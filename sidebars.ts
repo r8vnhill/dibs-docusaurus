@@ -24,6 +24,18 @@ const sidebars: SidebarsConfig = {
                 'unit-1/clean'
             ],
         },
+        {
+            type: 'category',
+            label: 'Unidad 2: Programación Orientada a Objetos',
+            link: {
+                type: 'doc',
+                id: 'unit-2/index',
+            },
+            items: [
+                'unit-2/objects',
+                'unit-2/classes',
+            ],
+        },
     ],
 };
 
