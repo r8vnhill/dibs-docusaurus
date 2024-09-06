@@ -15,7 +15,14 @@ const sidebars: SidebarsConfig = {
         {
             type: 'category',
             label: 'Unidad 1: Introducción',
-            items: ['unit-1/introduction', 'unit-1/Kotlin', 'unit-1/basics', 'unit-1/void-safety', 'unit-1/input'],
+            items: [
+                'unit-1/introduction',
+                'unit-1/Kotlin',
+                'unit-1/basics',
+                'unit-1/void-safety',
+                'unit-1/input',
+                'unit-1/clean'
+            ],
         },
     ],
 };
