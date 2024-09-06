@@ -11,13 +11,13 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
  Create as many sidebars as you want.
  */
 const sidebars: SidebarsConfig = {
-  tutorialSidebar: [
-    {
-      type: 'category',
-      label: 'Unidad 1: Introducción',
-      items: ['unit-1/introduction', 'unit-1/Kotlin', 'unit-1/basics', 'unit-1/void-safety'],
-    },
-  ],
+    tutorialSidebar: [
+        {
+            type: 'category',
+            label: 'Unidad 1: Introducción',
+            items: ['unit-1/introduction', 'unit-1/Kotlin', 'unit-1/basics', 'unit-1/void-safety', 'unit-1/input'],
+        },
+    ],
 };
 
 export default sidebars;
