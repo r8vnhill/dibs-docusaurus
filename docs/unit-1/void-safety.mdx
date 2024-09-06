@@ -1,0 +1,107 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Void-Safety
+
+## El Problema de los Punteros Nulos
+
+Los punteros o referencias nulas, denominados por Tony Hoare como "el error de mil millones de dólares", son una fuente común de errores en tiempo de ejecución. Este problema ocurre cuando una variable, que se espera contenga una referencia a un objeto, contiene un valor nulo, lo que provoca fallos al intentar acceder a métodos o propiedades de dicho objeto.
+
+## Motivación
+
+El manejo inadecuado de valores nulos genera errores difíciles de detectar, comprometiendo la robustez y seguridad del software. En bases de código grandes, estos errores son aún más peligrosos. Por ello, gestionar correctamente los valores nulos es esencial para asegurar la calidad y fiabilidad del software.
+
+## Enfoques en Diferentes Lenguajes
+
+- **Java**: Tradicionalmente, Java permite referencias nulas, lo que obliga a lxs desarrolladorxs a realizar validaciones manuales con frecuencia. Esto puede generar código redundante y aumenta la posibilidad de errores, resultando en excepciones `NullPointerException`.
+
+- **C#**: Introduce tipos anulables y no anulables. Los tipos de referencia son no anulables por defecto, pero se pueden declarar como anulables utilizando `?`.
+
+- **Scala**: Utiliza el tipo `Option`, que obliga a lxs desarrolladorxs a manejar explícitamente la posibilidad de que no haya un valor (`None`). Sin embargo, no elimina por completo el riesgo de `NullPointerException`, ya que `Option` puede contener un valor nulo en sí mismo si no se gestiona adecuadamente.
+
+### Solución en Kotlin: Seguridad de Tipos frente a Nulos
+
+Kotlin introduce un sistema de tipos que distingue entre referencias que pueden ser nulas y aquellas que no pueden serlo, lo que evita la mayoría de los errores de `NullPointerException` en tiempo de ejecución.
+
+#### Tipos no nullables y nullables
+
+En Kotlin, las variables son no nullables por defecto, lo que significa que no pueden contener `null` a menos que se declare explícitamente con `?`:
+
+```kotlin
+var a: String = "No es nulo"
+var b: String? = "Posiblemente nulo"
+a = null // Error: tipo no nullable
+b = null // Permitido: tipo nullable
+```
+
+#### Inferencia de tipos y nulabilidad
+
+La inferencia de tipos en Kotlin también se aplica a los valores nullable, pero sigue las mismas reglas:
+
+```kotlin
+var c = "Hola" // Tipo inferido como String, no nullable
+c = null // Error: c es no nullable
+```
+
+#### Llamadas Seguras en Kotlin
+
+Kotlin obliga a manejar explícitamente variables que pueden ser nulas, asegurando que no haya acceso a propiedades o métodos sin la verificación adecuada. Si una variable puede ser nula, Kotlin exige una validación previa:
+
+```kotlin
+val a: String? = TODO()
+if (a != null) {
+    println(a.length) // Acceso seguro
+} else {
+    println("a es nulo")
+}
+```
+
+Además, el operador de llamada segura (`?.`) permite realizar operaciones sobre una variable solo si no es nula:
+
+```kotlin
+println(a?.length) // Si a es nulo, devuelve null sin lanzar una excepción.
+```
+
+#### Operador Elvis
+
+El operador Elvis (`?:`) permite manejar de manera eficiente valores nulos proporcionando un valor por defecto cuando una expresión es nula:
+
+```kotlin
+val a: String? = TODO()
+val l = a?.length ?: -1 // Si a es nulo, l será -1
+```
+
+El operador Elvis es útil para evitar `null` en flujos de datos sin necesidad de condicionales adicionales, mejorando la claridad y simplicidad del código.
+
+:::tip Ejercicio: Procesamiento de Temperaturas de Ciudades
+Desarrolla un programa que procese información sobre las temperaturas de diferentes ciudades, algunas de las cuales podrían no tener datos disponibles (`null`).
+
+<Tabs>
+    <TabItem value="Ejercicio" label="Ejercicio">
+        1. **Datos de Entrada**: Define un mapa (`Map<String, Int?>`) donde las claves son nombres de ciudades y los valores son las temperaturas registradas, que pueden ser nulas si no hay datos.
+
+        2. **Procesamiento de Datos**: Itera sobre el mapa usando un bucle y llamadas seguras para manejar los valores nulos.
+
+        3. **Salida del Programa**: Imprime el nombre de la ciudad junto con su temperatura. Si la temperatura es nula, imprime el mensaje `Temperatura no disponible`.
+
+        Este enfoque asegura un manejo seguro de los valores nulos en Kotlin, reduciendo errores en tiempo de ejecución y mejorando la estabilidad del software.
+    </TabItem>
+    <TabItem value="Solución" label="Solución">
+        ```kotlin
+        fun main() {
+            val temperaturasPorCiudad = mapOf(
+                "Madrid" to 22,
+                "París" to null,
+                "Berlín" to 18,
+                "Roma" to null,
+                "Londres" to 15
+            )
+            for ((ciudad, temperatura) in temperaturasPorCiudad) {
+                val temperaturaFormateada = temperatura?.toString() ?: "Temperatura no disponible"
+                println("La temperatura en $ciudad es: $temperaturaFormateada")
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+:::
