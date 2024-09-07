@@ -64,6 +64,30 @@ const sidebars: SidebarsConfig = {
                 'unit-3/inheritance-2',
             ],
         },
+        {
+            type: 'category',
+            label: 'Unidad 4: Programación Funcional',
+            link: {
+                type: 'doc',
+                id: 'fp/index',
+            },
+            items: [
+                "fp/recursion",
+                {
+                    type: 'category',
+                    label: 'Optimización de Funciones Recursivas',
+                    link: {
+                        type: 'generated-index',
+                        title: 'Optimización de Funciones Recursivas',
+                        description: 'Uno de los problemas con la recursión es el caso en que la pila de ejecución se desborda. Existen distintas soluciones',
+                    },
+                    items: [
+                        'fp/recursion-optimization/tail',
+                    ],
+                },
+                "fp/hof",
+            ],
+        },
     ],
     assignmentsSidebar: [
         {

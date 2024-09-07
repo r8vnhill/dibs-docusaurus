@@ -1,0 +1,166 @@
+---
+
+title: Funciones de Alto Orden
+
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import ReadingTime from '../../src/components/ReadingTime';
+
+<ReadingTime />
+
+## Tipos de Funciones
+
+El **tipo de una función** se define en función de los tipos de sus parámetros y su tipo de retorno. En Kotlin, podemos expresar esto de la siguiente manera:
+
+```kotlin
+f: (A, B) -> C
+```
+
+Aquí, `A` y `B` representan los tipos de los parámetros que la función acepta, y `C` es el tipo de dato que la función devuelve como resultado. Este tipo de notación es útil para entender cómo las funciones manipulan los datos.
+
+Cuando hablamos de una **función miembro** o una **función de extensión** de un objeto, el tipo de función se expresa incluyendo el tipo del objeto que contiene la función:
+
+```kotlin
+f: W.(X, Y) -> Z
+```
+
+En este caso, `W` es el tipo del objeto que posee la función, mientras que `X` y `Y` son los tipos de los parámetros que la función acepta, y `Z` es el tipo de retorno.
+
+## Ciudadanos de Primera Clase
+
+Una entidad en un lenguaje de programación es considerada un **"ciudadano de primera clase"** si puede ser:
+
+- Creada dinámicamente durante la ejecución del programa.
+- Asignada a variables.
+- Pasada como argumento a otras funciones.
+- Retornada desde funciones.
+- Almacenada en estructuras de datos como listas o diccionarios.
+
+En Kotlin, las **funciones son ciudadanos de primera clase**, lo que significa que pueden ser tratadas como cualquier otro valor. Esto es importante porque permite pasar y devolver funciones de manera flexible, lo que habilita un estilo de programación más modular y reutilizable.
+
+### Ejemplo
+
+```kotlin
+val sumar: (Int, Int) -> Int = { a, b -> a + b }
+```
+
+Aquí, `sumar` es una función que se asigna a una variable, lo que demuestra cómo las funciones pueden ser manipuladas como cualquier otro valor en Kotlin.
+
+## Funciones de Alto Orden
+
+Las **funciones de alto orden** son aquellas que **reciben** otras funciones como parámetros o **retornan** una función como resultado. Esto permite un nivel adicional de abstracción y reutilización de código.
+
+Por ejemplo, una función que aplique otra función a todos los elementos de una lista podría tener el siguiente tipo:
+
+```kotlin
+(List<A>, (A) -> B) -> List<B>
+```
+
+o
+
+```kotlin
+List<A>.((A) -> B) -> List<B>
+```
+
+Esto indica que la función toma una lista de tipo `A`, una función que transforma elementos de tipo `A` en `B`, y devuelve una nueva lista de tipo `B`.
+
+Otro ejemplo es una función que componga dos funciones y retorne una nueva función. Su tipo sería:
+
+```kotlin
+(f: (A) -> B, g: (B) -> C) -> ((A) -> C)
+```
+
+Esto significa que la función toma dos funciones `f` y `g` y devuelve una nueva función que transforma un valor de tipo `A` a tipo `C` pasando por los dos pasos intermedios (primero aplica `f` y luego `g`).
+
+### Asociación a la derecha
+
+En la notación de funciones, el operador `->` se asocia a la derecha, lo que significa que:
+
+```kotlin
+(A) -> (B) -> C
+```
+
+Es equivalente a:
+
+```kotlin
+(A) -> ((B) -> C)
+```
+
+Esto implica que la función acepta un parámetro de tipo `A` y retorna una función que a su vez toma un parámetro de tipo `B` y retorna un valor de tipo `C`. Este concepto es clave en la **currificación**, una técnica común en la programación funcional.
+
+:::tip Ejercicio: Interfaz y Enumeración de Acciones del Juego
+
+<Tabs>
+    <TabItem value="Ejercicio" label="Ejercicio">
+        - Indica el tipo de:
+        1. Una función que toma una lista y un predicado (una función que devuelve un booleano) y retorna una lista con solo los elementos que cumplan el predicado.
+        2. Una función que toma un `String` que representa un idioma y devuelve una función que toma un nombre y retorna un saludo adecuado a ese idioma.
+        3. Una función que toma una lista y una función que combina los elementos de la lista, y retorna un único elemento que resulta de aplicar dicha función.
+    </TabItem>
+    <TabItem value="Solución" label="Solución">
+        1. `(List<A>, (A) -> Boolean) -> List<A>`
+        2. `(String) -> (String) -> String`
+        3. `(List<A>, (List<A>) -> A) -> A`
+    </TabItem>
+</Tabs>
+:::
+
+### Map
+
+Vamos a programar la función `map`. Esta función toma una lista y una función, luego aplica esa función a todos los elementos de la lista, devolviendo una nueva lista con los resultados.
+
+```kotlin
+fun double(n: Int): Int = n * 2
+
+fun square(n: Int): Int = n * n
+
+fun main() {
+    println(map(listOf(1, 2, 3, 4, 5), ::double))
+    println(map(listOf(1, 2, 3, 4, 5), ::square))
+}
+```
+
+En este ejemplo, estamos utilizando el operador `::` para **referenciar una función**. Esto nos permite pasar las funciones `double` y `square` como argumentos a la función `map` sin ejecutarlas directamente.
+
+#### Implementación de `map`
+
+La implementación básica de `map` toma una lista de enteros y una función que se aplica a cada uno de los elementos de esa lista. La función `map` recorre la lista, aplica la función a cada elemento, y devuelve una nueva lista con los resultados.
+
+```kotlin
+fun map(list: List<Int>, f: (Int) -> Int): List<Int> {
+    val result = mutableListOf<Int>()
+    for (i in list) {
+        result.add(f(i))
+    }
+    return result
+}
+```
+
+Aquí estamos creando una lista mutable llamada `result` que almacena los resultados. Luego, recorremos cada elemento de la lista original, aplicamos la función `f` y añadimos el resultado a `result`. Finalmente, la función devuelve esta nueva lista.
+
+#### Implementación Recursiva
+
+Una forma más **funcional** de implementar `map` sería utilizando **recursión** en lugar de un bucle. Esta implementación evita el uso de estructuras mutables, lo cual es más acorde con los principios de la programación funcional.
+
+```kotlin
+fun map(list: List<Int>, f: (Int) -> Int): List<Int> = if (list.isEmpty()) {
+    emptyList()
+} else {
+    listOf(f(list.first())) + map(list.drop(1), f)
+}
+```
+
+En este caso, la función `map` verifica si la lista está vacía. Si lo está, retorna una lista vacía. Si no, aplica la función `f` al primer elemento de la lista (`list.first()`), lo agrega a una nueva lista, y luego llama recursivamente a `map` con el resto de los elementos de la lista (`list.drop(1)`).
+
+:::tip Ejercicio: Implementación de `filter`
+<Tabs>
+    <TabItem value="Ejercicio" label="Ejercicio">
+        Programa la función filter, que toma una lista de enteros y un predicado y retorna una nueva lista con sólo los elementos que cumplen el predicado
+
+
+    </TabItem>
+    <TabItem value="Solución" label="Solución">
+    </TabItem>
+</Tabs>
