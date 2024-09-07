@@ -13,6 +13,10 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 const sidebars: SidebarsConfig = {
     tutorialSidebar: [
         {
+            type: 'doc',
+            id: 'installation',
+        },
+        {
             type: 'category',
             label: 'Unidad 1: Introducción',
             items: [
@@ -29,11 +33,11 @@ const sidebars: SidebarsConfig = {
             label: 'Unidad 2: Build Systems',
             link: {
                 type: 'doc',
-                id: 'unit-2/index',
+                id: 'build-systems/index',
             },
             items: [
-                'unit-2/build-systems',
-                'unit-2/tasks',
+                'build-systems/gradle',
+                'build-systems/tasks',
             ],
         },
         {

@@ -95,10 +95,10 @@ MAVEN_PASSWORD=yourPassword # Utiliza variables de entorno seguras
 
 El archivo `libs.versions.toml` permite definir las versiones de las dependencias utilizadas en el proyecto. Esto facilita la gestión de versiones y la actualización de bibliotecas.
 
-```toml title="libs.versions.toml"
+```toml title="gradle/libs.versions.toml"
 [versions]
 kotlin = "2.0.20"
-build-systems = "1.0.0" # La version de nuestro proyecto
+echo = "1.0.0" # La version de nuestro proyecto
 detekt = "1.23.6"
 kotest = "5.9.1"
 kotlinx-datetime = "0.6.1"
@@ -114,8 +114,8 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 
 [plugins]
-detekt = { module = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
-dokka = { module = "org.jetbrains.dokka", version.ref = "dokka" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 ```
 
 En este archivo:
@@ -164,51 +164,49 @@ El archivo `settings.gradle.kts` se utiliza para configurar y gestionar los ajus
 
 ```kotlin title="settings.gradle.kts"
 // El nombre del proyecto raíz
-rootProject.name = "build-systems-kt"
+rootProject.name = "echo-kt"
 
 // Incluye los subproyectos del proyecto raíz
 include(
-    ":subproject1",
-    ":subproject2",
-    ":subproject3"
+    ":echoLib",
+    ":echoApp",
 )
 ```
 
 A continuación, un ejemplo más completo que incluye la configuración de la gestión de plugins:
 
 ```kotlin title="settings.gradle.kts"
-rootProject.name = "build-systems-kt"
+rootProject.name = "echo-kt"
 
-pluginManagement { # Configuración de gestión de plugins
-    includeBuild("convention-plugins") # Incluye un archivo de configuración de plugins
-    repositories {  # Repositorios de plugins
+pluginManagement { // Configuración de gestión de plugins
+    includeBuild("convention-plugins") // Incluye un archivo de configuración de plugins
+    repositories {  // Repositorios de plugins
         mavenCentral()
         gradlePluginPortal()
     }
 }
 
-dependencyResolutionManagement {    # Gestión de resolución de dependencias
+dependencyResolutionManagement {    // Gestión de resolución de dependencias
     repositories {
-        maven { # Repositorio Maven
+        maven { // Repositorio Maven
             url = uri("https://maven.pkg.github.com/r8vnhill/strait-jakt")
             credentials {
                 username = System.getenv("GITHUB_USER")
                 password = System.getenv("GITHUB_TOKEN")
             }
         }
-        mavenCentral()  # Repositorio Maven Central
-        mavenLocal()    # Repositorio local
+        mavenCentral()  // Repositorio Maven Central
+        mavenLocal()    // Repositorio local
     }
 }
 
-plugins {   # Plugins del proyecto
+plugins {   // Plugins del proyecto
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
 }
 
-include(    # Incluye subproyectos
-    ":subproject1",
-    ":subproject2",
-    ":subproject3"
+include(    // Incluye subproyectos
+    ":echoLib",
+    ":echoApp"
 )
 ```
 
@@ -234,7 +232,7 @@ dependencyResolutionManagement {
    }
    versionCatalogs {
       create("libs") {
-         from(files("../gradle/libs.versions.toml"))    # Carga las versiones desde un archivo toml
+         from(files("../gradle/libs.versions.toml"))    // Carga las versiones desde un archivo toml
       }
    }
 }
@@ -258,15 +256,10 @@ En el archivo `build.gradle.kts`, se utiliza el **version catalog** `libs` para 
 plugins {
    kotlin("jvm")
 }
-
-kotlin {
-   jvm {
-      withJava()
-   }
-}
 ```
 
 Aquí, el archivo `jvm.conventions.gradle.kts` define las convenciones para proyectos JVM, como la configuración del plugin de Kotlin para JVM y la configuración de las opciones de compilación.
+En este caso, el archivo sólo establece el plugin de Kotlin para proyectos JVM.
 
 ### `build.gradle.kts`
 
@@ -280,7 +273,7 @@ plugins {
 
 // Configura el grupo y la versión para todos los proyectos
 allprojects {
-    group = "build-systems-kt"
+    group = "echo-kt"
     version = libs.versions.build.systems
 }
 
