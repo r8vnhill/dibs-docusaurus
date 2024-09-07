@@ -74,6 +74,12 @@ const config: Config = {
                     position: 'left',
                 },
                 {
+                    type: 'docSidebar',
+                    sidebarId: 'assignmentsSidebar',
+                    label: 'Tareas',
+                    position: 'left',
+                },
+                {
                     href: 'https://github.com/r8vnhill/dibs',
                     label: 'GitHub',
                     position: 'right',

@@ -35,9 +35,21 @@ const sidebars: SidebarsConfig = {
                 'unit-2/objects',
                 'unit-2/classes',
                 'unit-2/lateinit',
+                'unit-2/visibility',
             ],
         },
     ],
+    assignmentsSidebar: [
+        {
+            type: 'category',
+            label: 'Tareas',
+            items: [
+                'assignments/rules',
+                'assignments/assignment-1',
+                'assignments/assignment-2',
+            ],
+        }
+    ]
 };
 
 export default sidebars;
