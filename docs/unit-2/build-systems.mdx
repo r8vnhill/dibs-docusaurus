@@ -1,0 +1,202 @@
+---
+title: Build Systems
+---
+
+import Definition from '../../src/components/Definition';
+import ReadingTime from '../../src/components/ReadingTime';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<ReadingTime/>
+
+## Usos Comunes de Build Systems
+
+Los sistemas de construcción (build systems) son herramientas esenciales para gestionar y automatizar varios aspectos del ciclo de desarrollo de software. Estos sistemas ayudan a garantizar consistencia, eficiencia y control en el desarrollo y despliegue de aplicaciones.
+
+1. **Configuración Reutilizable**: Un sistema de construcción permite definir un proceso estandarizado de compilación que se puede reutilizar en múltiples proyectos. Esto asegura coherencia y ahorra tiempo, ya que evita tener que definir los mismos pasos repetidamente.
+
+2. **Gestión de Dependencias**: Automatiza la resolución y actualización de bibliotecas y paquetes necesarios para el desarrollo de un proyecto. Un build system se encarga de descargar las versiones correctas de cada dependencia y verificar que sean compatibles entre sí.
+
+3. **Automatización de Pruebas**: Los sistemas de construcción se integran con herramientas de pruebas, permitiendo que las pruebas se ejecuten automáticamente cada vez que se compila el proyecto, mejorando la calidad y seguridad del software.
+
+4. **Integración y Despliegue Continuos (CI/CD)**: Facilita la implementación de prácticas de integración y despliegue continuo, lo que permite que los cambios en el código sean compilados, probados y desplegados automáticamente.
+
+## Ejemplos de Build Systems
+
+- **Make**: Uno de los primeros sistemas de construcción, ampliamente utilizado en proyectos de C y C++. Aunque simple, es una herramienta poderosa que sigue siendo relevante hoy en día.
+
+- **Maven y Gradle**: Muy utilizados en el ecosistema Java, proporcionan una potente gestión de dependencias y facilidades para la construcción de proyectos de manera modular.
+
+- **Apache Ant**: Utilizado en proyectos Java, ofrece flexibilidad y extensibilidad, aunque con menos automatización que Maven o Gradle.
+
+- **Webpack y Babel**: Herramientas clave en el desarrollo de aplicaciones web modernas, que permiten empaquetar y transformar módulos de JavaScript.
+
+## Gradle
+
+Gradle es un sistema de construcción potente y flexible utilizado para automatizar todo el proceso de construcción de software, desde la compilación hasta la prueba y el despliegue. Es ampliamente utilizado en proyectos que requieren flexibilidad, incluyendo aplicaciones móviles y grandes sistemas empresariales.
+
+### Características Principales de Gradle
+
+1. **DSL Basado en Groovy y Kotlin**: Gradle utiliza lenguajes específicos del dominio (DSL) basados en Groovy y Kotlin, permitiendo a lxs desarrolladorxs escribir scripts de construcción expresivos y mantenibles.
+
+2. **Personalización y Extensibilidad**: Puedes personalizar y extender Gradle mediante la creación de tareas personalizadas y la adición de funcionalidades específicas para adaptarse a las necesidades del proyecto.
+
+3. **Compatibilidad con IDEs**: Gradle se integra perfectamente con IDEs populares como IntelliJ IDEA, Android Studio y Eclipse, lo que facilita su adopción en diversos entornos de desarrollo.
+
+4. **Gestión de Dependencias Avanzada**: Gradle simplifica la gestión de dependencias, asegurando que todas las bibliotecas necesarias se descarguen y configuren de manera eficiente.
+
+5. **Integración con Herramientas de CI/CD**: Gradle puede integrarse con sistemas como Jenkins, Travis CI, entre otros, facilitando la automatización completa del ciclo de vida del desarrollo.
+
+### Un Ejemplo Básico en Gradle
+
+```kotlin title="build.gradle.kts"
+plugins {
+  kotlin("jvm") version "2.0.20"
+}
+
+group = "cl.ravenhill"
+version = "1.0-SNAPSHOT"
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  testImplementation(kotlin("test"))
+}
+
+tasks.test {
+  useJUnitPlatform()
+}
+
+kotlin {
+  jvmToolchain(21)
+}
+```
+
+### `gradle.properties`
+
+El archivo `gradle.properties` permite definir propiedades globales que se usan en todo el proyecto. Estas propiedades pueden controlar configuraciones de rendimiento o definir variables de entorno.
+
+```properties title="gradle.properties"
+kotlin.code.style=official
+
+# Configuración de rendimiento
+org.gradle.parallel=true
+org.gradle.caching=true
+
+# Variables de entorno
+MAVEN_USERNAME=yourUsername # Nunca incluyas credenciales reales en el código
+MAVEN_PASSWORD=yourPassword # Utiliza variables de entorno seguras
+```
+
+- **`kotlin.code.style`**: Define el estilo de código a utilizar en el proyecto.
+- **`org.gradle.parallel`**: Habilita la ejecución paralela de tareas.
+- **`org.gradle.caching`**: Activa el almacenamiento en caché de tareas para mejorar el rendimiento.
+
+### `libs.versions.toml`
+
+El archivo `libs.versions.toml` permite definir las versiones de las dependencias utilizadas en el proyecto. Esto facilita la gestión de versiones y la actualización de bibliotecas.
+
+```toml title="libs.versions.toml"
+[versions]
+kotlin = "2.0.20"
+build-systems = "1.0.0" # La version de nuestro proyecto
+detekt = "1.23.6"
+kotest = "5.9.1"
+kotlinx-datetime = "0.6.1"
+dokka = "1.9.20"
+
+[libraries]
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotest-framework-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest" }
+kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
+kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+
+[plugins]
+detekt = { module = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+dokka = { module = "org.jetbrains.dokka", version.ref = "dokka" }
+```
+
+En este archivo:
+- **`[versions]`**: Define las versiones de las dependencias.
+- **`[libraries]`**: Especifica las dependencias y sus versiones.
+- **`[plugins]`**: Define los plugins y sus versiones.
+
+Este ejemplo incluye todas las dependencias que utilizaremos en el curso. Por ahora solo necesitas entender la estructura y cómo se definen las versiones.
+
+### Configuración de Repositorios
+
+En Gradle, los **repositorios** especifican de dónde obtener las dependencias necesarias para compilar y ejecutar el proyecto.
+
+```kotlin
+repositories {
+    mavenCentral()
+    google()
+    maven {
+        url = uri("https://your.company.com/maven")
+        credentials {
+            username = System.getenv("MAVEN_USERNAME") ?: "defaultUser"
+            password = System.getenv("MAVEN_PASSWORD") ?: "defaultPassword"
+        }
+    }
+    flatDir {
+        dirs("lib")
+    }
+}
+```
+
+### Dependencias
+
+Las **dependencias** son componentes externos que tu proyecto necesita para funcionar. Gradle las gestiona automáticamente y las descarga de repositorios configurados.
+
+```kotlin
+dependencies {
+    implementation(kotlin("reflect"))
+    testImplementation("group:name:version")
+    implementation(group = "group", name = "name", version = "version")
+}
+```
+
+## Comparaciones con Otros Lenguajes
+
+### En otros lenguajes, el concepto de sistemas de construcción y dependencias también es central:
+
+- **Maven (Java)**: Es uno de los sistemas de construcción más populares en el ecosistema Java. Utiliza un archivo `pom.xml` para definir dependencias y configuraciones del proyecto.
+
+```xml title="pom.xml"
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter</artifactId>
+    <version>2.3.0.RELEASE</version>
+</dependency>
+```
+
+- **NPM (JavaScript)**: En JavaScript, se usa NPM (Node Package Manager) para gestionar dependencias y scripts de construcción.
+
+```json title="package.json"
+{
+    "name": "my-app",
+    "version": "1.0.0",
+    "scripts": {
+        "build": "webpack",
+        "test": "jest"
+    },
+    "dependencies": {
+        "react": "^16.13.1",
+        "webpack": "^4.43.0"
+    }
+}
+```
+
+- **CMake (C++)**: Para proyectos en C++, CMake es una herramienta de construcción común que permite la generación de scripts de compilación.
+
+```cmake
+cmake_minimum_required(VERSION 3.10)
+project(MyProject VERSION 1.0)
+
+add_executable(MyExecutable main.cpp)
+target_link_libraries(MyExecutable PUBLIC MyLibrary)
+```
