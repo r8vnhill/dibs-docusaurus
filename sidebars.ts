@@ -73,6 +73,8 @@ const sidebars: SidebarsConfig = {
             },
             items: [
                 "fp/recursion",
+                "fp/hof",
+                "fp/pure",
                 {
                     type: 'category',
                     label: 'Optimización de Funciones Recursivas',
@@ -83,9 +85,9 @@ const sidebars: SidebarsConfig = {
                     },
                     items: [
                         'fp/recursion-optimization/tail',
+                        'fp/recursion-optimization/trampoline',
                     ],
                 },
-                "fp/hof",
             ],
         },
     ],

@@ -1,0 +1,191 @@
+---
+title: Funciones Puras y Efectos Secundarios
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import Definition from "../../src/components/Definition";
+import ReadingTime from '../../src/components/ReadingTime';
+import Corollary from "../../src/components/Corollary";
+
+<ReadingTime />
+
+## Funciones Puras
+
+<Definition title="Transparencia Referencial">
+    Una expresión $e$ es referencialmente transparente si, en cualquier programa $p$, todas las ocurrencias de $e$ en $p$ pueden ser reemplazadas por el resultado de evaluar $e$ sin cambiar el significado de $p$.
+</Definition>
+
+<Definition title="Función Pura">
+    Una función $f$ es pura si, para todos los $x$ que son referencialmente transparentes, la expresión $f(x)$ también lo es.
+</Definition>
+
+<Corollary>
+    Una función es pura si su único efecto observable dentro de la ejecución del programa es procesar el input para producir un output, sin causar ningún otro cambio en el estado del programa.
+</Corollary>
+
+### Efectos Secundarios
+
+También conocidos como **side-effects**, los efectos secundarios son cualquier operación que una función realice además de retornar un valor. Un efecto secundario puede ser modificar una variable global, escribir en un archivo, o interactuar con la interfaz de usuario. Cuando una función tiene efectos secundarios, se la considera **impura**.
+
+<Corollary>
+    Una función es impura si tiene efectos secundarios, es decir, si modifica algo fuera de su propio ámbito o entorno.
+</Corollary>
+
+### Ejemplos de Funciones Puras e Impuras
+
+A continuación, analizamos algunos ejemplos para identificar funciones puras e impuras.
+
+:::tip Ejercicio: Identificar Funciones Puras
+
+<Tabs>
+    <TabItem value="Ejercicio" label="Ejercicio">
+        Identifica si las siguientes funciones son puras o impuras:
+
+        1.
+        ```kotlin
+        fun add(a: Int, b: Int): Int = a + b
+        ```
+        2.
+        ```kotlin
+        fun addCurried(): (Int) -> (Int) -> Int = { a -> { b -> a + b } }
+        ```
+        3.
+        ```kotlin
+        fun greet(name: String): Unit = println("Hello, $name!")
+        ```
+        4.
+        ```kotlin
+        fun incrementArray(array: Array<Int>): Unit {
+            for (i in array.indices) {
+                array[i]++
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem value="Solución" label="Solución">
+        1. **Pura**: No tiene efectos secundarios y solo realiza una operación matemática.
+        2. **Pura**: Es una función currificada que no tiene efectos secundarios.
+        3. **Impura**: Tiene un efecto secundario al imprimir en la consola.
+        4. **Impura**: Modifica el array original, lo que implica un efecto secundario.
+    </TabItem>
+</Tabs>
+:::
+
+<Corollary>
+    En general, si una función retorna `Unit`, es un indicio de que podría tener efectos secundarios.
+</Corollary>
+
+### Mitigando Efectos Secundarios
+
+Cuando una función es impura debido a que modifica el estado del programa, como en el siguiente ejemplo, se puede refactorizar para evitar esos efectos.
+
+#### Ejemplo de función impura:
+
+```kotlin
+fun incrementArray(array: Array<Int>): Unit {
+    for (i in array.indices) {
+        array[i]++
+    }
+}
+```
+ 
+El problema aquí es que la función modifica el input, es decir, el arreglo pasado como argumento, lo que la convierte en impura. Para hacer que esta función sea pura, podemos evitar modificar el input creando un nuevo arreglo:
+
+```kotlin
+fun incrementArray(array: Array<Int>): Array<Int> {
+    val result = Array(array.size) { 0 }
+    for (i in array.indices) {
+    result[i] = array[i] + 1
+}
+    return result
+}
+```
+
+### Ejemplo de Función Impura: Cálculo de Intereses Compuestos
+
+En este ejemplo, el código impreso durante la ejecución es un efecto secundario:
+
+```kotlin
+fun calculateCompoundInterest(
+    principal: Double,
+    rate: Double,
+    years: Int
+): Double {
+    var balance = principal
+    for (year in 1..years) {
+        balance += balance * rate
+        println("Año $year: Balance = $balance")
+    }
+    return balance
+}
+```
+
+Para eliminar los efectos secundarios, podemos almacenar el historial de balances y devolver ambos resultados (el balance final y el historial) como un par.
+
+```kotlin
+fun calculateCompoundInterest(
+    principal: Double,
+    rate: Double,
+    years: Int
+): Pair<Double, List<String>> {
+    var balance = principal
+    val history = mutableListOf<String>()
+    for (year in 1..years) {
+    balance += balance * rate
+    history += "Año $year: Balance = $balance"
+}
+    return balance to history
+}
+```
+
+### Ejercicio: Eliminar Efectos Secundarios en Transferencias Bancarias
+
+En el siguiente ejemplo, la función `transferirFondos` tiene efectos secundarios, ya que modifica el estado de las cuentas y la base de datos:
+
+```kotlin
+fun transferirFondos(cuentaOrigen: Cuenta, cuentaDestino: Cuenta, monto: Int): Boolean {
+    if (cuentaOrigen.saldo >= monto) {
+        cuentaOrigen.saldo -= monto
+        cuentaDestino.saldo += monto
+        database.update(cuentaOrigen)
+        database.update(cuentaDestino)
+        return true
+    }
+    return false
+}
+```
+
+:::tip Ejercicio: Eliminar Efectos Secundarios
+
+<Tabs>
+    <TabItem value="Ejercicio" label="Ejercicio">
+        Modifica la función `transferirFondos` para eliminar los efectos secundarios. En lugar de modificar directamente las cuentas, devuelve un objeto que describa el resultado de la operación. **Hint**: Utiliza una `data class` para representar el resultado de la transferencia.
+
+    </TabItem>
+    <TabItem value="Solución" label="Solución">
+```kotlin
+data class ResultadoTransferencia(
+    val exito: Boolean,
+    val nuevoSaldoOrigen: Int,
+    val nuevoSaldoDestino: Int
+)
+```
+
+```kotlin
+fun transferirFondos(
+    cuentaOrigen: Cuenta, 
+    cuentaDestino: Cuenta, 
+    monto: Int
+): ResultadoTransferencia {
+    if (cuentaOrigen.saldo >= monto) {
+        val nuevoSaldoOrigen = cuentaOrigen.saldo - monto
+        val nuevoSaldoDestino = cuentaDestino.saldo + monto
+        return ResultadoTransferencia(true, nuevoSaldoOrigen, nuevoSaldoDestino)
+    }
+    return ResultadoTransferencia(false, cuentaOrigen.saldo, cuentaDestino.saldo)
+}
+```
+    </TabItem>
+</Tabs>
+:::
