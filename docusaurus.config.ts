@@ -10,15 +10,15 @@ const config: Config = {
     favicon: 'img/favicon.ico',
 
     // Set the production url of your site here
-    url: 'https://your-docusaurus-site.example.com',
+    url: 'https://dibs.pages.dev',
     // Set the /<baseUrl>/ pathname under which your site is served
     // For GitHub pages deployment, it is often '/<projectName>/'
     baseUrl: '/',
 
     // GitHub pages deployment config.
     // If you aren't using GitHub pages, you don't need these.
-    organizationName: 'facebook', // Usually your GitHub org/user name.
-    projectName: 'docusaurus', // Usually your repo name.
+    organizationName: 'ravenhill', // Usually your GitHub org/user name.
+    projectName: 'dibs', // Usually your repo name.
 
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
@@ -64,7 +64,17 @@ const config: Config = {
                     label: 'Apuntes',
                 },
                 {
-                    href: 'https://github.com/facebook/docusaurus',
+                    to: '/docs/lessons',
+                    label: 'Clases',
+                    position: 'left',
+                },
+                {
+                    to: '/docs/syllabus',
+                    label: 'Temario',
+                    position: 'left',
+                },
+                {
+                    href: 'https://github.com/r8vnhill/dibs',
                     label: 'GitHub',
                     position: 'right',
                 },
@@ -72,18 +82,7 @@ const config: Config = {
         },
         footer: {
             style: 'dark',
-            links: [
-                {
-                    title: 'Docs',
-                    items: [
-                        {
-                            label: 'Tutorial',
-                            to: '/docs/intro',
-                        },
-                    ],
-                },
-            ],
-            copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+            copyright: `Copyright © ${new Date().getFullYear()} Ignacio Slater M. Built with Docusaurus.`,
         },
         prism: {
             theme: prismThemes.github,
