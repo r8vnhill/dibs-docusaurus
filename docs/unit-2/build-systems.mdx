@@ -2,10 +2,7 @@
 title: Build Systems
 ---
 
-import Definition from '../../src/components/Definition';
 import ReadingTime from '../../src/components/ReadingTime';
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
 
 <ReadingTime/>
 
@@ -47,7 +44,7 @@ Gradle es un sistema de construcción potente y flexible utilizado para automati
 
 5. **Integración con Herramientas de CI/CD**: Gradle puede integrarse con sistemas como Jenkins, Travis CI, entre otros, facilitando la automatización completa del ciclo de vida del desarrollo.
 
-### Un Ejemplo Básico en Gradle
+### A Taste of Gradle
 
 ```kotlin title="build.gradle.kts"
 plugins {
@@ -114,6 +111,7 @@ kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", versio
 kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 
 [plugins]
 detekt = { module = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
@@ -158,6 +156,171 @@ dependencies {
     testImplementation("group:name:version")
     implementation(group = "group", name = "name", version = "version")
 }
+```
+
+### `settings.gradle`
+
+El archivo `settings.gradle.kts` se utiliza para configurar y gestionar los ajustes de configuración de un proyecto Gradle. Este archivo define la estructura de módulos del proyecto y puede incluir configuraciones adicionales para la gestión de plugins.
+
+```kotlin title="settings.gradle.kts"
+// El nombre del proyecto raíz
+rootProject.name = "build-systems-kt"
+
+// Incluye los subproyectos del proyecto raíz
+include(
+    ":subproject1",
+    ":subproject2",
+    ":subproject3"
+)
+```
+
+A continuación, un ejemplo más completo que incluye la configuración de la gestión de plugins:
+
+```kotlin title="settings.gradle.kts"
+rootProject.name = "build-systems-kt"
+
+pluginManagement { # Configuración de gestión de plugins
+    includeBuild("convention-plugins") # Incluye un archivo de configuración de plugins
+    repositories {  # Repositorios de plugins
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {    # Gestión de resolución de dependencias
+    repositories {
+        maven { # Repositorio Maven
+            url = uri("https://maven.pkg.github.com/r8vnhill/strait-jakt")
+            credentials {
+                username = System.getenv("GITHUB_USER")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+        mavenCentral()  # Repositorio Maven Central
+        mavenLocal()    # Repositorio local
+    }
+}
+
+plugins {   # Plugins del proyecto
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+}
+
+include(    # Incluye subproyectos
+    ":subproject1",
+    ":subproject2",
+    ":subproject3"
+)
+```
+
+### Convention Plugins
+
+Los **convention plugins** son una forma de definir y compartir configuraciones y convenciones comunes en un proyecto Gradle. Estos plugins permiten estandarizar la configuración y estructura de los proyectos, facilitando la colaboración y la reutilización de código.
+Por ahora, solo necesitas entender que los **convention plugins** son una forma de estandarizar la configuración de proyectos Gradle.
+
+```kotlin title="convention-plugins/settings.gradle.kts"
+rootProject.name = "convention-plugins"
+
+pluginManagement {
+   repositories {
+      mavenCentral()
+      gradlePluginPortal()
+   }
+}
+
+dependencyResolutionManagement {
+   repositories {
+      mavenCentral()
+      gradlePluginPortal()
+   }
+   versionCatalogs {
+      create("libs") {
+         from(files("../gradle/libs.versions.toml"))    # Carga las versiones desde un archivo toml
+      }
+   }
+}
+```
+
+En este ejemplo, el archivo `settings.gradle.kts` define un **version catalog** llamado `libs` que carga las versiones de las dependencias desde un archivo `libs.versions.toml` ubicado en el directorio `gradle` del proyecto.
+
+```kotlin title="convention-plugins/build.gradle.kts"
+plugins {
+   `kotlin-dsl`
+}
+
+dependencies {
+   implementation(libs.kotlin.gradle.plugin)
+}
+```
+
+En el archivo `build.gradle.kts`, se utiliza el **version catalog** `libs` para obtener la versión del plugin de Kotlin. Esto permite centralizar y estandarizar la gestión de versiones en el proyecto.
+
+```kotlin title="convention-plugins/src/main/kotlin/jvm.conventions.gradle.kts"
+plugins {
+   kotlin("jvm")
+}
+
+kotlin {
+   jvm {
+      withJava()
+   }
+}
+```
+
+Aquí, el archivo `jvm.conventions.gradle.kts` define las convenciones para proyectos JVM, como la configuración del plugin de Kotlin para JVM y la configuración de las opciones de compilación.
+
+### `build.gradle.kts`
+
+El archivo `build.gradle.kts` es el script principal de Gradle que define las tareas y configuraciones de construcción del proyecto. En este archivo se especifican las dependencias, plugins, tareas personalizadas y otros ajustes necesarios para compilar y ejecutar el proyecto.
+
+```kotlin title="build.gradle.kts"
+plugins {
+    id("jvm.conventions")
+    alias(libs.plugins.detekt)
+}
+
+// Configura el grupo y la versión para todos los proyectos
+allprojects {
+    group = "build-systems-kt"
+    version = libs.versions.build.systems
+}
+
+// Define el repositorio de Maven Central como fuente para las dependencias de los subproyectos
+subprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+```
+
+```kotlin title="subproject1/build.gradle.kts"
+plugins {
+    id("jvm.conventions")
+}
+
+dependencies {
+    implementation(kotlin("reflect"))
+    implementation(libs.kotlinx.datetime)
+    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.kotest.framework.datatest)
+    testImplementation(libs.kotest.framework.engine)
+    testImplementation(libs.kotest.property)
+    testImplementation(libs.kotest.runner.junit5)
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+kotlin {
+    jvmToolchain(17)
+}
+```
+
+## Construyendo el Proyecto
+
+```bash
+./gradlew :subproject1:build
+./gradlew build
 ```
 
 ## Comparaciones con Otros Lenguajes

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 function calculateReadingTime(text) {
-    const wordsPerMinute = 200; // Velocidad de lectura promedio
+    const wordsPerMinute = 150;
     const words = text.trim().split(/\s+/).length;
     const minutes = Math.ceil(words / wordsPerMinute);
     return minutes;

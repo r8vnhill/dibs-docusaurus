@@ -32,7 +32,8 @@ const sidebars: SidebarsConfig = {
                 id: 'unit-2/index',
             },
             items: [
-                'unit-2/build-systems'
+                'unit-2/build-systems',
+                'unit-2/tasks',
             ],
         },
         {
