@@ -1,0 +1,211 @@
+---
+title: Propiedades
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import ReadingTime from '../../src/components/ReadingTime';
+
+<ReadingTime />
+
+Las **propiedades** son fundamentales para definir el estado de una clase y funcionan como variables miembro. En Kotlin, las propiedades combinan el comportamiento de los campos con los métodos *getter* y *setter*, ofreciendo una manera más concisa y expresiva de manejar datos.
+
+Kotlin genera automáticamente un método `get` para propiedades inmutables (declaradas con `val`), y tanto `get` como `set` para propiedades mutables (declaradas con `var`). No obstante, es posible personalizar estos métodos si se requiere un comportamiento más específico.
+
+### Ejemplo de Propiedad con Getter y Setter Personalizados en Kotlin
+
+```kotlin
+class GettersAndSetters {
+    var name: String = "John"
+        get() { // Getter personalizado
+            return field
+        }
+        set(value) { // Setter personalizado
+            field = value
+        }
+}
+```
+
+En **Kotlin**, `field` es una palabra clave especial que representa el valor almacenado internamente en la propiedad. Es útil en *getters* y *setters* personalizados para acceder o modificar ese valor.
+
+#### Ejemplo en JavaScript
+
+En **JavaScript**, puedes lograr un comportamiento similar utilizando `getters` y `setters` en objetos o clases:
+
+```javascript
+class Person {
+    constructor(name) {
+        this._name = name;
+    }
+
+    get name() {
+        return this._name;
+    }
+
+    set name(value) {
+        this._name = value;
+    }
+}
+
+const person = new Person("John");
+console.log(person.name);  // John
+person.name = "Jane";
+console.log(person.name);  // Jane
+```
+
+### Propiedad Calculada
+
+Una **propiedad calculada** es una propiedad cuyo valor se evalúa cada vez que se accede a ella. En Kotlin, puedes usar un *getter* para hacer esto:
+
+```kotlin
+class GettersAndSetters {
+    val now: String
+        get() = Clock.System.now().toString()
+}
+```
+
+Cada vez que se accede a la propiedad `now`, se genera un valor basado en la hora actual.
+
+#### Ejemplo en Python
+
+En **Python**, puedes usar el decorador `@property` para definir *getters* personalizados:
+
+```python
+from datetime import datetime
+
+class GettersAndSetters:
+    @property
+    def now(self):
+        return datetime.now().isoformat()
+
+person = GettersAndSetters()
+print(person.now)  # Imprime la fecha y hora actual
+```
+
+### Propiedad con Setter Privado
+
+A veces, necesitas permitir que otras partes del programa lean el valor de una propiedad, pero restringir quién puede modificarla. En Kotlin, esto se logra mediante un *setter* privado:
+
+```kotlin
+class GettersAndSetters(age: Int) {
+    var age: Int = age
+        private set // Setter privado
+}
+```
+
+#### Ejemplo en C#
+
+En **C#**, puedes hacer algo similar con propiedades automáticas:
+
+```csharp
+class Person {
+    public int Age { get; private set; }
+
+    public Person(int age) {
+        Age = age;
+    }
+}
+```
+
+### Propiedad con Backing Field
+
+En Kotlin, el **backing field** permite controlar el acceso a una propiedad, manteniendo el valor almacenado en una variable privada:
+
+```kotlin
+class GettersAndSetters(private var _age: Int) {
+    val age: Int
+        get() = _age
+}
+```
+
+### Propiedades en Interfaces
+
+Kotlin permite definir propiedades en interfaces, donde puedes agregar lógica personalizada en los *getters* y *setters*. Esto te da una mayor flexibilidad para controlar cómo se acceden y modifican los datos en las clases que implementan la interfaz.
+
+```kotlin
+interface InterfaceWithGettersAndSetters {
+    val name: String
+        get() {
+            println("Getting name")
+            return "InterfaceWithGettersAndSetters"
+        }
+    var age: Int
+        get() {
+            println("Getting age")
+            return 0
+        }
+        set(value) {
+            println("Setting age")
+        }
+}
+```
+
+#### Implementación en una Clase
+
+Las clases que implementan esta interfaz pueden añadir su propia lógica para las propiedades, mientras aún pueden reutilizar el comportamiento de la interfaz.
+
+```kotlin
+class ClassWithGettersAndSetters : InterfaceWithGettersAndSetters {
+    override val name: String
+        get() {
+            super.name // Llama al getter de la interfaz
+            return "ClassWithGettersAndSetters"
+        }
+    override var age: Int = 0
+        get() {
+            super.age // Llama al getter de la interfaz
+            return field
+        }
+        set(value) {
+            super.age = value // Llama al setter de la interfaz
+            field = value
+        }
+}
+```
+
+#### Ejemplo en C#
+
+En **C#**, puedes hacer algo similar definiendo propiedades en interfaces:
+
+```csharp
+interface IPerson {
+    string Name { get; }
+    int Age { get; set; }
+}
+
+class Person : IPerson {
+    public string Name { get; private set; }
+    public int Age { get; set; }
+}
+```
+
+### Ejercicio Práctico
+
+:::tip Ejercicio: Clase Patient
+
+<Tabs>
+    <TabItem value="Ejercicio" label="Ejercicio">
+        Desarrolla una clase `Patient` para manejar información sobre pacientes en una clínica médica.
+
+        **Propiedades:**
+        - `name`: Inmutable; guarda el nombre del paciente.
+        - `age`: Mutable; guarda la edad del paciente.
+        - `isAdult`: Propiedad calculada que retorna `true` si el paciente es mayor de edad.
+        - `email`: Propiedad mutable que valide que el correo contenga un `@`.
+    </TabItem>
+    <TabItem value="Solución" label="Solución">
+```kotlin	
+class Patient(val name: String, var age: Int) {
+    val isAdult: Boolean
+        get() = age >= 18
+    var email: String = ""
+        set(value) {
+            if ("@" in value) {
+                field = value
+            }
+        }
+}
+```
+    </TabItem>
+</Tabs>
+:::
