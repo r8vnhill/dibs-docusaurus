@@ -34,6 +34,7 @@ const sidebars: SidebarsConfig = {
             items: [
                 'unit-2/objects',
                 'unit-2/classes',
+                'unit-2/lateinit',
             ],
         },
     ],
