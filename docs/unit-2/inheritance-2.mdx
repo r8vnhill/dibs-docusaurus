@@ -1,0 +1,389 @@
+---
+title: Herencia Avanzada
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import ReadingTime from '../../src/components/ReadingTime';
+
+<ReadingTime/>
+
+La **herencia** es un principio clave de la programación orientada a objetos que permite que una clase herede propiedades y comportamientos de otra clase. Esto ayuda a reducir la duplicación de código y permite extender funcionalidades de forma más eficiente. La herencia también puede llevar a problemas complejos, como el problema del "diamante", pero sigue siendo una herramienta esencial cuando se usa correctamente.
+
+### Herencia Simple
+
+La herencia simple permite que una clase herede características de un solo supertipo. En Kotlin, se define usando la palabra clave `open` para la clase base y los dos puntos `:` para indicar que una clase está heredando de otra.
+
+```kotlin
+open class A
+
+class B : A()
+```
+
+**En otros lenguajes**:
+
+- **Java** también usa la herencia simple y necesita la palabra clave `extends`:
+
+```java
+class A {}
+class B extends A {}
+  ```
+
+- **Python** también soporta herencia simple sin necesidad de una palabra clave explícita:
+
+```python
+class A:
+    pass
+class B(A):
+    pass
+  ```
+
+#### Primer Modelado: Sistema de Gestión de Personal
+
+Supongamos que estamos creando un sistema de gestión de personal con varios tipos de empleadxs: **Managers**, **Ingenierxs**, y **Practicantes**. Todos los empleados pueden calcular su salario usando la fórmula:
+
+$$ \text{salary} = \text{baseSalary} \times \text{extraCoefficient} $$
+
+```kotlin
+interface Employee {
+    val baseSalary: Int
+    val extraCoefficient: Int
+    fun calculateSalary(extraHours: Int): Int
+}
+
+abstract class AbstractEmployee(
+    override val baseSalary: Int,
+    override val extraCoefficient: Int
+) : Employee {
+    override fun calculateSalary(extraHours: Int): Int =
+        baseSalary + extraHours * extraCoefficient
+}
+
+class Engineer(baseSalary: Int) : AbstractEmployee(baseSalary, 10)
+class Intern(baseSalary: Int) : AbstractEmployee(baseSalary, 5)
+class Manager(baseSalary: Int) : AbstractEmployee(baseSalary, 20)
+```
+
+#### Segundo Modelado: Restricción de Horas Extra
+
+Si queremos restringir que los practicantes no puedan trabajar horas extra, podemos introducir una interfaz adicional para representar a lxs empleadxs que sí pueden trabajar horas extra.
+
+```kotlin
+interface OvertimeCapable : Employee {
+    val extraCoefficient: Int
+    fun calculateSalary(extraHours: Int): Int
+}
+
+class Engineer(override val baseSalary: Int) : OvertimeCapable {
+    override val extraCoefficient = 10
+    override fun calculateSalary(extraHours: Int) = baseSalary + extraCoefficient * extraHours
+}
+
+class Intern(override val baseSalary: Int) : Employee {
+    fun calculateSalary() = baseSalary
+}
+
+class Manager(override val baseSalary: Int) : OvertimeCapable {
+    override val extraCoefficient = 20
+    override fun calculateSalary(extraHours: Int) = baseSalary + extraCoefficient * extraHours
+}
+```
+
+**En otros lenguajes**:
+
+- **Java**:
+
+```java
+interface Employee {
+    int baseSalary();
+}
+
+interface OvertimeCapable extends Employee {
+    int extraCoefficient();
+    default int calculateSalary(int extraHours) {
+        return baseSalary() + extraCoefficient() * extraHours;
+    }
+}
+  ```
+
+### Herencia Múltiple (con Interfaces)
+
+La **herencia múltiple** permite que una clase herede características de varios supertipos. Kotlin, al igual que otros lenguajes como **Java** y **C#**, admite la herencia múltiple a través de **interfaces**.
+
+```kotlin
+interface A {
+    fun a() = println("A")
+}
+
+interface B {
+    fun b() = println("B")
+}
+
+class C : A, B
+```
+
+**En otros lenguajes**:
+
+- **Java** admite herencia múltiple solo con interfaces:
+
+```java
+interface A {
+    default void a() { System.out.println("A"); }
+}
+
+interface B {
+    default void b() { System.out.println("B"); }
+}
+
+class C implements A, B {}
+  ```
+
+- **Python** permite herencia múltiple directa entre clases:
+
+```python
+class A:
+    def a(self):
+        print("A")
+
+class B:
+    def b(self):
+        print("B")
+
+class C(A, B):
+    pass
+  ```
+
+#### Cuarto Modelado: Desarrolladores y Prácticas
+
+Imaginemos que tanto practicantes como ingenierxs son desarrolladorxs. Queremos que ambos puedan acceder a la funcionalidad de desarrollo, pero no todos pueden trabajar horas extra. Aquí la herencia múltiple es útil.
+
+```kotlin
+interface Developer : Employee {
+    fun develop() = println("""println("Hello, World!")""")
+}
+
+class Engineer(override val baseSalary: Int) : Developer, OvertimeCapable {
+    override val extraCoefficient = 10
+}
+
+class Intern(override val baseSalary: Int) : Developer {
+    fun calculateSalary() = baseSalary
+}
+
+class Manager(override val baseSalary: Int) : OvertimeCapable {
+    override val extraCoefficient = 20
+}
+```
+
+:::tip Ejercicio: Herencia Simple
+
+<Tabs>
+    <TabItem value="Ejercicio" label="Ejercicio">
+        Implementa un RPG basado en **The Walking Dead**. Define tres personajes: Rick, Negan y Jesus, cada uno con:
+        - Velocidad
+        - Intimidación
+        - Daño
+        - Nombre
+
+        Implementa estos personajes utilizando herencia simple.
+    </TabItem>
+    <TabItem value="Solución" label="Solución">
+
+        ```kotlin
+        interface Human {
+            val name: String
+            var speed: Int
+            var intimidation: Int
+            var damage: Int
+        }
+        ```
+
+        ```kotlin
+        abstract class AbstractHuman(override val name: String) : Human {
+            override var speed: Int = 0
+            override var intimidation: Int = 0
+            override var damage: Int = 0
+        }
+        ```
+
+        ```kotlin
+        class Jesus : AbstractHuman("Jesus")
+        ```
+
+        ```kotlin
+        class Negan : AbstractHuman("Negan")
+        ```
+
+        ```kotlin
+        class Rick : AbstractHuman("Rick")
+        ```
+
+    </TabItem>
+</Tabs>
+:::
+
+:::tip Ejercicio: Herencia Múltiple
+
+<Tabs>
+    <TabItem value="Ejercicio" label="Ejercicio">
+        En el RPG basado en **The Walking Dead**, agrega habilidades como:
+        - *Horse riding* (Jesus): +6 velocidad
+        - *Diplomatic* (Jesus, Rick, Negan): Imprime un mensaje
+        - *Gun user* (Rick, Jesus): +10 daño
+        - *Lucille* (Negan): +3 intimidación
+
+        Implementa estas habilidades utilizando herencia múltiple.
+    </TabItem>
+    <TabItem value="Solución" label="Solución">
+
+        ```kotlin
+        interface Diplomatic : Human {
+            fun negotiate(diplomatic: Diplomatic) =
+                println("$name is negotiating with ${diplomatic.name}")
+        }
+        ```
+
+        ```kotlin
+        private const val HORSE_RIDER_SPEED = 6
+
+        interface HorseRider : Human {
+            fun ride() {
+                speed += HORSE_RIDER_SPEED
+            }
+        }
+        ```
+
+        ```kotlin
+        private const val INTIMIDATION = 3
+
+        interface LucilleWielder : Human {
+            fun swing() {
+                intimidation += INTIMIDATION
+            }
+        }
+        ```
+
+        ```kotlin
+        private const val SHOOTER_DAMAGE = 10
+
+        interface Shooter : Human {
+            fun shoot() {
+                damage += SHOOTER_DAMAGE
+            }
+        }
+        ```
+
+        ```kotlin
+        class Jesus : AbstractHuman(name = "Jesus"), Diplomatic, HorseRider, Shooter
+        ```
+
+        ```kotlin
+        class Negan : AbstractHuman(name = "Negan"), Diplomatic, LucilleWielder
+        ```
+
+        ```kotlin
+        class Rick : AbstractHuman("Rick"), Diplomatic, Shooter
+        ```
+    </TabItem>
+</Tabs>
+:::
+
+### Delegación en Kotlin
+
+El **patrón de delegación** es un patrón estructural donde un objeto delega una responsabilidad específica a otro objeto auxiliar. Kotlin ofrece soporte nativo para la delegación, permitiendo una forma eficiente de compartir responsabilidades entre objetos sin herencia.
+
+```kotlin
+interface Printer {
+    fun print(document: String)
+}
+
+class PrinterImpl : Printer {
+    private var printedPages = 0
+
+    override fun print(document: String) {
+        println("Printing document: $document")
+        printedPages++
+    }
+}
+```
+
+#### Delegación en Kotlin usando `by`
+
+```kotlin
+class PrinterScanner(
+    private val printer: Printer = PrinterImpl()
+) : Printer by printer
+```
+
+Esto permite que `PrinterScanner` delegue la implementación de sus métodos a la instancia de `PrinterImpl`.
+
+**En otros lenguajes**:
+
+- **Python** no tiene soporte nativo para delegación, pero se puede implementar con composición:
+
+```python
+class Printer:
+    def print(self, document):
+        print(f"Printing document: {document}")
+
+class PrinterScanner:
+    def __init__(self):
+        self.printer = Printer()
+
+    def print(self, document):
+        self.printer.print(document)
+  ```
+
+:::tip Ejercicio: Delegación en un Sistema de Audio
+
+<Tabs>
+    <TabItem value="Ejercicio" label="Ejercicio">
+        Implementa un sistema de audio que maneje dispositivos de reproducción y grabación de sonido. Los dispositivos de reproducción deben poder ajustar el volumen, mientras que los dispositivos de grabación deben poder gestionar la duración de una grabación.
+    </TabItem>
+    <TabItem value="Solución" label="Solución">
+        ```kotlin
+        interface Recorder {
+            fun setDuration(duration: Int)
+        }
+
+        class RecorderImpl : Recorder {
+            private var duration = 0
+
+            override fun setDuration(duration: Int) {
+                this.duration = duration
+                println("Setting duration to $duration")
+            }
+        }
+        ```
+
+        ```kotlin
+        interface Speaker {
+            fun increaseVolume()
+            fun decreaseVolume()
+        }
+
+        class SpeakerImpl : Speaker {
+            private var volume = 0
+
+            override fun increaseVolume() {
+                volume++
+                println("Increasing volume to $volume")
+            }
+
+            override fun decreaseVolume() {
+                volume--
+                println("Decreasing volume to $volume")
+            }
+        }
+        ```
+
+        ```kotlin
+        class AudioDevice(
+            private val speaker: SpeakerImpl = SpeakerImpl(),
+            private val recorder: RecorderImpl = RecorderImpl()
+        ) : Speaker by speaker, Recorder by recorder
+        ```
+
+    </TabItem>
+</Tabs>
+:::

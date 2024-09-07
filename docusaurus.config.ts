@@ -92,7 +92,8 @@ const config: Config = {
         },
         prism: {
             theme: prismThemes.github,
-            darkTheme: prismThemes.dracula,
+            darkTheme: prismThemes.nightOwl,
+            additionalLanguages: ['java', 'scala', 'csharp', 'haskell'], // Aquí agregas los lenguajes que quieres habilitar
         },
     } satisfies Preset.ThemeConfig,
     stylesheets: [

@@ -1,0 +1,76 @@
+---
+title: Constructores
+---
+
+import ReadingTime from '../../src/components/ReadingTime';
+
+<ReadingTime />
+
+## Constructores en Kotlin
+
+Un **constructor** en Kotlin es un bloque especial de código que se ejecuta durante la creación de una instancia de una clase. Su principal objetivo es inicializar el objeto recién creado con los valores necesarios o realizar configuraciones iniciales que el objeto requiere para funcionar correctamente.
+
+En Kotlin, se pueden utilizar dos tipos de constructores: el **primario** y el **secundario**.
+
+### Constructor Primario
+
+El **constructor primario** es una forma concisa de inicializar una clase, integrándose directamente en la declaración de la misma. Este tipo de constructor es útil cuando las propiedades de la clase se inicializan principalmente con los valores proporcionados como parámetros.
+
+```kotlin
+class Player(val name: String, var lifePoints: Int)
+```
+
+En este ejemplo, la clase `Player` tiene un constructor primario que toma dos parámetros: `name` y `lifePoints`. Estos parámetros se utilizan directamente para inicializar las propiedades del objeto. Es importante notar que, en Kotlin, la visibilidad predeterminada es `public`, por lo que no es necesario declararla explícitamente a menos que quieras cambiarla.
+
+#### Bloques `init`
+
+Los bloques `init` permiten realizar inicializaciones adicionales o validaciones que no se pueden realizar en el constructor primario de manera directa. El bloque `init` se ejecuta inmediatamente después de que se crea la instancia y se han asignado los valores de los parámetros a las propiedades.
+
+```kotlin
+class Player(val name: String, var lifePoints: Int) {
+    init {
+        require(lifePoints >= 0) { "Los puntos de vida no pueden ser negativos." }
+    }
+}
+```
+
+En este caso, el bloque `init` asegura que `lifePoints` no sea un valor negativo cuando se crea una instancia de la clase `Player`. Si se intenta asignar un valor negativo, se lanzará una excepción con un mensaje explicativo.
+
+### Constructores Secundarios
+
+Kotlin permite que una clase tenga múltiples **constructores secundarios** para ofrecer formas alternativas de inicialización. Estos se declaran con la palabra clave `constructor`.
+
+```kotlin
+class Player(val name: String, var lifePoints: Int) {
+    init {
+        require(lifePoints >= 0) { "Los puntos de vida no pueden ser negativos." }
+    }
+
+    constructor() : this("Unknown", 8000) {
+        println("New player $name has $lifePoints life points.")
+    }
+}
+```
+
+En este ejemplo, se define un constructor secundario que permite crear un objeto `Player` sin pasar parámetros. Este constructor inicializa los valores predeterminados de `name` como "Unknown" y de `lifePoints` como 8000, además de imprimir un mensaje con los valores asignados.
+
+Un constructor secundario siempre debe llamar a otro constructor de la clase (generalmente el primario) para asegurarse de que todas las propiedades sean inicializadas.
+
+### Parámetros por Defecto
+
+En muchos casos, los constructores secundarios pueden ser innecesarios si se utilizan **parámetros por defecto** en el constructor primario. Esto simplifica el código y lo hace más limpio y mantenible.
+
+```kotlin
+class Player(
+    val name: String = "Unknown",
+    var lifePoints: Int = 8000
+) {
+    init {
+        require(lifePoints >= 0) { "Los puntos de vida no pueden ser negativos." }
+    }
+}
+```
+
+Aquí, se establece un valor por defecto para `name` y `lifePoints` en el constructor primario, eliminando la necesidad de constructores secundarios. De esta forma, si se llama al constructor sin parámetros, el objeto `Player` se inicializa con los valores por defecto.
+
+Este enfoque no solo reduce la cantidad de código, sino que también mejora la legibilidad y facilita el mantenimiento de la clase.

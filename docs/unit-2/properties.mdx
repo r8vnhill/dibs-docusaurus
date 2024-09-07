@@ -1,0 +1,151 @@
+---
+title: Propiedades
+---
+
+import ReadingTime from '../../src/components/ReadingTime';
+
+<ReadingTime />
+
+Las propiedades en Kotlin son esenciales para definir el estado de una clase y funcionan como variables miembro. Las propiedades el comportamiento de campos con los métodos getter y setter, ofreciendo una manera más concisa y expresiva de manejar datos.
+
+Kotlin genera automáticamente métodos `get` para propiedades inmutables (declaradas con `val`), y tanto `get` como `set` para propiedades mutables (declaradas con `var`). Sin embargo, también es posible personalizar el comportamiento de estos métodos.
+
+## Ejemplo de Propiedad con Getter y Setter Personalizados
+
+```kotlin
+class GettersAndSetters {
+    var name: String = "John"
+        get() { // Getter personalizado
+            return field
+        }
+        set(value) { // Setter personalizado
+            field = value
+        }
+}
+```
+
+- `field` es una palabra clave especial que representa el valor almacenado en la propiedad. Se usa en los getters y setters personalizados para acceder o modificar el valor interno.
+
+## Propiedad con Getter Definido como Expresión
+
+Kotlin permite simplificar el getter utilizando una expresión en lugar de un bloque de código completo:
+
+```kotlin
+class GettersAndSetters {
+    var name: String = "John"
+        get() = field // Getter como expresión
+        set(value) {
+            field = value
+        }
+}
+```
+
+Esta sintaxis es útil cuando el getter es directo y no requiere lógica adicional.
+
+## Propiedad con Getters y Setters por Defecto
+
+Si no necesitas personalizar los métodos `get` y `set`, Kotlin generará estos métodos por defecto:
+
+```kotlin
+class GettersAndSetters {
+    var name: String = "John"
+}
+```
+
+En este caso, `name` tiene un getter y un setter generados automáticamente, lo que simplifica el código.
+
+## Propiedad que Calcula su Valor
+
+Puedes definir una propiedad cuyo valor se calcule cada vez que se accede a ella. Esto es útil cuando el valor depende de alguna lógica o datos externos:
+
+```kotlin
+class GettersAndSetters {
+    val now: String
+        get() = Clock.System.now().toString()
+}
+```
+
+Esta propiedad no almacena ningún valor, sino que genera uno nuevo cada vez que se accede a `now`.
+
+## Propiedad con Setter Privado
+
+A veces, es necesario limitar el acceso a la modificación de una propiedad. En Kotlin, puedes hacerlo al declarar un setter privado:
+
+```kotlin
+class GettersAndSetters(age: Int) {
+    var age: Int = age
+        private set // Setter privado
+}
+```
+
+Esto permite que otras clases puedan leer el valor de `age`, pero solo la clase `GettersAndSetters` puede modificarlo.
+
+## Propiedad con Backing Field
+
+Otra manera de controlar el acceso a una propiedad es usando un **backing field**. Esto es útil cuando quieres que el valor interno sea accesible solo a través de un getter:
+
+```kotlin
+class GettersAndSetters(private var _age: Int) {
+    val age: Int
+        get() = _age
+}
+```
+
+En este ejemplo, `_age` es una variable privada que solo puede ser accedida de manera controlada a través del getter `age`.
+
+### Interfaces con Getters y Setters Personalizados
+
+En Kotlin, también es posible definir propiedades en interfaces. Puedes agregar lógica adicional en los getters y setters de estas propiedades para personalizar su comportamiento.
+
+Aquí tienes un ejemplo:
+
+```kotlin
+interface InterfaceWithGettersAndSetters {
+    val name: String
+        get() {
+            println("Getting name")
+            return "InterfaceWithGettersAndSetters"
+        }
+    var age: Int
+        get() {
+            println("Getting age")
+            return 0
+        }
+        set(value) {
+            println("Setting age")
+        }
+}
+```
+
+En este código:
+- La propiedad `name` tiene un getter que imprime un mensaje antes de devolver un valor.
+- La propiedad `age` incluye tanto un getter como un setter que imprimen mensajes cada vez que se acceden o modifican.
+
+## Implementación en una Clase
+
+Una clase puede implementar esta interfaz y añadir su propia lógica para las propiedades:
+
+```kotlin
+class ClassWithGettersAndSetters : InterfaceWithGettersAndSetters {
+    override val name: String
+        get() {
+            super.name // Llama al getter de la interfaz
+            return "ClassWithGettersAndSetters"
+        }
+    override var age: Int = 0
+        get() {
+            super.age // Llama al getter de la interfaz
+            return field
+        }
+        set(value) {
+            super.age = value // Llama al setter de la interfaz
+            field = value
+        }
+}
+```
+
+En este ejemplo:
+- El getter de `name` llama al getter de la interfaz antes de devolver un valor personalizado.
+- El getter y el setter de `age` también llaman a los métodos de la interfaz y luego acceden o modifican el valor de `field`.
+
+Esto permite combinar la lógica de la interfaz con la lógica específica de la clase, añadiendo flexibilidad y control adicional sobre las propiedades.

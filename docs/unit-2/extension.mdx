@@ -1,0 +1,110 @@
+---
+title: Funciones de Extensión
+---
+
+import ReadingTime from '../../src/components/ReadingTime';
+
+<ReadingTime />
+
+Las funciones de extensión en Kotlin son una herramienta poderosa que te permite añadir nuevas funcionalidades a una clase existente sin modificar su código fuente ni usar herencia. Estas funciones no alteran la clase original, sino que agregan comportamientos adicionales que se resuelven de manera estática. Es importante notar que, si una clase ya tiene un método con la misma firma que la función de extensión, el método original siempre tendrá prioridad.
+
+## Ejemplo de una Función de Extensión
+
+```kotlin
+fun String.replaceSpaces(replacement: String): String {
+    return this.replace(" ", replacement)
+}
+```
+
+En este ejemplo, estamos extendiendo la clase `String` con una nueva función `replaceSpaces`. La palabra clave `this` hace referencia a la instancia de `String` en la que se llama la función. Esto te permite trabajar con la instancia de manera similar a como lo harías en un método de miembro regular.
+
+## Uso de la Función de Extensión
+
+Una vez definida la función de extensión, puedes utilizarla como si fuera parte de la clase original.
+
+```kotlin
+fun main() {
+    val text = "Hello World"
+    println(text.replaceSpaces("_"))
+}
+```
+
+Aquí, la función `replaceSpaces` reemplaza los espacios en blanco en la cadena `"Hello World"` por guiones bajos (`_`).
+
+# Limitaciones de las Funciones de Extensión
+
+Las funciones de extensión **no** pueden acceder a los miembros privados o protegidos de la clase a la que están extendiendo. Esto garantiza que se respete el encapsulamiento y la seguridad de los datos. Las funciones de extensión solo tienen acceso a los miembros públicos de la clase.
+
+# Operadores de Extensión
+
+Kotlin también te permite sobrecargar operadores utilizando funciones de extensión. Esto es útil cuando deseas definir comportamientos personalizados para operadores en tus clases.
+
+## Definición de un Operador de Extensión
+
+```kotlin
+operator fun String.times(n: Int): String = this.repeat(n)
+```
+
+Este ejemplo extiende la clase `String` con el operador de multiplicación (`*`), utilizando la función `repeat` para repetir una cadena `n` veces.
+
+## Uso del Operador de Extensión
+
+Una vez definido, puedes usar el operador sobrecargado de la misma manera que cualquier operador nativo.
+
+```kotlin
+fun main() {
+    val text = "Muda"
+    println(text * 3)  // Output: MudaMudaMuda
+}
+```
+
+Aquí, el operador `*` repite la cadena `"Muda"` tres veces.
+
+# Propiedades de Extensión
+
+Además de funciones, Kotlin permite definir **propiedades de extensión**, que te permiten agregar propiedades adicionales a clases sin modificar su implementación original. Estas propiedades de extensión funcionan como getters y setters, pero no almacenan estado.
+
+## Definición de Propiedades de Extensión
+
+```kotlin
+val String.wordCount: Int
+    get() = this.split("""\s+""".toRegex()).size
+```
+
+En este ejemplo, se define una propiedad de extensión `wordCount` para la clase `String`, que cuenta el número de palabras en una cadena dividiéndola en fragmentos según los espacios en blanco.
+
+## Propiedades de Extensión con Getter y Setter
+
+Puedes crear propiedades de extensión tanto con getters como con setters, permitiendo la lectura y modificación del valor de la propiedad.
+
+```kotlin
+var MutableList<String>.firstElement: String
+    get() = this[0]
+    set(value) {
+        this[0] = value
+    }
+```
+
+En este caso, estamos añadiendo una propiedad `firstElement` a la clase `MutableList<String>`, que permite acceder y modificar el primer elemento de la lista.
+
+## Uso de Propiedades de Extensión
+
+Una vez definidas, las propiedades de extensión se pueden utilizar igual que cualquier otra propiedad miembro.
+
+```kotlin
+fun main() {
+    val text = "Hello World"
+    println(text.wordCount)  // Output: 2
+
+    val list = mutableListOf("Apple", "Banana", "Cherry")
+    println(list.firstElement)  // Output: Apple
+    list.firstElement = "Apricot"
+    println(list.firstElement)  // Output: Apricot
+}
+```
+
+En este ejemplo, la propiedad `wordCount` cuenta las palabras en una cadena, y la propiedad `firstElement` te permite acceder y modificar el primer elemento de una lista mutable.
+
+# Consideraciones
+
+Cuando implementas funciones y propiedades de extensión, es esencial garantizar que el comportamiento sea intuitivo y consistente con las expectativas del usuario. Asegúrate de que el uso de operadores y funciones de extensión siga los principios de diseño que faciliten la comprensión del código y respeten el comportamiento esperado para las clases existentes.
