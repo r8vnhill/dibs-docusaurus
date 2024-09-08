@@ -16,14 +16,163 @@ La aplicación que crearemos se llama **Echo App**. Su función es simple: recib
 en la consola junto a la hora actual. Aunque la funcionalidad es básica, nos permitirá explorar cómo configurar un
 proyecto Gradle y ejecutar una aplicación Kotlin.
 
-### Dependencias
+### Dependencias en detalle
 
-Para comenzar, necesitamos expandir las dependencias de nuestro proyecto para añadir `kotlinx-datetime`, una biblioteca
-que nos permitirá trabajar con fechas y horas en Kotlin. Para ello, comienza por actualizar el archivo
-`libs.versions.toml` en la carpeta `gradle` con la siguiente dependencia:
+Para expandir las funcionalidades de nuestro proyecto, vamos a añadir la biblioteca `kotlinx-datetime`, la cual nos
+permitirá trabajar con fechas y horas en Kotlin de manera eficiente. El primer paso será actualizar el archivo
+`libs.versions.toml` ubicado en la carpeta `gradle` con la nueva dependencia:
 
 ```toml title="./gradle/libs.versions.toml"
 [versions]
+# ...
+kotlinx-datetime = "0.6.1"
 
-kotlinx-datetime = "0.2.1"
+[libraries]
+# ...
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 ```
+
+Ahora, para asegurarnos de que todo esté correctamente configurado y habilitar el autocompletado en el IDE, construye
+el proyecto ejecutando el siguiente comando en tu terminal:
+
+```bash
+./gradlew build
+```
+
+A continuación, actualiza el archivo `build.gradle.kts` en el módulo `app` para incluir la nueva dependencia en el
+bloque `dependencies`. Este bloque es donde definimos las bibliotecas que se utilizarán en el proyecto. Aquí tienes una
+descripción de los diferentes tipos de dependencias que se pueden declarar:
+
+- `implementation`: Dependencias que serán incluidas en la compilación y el empaquetado de la aplicación.
+- `testImplementation`: Dependencias utilizadas únicamente para las pruebas.
+- `runtimeOnly`: Dependencias necesarias solo en tiempo de ejecución, no durante la compilación.
+- `testRuntimeOnly`: Dependencias necesarias solo en tiempo de ejecución de las pruebas.
+- `compileOnly`: Dependencias utilizadas en tiempo de compilación, pero no incluidas en tiempo de ejecución.
+- `testCompileOnly`: Dependencias para la compilación de las pruebas, no necesarias en tiempo de ejecución.
+- `api`: Dependencias que se compilan y también se exponen a otros módulos.
+- `testApi`: Dependencias para pruebas que se exponen a otros módulos.
+
+La sintaxis básica para añadir una dependencia es la siguiente:
+
+```kotlin
+dependencies {
+    implementation("group:artifact:version")
+    implementation(group = "group", name = "artifact", version = "version")
+    implementation(libs.artifact)
+}
+```
+
+En nuestro caso, añadimos la dependencia de `kotlinx-datetime` a nuestro proyecto de la siguiente manera:
+
+```kotlin title="./app/build.gradle.kts"
+dependencies {
+    implementation(libs.kotlinx.datetime)
+}
+```
+
+### Creando la aplicación
+
+Una vez que las dependencias están configuradas, es momento de empezar a escribir el código de nuestra aplicación. El
+primer paso es crear un nuevo paquete utilizando el nombre del grupo del proyecto seguido de `.echo` (por ejemplo,
+`cl.ravenhill.echo`). Dentro de este paquete, crearemos un archivo llamado `EchoApp.kt` que contendrá la lógica
+principal de la aplicación.
+
+El siguiente código muestra cómo construir nuestra aplicación:
+
+```kotlin title="./app/src/main/kotlin/cl/ravenhill/echo/EchoApp.kt"
+package cl.ravenhill.echo
+
+import kotlinx.datetime.Clock
+
+fun echo(message: String) = "${Clock.System.now()} - $message"
+
+fun main(args: Array<String>) {
+    for (arg in args) {
+        println(echo(arg))
+    }
+}
+```
+
+En este ejemplo:
+- Usamos `kotlinx.datetime.Clock` para obtener la hora actual y así agregar una marca de tiempo a los mensajes que se
+    envían como argumento.
+- La función `echo()` toma un mensaje como parámetro y devuelve una cadena con el mensaje acompañado de la hora actual.
+- En la función `main()`, se iteran los argumentos de la aplicación (`args`), y para cada uno de ellos, se llama a la
+    función `echo()`.
+
+#### Configuración del plugin `application`
+
+Para que nuestra aplicación sea ejecutable con Gradle, necesitamos agregar el plugin `application` al archivo
+`build.gradle.kts` en el módulo `app`. Este plugin nos permitirá ejecutar la aplicación mediante el comando
+`./gradlew :app:run` y empaquetarla con `./gradlew :app:installDist`.
+
+Añade el siguiente bloque al archivo `build.gradle.kts`:
+
+```kotlin title="./app/build.gradle.kts"
+plugins {
+    application
+}
+
+application {
+    mainClass.set("cl.ravenhill.echo.EchoAppKt")
+}
+```
+
+En este bloque:
+- Se aplica el plugin `application`.
+- Definimos la clase principal que contiene la función `main()` de nuestra aplicación. En este caso, la clase generada
+    por el compilador de Kotlin es `cl.ravenhill.echo.EchoAppKt`. El compilador agrega `Kt` al nombre de la clase, ya
+    que es el nombre del archivo en el que está definida la función `main()`.
+
+#### Ejecutando la aplicación
+
+Para ejecutar la aplicación, usa el siguiente comando en la terminal:
+
+```bash
+./gradlew :app:run --args "Hola, mundo!"
+```
+
+El resultado debería ser similar al siguiente:
+
+```text
+> Task :app:run
+2024-09-08T18:35:20.469735500Z - Hola,
+2024-09-08T18:35:20.479782500Z - mundo!
+```
+
+En este punto, has creado una aplicación funcional que recibe argumentos y los imprime junto con una marca de tiempo.
+Esto demuestra cómo integrar una biblioteca externa (`kotlinx-datetime`) y cómo configurar el proyecto para que sea
+ejecutable con Gradle.
+
+### El problema con `gradle run`
+
+Aunque `gradle run` es una forma rápida y conveniente de ejecutar una aplicación Kotlin durante el desarrollo, presenta algunas limitaciones importantes:
+
+- **No permite pasar argumentos directamente desde la línea de comandos**: Para pasar argumentos, debemos usar `--args`, lo cual puede ser menos intuitivo.
+- **No soporta input interactivo**: No se pueden recibir entradas directamente desde la consola mientras la aplicación está en ejecución.
+- **Requiere que Gradle esté instalado**: Cualquier persona que desee ejecutar la aplicación deberá tener Gradle instalado, lo cual no es ideal para distribución a usuarixs finales.
+
+Por estas razones, `gradle run` es más útil para el desarrollo, pero no es la mejor opción cuando queremos distribuir nuestra aplicación a usuarixs finales. Para crear un archivo ejecutable independiente de Gradle, podemos utilizar el comando `gradle installDist`.
+
+```bash
+./gradlew :app:installDist
+```
+
+Este comando genera un directorio `build/install/app`, que contiene un script de inicio que permite ejecutar la aplicación sin necesidad de Gradle. Para ejecutar la aplicación empaquetada, solo debes ejecutar el siguiente comando:
+
+```bash
+./app/build/install/app/bin/app "Hola," "mundo!"
+```
+
+Esto producirá el mismo resultado que ejecutar `gradle run`, pero con la ventaja de que no depende de Gradle y puede distribuirse de manera más sencilla.
+
+### ¡Felicidades! 🎉
+
+Has creado tu primera aplicación ejecutable en Kotlin, lista para distribuirse sin la necesidad de Gradle. Este es un paso importante para asegurar que tu aplicación sea más accesible para quienes la usen, ya que podrán ejecutarla de manera independiente.
+
+## Lo que aprendimos
+
+- Cómo agregar dependencias a un proyecto Gradle.
+- Cómo configurar un proyecto Gradle para ejecutar una aplicación Kotlin.
+- Cómo ejecutar una aplicación Kotlin utilizando `gradle run`.
+- Cómo empaquetar una aplicación Kotlin en un archivo ejecutable para su distribución, usando `gradle installDist`.
