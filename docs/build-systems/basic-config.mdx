@@ -6,12 +6,12 @@ import ReadingTime from '../../src/components/ReadingTime';
 
 <ReadingTime/>
 
-### `settings.gradle.kts`
+## `settings.gradle.kts`
 
 El archivo `settings.gradle.kts` es esencial para configurar y gestionar los ajustes globales de un proyecto **Gradle**,
 permitiendo definir aspectos como el nombre del proyecto y su estructura de módulos. Este archivo se evalúa al comienzo de la ejecución de Gradle, estableciendo el entorno para el resto del proceso de construcción.
 
-#### Propósito Principal
+### Propósito Principal
 
 1. **Definir el nombre del proyecto**: Esto es especialmente útil cuando el nombre de la carpeta del proyecto no coincide con el nombre deseado del proyecto en Gradle.
 2. **Configurar proyectos multi-módulo**: Para proyectos más complejos, puedes declarar varios módulos o subproyectos en este archivo, permitiendo que Gradle gestione todos los componentes de manera centralizada.
@@ -22,7 +22,7 @@ En el caso de nuestro proyecto comenzaríamos con un archivo `settings.gradle.kt
 rootProject.name = "gradle-basics"
 ```
 
-#### Proyectos Multi-Módulo
+### Proyectos Multi-Módulo
 
 En proyectos grandes, gestionar todo en un único módulo puede volverse ineficiente y difícil de mantener. Esto es especialmente relevante cuando trabajamos en **bibliotecas de software**, donde lxs usuarixs podrían necesitar solo una parte específica de la funcionalidad ofrecida por nuestra biblioteca.
 
@@ -30,7 +30,7 @@ Para resolver este problema, la mayoría de los sistemas de construcción (build
 
 Aunque en este curso las tareas serán lo suficientemente sencillas como para no necesitar múltiples módulos, utilizaremos una estructura multi-módulo para **practicar** y familiarizarnos con este patrón común en la creación de bibliotecas.
 
-##### Definir un Proyecto Multi-Módulo
+#### Definir un Proyecto Multi-Módulo
 
 A continuación, te mostramos cómo configurar un proyecto Gradle multi-módulo en el archivo `settings.gradle.kts`. Este archivo define el nombre del proyecto raíz y los módulos que lo componen:
 
@@ -47,14 +47,14 @@ En este ejemplo, hemos definido dos módulos:
 - **`app`**: Actúa como el módulo de la aplicación principal.
 - **`lib`**: Es el módulo donde colocaremos la funcionalidad que queremos reutilizar, como nuestras bibliotecas de software.
 
-#### ¿Por qué usar Proyectos Multi-Módulo?
+### ¿Por qué usar Proyectos Multi-Módulo?
 
 1. **Modularidad**: Cada módulo puede contener una parte específica de la funcionalidad, lo que facilita el desarrollo independiente de cada uno.
 2. **Reutilización**: Los módulos se pueden compartir entre diferentes proyectos. Por ejemplo, puedes reutilizar el módulo `lib` en otros proyectos sin necesidad de copiar el código.
 3. **Mantenimiento**: Al dividir el proyecto en módulos, es más fácil detectar y solucionar problemas, ya que el código está mejor organizado.
 4. **Optimización**: Gradle solo recompilará los módulos que hayan sido modificados, lo que reduce el tiempo de compilación en proyectos grandes.
 
-#### Aplicación en el Curso
+### Aplicación en el Curso
 
 En este curso, aunque los ejemplos serán sencillos, nos enfocaremos principalmente en crear módulos como **`lib`**, ya que el objetivo principal es desarrollar **bibliotecas de software**. Aun así, la estructura multi-módulo te permitirá practicar cómo organizar un proyecto real en el que:
 - La biblioteca (módulo `lib`) encapsula las funcionalidades.
@@ -64,7 +64,7 @@ En este curso, aunque los ejemplos serán sencillos, nos enfocaremos principalme
 
 Las **dependencias** son componentes externos o bibliotecas que tu proyecto necesita para compilarse y ejecutarse correctamente. Estas dependencias pueden incluir desde bibliotecas de terceros hasta herramientas internas que extienden la funcionalidad de tu código. En lugar de manejar manualmente las dependencias y sus versiones, los sistemas de construcción modernos automatizan este proceso.
 
-#### Gestión de Dependencias en Sistemas de Construcción
+### Gestión de Dependencias en Sistemas de Construcción
 
 **Gradle**, como muchos otros sistemas de construcción, automatiza la descarga e integración de las dependencias, ya sea desde repositorios remotos como **Maven Central** o **JCenter**, o desde repositorios locales. Sin embargo, Gradle no es el único sistema que ofrece esta funcionalidad. Otros sistemas de construcción que también gestionan dependencias incluyen:
 Algunos ejemplos de sistemas de construcción que descargan y gestionan dependencias son: **Maven**, **npm**, **SBT**, **Cargo**.
@@ -85,7 +85,7 @@ El archivo `libs.versions.toml` se organiza en cuatro secciones principales:
 
 Este enfoque te ayuda a tener un control centralizado sobre las versiones, evitando la repetición de versiones en múltiples archivos y garantizando que todas las dependencias y componentes utilicen las mismas versiones.
 
-#### Ejemplo de archivo `libs.versions.toml`:
+### Ejemplo de archivo `libs.versions.toml`:
 
 ```toml title="gradle/libs.versions.toml"
 [versions]
@@ -102,266 +102,3 @@ En este ejemplo:
 - En la sección `[libraries]`, definimos la biblioteca `kotlin-gradle-plugin` y vinculamos su versión a la referencia `kotlin` especificada anteriormente en la sección `[versions]`.
 
 Al usar esta estructura, cualquier actualización futura de la versión de Kotlin solo requiere modificar el archivo `libs.versions.toml` en un único lugar, manteniendo la consistencia en todo el proyecto.
-
-### Convention Plugins
-
-En proyectos con múltiples módulos, es común y recomendable tener un módulo dedicado a proporcionar configuraciones compartidas que puedan ser reutilizadas por otros módulos. A este tipo de módulo se le conoce como **convention plugins** o también como el patrón **buildSrc**. Estos plugins permiten centralizar configuraciones comunes, facilitando la consistencia y simplificando el mantenimiento del proyecto.
-
-Más adelante exploraremos los plugins con mayor profundidad, pero aquí comenzamos con la configuración básica.
-
-### Configuración de un Convention Plugin
-
-Lo primero que debemos hacer es definir un módulo que siempre se cargue antes que los demás módulos del proyecto. Esto se configura en el archivo `settings.gradle.kts`, asegurando que el módulo de plugins esté disponible para todos los demás módulos.
-
-```kotlin title="settings.gradle.kts"
-/* ... */
-pluginManagement {
-    includeBuild("convention-plugins") // Incluye el módulo de configuración de plugins
-    repositories {
-        mavenCentral()        // Repositorio Maven Central
-        gradlePluginPortal()  // Portal de plugins de Gradle
-    }
-}
-```
-
-### ¿Qué es lo que estamos haciendo aquí?
-
-1. **pluginManagement**: Esta sección configura la gestión de los plugins en Gradle. Es el lugar donde se puede incluir configuraciones adicionales para gestionar cómo y desde dónde se descargan los plugins.
-
-2. **includeBuild("convention-plugins")**: Aquí estamos incluyendo el módulo llamado `convention-plugins`. Este módulo albergará las configuraciones comunes que serán aplicadas en los demás módulos. Siempre se cargará antes de los demás módulos para garantizar que todas las configuraciones estén disponibles desde el principio.
-
-3. **repositories**: Dentro de esta sección definimos los repositorios de donde se obtendrán los plugins. En este caso, estamos usando dos repositorios:
-- `mavenCentral()`: El repositorio central de Maven, donde se encuentran numerosas dependencias y plugins.
-- `gradlePluginPortal()`: El repositorio oficial de Gradle para la gestión de plugins.
-
-### Configuración de Repositorios
-
-En Gradle, los **repositorios** especifican de dónde obtener las dependencias necesarias para compilar y ejecutar el proyecto.
-
-```kotlin
-repositories {
-    mavenCentral()
-    google()
-    maven {
-        url = uri("https://your.company.com/maven")
-        credentials {
-            username = System.getenv("MAVEN_USERNAME") ?: "defaultUser"
-            password = System.getenv("MAVEN_PASSWORD") ?: "defaultPassword"
-        }
-    }
-    flatDir {
-        dirs("lib")
-    }
-}
-```
-
-### Dependencias
-
-Las **dependencias** son componentes externos que tu proyecto necesita para funcionar. Gradle las gestiona automáticamente y las descarga de repositorios configurados.
-
-```kotlin
-dependencies {
-    implementation(kotlin("reflect"))
-    testImplementation("group:name:version")
-    implementation(group = "group", name = "name", version = "version")
-}
-```
-
-### `settings.gradle`
-
-El archivo `settings.gradle.kts` se utiliza para configurar y gestionar los ajustes de configuración de un proyecto Gradle. Este archivo define la estructura de módulos del proyecto y puede incluir configuraciones adicionales para la gestión de plugins.
-
-```kotlin title="settings.gradle.kts"
-// El nombre del proyecto raíz
-rootProject.name = "echo-kt"
-
-// Incluye los subproyectos del proyecto raíz
-include(
-    ":echoLib",
-    ":echoApp",
-)
-```
-
-A continuación, un ejemplo más completo que incluye la configuración de la gestión de plugins:
-
-```kotlin title="settings.gradle.kts"
-rootProject.name = "echo-kt"
-
-pluginManagement { // Configuración de gestión de plugins
-    includeBuild("convention-plugins") // Incluye un archivo de configuración de plugins
-    repositories {  // Repositorios de plugins
-        mavenCentral()
-        gradlePluginPortal()
-    }
-}
-
-dependencyResolutionManagement {    // Gestión de resolución de dependencias
-    repositories {
-        maven { // Repositorio Maven
-            url = uri("https://maven.pkg.github.com/r8vnhill/strait-jakt")
-            credentials {
-                username = System.getenv("GITHUB_USER")
-                password = System.getenv("GITHUB_TOKEN")
-            }
-        }
-        mavenCentral()  // Repositorio Maven Central
-        mavenLocal()    // Repositorio local
-    }
-}
-
-plugins {   // Plugins del proyecto
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
-}
-
-include(    // Incluye subproyectos
-    ":echoLib",
-    ":echoApp"
-)
-```
-
-### Convention Plugins
-
-Los **convention plugins** son una forma de definir y compartir configuraciones y convenciones comunes en un proyecto Gradle. Estos plugins permiten estandarizar la configuración y estructura de los proyectos, facilitando la colaboración y la reutilización de código.
-Por ahora, solo necesitas entender que los **convention plugins** son una forma de estandarizar la configuración de proyectos Gradle.
-
-```kotlin title="convention-plugins/settings.gradle.kts"
-rootProject.name = "convention-plugins"
-
-pluginManagement {
-   repositories {
-      mavenCentral()
-      gradlePluginPortal()
-   }
-}
-
-dependencyResolutionManagement {
-   repositories {
-      mavenCentral()
-      gradlePluginPortal()
-   }
-   versionCatalogs {
-      create("libs") {
-         from(files("../gradle/libs.versions.toml"))    // Carga las versiones desde un archivo toml
-      }
-   }
-}
-```
-
-En este ejemplo, el archivo `settings.gradle.kts` define un **version catalog** llamado `libs` que carga las versiones de las dependencias desde un archivo `libs.versions.toml` ubicado en el directorio `gradle` del proyecto.
-
-```kotlin title="convention-plugins/build.gradle.kts"
-plugins {
-   `kotlin-dsl`
-}
-
-dependencies {
-   implementation(libs.kotlin.gradle.plugin)
-}
-```
-
-En el archivo `build.gradle.kts`, se utiliza el **version catalog** `libs` para obtener la versión del plugin de Kotlin. Esto permite centralizar y estandarizar la gestión de versiones en el proyecto.
-
-```kotlin title="convention-plugins/src/main/kotlin/jvm.conventions.gradle.kts"
-plugins {
-   kotlin("jvm")
-}
-```
-
-Aquí, el archivo `jvm.conventions.gradle.kts` define las convenciones para proyectos JVM, como la configuración del plugin de Kotlin para JVM y la configuración de las opciones de compilación.
-En este caso, el archivo sólo establece el plugin de Kotlin para proyectos JVM.
-
-### `build.gradle.kts`
-
-El archivo `build.gradle.kts` es el script principal de Gradle que define las tareas y configuraciones de construcción del proyecto. En este archivo se especifican las dependencias, plugins, tareas personalizadas y otros ajustes necesarios para compilar y ejecutar el proyecto.
-
-```kotlin title="build.gradle.kts"
-plugins {
-    id("jvm.conventions")
-    alias(libs.plugins.detekt)
-}
-
-// Configura el grupo y la versión para todos los proyectos
-allprojects {
-    group = "echo-kt"
-    version = libs.versions.build.systems
-}
-
-// Define el repositorio de Maven Central como fuente para las dependencias de los subproyectos
-subprojects {
-    repositories {
-        mavenCentral()
-    }
-}
-```
-
-```kotlin title="subproject1/build.gradle.kts"
-plugins {
-    id("jvm.conventions")
-}
-
-dependencies {
-    implementation(kotlin("reflect"))
-    implementation(libs.kotlinx.datetime)
-    testImplementation(libs.kotest.assertions.core)
-    testImplementation(libs.kotest.framework.datatest)
-    testImplementation(libs.kotest.framework.engine)
-    testImplementation(libs.kotest.property)
-    testImplementation(libs.kotest.runner.junit5)
-}
-
-tasks.test {
-    useJUnitPlatform()
-}
-
-kotlin {
-    jvmToolchain(17)
-}
-```
-
-## Construyendo el Proyecto
-
-```bash
-./gradlew :subproject1:build
-./gradlew build
-```
-
-## Comparaciones con Otros Lenguajes
-
-### En otros lenguajes, el concepto de sistemas de construcción y dependencias también es central:
-
-- **Maven (Java)**: Es uno de los sistemas de construcción más populares en el ecosistema Java. Utiliza un archivo `pom.xml` para definir dependencias y configuraciones del proyecto.
-
-```xml title="pom.xml"
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter</artifactId>
-    <version>2.3.0.RELEASE</version>
-</dependency>
-```
-
-- **NPM (JavaScript)**: En JavaScript, se usa NPM (Node Package Manager) para gestionar dependencias y scripts de construcción.
-
-```json title="package.json"
-{
-    "name": "my-app",
-    "version": "1.0.0",
-    "scripts": {
-        "build": "webpack",
-        "test": "jest"
-    },
-    "dependencies": {
-        "react": "^16.13.1",
-        "webpack": "^4.43.0"
-    }
-}
-```
-
-- **CMake (C++)**: Para proyectos en C++, CMake es una herramienta de construcción común que permite la generación de scripts de compilación.
-
-```cmake
-cmake_minimum_required(VERSION 3.10)
-project(MyProject VERSION 1.0)
-
-add_executable(MyExecutable main.cpp)
-target_link_libraries(MyExecutable PUBLIC MyLibrary)
-```

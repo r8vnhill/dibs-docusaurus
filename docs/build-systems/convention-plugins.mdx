@@ -1,0 +1,688 @@
+---
+title: Convention Plugins
+---
+
+
+import Definition from "../../src/components/Definition";
+import ReadingTime from "../../src/components/ReadingTime";
+
+<ReadingTime/>
+
+En proyectos con múltiples módulos, es común y recomendable tener un módulo dedicado a proporcionar configuraciones
+compartidas que puedan ser reutilizadas por otros módulos. A este tipo de módulo se le conoce como **convention
+plugins** o también como el patrón **buildSrc**. Estos plugins permiten centralizar configuraciones comunes,
+facilitando la consistencia y simplificando el mantenimiento del proyecto.
+
+Más adelante exploraremos los plugins con mayor profundidad, pero aquí comenzamos con la configuración básica.
+
+## Configuración de un Convention Plugin
+
+Lo primero que debemos hacer es definir un módulo que siempre se cargue antes que los demás módulos del proyecto. Esto
+se configura en el archivo `settings.gradle.kts`, asegurando que el módulo de plugins esté disponible para todos los
+demás módulos.
+
+```kotlin title="settings.gradle.kts"
+/* ... */
+pluginManagement {
+    includeBuild("convention-plugins") // Incluye el módulo de configuración de plugins
+    repositories {
+        mavenCentral()        // Repositorio Maven Central
+        gradlePluginPortal()  // Portal de plugins de Gradle
+    }
+}
+```
+
+### ¿Qué es lo que estamos haciendo aquí?
+
+1. **pluginManagement**: Esta sección configura la gestión de los plugins en Gradle. Es el lugar donde se puede incluir
+    configuraciones adicionales para gestionar cómo y desde dónde se descargan los plugins.
+
+2. **includeBuild("convention-plugins")**: Aquí estamos incluyendo el módulo llamado `convention-plugins`. Este módulo
+    albergará las configuraciones comunes que serán aplicadas en los demás módulos. Siempre se cargará antes de los
+    demás módulos para garantizar que todas las configuraciones estén disponibles desde el principio.
+
+3. **repositories**: Dentro de esta sección definimos los repositorios de donde se obtendrán los plugins. En este caso,
+    estamos usando dos repositorios:
+    - `mavenCentral()`: El repositorio central de Maven, donde se encuentran numerosas dependencias y plugins.
+    - `gradlePluginPortal()`: El repositorio oficial de Gradle para la gestión de plugins.
+
+## Configuración de Convention Plugins
+
+El siguiente paso es crear la estructura de directorios necesaria para los convention plugins. Estos plugins definirán
+configuraciones comunes que otros módulos del proyecto podrán utilizar. En este caso, omitiremos el directorio de
+pruebas, ya que no es necesario para este tipo de módulos.
+
+### Crear la Estructura de Directorios
+
+Primero, crea el directorio donde colocaremos el código del plugin de convenciones:
+
+```bash
+mkdir -p convention-plugins/src/main/kotlin
+```
+
+### Configuración del `settings.gradle.kts`
+
+Dentro de la carpeta principal `convention-plugins`, debemos crear el archivo `settings.gradle.kts`. Este archivo se
+encarga de configurar el nombre del proyecto, la gestión de plugins y la resolución de dependencias para todo el módulo
+de convention plugins.
+
+```kotlin title="convention-plugins/settings.gradle.kts"
+rootProject.name = "convention-plugins"
+
+// Gestión de plugins y definición de repositorios para su descarga
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+// Configuración para la resolución de dependencias
+@Suppress("UnstableApiUsage")
+dependencyResolutionManagement {
+    repositoriesMode = RepositoriesMode.PREFER_SETTINGS
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+
+    // Definición de un catálogo centralizado de versiones de dependencias
+    versionCatalogs {
+        create("libs") {
+            from(files("../gradle/libs.versions.toml"))
+        }
+    }
+}
+```
+
+### ¿Qué estamos haciendo aquí?
+
+1. **`rootProject.name = "convention-plugins"`**: Aquí definimos el nombre del proyecto principal como
+    `convention-plugins`. Esto es importante para identificar y organizar correctamente el módulo dentro del entorno
+    Gradle.
+
+2. **`pluginManagement`**: Esta sección configura los repositorios desde los cuales se descargarán los plugins que el
+    proyecto necesita. Se utilizan los repositorios más comunes:
+    - **`mavenCentral()`**: Uno de los repositorios más grandes para librerías y plugins Java y Kotlin.
+    - **`gradlePluginPortal()`**: Repositorio especializado en plugins para Gradle.
+
+3. **`dependencyResolutionManagement`**: Configuramos cómo se gestionará la resolución de dependencias en todo el
+    proyecto:
+    - **`repositoriesMode = RepositoriesMode.PREFER_SETTINGS`**: Esto asegura que las configuraciones de los
+        repositorios en `settings.gradle.kts` tengan prioridad sobre las configuraciones en archivos `build.gradle.kts`
+        de los subproyectos.
+    - **Repositorios de dependencias**: Similar a la sección de gestión de plugins, se configuran los repositorios
+        desde los cuales se descargarán las dependencias del proyecto, como `mavenCentral()` y `gradlePluginPortal()`.
+
+4. **`versionCatalogs`**: Utilizamos un catálogo de versiones centralizado que se define en el archivo
+    `libs.versions.toml`, ubicado fuera de la carpeta de `convention-plugins`. Este archivo externo permite gestionar
+    versiones de dependencias de manera centralizada y reutilizable, lo que facilita la actualización de versiones en
+    todos los módulos del proyecto de manera consistente.
+
+Aquí tienes una versión mejorada, con más detalles sobre los elementos clave y el propósito de la configuración:
+
+### Configuración del `settings.gradle.kts`
+
+Dentro de la carpeta principal `convention-plugins`, debemos crear el archivo `settings.gradle.kts`. Este archivo se encarga de configurar el nombre del proyecto, la gestión de plugins y la resolución de dependencias para todo el módulo de convention plugins.
+
+```kotlin title="convention-plugins/settings.gradle.kts"
+rootProject.name = "convention-plugins"
+
+// Gestión de plugins y definición de repositorios para su descarga
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+// Configuración para la resolución de dependencias
+@Suppress("UnstableApiUsage")
+dependencyResolutionManagement {
+    repositoriesMode = RepositoriesMode.PREFER_SETTINGS
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+
+    // Definición de un catálogo centralizado de versiones de dependencias
+    versionCatalogs {
+        create("libs") {
+            from(files("../gradle/libs.versions.toml"))
+        }
+    }
+}
+```
+
+### ¿Qué estamos haciendo aquí?
+
+1. **`pluginManagement`**: Esta sección configura los repositorios desde los cuales se descargarán los plugins que el
+    proyecto necesita. Se utilizan los repositorios más comunes:
+    - **`mavenCentral()`**: Uno de los repositorios más grandes para librerías y plugins Java y Kotlin.
+    - **`gradlePluginPortal()`**: Repositorio especializado en plugins para Gradle.
+2. **`dependencyResolutionManagement`**: Configuramos cómo se gestionará la resolución de dependencias en todo el
+    proyecto:
+    - **`repositoriesMode = RepositoriesMode.PREFER_SETTINGS`**: Esto asegura que las configuraciones de los
+        repositorios en `settings.gradle.kts` tengan prioridad sobre las configuraciones en archivos `build.gradle.kts`
+        de los subproyectos.
+    - **Repositorios de dependencias**: Similar a la sección de gestión de plugins, se configuran los repositorios
+        desde los cuales se descargarán las dependencias del proyecto, como `mavenCentral()` y `gradlePluginPortal()`.
+3. **`versionCatalogs`**: Utilizamos un catálogo de versiones centralizado que se define en el archivo
+    `libs.versions.toml`, ubicado fuera de la carpeta de `convention-plugins`. Este archivo externo permite gestionar
+    versiones de dependencias de manera centralizada y reutilizable, lo que facilita la actualización de versiones en
+    todos los módulos del proyecto de manera consistente.
+
+## Mi Primer Plugin
+
+<Definition title="Plugin">
+    Un **plugin** es un componente de software que extiende o modifica la funcionalidad de un sistema existente. En el
+    contexto de Gradle, un plugin es un conjunto de tareas, configuraciones y comportamientos específicos que se pueden
+    aplicar a un proyecto para automatizar su construcción y administración.
+</Definition>
+
+Existen varias formas de crear plugins en Gradle. Una de ellas es mediante la definición de **convenciones**, que son
+configuraciones comunes aplicadas a todos los subproyectos de un proyecto. En esta sección, crearemos un plugin que
+establece convenciones para proyectos basados en la JVM. Mantendremos este plugin simple para comenzar, y lo
+expandiremos gradualmente en las siguientes secciones.
+
+### Creando el Plugin
+
+Primero, vamos a crear el archivo para nuestro plugin. Dentro de la carpeta `convention-plugins/src/main/kotlin`, crea
+un archivo llamado `jvm.conventions.gradle.kts` con el siguiente contenido:
+
+```kotlin title="convention-plugins/src/main/kotlin/jvm.conventions.gradle.kts"
+plugins {
+    kotlin("jvm")
+}
+```
+
+Este archivo define las convenciones para proyectos basados en la JVM, específicamente aplicando el plugin de Kotlin
+para JVM. Por ahora, simplemente estamos configurando el plugin de Kotlin, lo que permite la compilación de código
+Kotlin para la JVM.
+
+#### ¿Por qué no especificamos la versión del plugin?
+
+Aunque es común ver el plugin configurado con una versión explícita, como se muestra a continuación:
+
+```kotlin
+plugins {
+    kotlin("jvm") version "2.0.20"
+}
+```
+
+En este caso, no es necesario especificar la versión directamente, ya que hemos centralizado la gestión de versiones
+utilizando el archivo `libs.versions.toml`. Esto asegura que todas las dependencias y plugins de Kotlin usen la misma
+versión definida en ese archivo, facilitando su actualización en todo el proyecto.
+
+### Usando el Plugin
+
+Una vez que hemos creado nuestro plugin, necesitamos aplicarlo en los subproyectos donde queremos que se apliquen las
+convenciones definidas. En este ejemplo, aplicaremos el plugin a los subproyectos `app` y `lib`.
+
+#### En el subproyecto `app`:
+
+```kotlin title="app/build.gradle.kts"
+plugins {
+    id("jvm.conventions")
+}
+```
+
+#### En el subproyecto `lib`:
+
+```kotlin title="lib/build.gradle.kts"
+plugins {
+    id("jvm.conventions")
+}
+```
+
+### ¿Qué estamos logrando con esto?
+
+Al aplicar el plugin `jvm.conventions` en los subproyectos `app` y `lib`, estamos asegurando que ambos proyectos sigan
+las mismas configuraciones y convenciones definidas para proyectos JVM. Esto incluye la aplicación automática del plugin
+de Kotlin para JVM en cada subproyecto. A medida que expandamos el plugin, podremos agregar más configuraciones y reglas
+que se aplicarán de manera consistente en todos los subproyectos.
+
+## Integrando Todo
+
+Ahora que hemos creado y aplicado el plugin, lo que nos queda es construir el proyecto y asegurarnos de que las
+convenciones definidas en el plugin se apliquen correctamente a todos los subproyectos.
+
+Para construir el proyecto completo, ejecuta el siguiente comando desde la raíz del proyecto:
+
+```bash
+./gradlew build
+```
+
+Este comando ejecutará todas las tareas necesarias, incluyendo la compilación del código y la generación de los
+artefactos (como archivos `.jar`) para cada uno de los subproyectos.
+
+### Estructura Final del Proyecto
+
+Después de ejecutar el comando de construcción, tu proyecto debería tener una estructura de directorios similar a la
+siguiente:
+
+```text
+gradle-basics
+├───.gradle                 // Directorio de archivos internos de Gradle
+├───app                     // Subproyecto 'app'
+│   ├───build               // Archivos generados por la compilación
+│   │   ├───libs            // Artefactos (JARs) generados
+│   │   └───tmp             // Archivos temporales utilizados durante la construcción
+│   │       └───jar         // Archivos temporales para la tarea de empaquetado en JAR
+│   └───src                 // Código fuente del subproyecto 'app'
+│       ├───main            // Código principal de la aplicación
+│       │   └───kotlin      // Código en Kotlin
+│       └───test            // Código de pruebas
+│           └───kotlin      // Pruebas en Kotlin
+├───convention-plugins      // Módulo de los plugins de convención
+│   ├───build               // Archivos generados para los plugins
+│   └───src                 // Código fuente de los plugins de convención
+│       └───main
+│           └───kotlin      // Código en Kotlin para los plugins
+├───gradle                  // Configuración del wrapper de Gradle
+│   └───wrapper             // Archivos del Gradle wrapper
+└───lib                     // Subproyecto 'lib'
+    ├───build               // Archivos generados por la compilación del subproyecto 'lib'
+    │   ├───libs            // Artefactos (JARs) generados
+    │   └───tmp             // Archivos temporales para la construcción
+    │       └───jar         // Archivos temporales para la tarea de empaquetado en JAR
+    └───src                 // Código fuente del subproyecto 'lib'
+        ├───main            // Código principal de la librería
+        │   └───kotlin      // Código en Kotlin
+        └───test            // Código de pruebas
+            └───kotlin      // Pruebas en Kotlin
+```
+
+### ¿Qué hemos logrado?
+
+Con este comando, hemos realizado las siguientes acciones:
+- **Compilación del código**: Se ha compilado el código de los subproyectos `app` y `lib`, aplicando las convenciones de
+    compilación definidas en nuestro plugin `jvm.conventions`.
+- **Generación de artefactos**: Para cada subproyecto, se han generado los archivos `.jar` en el directorio
+    `build/libs`.
+- **Aplicación de convenciones**: El plugin `jvm.conventions` ha asegurado que ambos subproyectos sigan las mismas
+    reglas y configuraciones para la compilación en la JVM, centralizando la gestión y facilitando el mantenimiento a
+    medida que el proyecto crezca.
+
+[//]: # (## Dependencias)
+
+[//]: # ()
+[//]: # (Las **dependencias** son componentes externos que tu proyecto necesita para funcionar. Gradle las gestiona)
+
+[//]: # (automáticamente y las descarga de repositorios configurados.)
+
+[//]: # ()
+[//]: # (```kotlin)
+
+[//]: # (dependencies {)
+
+[//]: # (    implementation&#40;kotlin&#40;"reflect"&#41;&#41;)
+
+[//]: # (    testImplementation&#40;"group:name:version"&#41;)
+
+[//]: # (    implementation&#40;group = "group", name = "name", version = "version"&#41;)
+
+[//]: # (})
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (## `settings.gradle`)
+
+[//]: # ()
+[//]: # (El archivo `settings.gradle.kts` se utiliza para configurar y gestionar los ajustes de configuración de un proyecto)
+
+[//]: # (Gradle. Este archivo define la estructura de módulos del proyecto y puede incluir configuraciones adicionales para la)
+
+[//]: # (gestión de plugins.)
+
+[//]: # ()
+[//]: # (```kotlin title="settings.gradle.kts")
+
+[//]: # (// El nombre del proyecto raíz)
+
+[//]: # (rootProject.name = "echo-kt")
+
+[//]: # ()
+[//]: # (// Incluye los subproyectos del proyecto raíz)
+
+[//]: # (include&#40;)
+
+[//]: # (    ":echoLib",)
+
+[//]: # (    ":echoApp",)
+
+[//]: # (&#41;)
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (A continuación, un ejemplo más completo que incluye la configuración de la gestión de plugins:)
+
+[//]: # ()
+[//]: # (```kotlin title="settings.gradle.kts")
+
+[//]: # (rootProject.name = "echo-kt")
+
+[//]: # ()
+[//]: # (pluginManagement { // Configuración de gestión de plugins)
+
+[//]: # (    includeBuild&#40;"convention-plugins"&#41; // Incluye un archivo de configuración de plugins)
+
+[//]: # (    repositories {  // Repositorios de plugins)
+
+[//]: # (        mavenCentral&#40;&#41;)
+
+[//]: # (        gradlePluginPortal&#40;&#41;)
+
+[//]: # (    })
+
+[//]: # (})
+
+[//]: # ()
+[//]: # (dependencyResolutionManagement {    // Gestión de resolución de dependencias)
+
+[//]: # (    repositories {)
+
+[//]: # (        maven { // Repositorio Maven)
+
+[//]: # (            url = uri&#40;"https://maven.pkg.github.com/r8vnhill/strait-jakt"&#41;)
+
+[//]: # (            credentials {)
+
+[//]: # (                username = System.getenv&#40;"GITHUB_USER"&#41;)
+
+[//]: # (                password = System.getenv&#40;"GITHUB_TOKEN"&#41;)
+
+[//]: # (            })
+
+[//]: # (        })
+
+[//]: # (        mavenCentral&#40;&#41;  // Repositorio Maven Central)
+
+[//]: # (        mavenLocal&#40;&#41;    // Repositorio local)
+
+[//]: # (    })
+
+[//]: # (})
+
+[//]: # ()
+[//]: # (plugins {   // Plugins del proyecto)
+
+[//]: # (    id&#40;"org.gradle.toolchains.foojay-resolver-convention"&#41; version "0.8.0")
+
+[//]: # (})
+
+[//]: # ()
+[//]: # (include&#40;    // Incluye subproyectos)
+
+[//]: # (    ":echoLib",)
+
+[//]: # (    ":echoApp")
+
+[//]: # (&#41;)
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (## Convention Plugins)
+
+[//]: # ()
+[//]: # (Los **convention plugins** son una forma de definir y compartir configuraciones y convenciones comunes en un proyecto Gradle. Estos plugins permiten estandarizar la configuración y estructura de los proyectos, facilitando la colaboración y la reutilización de código.)
+
+[//]: # (Por ahora, solo necesitas entender que los **convention plugins** son una forma de estandarizar la configuración de proyectos Gradle.)
+
+[//]: # ()
+[//]: # (```kotlin title="convention-plugins/settings.gradle.kts")
+
+[//]: # (rootProject.name = "convention-plugins")
+
+[//]: # ()
+[//]: # (pluginManagement {)
+
+[//]: # (   repositories {)
+
+[//]: # (      mavenCentral&#40;&#41;)
+
+[//]: # (      gradlePluginPortal&#40;&#41;)
+
+[//]: # (   })
+
+[//]: # (})
+
+[//]: # ()
+[//]: # (dependencyResolutionManagement {)
+
+[//]: # (   repositories {)
+
+[//]: # (      mavenCentral&#40;&#41;)
+
+[//]: # (      gradlePluginPortal&#40;&#41;)
+
+[//]: # (   })
+
+[//]: # (   versionCatalogs {)
+
+[//]: # (      create&#40;"libs"&#41; {)
+
+[//]: # (         from&#40;files&#40;"../gradle/libs.versions.toml"&#41;&#41;    // Carga las versiones desde un archivo toml)
+
+[//]: # (      })
+
+[//]: # (   })
+
+[//]: # (})
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (En este ejemplo, el archivo `settings.gradle.kts` define un **version catalog** llamado `libs` que carga las versiones de las dependencias desde un archivo `libs.versions.toml` ubicado en el directorio `gradle` del proyecto.)
+
+[//]: # ()
+[//]: # (```kotlin title="convention-plugins/build.gradle.kts")
+
+[//]: # (plugins {)
+
+[//]: # (   `kotlin-dsl`)
+
+[//]: # (})
+
+[//]: # ()
+[//]: # (dependencies {)
+
+[//]: # (   implementation&#40;libs.kotlin.gradle.plugin&#41;)
+
+[//]: # (})
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (En el archivo `build.gradle.kts`, se utiliza el **version catalog** `libs` para obtener la versión del plugin de Kotlin. Esto permite centralizar y estandarizar la gestión de versiones en el proyecto.)
+
+[//]: # ()
+[//]: # (```kotlin title="convention-plugins/src/main/kotlin/jvm.conventions.gradle.kts")
+
+[//]: # (plugins {)
+
+[//]: # (   kotlin&#40;"jvm"&#41;)
+
+[//]: # (})
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (Aquí, el archivo `jvm.conventions.gradle.kts` define las convenciones para proyectos JVM, como la configuración del plugin de Kotlin para JVM y la configuración de las opciones de compilación.)
+
+[//]: # (En este caso, el archivo sólo establece el plugin de Kotlin para proyectos JVM.)
+
+[//]: # ()
+[//]: # (## `build.gradle.kts`)
+
+[//]: # ()
+[//]: # (El archivo `build.gradle.kts` es el script principal de Gradle que define las tareas y configuraciones de construcción del proyecto. En este archivo se especifican las dependencias, plugins, tareas personalizadas y otros ajustes necesarios para compilar y ejecutar el proyecto.)
+
+[//]: # ()
+[//]: # (```kotlin title="build.gradle.kts")
+
+[//]: # (plugins {)
+
+[//]: # (    id&#40;"jvm.conventions"&#41;)
+
+[//]: # (    alias&#40;libs.plugins.detekt&#41;)
+
+[//]: # (})
+
+[//]: # ()
+[//]: # (// Configura el grupo y la versión para todos los proyectos)
+
+[//]: # (allprojects {)
+
+[//]: # (    group = "echo-kt")
+
+[//]: # (    version = libs.versions.build.systems)
+
+[//]: # (})
+
+[//]: # ()
+[//]: # (// Define el repositorio de Maven Central como fuente para las dependencias de los subproyectos)
+
+[//]: # (subprojects {)
+
+[//]: # (    repositories {)
+
+[//]: # (        mavenCentral&#40;&#41;)
+
+[//]: # (    })
+
+[//]: # (})
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (```kotlin title="subproject1/build.gradle.kts")
+
+[//]: # (plugins {)
+
+[//]: # (    id&#40;"jvm.conventions"&#41;)
+
+[//]: # (})
+
+[//]: # ()
+[//]: # (dependencies {)
+
+[//]: # (    implementation&#40;kotlin&#40;"reflect"&#41;&#41;)
+
+[//]: # (    implementation&#40;libs.kotlinx.datetime&#41;)
+
+[//]: # (    testImplementation&#40;libs.kotest.assertions.core&#41;)
+
+[//]: # (    testImplementation&#40;libs.kotest.framework.datatest&#41;)
+
+[//]: # (    testImplementation&#40;libs.kotest.framework.engine&#41;)
+
+[//]: # (    testImplementation&#40;libs.kotest.property&#41;)
+
+[//]: # (    testImplementation&#40;libs.kotest.runner.junit5&#41;)
+
+[//]: # (})
+
+[//]: # ()
+[//]: # (tasks.test {)
+
+[//]: # (    useJUnitPlatform&#40;&#41;)
+
+[//]: # (})
+
+[//]: # ()
+[//]: # (kotlin {)
+
+[//]: # (    jvmToolchain&#40;17&#41;)
+
+[//]: # (})
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (## Construyendo el Proyecto)
+
+[//]: # ()
+[//]: # (```bash)
+
+[//]: # (./gradlew :subproject1:build)
+
+[//]: # (./gradlew build)
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (## Comparaciones con Otros Lenguajes)
+
+[//]: # ()
+[//]: # (## En otros lenguajes, el concepto de sistemas de construcción y dependencias también es central:)
+
+[//]: # ()
+[//]: # (- **Maven &#40;Java&#41;**: Es uno de los sistemas de construcción más populares en el ecosistema Java. Utiliza un archivo `pom.xml` para definir dependencias y configuraciones del proyecto.)
+
+[//]: # ()
+[//]: # (```xml title="pom.xml")
+
+[//]: # (<dependency>)
+
+[//]: # (    <groupId>org.springframework.boot</groupId>)
+
+[//]: # (    <artifactId>spring-boot-starter</artifactId>)
+
+[//]: # (    <version>2.3.0.RELEASE</version>)
+
+[//]: # (</dependency>)
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (- **NPM &#40;JavaScript&#41;**: En JavaScript, se usa NPM &#40;Node Package Manager&#41; para gestionar dependencias y scripts de construcción.)
+
+[//]: # ()
+[//]: # (```json title="package.json")
+
+[//]: # ({)
+
+[//]: # (    "name": "my-app",)
+
+[//]: # (    "version": "1.0.0",)
+
+[//]: # (    "scripts": {)
+
+[//]: # (        "build": "webpack",)
+
+[//]: # (        "test": "jest")
+
+[//]: # (    },)
+
+[//]: # (    "dependencies": {)
+
+[//]: # (        "react": "^16.13.1",)
+
+[//]: # (        "webpack": "^4.43.0")
+
+[//]: # (    })
+
+[//]: # (})
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (- **CMake &#40;C++&#41;**: Para proyectos en C++, CMake es una herramienta de construcción común que permite la generación de scripts de compilación.)
+
+[//]: # ()
+[//]: # (```cmake)
+
+[//]: # (cmake_minimum_required&#40;VERSION 3.10&#41;)
+
+[//]: # (project&#40;MyProject VERSION 1.0&#41;)
+
+[//]: # ()
+[//]: # (add_executable&#40;MyExecutable main.cpp&#41;)
+
+[//]: # (target_link_libraries&#40;MyExecutable PUBLIC MyLibrary&#41;)
+
+[//]: # (```)
