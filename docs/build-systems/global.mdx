@@ -1,0 +1,97 @@
+---
+title: Configuraciones Globales
+---
+
+import Definition from "../../src/components/Definition";
+import ReadingTime from "../../src/components/ReadingTime";
+
+<ReadingTime/>
+
+## Configuraciones Globales en Gradle
+
+En esta sección, aprenderemos a definir configuraciones que se aplican a todos los submódulos de un proyecto Gradle.
+Estas configuraciones globales se gestionan a través del archivo `build.gradle.kts` ubicado en la raíz del proyecto.
+Por ahora, nos enfocaremos en definir el **grupo** y la **versión** del proyecto, dos elementos fundamentales en
+cualquier configuración de Gradle.
+
+<Definition title="Grupo">
+    El **grupo** en Gradle es una cadena de texto que identifica de manera única a un proyecto. La convención más común
+    es usar un formato de dominio invertido (por ejemplo, `cl.ravenhill`) para evitar posibles conflictos con otros
+    proyectos. Este grupo se utiliza junto con el nombre del proyecto y su versión para generar el identificador único
+    del artefacto resultante.
+</Definition>
+
+:::info
+Si no posees un dominio web (como la mayoría de la gente), una buena alternativa es usar tu nombre de usuario de
+GitHub, como `com.github.username`.
+:::
+
+## `gradle.properties`
+
+Para mantener las configuraciones globales de manera organizada y centralizada, crearemos un archivo llamado
+`gradle.properties` en la raíz del proyecto. Este archivo nos permite definir propiedades que pueden reutilizarse en
+todos los archivos de configuración, tanto para parámetros que se pasan a Gradle como para variables globales o de
+entorno.
+
+```properties title="gradle.properties"
+# Parámetros de la JVM
+org.gradle.jvmargs=-Xmx4g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
+systemProp.org.gradle.jvmargs=-Xmx4g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
+
+# Configuraciones de rendimiento
+org.gradle.caching=true
+org.gradle.parallel=true
+org.gradle.daemon=true
+org.gradle.configuration-cache=true
+org.gradle.configuration-cache-problems=warn
+org.gradle.configureondemand=false
+
+# Grupo del proyecto (ajusta según tu dominio o nombre de usuario)
+echo.group = cl.ravenhill
+```
+
+## ¿Qué acabamos de hacer?
+
+- **`org.gradle.jvmargs`**: Configura los argumentos de la JVM, asignando 4 GB de memoria máxima para Gradle y activando
+    el volcado de heap en caso de un error de memoria.
+- **`org.gradle.caching`, `org.gradle.parallel`, `org.gradle.daemon`**: Estas propiedades habilitan diversas
+    optimizaciones de Gradle, como la caché de construcción, la ejecución de tareas en paralelo y el uso del daemon de
+    Gradle para mejorar el rendimiento.
+- **`echo.group`**: Definimos una propiedad personalizada para el grupo del proyecto. Este valor se reutilizará en el
+    archivo `build.gradle.kts` para establecer el identificador único del proyecto.
+
+## `build.gradle.kts`
+
+En el archivo `build.gradle.kts`, utilizamos las propiedades definidas en `gradle.properties` para configurar el grupo
+y la versión del proyecto. También aplicamos el plugin que gestionará las convenciones del proyecto.
+
+```kotlin title="build.gradle.kts"
+plugins {
+    id("jvm.conventions") // Aplica el plugin de convenciones para JVM
+}
+
+val projectGroup = extra["echo.group"] ?: error("La propiedad 'echo.group' no está definida.")
+val projectVersion = libs.versions.echo.get()
+
+allprojects {
+    group = projectGroup
+    version = projectVersion
+}
+```
+
+## ¿Qué acabamos de hacer?
+
+1. **Cargar propiedades**: Usamos `extra["echo.group"]` para obtener el valor de `echo.group` definido en
+    `gradle.properties`. En caso de que esta propiedad no esté definida, lanzamos un error para evitar fallos
+    silenciosos.
+2. **Configurar el grupo y la versión**: Establecemos el **grupo** y la **versión** para todos los submódulos del
+    proyecto utilizando `allprojects`. El grupo se obtiene del archivo `gradle.properties`, mientras que la versión se
+    obtiene del archivo `libs.versions.toml`.
+
+## Wrapping Up
+
+En esta sección, aprendimos a configurar las propiedades globales en un proyecto Gradle. Estas configuraciones permiten
+mantener un control centralizado de propiedades clave como el grupo y la versión del proyecto, lo que facilita la
+administración de proyectos con múltiples submódulos y mejora la consistencia en toda la estructura del proyecto. Usar
+el archivo `gradle.properties` y definir estas configuraciones en `build.gradle.kts` ayuda a simplificar la
+configuración y a hacerla más mantenible a largo plazo.

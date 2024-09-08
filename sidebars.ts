@@ -39,6 +39,8 @@ const sidebars: SidebarsConfig = {
                 'build-systems/gradle-init',
                 'build-systems/basic-config',
                 'build-systems/convention-plugins',
+                'build-systems/global',
+                'build-systems/my-app',
                 'build-systems/tasks',
             ],
         },
