@@ -36,7 +36,8 @@ const sidebars: SidebarsConfig = {
                 id: 'build-systems/index',
             },
             items: [
-                'build-systems/gradle',
+                'build-systems/gradle-init',
+                'build-systems/basic-config',
                 'build-systems/tasks',
             ],
         },
