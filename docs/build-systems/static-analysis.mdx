@@ -33,3 +33,57 @@ Incluye un conjunto de reglas predefinidas que cubren varios aspectos del desarr
 
 Permite a los desarrolladores definir y ajustar reglas específicas para satisfacer las políticas de codificación de su equipo o empresa
 
+Para utilizar Detekt en el proyecto, lo primero que debemos hacer es agregar la versión al archivo `libs.versions.toml`:
+
+```toml
+[versions]
+# ...
+detekt = "1.23.6"
+
+[libraries]
+# ...
+
+[plugins]
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+```
+
+Ahora podemos agregar la dependencia en el archivo `build.gradle.kts` del proyecto principal:
+
+[//]: # (FIXME: Modificar esto luego de enseñar tareas y plugins)
+
+```kotlin title="app/build.gradle.kts, lib/build.gradle.kts"
+plugins {
+    # ...
+    alias(libs.plugins.detekt)
+}
+```
+
+Una vez configurada la dependencia, podemos ejecutar Detekt en el proyecto utilizando el siguiente comando:
+
+```bash
+./gradlew :app:detekt :lib:detekt
+```
+
+Por ejemplo, si tuvieramos un archivo `Echo.kt` con el siguiente contenido:
+
+```kotlin
+package cl.ravenhill
+
+import kotlinx.datetime.*
+
+fun echo(message: String) = "${Clock.System.now()} - $message"
+
+fun main(args: Array<String>){
+    for (arg in args) {
+        println(echo("Hola, mundo!"))
+    }
+}
+```
+
+Al ejecutar Detekt, obtendríamos un reporte como el siguiente:
+
+```text
+> Task :app:detekt FAILED
+...\gradle-basics\app\src\main\kotlin\cl\ravenhill\Echo.kt:3:1: kotlinx.datetime.* is a wildcard import. Replace it with fully qualified imports. [WildcardImport]
+...\gradle-basics\app\src\main\kotlin\cl\ravenhill\Echo.kt:8:10: Private property `arg` is unused. [UnusedPrivateProperty]
+```

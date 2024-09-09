@@ -5,480 +5,310 @@ title: Tareas
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import Definition from "../../src/components/Definition";
 import ReadingTime from '../../src/components/ReadingTime';
 
 <ReadingTime/>
 
-## Tareas en Gradle
+Un escenario común es la necesidad de ejecutar tareas específicas durante el proceso de compilación, pruebas o
+empaquetado de un proyecto. Algunos ejemplos de tareas comunes incluyen la ejecución de pruebas, la generación de
+documentación y la verificación de calidad de código, entre otras.
 
-Una **tarea** es una unidad de trabajo en Gradle que puede representar diversas operaciones, como compilar código, ejecutar pruebas, generar documentación o desplegar aplicaciones. Las tareas se definen en el archivo `build.gradle.kts` y pueden ser tan simples o complejas como el proyecto requiera.
+<Definition title="Tareas">
+    Unidad de trabajo que Gradle puede ejecutar. Puede representar cualquier cosa, desde compilar código, ejecutar
+    pruebas, generar documentación, hasta desplegar una aplicación. Las tareas se definen en algún archivo
+    `*.gradle.kts` y pueden ser tan simples o complejas como sea necesario, dependiendo del propósito que deban
+    cumplir.
+</Definition>
 
-### Tareas Predefinidas en Gradle
+## Tareas Predefinidas
 
-Gradle ofrece una serie de tareas predefinidas que son comunes en la mayoría de los proyectos. Veamos algunos ejemplos:
+Gradle proporciona un conjunto de tareas predefinidas que se pueden ejecutar en cualquier proyecto. Por ejemplo
+`build`, `clean`, `assemble`, `check`, entre otras. Estas tareas son comunes en la mayoría de los proyectos y se
+pueden ejecutar directamente desde la línea de comandos.
 
-#### Ejemplo de Tarea de Prueba
+### Tarea `build`
 
-```kotlin
+La tarea `build` es una de las tareas más comunes en Gradle. Se encarga de compilar el código fuente, ejecutar las
+pruebas y empaquetar la aplicación en un formato específico. Al ejecutar `./gradlew build`, Gradle realizará todas las
+tareas necesarias para construir el proyecto.
+
+### Tarea `clean`
+
+La tarea `clean` se utiliza para limpiar el directorio de salida del proyecto, eliminando los archivos generados durante
+el proceso de compilación. Al ejecutar `./gradlew clean`, Gradle eliminará los archivos compilados y otros artefactos
+generados, dejando el proyecto en un estado limpio.
+
+### Tarea `assemble`
+
+La tarea `assemble` se encarga de compilar y empaquetar la aplicación en un formato específico, sin ejecutar las
+pruebas. Esta tarea es útil cuando solo se necesita generar el artefacto final sin realizar las pruebas. Al ejecutar
+`./gradlew assemble`, Gradle generará el artefacto de salida sin ejecutar las pruebas.
+
+### Tarea `check`
+
+La tarea `check` se utiliza para ejecutar las pruebas y verificar la calidad del código. Esta tarea incluye la ejecución
+de pruebas unitarias, pruebas de integración, análisis estático de código, entre otras verificaciones. Al ejecutar
+`./gradlew check`, Gradle ejecutará todas las pruebas y verificaciones de calidad de código definidas en el proyecto.
+
+### Configuración de Tareas por Defecto
+
+Además de las mencionadas, Gradle también define tareas por defecto que pueden ser configuradas para personalizar su
+comportamiento. Por ejemplo, la tarea `test` se encarga de ejecutar las pruebas unitarias y puede ser configurada para
+declarar el motor de pruebas a utilizar, los informes a generar, entre otros aspectos.
+
+```kotlin title="convention-plugins/src/main/kotlin/jvm.conventions.gradle.kts"
 tasks.test {
     useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+        showStandardStreams = true
+    }
 }
 ```
 
-Esta tarea configura Gradle para usar el motor JUnit para ejecutar pruebas.
+## Creación de Tareas Personalizadas
 
-#### Ejemplo de Tarea de Copiado
+Gradle no solo te permite usar tareas predefinidas, sino que también te brinda la flexibilidad de definir tareas
+personalizadas para realizar acciones específicas dentro de tu proyecto. Estas tareas pueden variar en complejidad,
+desde operaciones sencillas hasta flujos de trabajo más elaborados, y se definen fácilmente en los archivos
+`build.gradle.kts` o en otros archivos `*.gradle.kts` dentro del proyecto.
 
-```kotlin
-tasks.create<Copy>("copy") {
-    description = "Copia archivos del directorio src al directorio dst"
-    group = "Custom"
 
-    from("src")
-    into("dst")
+Para definir las tareas que utilizaremos, podemos hacerlo en el módulo `convention-plugins`, dentro de un archivo
+`playground.gradle.kts`. Ahora podemos crear una tarea personalizada, utilizamos la función `tasks.register`, donde
+especificamos el nombre de la tarea y las acciones que queremos ejecutar. A continuación te mostramos un ejemplo
+básico:
+
+```kotlin title="convention-plugins/src/main/kotlin/jvm.conventions.gradle.kts"
+tasks.register("greet") {
+    group = "Playground"
+    description = "Prints a greeting message"
+    println("Hello, Gradle!")
 }
 ```
 
-Esta tarea copia archivos del directorio `src` al directorio `dst`. Además, tiene una descripción y se agrupa en el grupo "Custom", lo cual es una buena práctica para mantener el proyecto organizado.
+Con esto, podemos ir al archivo `build.gradle.kts` en el módulo principal y aplicar el plugin que contiene la tarea
+personalizada.
 
-### Ejecución de Tareas Predefinidas
-
-Puedes ejecutar una tarea predefinida con los siguientes comandos:
-
-```bash
-./gradlew test
-./gradlew copy
+```kotlin title="build.gradle.kts"
+plugins {
+    id("jvm.conventions")
+    id("playground")
+}
 ```
 
-Estas tareas se ejecutarán en el orden definido, y Gradle manejará cualquier dependencia entre tareas de manera automática.
+Ahora podemos ejecutar la tarea `greet` con el comando `./gradlew greet` y veremos el mensaje impreso en la consola.
 
-### Tareas Predefinidas Comunes
+### Acciones en Gradle
 
-- **assemble**: Ensambla el proyecto completo.
-- **build**: Construye el proyecto.
-- **clean**: Elimina archivos generados en construcciones anteriores.
-- **check**: Ejecuta todas las verificaciones, incluidas las pruebas.
+Las acciones en Gradle son bloques de código que puedes agregar a una tarea para definir comportamientos que deben
+ejecutarse en momentos específicos durante el ciclo de vida de esa tarea. Existen dos tipos principales de acciones:
 
-Estas tareas son esenciales en cualquier proyecto Gradle, ya que te permiten automatizar las acciones más comunes y mantener la consistencia en los procesos de construcción y despliegue.
+- **`doFirst`**: Agrega una acción que se ejecutará **al inicio** de la tarea, antes de cualquier otra acción
+configurada. Se usa cuando necesitas realizar preparaciones o configuraciones previas, como inicializaciones,
+antes de la ejecución principal de la tarea.
 
-## Acciones dentro de Tareas
+- **`doLast`**: Agrega una acción que se ejecutará **al final** de la tarea, después de todas las demás acciones
+configuradas. Se usa para realizar operaciones finales, como validaciones, limpieza, o cualquier acción que deba
+ocurrir después de que la tarea haya completado su ejecución principal.
 
-Gradle te permite agregar acciones a las tareas para controlar su comportamiento. Estas acciones se pueden ejecutar antes o después de la ejecución principal de la tarea.
+### Ejemplo: Calculando la secuencia de Fibonacci
 
-### `doFirst` y `doLast`
+Para ilustrar cómo funcionan estas acciones, veamos un ejemplo en el que creamos una tarea personalizada que calcula
+la secuencia de Fibonacci hasta el décimo número. No sé qué caso de uso tendría esto, pero este ejemplo nos permite
+explorar cómo definir y estructurar tareas personalizadas con `doFirst` y `doLast`.
 
-- **`doFirst`**: Ejecuta una acción al inicio de la tarea, antes de que la acción principal ocurra. Útil para configuraciones previas.
-- **`doLast`**: Ejecuta una acción al final de la tarea, después de que la acción principal ocurra. Ideal para realizar operaciones de limpieza o validaciones.
+La secuencia de Fibonacci es una serie en la que cada número es la suma de los dos números anteriores. La fórmula para
+calcularla es la siguiente:
 
-#### Ejemplo con `doFirst` y `doLast`
+$$
+F_0 = 0
+$$
+$$
+F_1 = 1
+$$
+$$
+F_n = F_{n-1} + F_{n-2}
+$$
 
-```kotlin
-tasks.register("Fib") {
+Usando esta relación, podemos definir una tarea en Gradle que calcule y muestre los primeros 10 números de la
+secuencia de Fibonacci:
+
+```kotlin title="convention-plugins/src/main/kotlin/jvm.conventions.gradle.kts"
+tasks.register("fib") {
+    group = "Playground"
+    description = "Calculates the Fibonacci sequence up to the 10th number"
+
     var first = 0
     var second = 1
+
     doFirst {
-        println("Iniciando el cálculo de Fibonacci...")
-        for (i in 1..11) {
+        for (i in 1..10) {
+            print("$first ")
             second += first
             first = second - first
         }
     }
+
     doLast {
-        println("El 12.º número de Fibonacci es $second")
+        println("\nThe 10th Fibonacci number is: $first")
     }
 }
 ```
 
-### Orden de Ejecución de Acciones
+### ¿Qué está sucediendo aquí?
 
-Las acciones agregadas con `doFirst` se ejecutan en orden inverso al que se definen, mientras que las acciones agregadas con `doLast` se ejecutan en el orden en que se definen.
+1. **`doFirst`**: Este bloque se ejecuta primero. Aquí, estamos imprimiendo los primeros 10 números de la secuencia de
+Fibonacci. En cada iteración, calculamos el siguiente número sumando los dos anteriores y actualizamos las
+variables `first` y `second`.
 
-:::tip Ejercicio: Orden de Ejecución de Acciones
+2. **`doLast`**: Después de que `doFirst` termina, este bloque se ejecuta al final de la tarea. Imprimimos el décimo
+número de la secuencia, que se encuentra en la variable `first` al finalizar el bucle.
 
+### Resultado
+
+Cuando ejecutas esta tarea, verás una salida similar a la siguiente:
+
+```plaintext
+> Task :fib
+0 1 1 2 3 5 8 13 21 34
+The 10th Fibonacci number is: 55
+```
+
+### ¿Por qué usar `doFirst` y `doLast`?
+
+- **`doFirst`** es útil cuando necesitas preparar algo antes de que la lógica principal de la tarea se ejecute, como inicializar variables o configurar el entorno.
+
+- **`doLast`** es ideal para operaciones finales, como limpiar recursos o imprimir resultados después de que la tarea haya completado sus operaciones principales.
+
+Con esta estructura, puedes crear tareas altamente personalizadas que ejecuten acciones en puntos específicos de su ciclo de vida, lo que te da un control más fino sobre cómo y cuándo ocurren las distintas operaciones dentro de tu proyecto Gradle.
+
+:::tip Ejercicio
 <Tabs>
     <TabItem value="Ejercicio" label="Ejercicio">
+        ¿Qué sucede si intercambias las acciones `doFirst` y `doLast` en la tarea `fib`? ¿Cómo afecta esto el resultado?
+    </TabItem>
+    <TabItem value="Solución" label="Solución">
+        Al intercambiar las acciones `doFirst` y `doLast`, el resultado de la tarea `fib` cambiará. En este caso, la
+        secuencia de Fibonacci se imprimirá al final de la ejecución de la tarea, y el décimo número se mostrará
+        antes de los primeros 10 números. Esto se debe a que `doLast` se ejecuta después de `doFirst`, por lo que
+        el cálculo de la secuencia se realizará primero y luego se imprimirá el décimo número al final.
+    </TabItem>
+</Tabs>
+:::
 
-        ¿Qué se imprimirá al ejecutar la siguiente tarea?
+:::tip Ejercicio
+<Tabs>
+    <TabItem value="Ejercicio" label="Ejercicio">
+        ¿Qué imprime lo siguiente?
 
-        ```kotlin
-        tasks.register("advancedTask") {
-        doFirst {
+```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+tasks.register("advancedTask")
+    doFirst
         println("First action - Preparation Step 1")
     }
-        doFirst {
+    doFirst
         println("First action - Preparation Step 2")
     }
-        doLast {
+    doLast
         println("Last action - Cleanup Step 1")
     }
-        doLast {
+    doLast
         println("Last action - Cleanup Step 2")
     }
-    }
-        ```
-
+}
+```
     </TabItem>
     <TabItem value="Solución" label="Solución">
-
-        ```plaintext
-        First action - Preparation Step 2
-        First action - Preparation Step 1
-        Last action - Cleanup Step 1
-        Last action - Cleanup Step 2
-        ```
-
+        Al ejecutar la tarea `advancedTask`, verás la siguiente salida:
+```plaintext
+> Task :advancedTask
+First action - Preparation Step 2
+First action - Preparation Step 1
+Last action - Cleanup Step 1
+Last action - Cleanup Step 2
+```
     </TabItem>
 </Tabs>
 :::
 
-## Dependencias entre Tareas
+### Dependencias entre Tareas
 
-Una tarea en Gradle puede depender de otras tareas, lo que garantiza que se ejecuten en un orden específico. Esto es útil cuando necesitas que ciertas tareas se completen antes de que otras puedan comenzar.
+En proyectos Gradle, es común que ciertas tareas dependan de otras para asegurarse de que se ejecuten en el orden
+correcto. Esto se puede lograr utilizando el método `dependsOn`, que permite definir que una tarea específica debe
+ejecutarse antes de otra.
 
-```kotlin
-tasks.register("cleanAll") {
-    dependsOn(":subproject1:clean", ":subproject2:clean", ":subproject3:clean")
+Supongamos que queremos una tarea que imprima un mensaje antes de ejecutar la tarea `fib`. Para lograrlo, podemos
+definir una nueva tarea `message` y luego establecer que la tarea `fib` dependa de `message`.
+
+```kotlin title="convention-plugins/src/main/kotlin/jvm.conventions.gradle.kts"
+tasks.register("message") {
+    doFirst {
+        println("Calculating the Fibonacci sequence...")
+    }
+}
+
+tasks.named("fib") {
+    dependsOn("message")
 }
 ```
 
-En este ejemplo, `cleanAll` depende de las tareas `clean` de varios subproyectos. Cuando se ejecuta `cleanAll`, Gradle primero ejecuta las tareas de limpieza de cada subproyecto antes de proceder.
+En este ejemplo:
+- **`message`**: Una tarea que imprime un mensaje indicando que está a punto de calcularse la secuencia de Fibonacci.
+- **`dependsOn`**: Establece que la tarea `fib` depende de `message`, lo que significa que Gradle ejecutará primero
+  `message` antes de continuar con `fib`.
 
-:::tip Ejercicio: Tamaño del Proyecto
+Cuando ejecutas la tarea `fib`, el resultado en la consola será algo como esto:
 
+```plaintext
+> Task :message
+Calculating the Fibonacci sequence...
+
+> Task :fib
+0 1 1 2 3 5 8 13 21 34
+The 10th Fibonacci number is: 55
+```
+
+### Ejemplo Práctico: Contar el Tamaño del Proyecto Compilado
+
+Un ejercicio interesante es crear una tarea personalizada en Gradle que calcule el tamaño de los archivos compilados
+del proyecto. Esto puede ser útil para monitorear el tamaño del proyecto después de la compilación. 
+
+Además, haremos que esta tarea dependa de `compileKotlin`, asegurándonos de que se compile el código antes de contar el
+tamaño de los archivos.
+
+:::tip Ejercicio
 <Tabs>
     <TabItem value="Ejercicio" label="Ejercicio">
-        Crea una tarea de Gradle que calcule el tamaño del proyecto después de compilarlo. Usa
-        `project.fileTree("build/classes/kotlin/main").files` para acceder a los archivos compilados y el método
-        `length()` para obtener su tamaño. Asegúrate de que tu tarea dependa de `compileKotlin`.
+        Crea una tarea en Gradle que calcule el tamaño de los archivos compilados de tu proyecto.
+
+        - La tarea debe acceder a los archivos compilados de Kotlin ubicados en
+            `app/build/classes/kotlin/main`.
+          Para esto, puedes utilizar `fileTree("ruta").files` para obtener los archivos.
+        - Puedes calcular el tamaño de un archivo utilizando el método `length()`.
+        - Incluye un grupo y descripción para la tarea.
+        - Asegúrate de que la tarea dependa de `compileKotlin`.
     </TabItem>
     <TabItem value="Solución" label="Solución">
-
-        ```kotlin
-        tasks.register("countCompiledSize") {
-        group = "build"
-        description = "Count the size of the compiled classes"
-        dependsOn("compileKotlin")
-        doLast {
-        val files = fileTree("build/classes/kotlin/main")
+```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+tasks.register("countCompiledSize") {
+    group = "build"
+    description = "Count the size of the compiled classes"
+    dependsOn("compileKotlin")
+    
+    doLast {
+        val files = fileTree("app/build/classes/kotlin/main").files +
+                    fileTree("lib/build/classes/kotlin/main").files
         var size = 0L
         for (file in files) {
-        size += file.length()
+            size += file.length()
+        }
+        println("The total size of the compiled classes is $size bytes")
     }
-        println(
-        "The size of the compiled classes in subproject1 is $size bytes"
-        )
-    }
-    }
-        ```
-
+}
+```
     </TabItem>
 </Tabs>
 :::
 
-## Definición de Tareas como Clases
-
-Si necesitas realizar tareas complejas de manera repetitiva, es posible definir tareas como clases en Gradle.
-
-### Caso de Estudio: Tarea de Fibonacci
-
-```kotlin
-abstract class FibonacciTask : DefaultTask() {
-    @get:Input
-    abstract val number: Property<Int>
-
-    @TaskAction
-    fun calculateFibonacci() {
-        val n = number.get()
-        var first = 0
-        var second = 1
-        repeat(n) {
-            second += first
-            first = second - first
-        }
-        println("El $n.º número de Fibonacci es $first")
-    }
-}
-```
-
-Luego puedes registrar instancias de esta tarea para diferentes números de Fibonacci:
-
-```kotlin
-tasks.register<FibonacciTask>("Fib_10") {
-    number.set(10)
-}
-
-tasks.register<FibonacciTask>("Fib_20") {
-    number.set(20)
-}
-```
-
-## Procesar Archivos de Texto con una Tarea
-
-También puedes implementar tareas para manipular archivos. Aquí tienes un ejemplo que transforma texto a mayúsculas.
-
-```kotlin
-abstract class TextProcessingTask : DefaultTask() {
-    @get:InputFile
-    abstract val inputFile: RegularFileProperty
-
-    @get:OutputFile
-    abstract val outputFile: RegularFileProperty
-
-    @TaskAction
-    fun processText() {
-        val inputText = inputFile.get().asFile.readText()
-        val processedText = inputText.uppercase(Locale.getDefault())
-        outputFile.get().asFile.writeText(processedText)
-        println("Texto procesado en: ${outputFile.get().asFile.absolutePath}")
-    }
-}
-```
-
-### Registro de la Tarea
-
-```kotlin
-tasks.register<TextProcessingTask>("processText") {
-    inputFile.set(file("src/main/resources/input.txt"))
-    outputFile.set(file("build/output.txt"))
-
-    doFirst {
-        println("Preparando para procesar texto desde ${inputFile.get().asFile.absolutePath}")
-    }
-
-    doLast {
-        println("Texto procesado y guardado en ${outputFile.get().asFile.absolutePath}")
-    }
-}
-```
-
-### Ejecución de la Tarea
-
-```bash
-./gradlew processText
-```
-
-Este ejemplo procesa el texto de un archivo, lo convierte a mayúsculas y lo guarda en un archivo de salida.
-
-### Tareas en Make
-
-**Make** es uno de los sistemas de construcción más antiguos y conocidos, especialmente en proyectos en **C** y **C++**. Las tareas en Make se llaman "targets" y consisten en reglas que indican cómo deben construirse ciertos archivos o productos.
-
-#### Ejemplo en Make
-
-```make
-all: compile
-
-compile:
-	@gcc -o main main.c
-	@echo "Compilación completa"
-
-clean:
-	@rm -f main
-	@echo "Archivos eliminados"
-```
-
-En **Make**, `all` y `compile` son targets que ejecutan comandos de shell. Al ejecutar `make all`, se compilará el código C y se generará el archivo `main`.
-
-```bash
-make all
-```
-
-### Tareas en Maven
-
-En **Maven**, las tareas se conocen como "fases" o "goals". Maven sigue un ciclo de vida de compilación predefinido con fases como `compile`, `test`, y `package`.
-
-#### Ejemplo en Maven
-
-```xml
-<project>
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.example</groupId>
-  <artifactId>my-app</artifactId>
-  <version>1.0-SNAPSHOT</version>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
-        <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
-</project>
-```
-
-Aquí, Maven compilará el código Java utilizando el **maven-compiler-plugin**. Puedes ejecutar la fase de compilación con el siguiente comando:
-
-```bash
-mvn compile
-```
-
-### Tareas en Ant
-
-**Apache Ant** es otro sistema de construcción popular, especialmente en proyectos **Java**. En Ant, las tareas son más explícitas y están definidas en archivos **XML** llamados *build scripts*.
-
-#### Ejemplo en Ant
-
-```xml
-<project name="MyApp" default="compile">
-  <target name="compile">
-    <javac srcdir="src" destdir="build/classes"/>
-    <echo message="Compilación completa"/>
-  </target>
-
-  <target name="clean">
-    <delete dir="build"/>
-    <echo message="Archivos eliminados"/>
-  </target>
-</project>
-```
-
-Este archivo de Ant define dos tareas: `compile` para compilar código Java y `clean` para eliminar archivos. Puedes ejecutar estas tareas con:
-
-```bash
-ant compile
-ant clean
-```
-
-### Tareas en NPM Scripts
-
-En el mundo del desarrollo **JavaScript**, los **NPM Scripts** también permiten definir tareas en el archivo `package.json` de un proyecto.
-
-#### Ejemplo en NPM Scripts
-
-```json
-{
-  "name": "my-app",
-  "version": "1.0.0",
-  "scripts": {
-    "build": "webpack --config webpack.config.js",
-    "test": "jest"
-  }
-}
-```
-
-Aquí se definen dos scripts: `build` para compilar usando Webpack y `test` para ejecutar pruebas usando Jest. Puedes ejecutar estos scripts con:
-
-```bash
-npm run build
-npm run test
-```
-
-Aquí tienes la sección de **CMake** y **SBT** añadidas para complementar las tareas en otros sistemas de construcción:
-
-### Tareas en CMake
-
-**CMake** es un sistema de construcción multiplataforma utilizado principalmente para proyectos en **C** y **C++**. En CMake, las tareas no se definen explícitamente como en otros sistemas, pero se pueden crear objetivos que representen acciones como compilar, ejecutar pruebas o generar documentación.
-
-#### Ejemplo de Compilación en CMake
-
-```cmake
-# CMakeLists.txt
-cmake_minimum_required(VERSION 3.10)
-project(MyApp)
-
-# Añadir archivo fuente
-add_executable(main main.cpp)
-
-# Definir compilación y ejecutables
-set(CMAKE_CXX_STANDARD 17)
-```
-
-Puedes ejecutar la compilación con los siguientes comandos:
-
-```bash
-mkdir build
-cd build
-cmake ..
-make
-```
-
-### Ejemplo de Tarea Personalizada en CMake
-
-Aunque CMake no tiene "tareas" como tal, se pueden usar comandos personalizados para ejecutar acciones adicionales.
-
-```cmake
-add_custom_target(run
-    COMMAND main
-    DEPENDS main
-    COMMENT "Ejecutando el programa"
-)
-```
-
-Este ejemplo agrega un objetivo personalizado llamado `run` que ejecuta el programa después de compilarlo. Puedes ejecutarlo con:
-
-```bash
-make run
-```
-
-## Tareas en SBT
-
-**SBT** es el sistema de construcción más utilizado en proyectos de **Scala** y **Java**. Al igual que en **Gradle**, las tareas en SBT son acciones que se pueden personalizar y ejecutar a través de comandos en la terminal.
-
-### Ejemplo de Tarea de Compilación en SBT
-
-```scala
-// build.sbt
-name := "MyApp"
-version := "0.1"
-scalaVersion := "2.13.8"
-```
-
-Puedes ejecutar una tarea de compilación con:
-
-```bash
-sbt compile
-```
-
-### Definición de Tareas Personalizadas en SBT
-
-En SBT, puedes definir tareas personalizadas utilizando `Def.task` para realizar cualquier operación.
-
-```scala
-lazy val helloTask = taskKey[Unit]("Imprime un mensaje")
-
-helloTask := {
-  println("Hola, esta es una tarea personalizada en SBT")
-}
-```
-
-Ejecuta esta tarea con:
-
-```bash
-sbt helloTask
-```
-
-### Ejemplo de Tarea Compleja en SBT
-
-Puedes definir tareas que dependan de otras tareas y también realizar operaciones como compilar y ejecutar programas.
-
-```scala
-lazy val runApp = taskKey[Unit]("Compila y ejecuta la aplicación")
-
-runApp := {
-  (compile in Compile).value
-  println("Compilación completa. Ejecutando el programa...")
-  (run in Compile).toTask("").value
-}
-```
-
-Esta tarea compila el proyecto y luego lo ejecuta automáticamente.
-
-## Comparación entre Sistemas de Construcción
-
-| Sistema    | Término para Tarea | Sintaxis            | Uso Común                          |
-|------------|--------------------|---------------------|------------------------------------|
-| **Gradle** | Tarea              | Kotlin, Groovy      | Proyectos Kotlin, Android, JVM     |
-| **Make**   | Target             | Makefile            | Proyectos en C, C++, Unix/Linux    |
-| **Maven**  | Fase, Goal         | XML (POM)           | Proyectos Java, ciclos de vida     |
-| **Ant**    | Tarea              | XML (Build Script)  | Proyectos Java, Flexibilidad       |
-| **NPM**    | Script             | JSON (package.json) | Proyectos Node.js, Web Development |
-| **CMake**  | Objetivo (Target)  | CMakeLists.txt      | Proyectos en C, C++                |
-| **SBT**    | Tarea              | Scala, sbt          | Proyectos Scala, Java              |
-
-Cada uno de estos sistemas permite definir tareas de diferentes formas, pero el objetivo principal es siempre el mismo: automatizar el proceso de construcción de un proyecto y sus dependencias.

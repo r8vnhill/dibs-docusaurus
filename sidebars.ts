@@ -42,6 +42,7 @@ const sidebars: SidebarsConfig = {
                 'build-systems/global',
                 'build-systems/my-app',
                 'build-systems/tasks',
+                'build-systems/static-analysis',
             ],
         },
         {
