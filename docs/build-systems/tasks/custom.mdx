@@ -1,0 +1,225 @@
+---
+title: Tareas Personalizadas
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import ReadingTime from '../../../src/components/ReadingTime';
+
+<ReadingTime/>
+
+Gradle no solo ofrece tareas predefinidas, sino que también permite definir **tareas personalizadas** para realizar acciones específicas dentro de tu proyecto. Estas tareas pueden variar en complejidad y se definen en los archivos `build.gradle.kts` o en otros archivos `*.gradle.kts`.
+
+Para definir tareas personalizadas, podemos hacerlo en el módulo `convention-plugins`, dentro de un archivo como `playground.gradle.kts`. Utilizamos la función `tasks.register` para especificar el nombre y las acciones a ejecutar. Aquí tienes un ejemplo básico:
+
+```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+tasks.register("greet") {
+    group = "Playground"
+    description = "Prints a greeting message"
+    println("Hello, Gradle!")
+}
+```
+
+Para que esta tarea se ejecute en el proyecto principal, debes aplicar el plugin correspondiente en el archivo `build.gradle.kts` del módulo principal:
+
+```kotlin title="build.gradle.kts"
+plugins {
+    id("jvm.conventions")
+    id("playground")
+}
+```
+
+Ahora puedes ejecutar la tarea con `./gradlew greet` y verás el mensaje impreso en la consola.
+
+## Acciones en Gradle
+
+Las **acciones** son bloques de código que puedes agregar a una tarea para definir comportamientos específicos en momentos determinados durante su ciclo de vida. Las acciones más comunes son:
+
+- **`doFirst`**: Se ejecuta **antes** de cualquier otra acción configurada.
+- **`doLast`**: Se ejecuta **después** de todas las demás acciones configuradas.
+
+## Ejemplo: Calculando la Secuencia de Fibonacci
+
+Supongamos que queremos crear una tarea que calcule la secuencia de Fibonacci. Usaremos las acciones `doFirst` y `doLast` para estructurar las operaciones:
+
+```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+tasks.register("fib") {
+    group = "Playground"
+    description = "Calculates the Fibonacci sequence up to the 10th number"
+
+    var first = 0
+    var second = 1
+
+    doFirst {
+        for (i in 1..10) {
+            print("$first ")
+            second += first
+            first = second - first
+        }
+    }
+
+    doLast {
+        println("\nThe 10th Fibonacci number is: $first")
+    }
+}
+```
+
+### ¿Qué está sucediendo aquí?
+
+1. **`doFirst`**: Calcula los primeros 10 números de la secuencia de Fibonacci y los imprime.
+2. **`doLast`**: Imprime el décimo número de la secuencia al final.
+
+### Resultado
+
+Cuando ejecutas esta tarea con `./gradlew fib`, verás la siguiente salida:
+
+```plaintext
+> Task :fib
+0 1 1 2 3 5 8 13 21 34
+The 10th Fibonacci number is: 55
+```
+
+## Dependencias entre Tareas
+
+En Gradle, es común que ciertas tareas dependan de otras. Para esto, puedes usar el método `dependsOn`. Por ejemplo, si queremos que la tarea `fib` dependa de una tarea `message`, podemos hacerlo así:
+
+```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+tasks.register("message") {
+    doFirst {
+        println("Calculating the Fibonacci sequence...")
+    }
+}
+
+tasks.named("fib") {
+    dependsOn("message")
+}
+```
+
+Esto hace que `message` se ejecute antes de `fib`, y el resultado en la consola será algo como:
+
+```plaintext
+> Task :message
+Calculating the Fibonacci sequence...
+
+> Task :fib
+0 1 1 2 3 5 8 13 21 34
+The 10th Fibonacci number is: 55
+```
+
+## Ejemplo Práctico: Contar el Tamaño del Proyecto Compilado
+
+Un ejercicio útil es crear una tarea personalizada que calcule el tamaño de los archivos compilados del proyecto. Además, haremos que esta tarea dependa de `compileKotlin` para asegurarnos de que el código se compile antes de contar el tamaño.
+
+:::tip Ejercicio
+<Tabs>
+    <TabItem value="Ejercicio" label="Ejercicio">
+        Crea una tarea en Gradle que calcule el tamaño de los archivos compilados de tu proyecto.
+
+        - Usa `fileTree("ruta").files` para obtener los archivos.
+        - Utiliza `length()` para calcular el tamaño.
+        - Asegúrate de que la tarea dependa de `compileKotlin`.
+    </TabItem>
+    <TabItem value="Solución" label="Solución">
+        ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+        tasks.register("countCompiledSize") {
+            group = "build"
+            description = "Count the size of the compiled classes"
+            dependsOn("compileKotlin")
+
+            doLast {
+                val files = fileTree("app/build/classes/kotlin/main").files +
+                fileTree("lib/build/classes/kotlin/main").files
+                var size = 0L
+                for (file in files) {
+                    size += file.length()
+                }
+                println("The total size of the compiled classes is $size bytes")
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+:::
+
+## Tareas Basadas en Otras Tareas
+
+Otra forma de crear tareas personalizadas en Gradle es basándolas en tareas existentes. Esto es útil si quieres extender o agregar funcionalidades a una tarea predefinida. Por ejemplo, si queremos crear una tarea que copie los archivos compilados a un directorio específico después de la compilación, podemos usar la tarea `Copy` y configurarla para que dependa de `compileKotlin`.
+
+```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+tasks.create<Copy>("copyCompiledClasses") {
+    group = "build"
+    description = "Copy the compiled classes to a specific directory"
+    dependsOn("compileKotlin")
+    from("app/build/classes/kotlin/main")
+    into("compiled-classes")
+}
+```
+
+Esta tarea copiará los archivos compilados al directorio `compiled-classes` después de que se haya completado la compilación.
+
+### Otros Ejemplos en Diferentes Herramientas y Lenguajes
+
+A continuación, se muestran ejemplos de cómo podrías definir tareas similares en otras plataformas.
+
+- **npm (JavaScript/Node.js)**:
+    ```json
+    "scripts": {
+        "build": "webpack",
+        "clean": "rimraf dist",
+        "fibonacci": "node fibonacci.js"
+    }
+    ```
+    Archivo `fibonacci.js`:
+    ```javascript
+    function fibonacci(n) {
+        let a = 0, b = 1, f = 1;
+        for (let i = 2; i <= n; i++) {
+            f = a + b;
+            a = b;
+            b = f;
+        }
+        return f;
+    }
+    console.log(fibonacci(10));
+    ```
+
+- **Make (C/C++)**:
+    ```make
+    all: build fibonacci
+
+    build:
+        gcc -o app main.c
+
+    fibonacci:
+        @echo "Calculating Fibonacci sequence..."
+        @./app
+    ```
+
+- **Cargo (Rust)**:
+    En `Cargo.toml`:
+    ```toml
+    [package]
+    name = "fibonacci"
+    version = "0.1.0"
+
+    [build-dependencies]
+    ```
+    En `build.rs`:
+    ```rust
+    fn main() {
+        println!("Calculating Fibonacci...");
+        let mut a = 0;
+        let mut b = 1;
+        for _ in 0..10 {
+            let temp = a;
+            a = b;
+            b = temp + b;
+            print!("{} ", a);
+        }
+        println!();
+    }
+    ```
+
+### Resumen
+
+Hemos aprendido cómo definir **tareas personalizadas** en Gradle, usando acciones `doFirst` y `doLast`, así como establecer dependencias entre tareas. También exploramos cómo crear tareas basadas en otras tareas existentes y cómo implementar ejemplos similares en otras plataformas como npm, Make y Cargo.

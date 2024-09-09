@@ -41,7 +41,18 @@ const sidebars: SidebarsConfig = {
                 'build-systems/convention-plugins',
                 'build-systems/global',
                 'build-systems/my-app',
-                'build-systems/tasks',
+                {
+                    type: 'category',
+                    label: 'Tareas',
+                    link: {
+                        type: 'doc',
+                        id: 'build-systems/tasks/index',
+                    },
+                    items: [
+                        'build-systems/tasks/default',
+                        'build-systems/tasks/custom',
+                    ],
+                },
                 'build-systems/static-analysis',
             ],
         },
