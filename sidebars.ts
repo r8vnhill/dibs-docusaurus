@@ -1,15 +1,5 @@
 import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 
-/**
- * Creating a sidebar enables you to:
- - create an ordered group of docs
- - render a sidebar for each doc of that group
- - provide next/previous navigation
-
- The sidebars can be generated from the filesystem, or explicitly defined here.
-
- Create as many sidebars as you want.
- */
 const sidebars: SidebarsConfig = {
     tutorialSidebar: [
         {
@@ -20,12 +10,13 @@ const sidebars: SidebarsConfig = {
             type: 'category',
             label: 'Unidad 1: Introducción',
             items: [
-                'unit-1/introduction',
-                'unit-1/Kotlin',
-                'unit-1/basics',
-                'unit-1/void-safety',
-                'unit-1/input',
-                'unit-1/clean'
+                'intro/introduction',
+                'intro/Kotlin',
+                'intro/basics',
+                'intro/void-safety',
+                'intro/input',
+                'intro/clean',
+                'intro/documentation',
             ],
         },
         {
@@ -51,6 +42,7 @@ const sidebars: SidebarsConfig = {
                     items: [
                         'build-systems/tasks/default',
                         'build-systems/tasks/custom',
+                        'build-systems/tasks/classes',
                     ],
                 },
                 'build-systems/static-analysis',
@@ -124,4 +116,5 @@ const sidebars: SidebarsConfig = {
     ]
 };
 
+// noinspection JSUnusedGlobalSymbols
 export default sidebars;

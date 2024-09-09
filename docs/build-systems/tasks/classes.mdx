@@ -1,0 +1,74 @@
+---
+title: Tareas como Clases
+---
+
+import ReadingTime from "../../../src/components/ReadingTime";
+
+<ReadingTime/>
+
+A veces necesitas definir tareas más complejas que requieren una lógica más elaborada o necesitamos reutilizar tareas en
+diferentes contextos. En estos casos, podemos definir tareas como clases en Gradle. Esto nos permite encapsular la
+lógica de la tarea en una clase y reutilizarla en diferentes partes del proyecto.
+
+Estas tareas podemos definirlas en cualquier archivo `*.gradle.kts` al igual que las tareas regulares, o en archivos
+`.kt` como cualquier otra clase en Kotlin. Para estos ejemplos, utilizaremos el segundo enfoque.
+
+## Fibonacci Revisited
+
+Hasta ahora, la tarea de Fibonacci que definimos anteriormente solamente imprime los primeros 10 números de la
+secuencia. Supongamos que queremos extender esta tarea para que pueda calcular la secuencia hasta un número específico
+definido por el usuario. Para hacer esto, definiremos la tarea como una clase en un archivo `.kt`.
+
+Comencemos por crear un paquete `tasks` en el directorio `src/main/kotlin` del módulo `convention-plugins`. Dentro de
+este paquete, crearemos un archivo `FibonacciTask.kt`, recordemos que al ser una clase esta debería estar propiamente
+documentada con el siguiente contenido:
+
+```kotlin title="convention-plugins/src/main/kotlin/FibonacciTask.kt"
+package tasks
+
+import org.gradle.api.DefaultTask
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.StopExecutionException
+import org.gradle.api.tasks.TaskAction
+
+abstract class FibonacciTask : DefaultTask() {  // (1)
+    @get:Input  // (2)
+    abstract val number: Property<Int>  // (3)
+
+    @TaskAction // (4)
+    fun calculateFibonacci() {
+        val n = number.get()    // (5)
+        if (n < 0) {
+            throw StopExecutionException("The number must be greater than or equal to 0")   // (6)
+        }
+        var first = 0
+        var second = 1
+        repeat(n) {
+            second += first
+            first = second - first
+        }
+        println("The $n-th Fibonacci number is: $first")
+    }
+}
+```
+
+Aquí:
+
+1. Definimos una clase `FibonacciTask` que extiende de `DefaultTask`. Todas las tareas en Gradle deben extender de
+   `DefaultTask`. Noten que la clase es abstracta, esto debido a que el input no está completamente definido, esto
+    debiera indicarnos que la clase debe ser abstracta y que su utilidad es para ser extendida.
+2. Anotamos la propiedad `number` con `@get:Input`. Esto le dice a Gradle que esta propiedad es un input para la tarea.
+    Con esto, Gradle podrá detectar cambios en esta propiedad y ejecutar la tarea si es necesario.
+3. Definimos la propiedad `number` como un `Property<Int>`. Esta propiedad será utilizada para almacenar el número hasta
+    el cual queremos calcular la secuencia de Fibonacci.
+4. Anotamos el método `calculateFibonacci` con `@TaskAction`. Este método contiene la lógica de la tarea. Cuando la
+    tarea se ejecute, Gradle llamará a este método, después de `doFirst` y antes de `doLast`.
+
+Ahora que tenemos definida la tarea, podemos utilizarla de forma similar a como creamos la tarea `copy` en la sección
+anterior. Para esto debemos registrar la tarea en algún archivo `*.gradle.kts`. Por ejemplo, podemos registrar la tarea
+en el archivo `playground.gradle.kts` de la siguiente manera:
+
+```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+...
+```
