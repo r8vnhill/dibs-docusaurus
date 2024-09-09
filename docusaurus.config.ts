@@ -93,7 +93,17 @@ const config: Config = {
         prism: {
             theme: prismThemes.nightOwlLight,
             darkTheme: prismThemes.nightOwl,
-            additionalLanguages: ['java', 'scala', 'csharp', 'haskell', "bash", "powershell", "toml", "properties"],
+            additionalLanguages: [
+                'java',
+                'scala',
+                'csharp',
+                'haskell',
+                "bash",
+                "powershell",
+                "toml",
+                "properties",
+                "ruby"
+            ],
         },
     } satisfies Preset.ThemeConfig,
     stylesheets: [
