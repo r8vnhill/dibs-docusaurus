@@ -1,0 +1,315 @@
+---
+title: Plugins Personalizados
+---
+import TabItem from "@theme/TabItem";
+import Tabs from "@theme/Tabs";
+
+import ReadingTime from "../../../src/components/ReadingTime";
+
+<ReadingTime/>
+
+## Plugins precompilados
+
+En la sección [mi primer plugin](../convention-plugins#mi-primer-plugin), exploramos cómo crear un plugin dentro de un archivo de convenciones. Estos se conocen como **plugins precompilados**, ya que su código se compila antes de ejecutar el script de construcción del proyecto raíz.
+
+Los plugins precompilados se definen en archivos `*.gradle.kts` dentro de módulos que han sido declarados en el bloque `includeBuild` en el archivo `settings.gradle.kts`. Un ejemplo de este tipo de módulos es `convention-plugins`, que centraliza las configuraciones y las hace accesibles para todos los subproyectos del build.
+
+Este enfoque es una manera sencilla y eficiente de crear plugins, y es la **forma recomendada** para desarrollar plugins personalizados en Gradle. La ventaja principal es que los plugins precompilados pueden ser utilizados directamente desde el bloque `plugins` en cualquier archivo de configuración, facilitando su reutilización y simplificando la gestión de versiones y dependencias en proyectos multi-módulo.
+
+## Plugins como clases
+
+En Gradle, un plugin es esencialmente una clase escrita en Java o Kotlin que implementa la interfaz `Plugin<T>`, donde `T` es el tipo de objeto que el plugin extiende. Esta interfaz define un único método `apply`, que recibe un objeto de tipo `T`, lo que permite al plugin modificar la configuración del proyecto o añadir nuevas funcionalidades según las necesidades del mismo.
+
+:::info
+Si bien el único método que define la interfaz `Plugin<T>` es `apply`, es común que los plugins también definan otros métodos y propiedades para encapsular la lógica y facilitar su uso.
+:::
+
+### Tipos de plugins
+
+Lo más común es que `T` sea un objeto de tipo `Project`, que representa el proyecto Gradle donde se está ejecutando el script. Esto permite que el plugin configure aspectos globales del proyecto, como tareas, dependencias o extensiones. Sin embargo, Gradle es lo suficientemente flexible para que los plugins también puedan extender otros tipos de objetos, como:
+
+- **`Task`**: Si deseas crear un plugin que configure o modifique comportamientos específicos de una tarea.
+- **`PluginAware`**: Utilizado cuando necesitas que el plugin esté consciente de otros plugins que se aplican.
+- **Clases personalizadas**: Si defines tipos personalizados en tu proyecto, también puedes escribir plugins que extiendan esos tipos.
+
+## Creando un Plugin Personalizado
+
+Comencemos por un ejemplo simple de un plugin personalizado que imprime un mensaje en la consola al aplicarse antes de pasar a un ejemplo más complejo. Para ello, crearemos un plugin que imprima un mensaje de bienvenida al ejecutar la tarea `hello`.
+
+Para esto, crearemos un nuevo paquete en `convention-plugins` llamada `plugins` y dentro de este, un archivo `HelloPlugin.kt` con el siguiente contenido:
+
+```kotlin title="convention-plugins/src/main/kotlin/plugins/HelloPlugin.kt"
+package plugins
+
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+
+class HelloPlugin : Plugin<Project> {   // (1)
+    override fun apply(project: Project) {  // (2)
+        project.tasks.register("hello") {   // (3)
+            group = "playground"
+            description = "Prints 'Hello, world!'"
+            doLast {
+                println("Hello, world!")
+            }
+        }
+    }
+}
+```
+
+1. La clase `HelloPlugin` implementa la interfaz `Plugin<Project>`, lo que indica que este plugin se aplicará a un objeto de tipo `Project`.
+2. El método `apply` es donde se define la lógica del plugin. En este caso, registramos una nueva tarea llamada `hello`.
+3. La tarea `hello` imprime el mensaje "Hello, world!" en la consola.
+
+Con esto podemos agregar el plugin en cualquier archivo `*.gradle.kts`, apliquémoslo en nuestro archivo `playground.gradle.kts` (aunque podríamos definirlo directamente en algún `build.gradle.kts`).
+
+<Tabs>
+    <TabItem value="Kotlin DSL">
+        ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+        import plugins.HelloPlugin
+
+        // ...
+
+        apply<HelloPlugin>()
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL">
+        ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle"
+        import plugins.HelloPlugin
+
+        // ...
+
+        apply plugin: HelloPlugin
+        ```
+    </TabItem>
+</Tabs>
+
+Esto registrará la tarea `hello` en el proyecto al igual que si hubieramos definido la tarea directamente en el archivo `build.gradle.kts`.
+
+Probemos ejecutar la tarea para ver que todo está en orden:
+
+```bash
+./gradlew hello
+```
+
+Esto debería imprimir:
+
+```plaintext
+> Task :hello
+Hello, world!
+```
+
+:::warning ¡Atención!
+Si bien es posible definir plugins dentro de los archivos `build.gradle.kts` esto es considerado una mala práctica ya que hace que nuestro plugin sea menos reutilizable.
+:::
+
+## Ejemplo: Escribir la versión en un archivo con fecha y hora
+
+En este ejemplo, crearemos un plugin que escriba la versión del proyecto en un archivo `version.txt`, junto con la fecha y hora en la que se ejecutó la tarea.
+
+### Desafío: Dependencias en el plugin
+
+Un problema común al crear plugins personalizados es que no podemos declarar dependencias directamente dentro del plugin como lo hacemos con los **plugins precompilados**. Esto significa que, si queremos usar una librería como `kotlinx-datetime` en nuestro plugin, debemos agregar explícitamente esa dependencia en el archivo `build.gradle.kts` del módulo donde se define el plugin (en este caso, el módulo `convention-plugins`).
+
+### Agregar la dependencia `kotlinx-datetime`
+
+Primero, añadimos la dependencia necesaria para trabajar con fechas y horas en nuestro plugin. Abrimos el archivo `build.gradle.kts` en el módulo `convention-plugins` y agregamos la dependencia:
+
+<Tabs>
+  <TabItem value="Kotlin DSL">
+  
+  ```kotlin title="convention-plugins/build.gradle.kts"
+  dependencies {
+      implementation(libs.kotlin.gradle.plugin)
+      implementation(libs.kotlinx.datetime)  // Añadimos kotlinx-datetime
+  }
+  ```
+  
+  </TabItem>
+  <TabItem value="Groovy DSL">
+  
+  ```groovy title="convention-plugins/build.gradle"
+  dependencies {
+      implementation libs.kotlin.gradle.plugin
+      implementation libs.kotlinx.datetime  // Añadimos kotlinx-datetime
+  }
+  ```
+  
+  </TabItem>
+</Tabs>
+
+### Creación del `VersioningPlugin`
+
+Ahora vamos a crear el plugin que escribirá la versión y la fecha/hora en un archivo `version.txt`. Para ello, creamos un archivo llamado `VersioningPlugin.kt` en el paquete `plugins` dentro del módulo `convention-plugins` con el siguiente contenido:
+
+```kotlin title="convention-plugins/src/main/kotlin/plugins/VersioningPlugin.kt"
+package plugins
+
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+
+class VersioningPlugin : Plugin<Project> {
+    override fun apply(project: Project) {
+        // Definir una tarea que genera un archivo version.txt
+        project.tasks.register("generateVersionFile") {
+            group = "Versioning"
+            description = "Generates a version file with the project version and build date"
+
+            doLast {
+                val version = project.version.toString()
+                val currentMoment = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                val dateTime = currentMoment.toString().split('.')[0].replace('T', ' ')
+
+                val versionFile = project.layout.buildDirectory.file("version.txt").get().asFile
+
+                if (!versionFile.exists()) {
+                    versionFile.createNewFile()
+                }
+                
+                versionFile.appendText("Version: $version\nBuild Date: $dateTime\n\n")
+
+                println("Version file updated at: ${versionFile.absolutePath}")
+            }
+        }
+    }
+}
+```
+
+### Explicación del código
+
+1. **Uso de la interfaz `Plugin<Project>`**: 
+   - Nuestro plugin implementa la interfaz `Plugin<Project>`, lo que nos permite modificar el proyecto Gradle donde se aplique este plugin. El método `apply()` es el lugar donde definimos la lógica de nuestro plugin.
+   
+2. **Registro de la tarea `generateVersionFile`**:
+   - Usamos `project.tasks.register("generateVersionFile")` para definir una nueva tarea dentro del proyecto, la cual tendrá el grupo `Versioning` y una descripción clara de su propósito.
+
+3. **Obtención de la versión del proyecto**:
+   - `val version = project.version.toString()` extrae la versión actual del proyecto definida en el archivo `build.gradle.kts`.
+
+4. **Uso de `kotlinx.datetime` para obtener la fecha y hora actual**:
+   - `Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())` nos da la fecha y hora actual del sistema en la zona horaria predeterminada.
+   - Usamos `split('.')[0]` para eliminar los milisegundos y `replace('T', ' ')` para reemplazar el carácter `T` por un espacio en la representación de la fecha/hora.
+
+5. **Escritura en el archivo `version.txt`**:
+   - `project.layout.buildDirectory.file("version.txt").get().asFile` se encarga de obtener el archivo `version.txt` dentro de la carpeta de `build`.
+   - En lugar de sobrescribir el archivo, usamos `appendText()` para agregar la nueva versión y la fecha/hora al final del archivo, lo que permite mantener un historial de compilaciones.
+
+6. **Mensajes de confirmación**:
+   - Finalmente, imprimimos en consola un mensaje indicando que el archivo ha sido actualizado, mostrando la ubicación completa del archivo.
+
+### Aplicar el plugin en un proyecto
+
+Una vez creado el plugin, podemos aplicarlo en el proyecto principal o en cualquier subproyecto donde lo necesitemos. Por ejemplo, en el archivo `playground.gradle.kts`:
+
+<Tabs>
+  <TabItem value="Kotlin DSL">
+  
+  ```kotlin title="playground/build.gradle.kts"
+  import plugins.VersioningPlugin
+
+  apply<VersioningPlugin>()
+  ```
+  
+  </TabItem>
+  <TabItem value="Groovy DSL">
+  
+  ```groovy title="playground/build.gradle"
+  import plugins.VersioningPlugin
+
+  apply plugin: VersioningPlugin
+  ```
+  
+  </TabItem>
+</Tabs>
+
+### Ejecutar la tarea
+
+Finalmente, para generar o actualizar el archivo `version.txt`, ejecutamos la tarea `generateVersionFile` con el siguiente comando:
+
+```bash
+./gradlew generateVersionFile
+```
+
+Esto generará o actualizará un archivo `version.txt` en la carpeta `build` del proyecto con contenido como el siguiente:
+
+```plaintext
+Version: 1.0.0
+Build Date: 2024-09-10 17:53:06
+```
+
+Cada vez que se ejecute la tarea, el archivo se actualizará con una nueva entrada, añadiendo la versión actual y la fecha/hora en que se generó.
+
+:::tip Ejercicio
+<Tabs>
+    <TabItem value="Enunciado">
+        Vas a crear un plugin llamado **ProjectManagementPlugin** que añade dos tareas personalizadas al proyecto:
+
+        1. **`generateReadme`**: Genera un archivo `README.md` en la carpeta raíz del proyecto con un resumen del proyecto, incluyendo el nombre del proyecto, la versión, y la fecha de creación del archivo.
+        2. **`cleanLogs`**: Elimina todos los archivos de registro (`*.log`) de la carpeta `logs` del proyecto, si existen.
+    </TabItem>
+    <TabItem value="Solución">
+        ```kotlin
+        class ProjectManagementPlugin : Plugin<Project> {
+            override fun apply(project: Project) {
+                project.tasks.register("generateReadme") {
+                    group = "Project Management"
+                    description = "Generates a README.md file with project information"
+
+                    doLast {
+                        val projectName = project.name
+                        val projectVersion = project.version.toString()
+                        val currentDate = Clock.System.now()
+                            .toLocalDateTime(TimeZone.currentSystemDefault()).toString()
+
+                        val readmeContent = """
+                            # $projectName
+                            
+                            Versión: $projectVersion
+                            
+                            Fecha de creación: $currentDate
+                            """.trimIndent()
+
+                        val readmeFile = File(project.projectDir, "README.md")
+                        readmeFile.writeText(readmeContent)
+                        println("README.md generado en: ${readmeFile.absolutePath}")
+                    }
+                }
+
+                project.tasks.register("cleanLogs") {
+                    group = "Project Management"
+                    description = "Cleans all .log files in the logs directory"
+
+                    doLast {
+                        val logsDir = File(project.projectDir, "logs")
+                        if (logsDir.exists() && logsDir.isDirectory) {
+                            val logFiles = logsDir.listFiles { _, name -> name.endsWith(".log") }
+                            if (logFiles != null && logFiles.isNotEmpty()) {
+                                logFiles.forEach { it.delete() }
+                                println("${logFiles.size} archivos de registro eliminados.")
+                            } else {
+                                println("No se encontraron archivos de registro.")
+                            }
+                        } else {
+                            println("La carpeta 'logs' no existe.")
+                        }
+                    }
+                }
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+:::
+
+## Conclusiones
+
+Los **plugins personalizados** en Gradle ofrecen una poderosa herramienta para mejorar la reutilización y centralización de lógica en proyectos multi-módulo. Hemos visto cómo podemos crear tanto **plugins precompilados**, que permiten reutilizar configuraciones comunes fácilmente, como **plugins definidos como clases**, los cuales proporcionan flexibilidad adicional para modificar el comportamiento de los proyectos.
+
+Al aprender a crear plugins más avanzados, como el que escribe la versión del proyecto junto con la fecha y hora de compilación, hemos podido explorar cómo los plugins permiten automatizar tareas comunes, eliminando redundancias y errores manuales en la configuración de proyectos.
+
+Gradle nos proporciona diversas formas de aplicar estos plugins, desde el bloque `plugins` hasta el método `apply`. Entender cuándo usar cada enfoque es esencial para mantener un proyecto bien estructurado, eficiente y fácil de mantener.
+
+En resumen, dominar los **plugins personalizados** no solo facilita el trabajo con proyectos grandes y complejos, sino que también ofrece la capacidad de crear herramientas específicas para resolver necesidades particulares en cada proyecto. Esto hace que Gradle sea una opción extremadamente flexible y poderosa para la automatización de tareas de construcción en el desarrollo de software.

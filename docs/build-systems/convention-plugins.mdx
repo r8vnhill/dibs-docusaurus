@@ -61,8 +61,8 @@ demás módulos para garantizar que todas las configuraciones estén disponibles
 
 3. **repositories**: Dentro de esta sección definimos los repositorios de donde se obtendrán los plugins. En este caso,
 estamos usando dos repositorios:
- - `mavenCentral()`: El repositorio central de Maven, donde se encuentran numerosas dependencias y plugins.
- - `gradlePluginPortal()`: El repositorio oficial de Gradle para la gestión de plugins.
+     - `mavenCentral()`: El repositorio central de Maven, donde se encuentran numerosas dependencias y plugins.
+     - `gradlePluginPortal()`: El repositorio oficial de Gradle para la gestión de plugins.
 
 ## Configuración de Convention Plugins
 
@@ -144,7 +144,7 @@ de convention plugins.
     </TabItem>
 </Tabs>
 
-### ¿Qué estamos haciendo aquí?
+#### ¿Qué estamos haciendo aquí?
 
 1. **`rootProject.name = "convention-plugins"`**: Aquí definimos el nombre del proyecto principal como
 `convention-plugins`. Esto es importante para identificar y organizar correctamente el módulo dentro del entorno
@@ -157,9 +157,6 @@ Gradle.
 
 3. **`dependencyResolutionManagement`**: Configuramos cómo se gestionará la resolución de dependencias en todo el
     proyecto:
-    - **`repositoriesMode = RepositoriesMode.PREFER_SETTINGS`**: Esto asegura que las configuraciones de los
-        repositorios en `settings.gradle.kts` tengan prioridad sobre las configuraciones en archivos `build.gradle.kts`
-        de los subproyectos.
     - **Repositorios de dependencias**: Similar a la sección de gestión de plugins, se configuran los repositorios
         desde los cuales se descargarán las dependencias del proyecto, como `mavenCentral()` y `gradlePluginPortal()`.
 
@@ -167,6 +164,39 @@ Gradle.
     `libs.versions.toml`, ubicado fuera de la carpeta de `convention-plugins`. Este archivo externo permite gestionar
     versiones de dependencias de manera centralizada y reutilizable, lo que facilita la actualización de versiones en
     todos los módulos del proyecto de manera consistente.
+
+### Crear el archivo de construcción
+
+Dentro de la carpeta `convention-plugins`, crea un archivo de construcción para el módulo de plugins. Este archivo debe llamarse `build.gradle.kts` si estás utilizando Kotlin DSL, o `build.gradle` si prefieres Groovy DSL. A continuación, el contenido básico para configurar este módulo:
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="convention-plugins/build.gradle.kts"
+        plugins {
+            `kotlin-dsl`    // (1)
+        }
+
+        repositories {    // (2)
+            mavenCentral()
+            gradlePluginPortal()
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="convention-plugins/build.gradle"
+        repositories {    // (2)
+            mavenCentral()
+            gradlePluginPortal()
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+#### ¿Qué está pasando aquí?
+
+1. **`plugins { kotlin-dsl }`**: Este plugin habilita el uso de Kotlin en el archivo de construcción, permitiendo que puedas escribir tu archivo `build.gradle.kts` utilizando Kotlin en lugar de Groovy. Es innecesario si estás trabajando con Groovy DSL.
+
+2. **`repositories { mavenCentral(); gradlePluginPortal() }`**: Aquí estamos configurando los repositorios de donde se descargarán tanto las dependencias como los plugins. Utilizamos `mavenCentral()` para acceder a dependencias populares y `gradlePluginPortal()` para los plugins compatibles con Gradle.
 
 ## Mi Primer Plugin
 
@@ -236,6 +266,15 @@ versión definida en ese archivo, facilitando su actualización en todo el proye
 
 Una vez que hemos creado nuestro plugin, necesitamos aplicarlo en los subproyectos donde queremos que se apliquen las
 convenciones definidas. En este ejemplo, aplicaremos el plugin a los subproyectos `app` y `lib`.
+
+Para esto, primero debemos crear una carpeta para cada subproyecto, esto puedes hacerlo de la siguiente manera:
+
+```bash
+mkdir -p app/src/main/kotlin # Aquí irá el código de la aplicación
+mkdir -p app/src/test/kotlin # Aquí irán los tests de la aplicación
+mkdir -p lib/src/main/kotlin # Aquí irá el código de la librería
+mkdir -p lib/src/test/kotlin # Aquí irán los tests de la librería
+```
 
 #### En el subproyecto `app`:
 
