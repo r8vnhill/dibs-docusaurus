@@ -268,6 +268,107 @@ Si en algún submódulo no deseas aplicar el plugin `SomePlugin` u otros plugins
 
 Esto excluye al submódulo `js` de aplicar el plugin `SomePlugin`, mientras que todos los demás subproyectos seguirán aplicándolo.
 
+## Ejemplos de aplicaciones de plugins en diferentes lenguajes
+
+### Maven (para proyectos Java)
+
+En Maven, los plugins se configuran en el archivo `pom.xml`. A continuación se muestra un ejemplo de cómo agregar el plugin `maven-compiler-plugin`:
+
+```xml title="pom.xml"
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.8.1</version>
+            <configuration>
+                <source>1.8</source>
+                <target>1.8</target>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+```
+
+Sí, además de Gradle y Maven, otros sistemas de construcción también tienen soporte para **plugins** que extienden o mejoran sus capacidades. Aquí te dejo algunos ejemplos notables:
+
+### **npm/yarn (Node.js)**
+Tanto **npm** como **yarn** son sistemas de gestión de paquetes para proyectos JavaScript, y aunque no son "build systems" en el sentido clásico, utilizan **plugins** o paquetes adicionales para ejecutar scripts, automatizar tareas y manejar el ciclo de vida del proyecto.
+
+#### Ejemplo: Uso de Plugins (Paquetes) en npm/yarn
+```json title="package.json"
+{
+    "scripts": {
+        "build": "webpack --config webpack.config.js",
+        "test": "jest"
+    },
+    "devDependencies": {
+        "webpack": "^5.52.0",
+        "jest": "^27.0.6"
+    }
+}
+```
+Aquí, **Webpack** y **Jest** son paquetes (plugins) que se agregan como `devDependencies` y se invocan a través de los scripts de npm/yarn.
+
+Para instalar estos "plugins":
+```bash
+npm install --save-dev webpack jest
+# o con Yarn
+yarn add --dev webpack jest
+```
+
+### 2. **SBT (Scala Build Tool)**
+**SBT** es el sistema de construcción más común para proyectos en Scala, y también permite utilizar **plugins** para extender sus capacidades, como la integración continua, la gestión de dependencias y la compilación.
+
+#### Ejemplo: Agregar un plugin en SBT
+```scala title="project/plugins.sbt"
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.8.0")
+```
+
+En este caso, el plugin `sbt-native-packager` permite empaquetar aplicaciones Scala/Java de diversas maneras, incluidas distribuciones Docker.
+
+### **Cargo (Rust)**
+**Cargo** es el sistema de construcción y gestor de paquetes para proyectos **Rust**. Aunque Cargo no tiene un sistema de plugins tan amplio como Gradle o Maven, hay **complementos** (como herramientas adicionales) que se pueden integrar en el ciclo de vida de la construcción a través de scripts o dependencias en el archivo `Cargo.toml`.
+
+#### Ejemplo: Agregar herramientas de construcción en Cargo
+```toml title="Cargo.toml"
+[dependencies]
+serde = "1.0"
+serde_derive = "1.0"
+
+[build-dependencies]
+cc = "1.0"
+```
+
+Aquí, `serde` es una librería que se usa en el código Rust, y `cc` es un complemento que permite construir código C desde el mismo entorno de Cargo.
+
+### **CMake**
+**CMake** es un sistema de construcción utilizado principalmente en proyectos **C/C++**. CMake puede extenderse a través de **modulos** que actúan como plugins para gestionar dependencias, configuraciones de compilación y más.
+
+#### Ejemplo: Uso de módulos en CMake
+```cmake title="CMakeLists.txt"
+find_package(Boost 1.71.0 REQUIRED)
+include_directories(${Boost_INCLUDE_DIR})
+```
+
+Aquí, `find_package` busca módulos o bibliotecas como **Boost**, que es un conjunto de bibliotecas C++.
+
+### **Bazel**
+**Bazel** es otro sistema de construcción que permite usar **reglas** y **plugins** para definir cómo construir proyectos de gran escala. Los **plugins** en Bazel suelen ser llamados "reglas", y se pueden cargar desde el repositorio central de reglas de Bazel o definirse dentro del proyecto.
+
+#### Ejemplo: Agregar una regla (plugin) en Bazel
+```starlark title="WORKSPACE"
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "rules_docker",
+    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.14.1/rules_docker-v0.14.1.tar.gz"],
+    sha256 = "some-sha256-hash",
+)
+```
+
+Este ejemplo descarga y usa reglas para trabajar con Docker en Bazel.
+
 ## Recapitulando
 
 En este artículo, hemos explorado diferentes formas de aplicar plugins en Gradle, tanto en proyectos simples como en proyectos multi-módulo. Hemos visto cómo aplicar plugins de manera directa utilizando el bloque `plugins`, que es la forma recomendada por Gradle para gestionar versiones y garantizar una configuración declarativa y validada en tiempo de configuración.
@@ -275,9 +376,6 @@ En este artículo, hemos explorado diferentes formas de aplicar plugins en Gradl
 También cubrimos el uso del método `apply`, que ofrece mayor flexibilidad en la aplicación de plugins, permitiendo aplicar plugins de forma condicional o cuando se definen como clases dentro del proyecto.
 
 Finalmente, hemos abordado el uso de `apply false`, una técnica útil para declarar plugins centralizadamente sin aplicarlos inmediatamente, lo que proporciona un control más preciso en proyectos multi-módulo. Esta técnica, junto con el bloque `subprojects`, permite gestionar de manera eficiente la configuración de grandes proyectos con múltiples submódulos.
-
-En resumen, el bloque `plugins` es preferido por su simplicidad y seguridad, mientras que `apply` y `apply false` son herramientas útiles cuando se necesita una mayor flexibilidad en la configuración del proyecto.
-
 
 <References references={[
     {

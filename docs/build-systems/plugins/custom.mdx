@@ -305,6 +305,107 @@ Cada vez que se ejecute la tarea, el archivo se actualizará con una nueva entra
 </Tabs>
 :::
 
+## Crear Plugins en Diferentes Frameworks
+
+### Maven
+
+En Maven, puedes crear un **plugin** extendiendo la clase `AbstractMojo` y definiendo el comportamiento dentro del método `execute`. Los plugins se empaquetan como un archivo JAR y se configuran en el `pom.xml`.
+
+```java title="src/main/java/com/example/MyMojo.java"
+package com.example;
+
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Mojo;
+
+@Mojo(name = "sayhi")
+public class MyMojo extends AbstractMojo {
+    public void execute() throws MojoExecutionException {
+        getLog().info("¡Hola desde el plugin de Maven!");
+    }
+}
+```
+
+#### Aplicar el plugin en el proyecto
+
+En tu `pom.xml`, defines y ejecutas el plugin personalizado de Maven:
+
+```xml title="pom.xml"
+<build>
+    <plugins>
+        <plugin>
+            <groupId>com.example</groupId>
+            <artifactId>my-maven-plugin</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>sayhi</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+```
+
+### SBT (Scala)
+
+Para crear un plugin en SBT, extiende la clase `AutoPlugin` y define las tareas o configuraciones que el plugin proporcionará.
+
+```scala title="src/main/scala/MyPlugin.scala"
+import sbt._
+import sbt.Keys._
+
+object MyPlugin extends AutoPlugin {
+    override def trigger = allRequirements
+
+    object autoImport {
+        val customTask = taskKey[Unit]("Una tarea personalizada que imprime un mensaje")
+    }
+
+    import autoImport._
+
+    override lazy val projectSettings = Seq(
+        customTask := {
+            println("¡Hola desde el plugin personalizado de SBT!")
+        }
+    )
+}
+```
+
+#### Aplicar el plugin en el proyecto
+
+En tu archivo `build.sbt`, puedes cargar y ejecutar el plugin:
+
+```scala title="build.sbt"
+enablePlugins(MyPlugin)
+
+customTask
+```
+
+### npm (Node.js)
+
+En **Node.js**, los plugins se crean como paquetes que exportan funciones o clases para ser utilizadas en los scripts del proyecto.
+
+```js title="my-plugin.js"
+module.exports = function customPlugin() {
+    console.log("¡Hola desde el plugin personalizado de npm!");
+}
+```
+
+#### Aplicar el plugin en el proyecto
+
+Primero, instala el plugin como una dependencia local o global, luego lo usas en los scripts del proyecto:
+
+```json title="package.json"
+{
+    "scripts": {
+        "runPlugin": "node -e 'require(\"./my-plugin\")()'"
+    }
+}
+```
+
 ## Conclusiones
 
 Los **plugins personalizados** en Gradle ofrecen una poderosa herramienta para mejorar la reutilización y centralización de lógica en proyectos multi-módulo. Hemos visto cómo podemos crear tanto **plugins precompilados**, que permiten reutilizar configuraciones comunes fácilmente, como **plugins definidos como clases**, los cuales proporcionan flexibilidad adicional para modificar el comportamiento de los proyectos.
