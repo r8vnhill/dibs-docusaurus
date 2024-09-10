@@ -136,7 +136,7 @@ const renderReference = (reference: Reference) => {
             <li key={reference.id}>
                 {renderTypeEmoji(reference.type)}{' '}
                 <strong>{reference.siteOrAuthor}.</strong> "{reference.title}"
-                Accessed {reference.accessedDate}.{' '}
+                Accedido {reference.accessedDate}.{' '}
                 <a href={reference.url} target="_blank" rel="noopener noreferrer">
                     {reference.url}
                 </a>
