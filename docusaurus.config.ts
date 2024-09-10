@@ -102,7 +102,8 @@ const config: Config = {
                 "powershell",
                 "toml",
                 "properties",
-                "ruby"
+                "ruby",
+                'groovy',
             ],
         },
     } satisfies Preset.ThemeConfig,
@@ -115,6 +116,10 @@ const config: Config = {
             crossorigin: 'anonymous',
         },
     ],
+    plugins: [
+        require.resolve('docusaurus-lunr-search'),
+    ],
 };
 
+// noinspection JSUnusedGlobalSymbols
 export default config;

@@ -45,6 +45,7 @@ const sidebars: SidebarsConfig = {
                         'build-systems/tasks/classes',
                     ],
                 },
+                'build-systems/plugins',
                 'build-systems/static-analysis',
             ],
         },
