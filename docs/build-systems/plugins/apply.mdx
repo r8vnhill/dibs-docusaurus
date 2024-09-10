@@ -1,0 +1,290 @@
+---
+title: Usando Plugins
+---
+import ReadingTime from "../../../src/components/ReadingTime";
+import References from "../../../src/components/ReferencesComponent";
+import TabItem from '@theme/TabItem';
+import Tabs from '@theme/Tabs';
+
+<ReadingTime/>
+
+## Aplicación de plugins
+
+Gradle ofrece varias formas de aplicar plugins en el bloque `plugins`. A continuación, se presentan los métodos más
+comunes:
+
+### Aplicación directa
+#### Aplicación por ID con versión
+
+Esta es la forma más habitual de aplicar un plugin, especificando su ID y versión:
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin
+        plugins {
+            id("some.plugin") version "1.0.0"
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy
+        plugins {
+            id 'some.plugin' version '1.0.0'
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+#### Aplicación por ID sin versión
+
+Si gestionas las versiones de los plugins en un archivo centralizado como `libs.versions.toml`, puedes omitir la
+versión directamente en el bloque `plugins`. Este es el método recomendado para proyectos que usan una gestión
+centralizada de versiones:
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin
+        plugins {
+            id("some.plugin")
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy
+        plugins {
+            id 'some.plugin'
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+#### Uso de alias para plugins (desde `libs.versions.toml`)
+
+Gradle también permite definir alias en un archivo `libs.versions.toml` para simplificar la declaración de los plugins:
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin
+        plugins {
+            alias(libs.plugins.some.plugin)
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy
+        plugins {
+            alias libs.plugins.some.plugin
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+#### Aplicación por nombre "simple"
+
+Algunos plugins integrados de Gradle, como `java-library` o `application`, pueden aplicarse de manera más concisa
+utilizando su nombre directamente. Si el nombre del plugin contiene caracteres especiales, como guiones (`-`), usa
+comillas invertidas:
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin
+        plugins {
+            `java-library`  // Con comillas invertidas debido al guion
+            application     // Sin comillas porque no contiene caracteres especiales
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy
+        plugins {
+            id 'java-library'  // Usa comillas simples para los IDs de plugins que contienen caracteres especiales
+            id 'application'   // Lo mismo para IDs de plugins simples, se recomienda usar comillas simples
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+#### Aplicación mediante funciones específicas (Kotlin DSL)
+
+Algunos plugins, como el de Kotlin, tienen funciones específicas en Kotlin DSL, lo que mejora la legibilidad y
+facilita el uso de diferentes configuraciones dentro del mismo bloque:
+
+```kotlin
+plugins {
+    kotlin("jvm") version "1.6.21"
+}
+```
+
+---
+
+Estas son las principales formas de aplicar plugins en Gradle usando el bloque `plugins`. El uso de alias y la gestión
+centralizada de versiones en `libs.versions.toml` es recomendable para mantener una consistencia en la versión de los
+plugins en proyectos grandes.
+
+### Aplicación mediante `apply`
+
+El método `apply` permite aplicar plugins de forma dinámica en cualquier parte del script de construcción. Esto podría
+ser útil si necesitas aplicar un plugin condicionalmente o en función de alguna lógica específica.
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin
+        apply(plugin = "some.plugin")   // Aplicación por ID
+        apply<SomePlugin>()             // Aplicación por tipo
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy
+        apply plugin: "some.plugin"     // Aplicación por ID
+        apply plugin: SomePlugin        // Aplicación por tipo
+        ```
+    </TabItem>
+</Tabs>
+
+Si bien el método `apply` es más flexible, se recomienda utilizar el bloque `plugins` para aplicar plugins en la mayoría de los casos, ya que proporciona una forma más segura y declarativa de gestionar las dependencias del proyecto.
+
+### Diferencias entre `plugins` y `apply`
+
+| **Característica**                             | **Bloque `plugins`**                                                             | **Método `apply`**                                 |
+|------------------------------------------------|----------------------------------------------------------------------------------|----------------------------------------------------|
+| **Validación en tiempo de configuración**      | Sí. Detecta errores de configuración al inicio.                                  | No. La validación ocurre en tiempo de ejecución.   |
+| **Compatibilidad con repositorios de plugins** | Sí. Se integra directamente con el portal de plugins de Gradle.                  | No. Requiere que los plugins ya estén disponibles. |
+| **Aplicación condicional**                     | No. Es más declarativo y estático.                                               | Sí. Permite lógica condicional dentro del script.  |
+| **Soporte para plugins personalizados**        | Sí, si el plugin está en un archivo de convención.                              | Necesario para plugins definidos como clases.      |
+| **Gestión de versiones**                       | Centralizada a través de `libs.versions.toml`.                                   | Puede necesitar lógica adicional para gestionar versiones. |
+
+### ¿Cuándo usar `plugins` y `apply`?
+
+- **Usar `plugins`**:
+    - Cuando trabajes con **plugins estándar** de Gradle que están disponibles en repositorios de plugins.
+    - Para aprovechar la **validación en tiempo de configuración**, lo que mejora la detección temprana de errores.
+    - Si deseas tener una configuración más **declarativa y estática**, especialmente en proyectos modernos.
+
+- **Usar `apply`**:
+    - Cuando necesites aplicar un **plugin condicionalmente** basado en una propiedad o lógica del proyecto.
+    - Cuando estés **migrando un proyecto antiguo** que ya utiliza `apply`, o para manejar casos donde `plugins` no puede ser utilizado (por ejemplo, ciertos proyectos multiproyecto).
+
+Recuerda que para la mayoría de los casos, el bloque `plugins` es la opción recomendada por su simplicidad, seguridad y mejor integración con el ecosistema de Gradle. Sin embargo, si necesitas mayor flexibilidad, `apply` sigue siendo una herramienta útil para personalizar y condicionar la aplicación de plugins.
+
+## Aplicación de plugins en sub-módulos
+
+Cuando trabajas con proyectos **multi-módulo** en Gradle, es común que necesites aplicar un mismo plugin a varios submódulos. En lugar de duplicar la configuración del plugin en cada submódulo, Gradle permite aplicar plugins de manera centralizada a todos los subproyectos. Esto ayuda a mantener una configuración **coherente** y **fácil de mantener**.
+
+En este caso, estamos aplicando el plugin `jvm.conventions` en todos los subproyectos. Para evitar aplicar el plugin individualmente en cada subproyecto, podemos centralizar esta tarea utilizando el bloque `subprojects` dentro del archivo `build.gradle.kts` o `build.gradle`.
+
+### Aplicación centralizada del plugin en todos los subproyectos
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="build.gradle.kts"
+        subprojects {
+            apply(plugin = "jvm.conventions")
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="build.gradle"
+        subprojects {
+            apply plugin: 'jvm.conventions'
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+De esta forma, el plugin `jvm.conventions` se aplicará automáticamente en **todos los subproyectos** del proyecto principal, eliminando la necesidad de repetir la misma configuración en cada uno de ellos.
+
+Aquí tienes una versión mejorada que aclara los casos de uso de `apply false`, con ejemplos concretos sobre cuándo y por qué es útil. También está envuelto en Markdown como solicitaste.
+
+### Usando `apply false`
+
+Cuando trabajas en un proyecto **multi-módulo** en Gradle, es posible que quieras **declarar** un plugin de forma centralizada sin aplicarlo automáticamente en todos los subproyectos. Aquí es donde entra en juego `apply false`. Esta opción es útil para **centralizar versiones** de plugins y gestionarlas en un único lugar, pero dejando la aplicación del plugin a nivel de subproyecto cuando sea necesario.
+
+#### ¿Por qué usar `apply false`?
+
+1. **Centralización de versiones**: Si gestionas todas las versiones de los plugins en un solo lugar, puedes declarar un plugin en el proyecto raíz y aplicarlo manualmente en los subproyectos que lo requieran.
+2. **Evitar la duplicación**: Puedes evitar declarar la versión del plugin en cada subproyecto, lo que facilita su mantenimiento y actualización.
+3. **Flexibilidad**: Permite que ciertos subproyectos apliquen el plugin y otros no, dándote mayor control sobre qué módulos requieren el plugin y cuáles no.
+
+#### Ejemplo de uso
+
+Supongamos que tenemos varios subproyectos, pero solo algunos de ellos requieren el plugin `kotlin`. Podemos declarar el plugin `java` en el bloque `plugins` del proyecto raíz, pero usando `apply false` para no aplicarlo inmediatamente.
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin
+        plugins {
+            kotlin("jvm") version "2.0.20" apply false  // Declaramos el plugin 'kotlin' sin aplicarlo inmediatamente
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy
+        plugins {
+            id 'org.jetbrains.kotlin.jvm' version '2.0.20' apply false  // Declaramos el plugin 'kotlin' sin aplicarlo inmediatamente
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+Con esta configuración, el plugin `kotlin` no se aplicará a ningún subproyecto por defecto. Sin embargo, puedes aplicarlo manualmente en los subproyectos que lo necesiten:
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="subproject/build.gradle.kts"
+        apply(plugin = "kotlin")  // Aplica el plugin 'kotlin' en este subproyecto específico
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="subproject/build.gradle"
+        apply plugin: 'org.jetbrains.kotlin.jvm'  // Aplica el plugin 'kotlin' en este subproyecto específico
+        ```
+    </TabItem>
+</Tabs>
+
+### Flexibilidad con `subprojects`
+
+Si en algún submódulo no deseas aplicar el plugin `SomePlugin` u otros plugins de manera centralizada, puedes excluir ciertos submódulos de la aplicación de plugins usando condiciones dentro del bloque `subprojects`. Por ejemplo:
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin
+        subprojects {
+            if (name != "js") {
+                apply<SomePlugin>()
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy
+        subprojects {
+            if (name != 'js') {
+                apply plugin: SomePlugin
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+Esto excluye al submódulo `js` de aplicar el plugin `SomePlugin`, mientras que todos los demás subproyectos seguirán aplicándolo.
+
+## Recapitulando
+
+En este artículo, hemos explorado diferentes formas de aplicar plugins en Gradle, tanto en proyectos simples como en proyectos multi-módulo. Hemos visto cómo aplicar plugins de manera directa utilizando el bloque `plugins`, que es la forma recomendada por Gradle para gestionar versiones y garantizar una configuración declarativa y validada en tiempo de configuración.
+
+También cubrimos el uso del método `apply`, que ofrece mayor flexibilidad en la aplicación de plugins, permitiendo aplicar plugins de forma condicional o cuando se definen como clases dentro del proyecto.
+
+Finalmente, hemos abordado el uso de `apply false`, una técnica útil para declarar plugins centralizadamente sin aplicarlos inmediatamente, lo que proporciona un control más preciso en proyectos multi-módulo. Esta técnica, junto con el bloque `subprojects`, permite gestionar de manera eficiente la configuración de grandes proyectos con múltiples submódulos.
+
+En resumen, el bloque `plugins` es preferido por su simplicidad y seguridad, mientras que `apply` y `apply false` son herramientas útiles cuando se necesita una mayor flexibilidad en la configuración del proyecto.
+
+
+<References references={[
+    {
+        accessedDate: '10 de septiembre de 2024',
+        siteOrAuthor: 'Gradle',
+        title: 'Using Plugins',
+        type: 'web',
+        url: 'https://docs.gradle.org/current/userguide/plugins.html',
+    },
+]}/>

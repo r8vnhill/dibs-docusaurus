@@ -45,7 +45,17 @@ const sidebars: SidebarsConfig = {
                         'build-systems/tasks/classes',
                     ],
                 },
-                'build-systems/plugins',
+                {
+                    type: 'category',
+                    label: 'Plugins',
+                    link: {
+                        type: 'doc',
+                        id: 'build-systems/plugins/index',
+                    },
+                    items: [
+                        'build-systems/plugins/apply',
+                    ],
+                },
                 'build-systems/static-analysis',
             ],
         },
