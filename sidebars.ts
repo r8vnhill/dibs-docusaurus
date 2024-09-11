@@ -55,6 +55,7 @@ const sidebars: SidebarsConfig = {
                     items: [
                         'build-systems/plugins/apply',
                         'build-systems/plugins/custom',
+                        'build-systems/plugins/extensions'
                     ],
                 },
                 'build-systems/static-analysis',
@@ -67,6 +68,7 @@ const sidebars: SidebarsConfig = {
                     },
                     items: [
                         'build-systems/library/logic',
+                        'build-systems/library/compile',
                     ],
                 }
             ],

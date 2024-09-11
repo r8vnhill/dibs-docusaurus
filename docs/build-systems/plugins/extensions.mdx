@@ -1,0 +1,238 @@
+---
+title: Extensiones
+---
+
+import References from "../../../src/components/ReferencesComponent";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import ReadingTime from "../../../src/components/ReadingTime";
+
+<ReadingTime/>
+
+A veces necesitamos una forma más conveniente y flexible de configurar plugins en nuestros proyectos. En lugar de repetir la misma configuración en varios archivos, podemos encapsular esa configuración en **extensiones**. Las extensiones permiten agregar propiedades y métodos adicionales a un plugin, facilitando su personalización y uso en todo el proyecto.
+
+## ¿Qué es `ext`?
+
+La extensión `ext` en Gradle es un mecanismo que nos permite agregar **propiedades** y **métodos** a nuestro proyecto o plugin, de una manera dinámica y flexible. Las propiedades definidas en `ext` se comportan como variables globales que podemos reutilizar en diferentes tareas o configuraciones a lo largo del proyecto. Se pueden definir directamente como un diccionario o dentro de un bloque `ext`.
+
+Por ejemplo, si necesitamos que una tarea como `greet` imprima un mensaje personalizado en función del módulo que esté ejecutando, podemos hacerlo configurando `ext` de esta manera.
+
+### Ejemplo de uso con `greet`
+
+Vamos a modificar la tarea `greet` para que imprima un mensaje de saludo diferente según el módulo donde se esté ejecutando:
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="./echo/convention-plugins/src/main/kotlin/playground.gradle.kts"
+        tasks.register("greet") {
+            group = "playground"
+            description = "Prints a greeting message"
+            doLast {
+                println("Hello, from ${ext["module"]}!")
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="./echo/convention-plugins/src/main/groovy/playground.gradle"
+        tasks.register('greet') {
+            group = 'playground'
+            description = 'Prints a greeting message'
+            doLast {
+                println("Hello, from ${ext['module']}!")
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+### Definiendo la propiedad `module`
+
+Para personalizar el mensaje de saludo, podemos definir la propiedad `module` en el archivo de configuración del módulo principal (o en cualquier otro módulo) de las siguientes formas:
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="./echo/build.gradle.kts"
+        // Definir el valor de la propiedad directamente
+        ext["module"] = "main"
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="./echo/build.gradle"
+        // Definir el valor de la propiedad directamente
+        ext.module = 'main'
+        ```
+    </TabItem>
+</Tabs>
+
+### Usando el bloque `ext`
+
+También podemos configurar la propiedad `module` dentro de un bloque `ext`, lo que ofrece una forma más declarativa de establecer configuraciones en el proyecto:
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="./echo/build.gradle.kts"
+        // Usar el bloque ext para configurar la propiedad
+        ext {
+            set("module", project.name)
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="./echo/build.gradle"
+        // Usar el bloque ext para configurar la propiedad
+        ext {
+            module = project.name
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+### Ejecutando la tarea `greet`
+
+Finalmente, podemos ejecutar la tarea `greet` para ver el mensaje de saludo personalizado:
+
+```bash
+./gradlew greet
+```
+
+Al ejecutar la tarea `greet`, veremos un mensaje de saludo personalizado que incluye el nombre del módulo:
+
+```plaintext
+Hello, from echo!
+```
+
+## Las limitaciones de `ext`
+
+Aunque `ext` es una forma conveniente de agregar propiedades y métodos a un proyecto en Gradle, presenta algunas desventajas importantes. En particular, **`ext` no es seguro en tiempo de compilación**, lo que puede llevar a errores difíciles de depurar. Por ejemplo, si intentamos acceder a una propiedad que no está definida en `ext`, Gradle lanzará un error solo en tiempo de ejecución.
+
+Este comportamiento puede provocar problemas inesperados, especialmente en proyectos grandes, donde errores como estos pueden pasar desapercibidos hasta que el script se ejecuta.
+
+### El riesgo de `ext`:
+- **Errores en tiempo de ejecución**: Acceder a una propiedad que no existe resultará en un error que solo se detectará cuando se ejecute la tarea, lo que complica la depuración.
+- **Falta de tipado**: `ext` permite definir propiedades dinámicamente, pero no verifica su tipo, lo que incrementa las posibilidades de cometer errores al manipular estas propiedades.
+
+### Alternativa: Extensiones tipadas
+
+Para mitigar estos problemas, podemos usar **extensiones tipadas**, que permiten definir propiedades con seguridad en tiempo de compilación. Esto significa que Gradle podrá verificar la existencia y tipo de las propiedades antes de ejecutar el script, previniendo errores antes de que ocurran.
+
+Las extensiones tipadas proporcionan:
+- **Seguridad en tiempo de compilación**: Detecta errores de propiedades no definidas o mal tipadas durante la compilación.
+- **Autocompletado**: Mejora la experiencia del desarrollador al permitir autocompletado de las propiedades en los IDEs.
+
+### Definiendo una extensión tipada
+
+Para mejorar la seguridad y el tipado en nuestra tarea `greet`, vamos a definir una **extensión tipada** que incluya la propiedad `module`. Esto nos permitirá configurar y acceder de manera segura a esta propiedad desde cualquier parte del proyecto.
+
+#### 1. Creando la extensión tipada
+
+Primero, definimos una clase `GreetExtension` que contendrá la propiedad `module`. Colocamos esta clase en el paquete `extensions` dentro del módulo `convention-plugins`.
+
+```kotlin title="./echo/convention-plugins/src/main/kotlin/extensions/GreetExtension.kt"
+abstract class GreetExtension {
+    abstract var module: String
+}
+```
+
+#### 2. Registrando la extensión en el plugin
+
+A continuación, registramos la extensión tipada en nuestro plugin `playground`, lo que hará que esté disponible en todo el proyecto. La tarea `greet` accederá a la propiedad `module` definida en la extensión.
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="./echo/convention-plugins/src/main/kotlin/playground.gradle.kts"
+        project.extensions.create("greeting", GreetExtension::class)
+
+        tasks.register("greet") {
+            group = "playground"
+            description = "Prints a greeting message"
+            doLast {
+                val module = project.extensions.getByType(GreetExtension::class).module
+                println("Hello, from $module!")
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="./echo/convention-plugins/src/main/groovy/playground.gradle"
+        project.extensions.create("greeting", GreetExtension)
+
+        tasks.register('greet') {
+            group = 'playground'
+            description = 'Prints a greeting message'
+            doLast {
+                def module = project.extensions.getByType(GreetExtension).module
+                println("Hello, from $module!")
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+#### 3. Construir el proyecto
+
+Antes de usar la extensión, compilamos los plugins para asegurar que todo está correctamente registrado y disponible.
+
+```bash
+./gradlew :convention-plugins:build
+```
+
+### Configurando la extensión tipada
+
+Ahora, configuramos la propiedad `module` de la extensión tipada en el archivo de configuración del módulo principal. Esto se hace agregando el bloque `greeting` en el archivo `build.gradle`.
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="./echo/build.gradle.kts"
+        // Configurar la propiedad module de la extensión tipada
+        greeting {
+            module = project.name
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="./echo/build.gradle"
+        // Configurar la propiedad module de la extensión tipada
+        greeting {
+            module = project.name
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+### Ejecutando la tarea `greet`
+
+Para ejecutar la tarea `greet` y ver el mensaje de saludo personalizado con el nombre del módulo, simplemente ejecuta el siguiente comando:
+
+```bash
+./gradlew greet
+```
+
+El resultado esperado será un mensaje como el siguiente, que incluye el nombre del módulo:
+
+```plaintext
+Hello, from echo!
+```
+
+## Lo que vimos
+
+En esta sección, aprendimos a encapsular configuraciones utilizando extensiones en Gradle, específicamente con la extensión `ext`. Este mecanismo nos permitió definir propiedades y métodos de manera flexible para su uso en diversas tareas del proyecto. Vimos cómo personalizar el comportamiento de la tarea `greet` según el módulo donde se ejecute, utilizando `ext` como una herramienta práctica para configurar el proyecto.
+
+Sin embargo, también abordamos las limitaciones del uso de `ext`, como la falta de tipado y seguridad en tiempo de compilación. Esto puede provocar errores que solo se descubren en tiempo de ejecución, lo que complica el proceso de depuración en proyectos grandes.
+
+Para mejorar la seguridad y la mantenibilidad del proyecto, introdujimos las **extensiones tipadas**. Estas extensiones ofrecen una alternativa más robusta, ya que permiten definir propiedades con seguridad en tiempo de compilación y brindan soporte para el autocompletado en IDEs, lo que facilita el trabajo del desarrollador.
+
+Finalmente, implementamos una extensión tipada para la tarea `greet`, que nos permitió gestionar propiedades de manera más segura y eficiente en todo el proyecto. El resultado fue un sistema más robusto y fácil de mantener, con mayor control sobre la configuración del proyecto.
+
+<References references={[
+    {
+        title: "Extending Gradle",
+        bookTitle: "Gradle in Action",
+        pages: "191–222",
+        location: "Shelter Island, NY",
+        publisher: "Manning",
+        year: "2014",
+        type: "book",
+        author: 'Muschko, Benjamin and Dockter, Hans',
+    },
+]}/>

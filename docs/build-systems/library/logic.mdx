@@ -1,11 +1,10 @@
 ---
 title: "Disyuntiva lógica: negocio vs. aplicación"
 ---
-
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
 import ReadingTime from "../../../src/components/ReadingTime";
-import Definition from '../../../src/components/Definition';
+import References from "../../../src/components/ReferencesComponent";
+import TabItem from "@theme/TabItem";
+import Tabs from "@theme/Tabs";
 
 <ReadingTime/>
 
@@ -158,108 +157,145 @@ fun echo(message: String) = "${Clock.System.now()} - $message"
 
 Esta implementación permite reutilizar la función `echo` desde distintos módulos o aplicaciones, sin que dependa de la lógica específica de la aplicación.
 
-### Utilizando la biblioteca con `flatDir`
-
-Ya tienes todo listo para utilizar la biblioteca de forma local. Para hacerlo, debes añadir la dependencia de la biblioteca en el archivo `build.gradle.kts` del módulo `app`. Empezaremos por una configuración sencilla utilizando `flatDir`, que es la forma más directa de apuntar a dependencias locales en formato JAR.
-
-#### ¿Qué es `flatDir`?
-
-`flatDir` es un tipo de repositorio local que permite a Gradle buscar archivos JAR (Java ARchive) en uno o más directorios específicos del sistema de archivos. Es una solución rápida cuando no se utiliza un repositorio remoto, como Maven Central, para gestionar dependencias. En lugar de publicar la biblioteca, simplemente empaquetas tu código en un archivo JAR y lo colocas en una carpeta local, permitiendo que otros módulos de tu proyecto lo consuman como dependencia.
-
-<Definition title="JAR">
-    Un archivo JAR (Java ARchive) es un archivo ZIP que contiene clases Java, recursos y metadatos. Es un formato comúnmente utilizado para distribuir bibliotecas y aplicaciones Java.
-</Definition>
-
-Este método es útil para pruebas rápidas o cuando se trabaja en varios módulos de un proyecto localmente. Más adelante ahondaremos en el concepto de JAR, pero por ahora, es suficiente saber que es un archivo que contiene código Java o Kotlin que puede ser reutilizado en diferentes proyectos o módulos.
-
-#### Configuración de `flatDir`
-
-Para configurar `flatDir`, seguimos los siguientes pasos:
-
-1. **Añadir un repositorio local**: Primero, configuramos un repositorio `flatDir` en el archivo `settings.gradle.kts` que apunta a la carpeta `libs`, donde estará ubicado nuestro archivo JAR.
-2. **Añadir la dependencia de la biblioteca**: Luego, en el archivo `build.gradle.kts` del módulo `app`, añadimos la dependencia de la biblioteca, indicando su nombre.
-
-Aquí están los cambios necesarios en los archivos de configuración:
-
+:::tip Ejercicio: Identificar y Separar Lógica de Negocio y Aplicación
 <Tabs>
-    <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin title="settings.gradle.kts"
-        dependencyResolutionManagement {
-        repositories {
-        flatDir {
-        dirs(file("libs"))  // Indicamos la carpeta donde se buscarán los archivos JAR
-    }
-    }
-    }
+    <TabItem value="Enunciado" label="Enunciado">
+        Estás construyendo una aplicación simple de gestión de tareas. Actualmente, el código está todo en un solo archivo, lo que lo hace más difícil de mantener y reutilizar. Tu tarea es identificar las partes que corresponden a la **lógica de negocio** y las que corresponden a la **lógica de aplicación**.
+
+        ### Código Inicial
+
+        ```kotlin
+        class Item(val id: String, val name: String, val quantity: Int, val lastUpdated: String) {
+            fun copy(
+                id: String = this.id, 
+                name: String = this.name, 
+                quantity: Int = this.quantity, 
+                lastUpdated: String = this.lastUpdated
+            ) = Item(id, name, quantity, lastUpdated)
+        }
+
+        val items = mutableListOf<Item>()
+
+        fun addItem(name: String, quantity: Int) {
+            val id = UUID.randomUUID().toString()   // Generar un ID único
+            val currentTime = Clock.System.now()
+                .toLocalDateTime(TimeZone.currentSystemDefault()).toString()
+            val item = Item(id, name, quantity, currentTime)
+            items.add(item)
+            println("Item added: $name with quantity $quantity")
+        }
+
+        fun updateItem(id: Int, quantity: Int) {
+            val item = items.find { it.id == id }
+            if (item != null) {
+                val updatedItem = item.copy(
+                    quantity = quantity, 
+                    lastUpdated = Clock.System.now()
+                        .toLocalDateTime(TimeZone.currentSystemDefault()).toString()
+                )
+                items[items.indexOf(item)] = updatedItem
+                println("Updated item: ${item.name} to quantity: $quantity")
+            } else {
+                println("Item not found")
+            }
+        }
+
+        fun promptForCommand(): String {
+            println("Enter a command (add, update, list, totalValue, exit):")
+            return readLine() ?: ""
+        }
+
+        fun handleAddCommand() {
+            val name = promptForItemName()
+            val quantity = promptForQuantity()
+            addItem(name, quantity)
+        }
+
+        fun handleUpdateCommand() {
+            val id = promptForItemId()
+            val quantity = promptForQuantity()
+            updateItem(id, quantity)
+        }
+
+        fun promptForItemName(): String {
+            println("Enter item name:")
+            return readLine() ?: ""
+        }
+
+        fun promptForQuantity(): Int {
+            println("Enter quantity:")
+            return readLine()?.toIntOrNull() ?: 0
+        }
+
+        fun promptForItemId(): Int {
+            println("Enter item ID:")
+            return readLine()?.toIntOrNull() ?: 0
+        }
+
+        fun main() {
+            while (true) {
+                val command = promptForCommand()
+                when (command) {
+                    "add" -> handleAddCommand()
+                    "update" -> handleUpdateCommand()
+                    "exit" -> break
+                    else -> println("Unknown command")
+                }
+            }
+        }
         ```
-        ```kotlin title="app/build.gradle.kts"
-        dependencies {
-        implementation(name = "lib")  // Añadimos la dependencia de la biblioteca 'lib'
-    }
-        ```
+
+        ### Preguntas
+        1. ¿Qué parte del código crees que corresponde a la **lógica de aplicación**?
+        2. ¿Qué parte del código puedes considerar como **lógica de negocio**?
+        3. ¿Cómo refactorizarías el código para separar estos dos tipos de lógica? No es necesario implementar la separación, solo describe cómo lo harías.
     </TabItem>
-    <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy title="settings.gradle"
-        dependencyResolutionManagement {
-        repositories {
-        flatDir {
-        dirs file("libs")  // Indicamos la carpeta donde se buscarán los archivos JAR
-    }
-    }
-    }
-        ```
-        ```groovy title="app/build.gradle"
-        dependencies {
-        implementation name: "lib"  // Añadimos la dependencia de la biblioteca 'lib'
-    }
-        ```
+    <TabItem value="Solución" label="Solución">
+        ### Solución
+
+        1. **Lógica de Aplicación**:
+            - La **lógica de aplicación** se refiere a todo lo relacionado con la interacción con el usuario, gestión del flujo del programa y manejo de comandos.
+            - Esto incluye:
+              - `promptForCommand()`
+              - `handleAddCommand()`
+              - `handleUpdateCommand()`
+              - `promptForItemName()`, `promptForQuantity()`, `promptForItemId()`
+              - La función `main`, ya que es la encargada de coordinar todo el flujo de la aplicación y las interacciones con el usuario.
+
+        2. **Lógica de Negocio**:
+            - La **lógica de negocio** incluye las operaciones que involucran directamente las reglas de negocio, como la gestión de los items (agregar, actualizar, y la manipulación de los mismos).
+            - Esto incluye:
+              - La clase `Item`, que es parte del modelo de negocio.
+              - Las funciones `addItem()` y `updateItem()`, ya que estas se encargan de procesar la lógica central de la aplicación (creación y modificación de items).
+
+        3. **Refactorización**:
+            - Para separar la **lógica de negocio** de la **lógica de aplicación**, podríamos mover la lógica de negocio a una biblioteca separada o a otro módulo que maneje solo las operaciones de gestión de items.
+            - Podríamos hacer lo siguiente:
+              - Mover la clase `Item` y las funciones `addItem()` y `updateItem()` a un módulo o archivo separado, por ejemplo, a un archivo llamado `ItemService.kt`.
+              - Mantener las funciones que manejan las interacciones con el usuario (`promptForCommand()`, `handleAddCommand()`, etc.) en el archivo de la aplicación principal.
+              - Esto permitiría que el módulo de negocio no dependa de la interfaz de usuario y que pueda ser probado o reutilizado en otros contextos sin necesidad de modificar la lógica de aplicación.
     </TabItem>
 </Tabs>
 
-#### Proceso completo
-
-1. **Empaquetar la biblioteca**: Primero, deberás compilar y empaquetar tu biblioteca en un archivo JAR. Esto puede hacerse ejecutando:
-
- ```bash
- ./gradlew lib:jar
-    ```
-
-Esto generará un archivo JAR en el directorio `build/libs/` dentro de tu módulo de la biblioteca. Mueve este archivo a una carpeta `libs` en el directorio raíz de tu proyecto.
-
-2. **Referenciar el JAR en tu aplicación**: Con el JAR en la carpeta `libs`, tu aplicación puede ahora referenciar y utilizar la biblioteca `lib` sin que tengas que modificar el código fuente de la biblioteca o compilarla manualmente cada vez.
-
-Este enfoque con `flatDir` es útil cuando estás desarrollando localmente y necesitas una integración rápida. Sin embargo, en entornos más grandes o colaborativos, es recomendable publicar tu biblioteca en un repositorio de artefactos como Maven Central o un repositorio privado para gestionar mejor las versiones y dependencias.
-
-### Probando la biblioteca
-
-Para probar que la biblioteca funciona correctamente, podemos modificar la función `main` de nuestra aplicación para utilizar la función `echo` de la biblioteca. De esta forma, verificamos que la lógica de negocio se ha separado correctamente de la lógica de aplicación:
-
-```kotlin title="app/src/main/kotlin/cl/ravenhill/EchoApp.kt"
-package cl.ravenhill
-
-// Como la función echo está en el mismo paquete, no es necesario importarla
-
-fun main(args: Array<String>) {
-    for (arg in args) {
-        println(echo(arg))
-    }
-}
-```
-
-Ahora, podemos hacer una prueba rápida para verificar que todo funciona correctamente.
-
-Primero compila la biblioteca en un ejecutable haciendo:
-
-```bash
-./gradlew :app:installDist
-```
-
-Luego, ejecuta la aplicación con un mensaje de prueba:
-
-```bash
-./app/build/install/app/bin/app "Hola," "mundo!"
-```
-
-Si todo ha ido bien, deberías ver la fecha y hora actual seguida de los mensajes que has pasado como argumentos.
+:::
 
 ## ¿Qué aprendimos?
+
+En esta sección hemos aprendido a separar la **lógica de negocio** de la **lógica de aplicación**. A través de este proceso, vimos cómo la lógica de negocio —que es independiente de la infraestructura— puede extraerse a una biblioteca independiente, haciéndola más reutilizable y fácil de mantener. Por otro lado, la lógica de aplicación permanece en el módulo principal de la aplicación, encargándose de manejar las interacciones con el sistema, como la entrada y salida de datos.
+
+### Ventajas clave:
+1. **Modularidad**: Al separar la lógica en distintos módulos, logramos un sistema más modular, lo que facilita la mantenibilidad y escalabilidad.
+2. **Reutilización**: Al tener la lógica de negocio en una biblioteca independiente, puede ser reutilizada en otras aplicaciones sin depender de una implementación específica.
+3. **Facilidad de pruebas**: Las pruebas unitarias sobre la lógica de negocio son más sencillas ya que no dependen de infraestructura como bases de datos o redes.
+
+En el próximo artículo, veremos cómo compilar la biblioteca que hemos creado y cómo integrarla de manera efectiva con el módulo `app`, permitiendo que nuestra aplicación use la lógica de negocio extraída en su forma de biblioteca.
+
+<References references={[
+    {
+        accessedDate: '11 de septiembre de 2024',
+        siteOrAuthor: 'Meier, Wesley',
+        title: 'Business Logic vs. Application Logic: The Key Differences You Need to Know | APIsec',
+        type: 'web',
+        url: 'https://www.apisec.ai/blog/business-logic-vs-application-logic'
+    },
+]}/>

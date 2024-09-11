@@ -1,0 +1,88 @@
+---
+title: "Compilación de bibliotecas"
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import Definition from "../../../src/components/Definition";
+import ReadingTime from "../../../src/components/ReadingTime";
+
+<ReadingTime />
+
+## Empaquetado JAR
+
+<Definition title={"JAR"}>
+    Un archivo JAR (**J**ava **Ar**chive) es un formato de paquete que agrupa múltiples archivos de clase Java, metadatos y recursos (como textos, imágenes, etc.) en un único archivo para facilitar su distribución y despliegue. Los archivos JAR se basan en el formato ZIP y tienen una estructura similar.
+</Definition>
+
+En Gradle, la tarea `jar` es responsable de empaquetar los archivos de clase y recursos de un proyecto en un archivo JAR. Esta tarea se ejecuta automáticamente cuando se ejecuta la tarea `build`, y genera el archivo JAR dentro del directorio `build/libs/` del proyecto.
+
+A continuación, veremos cómo automatizar el proceso de empaquetado de la biblioteca y su uso en la aplicación:
+
+1. **Empaquetar la biblioteca `lib` en un archivo JAR**: Utilizaremos la tarea `jar` para generar el archivo JAR de la biblioteca.
+2. **Copiar el archivo JAR al módulo `app`**: Configuraremos una tarea que copie automáticamente el JAR generado en el directorio `libs` del módulo `app`.
+3. **Configurar el módulo `app` para utilizar la biblioteca empaquetada**: Actualizaremos las dependencias del módulo `app` para que utilice la biblioteca empaquetada en lugar de acceder a ella directamente.
+
+Aunque podríamos realizar este proceso manualmente, aprovecharemos las capacidades de automatización de Gradle para hacerlo de manera eficiente y siguiendo las buenas prácticas.
+
+
+## Empaquetando la biblioteca
+
+Lo primero que haremos será crear un nuevo plugin de convenciones para automatizar el proceso de empaquetado de la biblioteca, para esto, creemos un nuevo archivo `convention-plugins/src/main/kotlin/compile.conventions.gradle.kts`.
+
+Dentro de este archivo, crearemos una tarea para copiar los archivos del directorio `build/libs` al directorio `libs` del módulo `app` como vimos en la lección sobre [tareas personalizadas](../tasks/custom#tareas-basadas-en-otras-tareas).
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
+        import org.gradle.api.tasks.Copy
+
+        tasks.register<Copy>("copyLib") {
+            group = "build"
+            description = "Copies the library to the application directory"
+            dependsOn("jar")
+            from("build/libs")
+            into("$rootDir/app/libs")
+            doLast {
+                println("Library copied to app/libs")
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="convention-plugins/src/main/groovy/compile.conventions.gradle"
+        import org.gradle.api.tasks.Copy
+
+        tasks.register("copyLib", Copy) {
+            group = "build"
+            description = "Copies the library to the application directory"
+            dependsOn "jar"
+            from "build/libs"
+            into "$rootDir/app/libs"
+            doLast {
+                println "Library copied to app/libs"
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+En este caso, la tarea `copyLib` copiará los archivos generados por la tarea `jar` al directorio `app/lib` del proyecto. Para ello, la tarea `copyLib` depende de la tarea `jar` y copia los archivos del directorio `build/libs` al directorio `app/lib`.
+
+Con esto, podemos agregar la tarea `copyLib` al ciclo de vida de construcción del proyecto utilizando `finalizedBy`, que ejecutará la tarea `copyLib` después de que la tarea `build` haya finalizado.
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
+        tasks.build {
+            finalizedBy("copyLib")
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="convention-plugins/src/main/groovy/compile.conventions.gradle"
+        tasks.build {
+            finalizedBy 'copyLib'
+        }
+        ```
+    </TabItem>
+</Tabs>
