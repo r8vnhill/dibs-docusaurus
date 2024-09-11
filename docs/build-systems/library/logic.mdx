@@ -1,9 +1,11 @@
 ---
-title: Disyuntiva lógica: negocio vs. aplicación
+title: "Disyuntiva lógica: negocio vs. aplicación"
 ---
+
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 import ReadingTime from "../../../src/components/ReadingTime";
+import Definition from '../../../src/components/Definition';
 
 <ReadingTime/>
 
@@ -156,6 +158,108 @@ fun echo(message: String) = "${Clock.System.now()} - $message"
 
 Esta implementación permite reutilizar la función `echo` desde distintos módulos o aplicaciones, sin que dependa de la lógica específica de la aplicación.
 
-### Utilizando la biblioteca
+### Utilizando la biblioteca con `flatDir`
 
-Ya tienes todo listo para utilizar la biblioteca de forma local. Para ello, debes añadir la dependencia de la biblioteca en el archivo `build.gradle.kts` del módulo `app`:
+Ya tienes todo listo para utilizar la biblioteca de forma local. Para hacerlo, debes añadir la dependencia de la biblioteca en el archivo `build.gradle.kts` del módulo `app`. Empezaremos por una configuración sencilla utilizando `flatDir`, que es la forma más directa de apuntar a dependencias locales en formato JAR.
+
+#### ¿Qué es `flatDir`?
+
+`flatDir` es un tipo de repositorio local que permite a Gradle buscar archivos JAR (Java ARchive) en uno o más directorios específicos del sistema de archivos. Es una solución rápida cuando no se utiliza un repositorio remoto, como Maven Central, para gestionar dependencias. En lugar de publicar la biblioteca, simplemente empaquetas tu código en un archivo JAR y lo colocas en una carpeta local, permitiendo que otros módulos de tu proyecto lo consuman como dependencia.
+
+<Definition title="JAR">
+    Un archivo JAR (Java ARchive) es un archivo ZIP que contiene clases Java, recursos y metadatos. Es un formato comúnmente utilizado para distribuir bibliotecas y aplicaciones Java.
+</Definition>
+
+Este método es útil para pruebas rápidas o cuando se trabaja en varios módulos de un proyecto localmente. Más adelante ahondaremos en el concepto de JAR, pero por ahora, es suficiente saber que es un archivo que contiene código Java o Kotlin que puede ser reutilizado en diferentes proyectos o módulos.
+
+#### Configuración de `flatDir`
+
+Para configurar `flatDir`, seguimos los siguientes pasos:
+
+1. **Añadir un repositorio local**: Primero, configuramos un repositorio `flatDir` en el archivo `settings.gradle.kts` que apunta a la carpeta `libs`, donde estará ubicado nuestro archivo JAR.
+2. **Añadir la dependencia de la biblioteca**: Luego, en el archivo `build.gradle.kts` del módulo `app`, añadimos la dependencia de la biblioteca, indicando su nombre.
+
+Aquí están los cambios necesarios en los archivos de configuración:
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="settings.gradle.kts"
+        dependencyResolutionManagement {
+        repositories {
+        flatDir {
+        dirs(file("libs"))  // Indicamos la carpeta donde se buscarán los archivos JAR
+    }
+    }
+    }
+        ```
+        ```kotlin title="app/build.gradle.kts"
+        dependencies {
+        implementation(name = "lib")  // Añadimos la dependencia de la biblioteca 'lib'
+    }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="settings.gradle"
+        dependencyResolutionManagement {
+        repositories {
+        flatDir {
+        dirs file("libs")  // Indicamos la carpeta donde se buscarán los archivos JAR
+    }
+    }
+    }
+        ```
+        ```groovy title="app/build.gradle"
+        dependencies {
+        implementation name: "lib"  // Añadimos la dependencia de la biblioteca 'lib'
+    }
+        ```
+    </TabItem>
+</Tabs>
+
+#### Proceso completo
+
+1. **Empaquetar la biblioteca**: Primero, deberás compilar y empaquetar tu biblioteca en un archivo JAR. Esto puede hacerse ejecutando:
+
+ ```bash
+ ./gradlew lib:jar
+    ```
+
+Esto generará un archivo JAR en el directorio `build/libs/` dentro de tu módulo de la biblioteca. Mueve este archivo a una carpeta `libs` en el directorio raíz de tu proyecto.
+
+2. **Referenciar el JAR en tu aplicación**: Con el JAR en la carpeta `libs`, tu aplicación puede ahora referenciar y utilizar la biblioteca `lib` sin que tengas que modificar el código fuente de la biblioteca o compilarla manualmente cada vez.
+
+Este enfoque con `flatDir` es útil cuando estás desarrollando localmente y necesitas una integración rápida. Sin embargo, en entornos más grandes o colaborativos, es recomendable publicar tu biblioteca en un repositorio de artefactos como Maven Central o un repositorio privado para gestionar mejor las versiones y dependencias.
+
+### Probando la biblioteca
+
+Para probar que la biblioteca funciona correctamente, podemos modificar la función `main` de nuestra aplicación para utilizar la función `echo` de la biblioteca. De esta forma, verificamos que la lógica de negocio se ha separado correctamente de la lógica de aplicación:
+
+```kotlin title="app/src/main/kotlin/cl/ravenhill/EchoApp.kt"
+package cl.ravenhill
+
+// Como la función echo está en el mismo paquete, no es necesario importarla
+
+fun main(args: Array<String>) {
+    for (arg in args) {
+        println(echo(arg))
+    }
+}
+```
+
+Ahora, podemos hacer una prueba rápida para verificar que todo funciona correctamente.
+
+Primero compila la biblioteca en un ejecutable haciendo:
+
+```bash
+./gradlew :app:installDist
+```
+
+Luego, ejecuta la aplicación con un mensaje de prueba:
+
+```bash
+./app/build/install/app/bin/app "Hola," "mundo!"
+```
+
+Si todo ha ido bien, deberías ver la fecha y hora actual seguida de los mensajes que has pasado como argumentos.
+
+## ¿Qué aprendimos?
