@@ -1,0 +1,161 @@
+---
+title: Disyuntiva lógica: negocio vs. aplicación
+---
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import ReadingTime from "../../../src/components/ReadingTime";
+
+<ReadingTime/>
+
+Hasta ahora, todo nuestro trabajo se ha realizado en el módulo `app` de la aplicación. Sin embargo, no nos hemos detenido a analizar si todo el código debería estar realmente en ese módulo. Esto nos lleva a la pregunta clave: **¿qué criterios debemos seguir para decidir qué código va en qué módulo?**
+
+En términos sencillos, buscamos una clara separación de responsabilidades. Es decir, queremos diferenciar entre lo que es necesario para que la aplicación funcione y lo que es necesario para que la aplicación cumpla con su propósito específico. Esta distinción nos lleva a separar la **lógica de negocio** de la **lógica de aplicación**
+
+## Lógica de Negocios
+La **lógica de negocios** se refiere a las reglas y procesos específicos del dominio o problema que tu aplicación está resolviendo. Esta lógica es independiente de la forma en que los datos entran o salen de la aplicación, es decir, no está vinculada a cómo la aplicación interactúa con bases de datos, interfaces de usuario, servicios web, etc. La lógica de negocio suele manejar:
+
+- Validaciones de datos específicos del dominio.
+- Reglas de cálculo.
+- Políticas, procesos, y toma de decisiones que resuelven un problema dentro del dominio.
+- Agregar, modificar o consultar objetos de dominio (entidades, agregados, etc.).
+
+**Ejemplo:**
+Si estás creando una aplicación de gestión de usuarios, la lógica de negocios incluiría las reglas para validar un nombre de usuario, calcular permisos, o verificar la integridad de los datos de un usuario.
+
+```kotlin
+class UserService {
+    fun registerUser(user: User): Boolean {
+        // Aquí se definen reglas de validación específicas del dominio
+        if (user.name.isEmpty()) {
+            throw InvalidUserException("El nombre de usuario no puede estar vacío.")
+        }
+        return true // o más procesamiento basado en reglas de negocio
+    }
+}
+```
+
+## Lógica de Aplicación
+La **lógica de aplicación**, por otro lado, es el pegamento que conecta tu aplicación con el mundo exterior (bases de datos, APIs, interfaces de usuario). Esta capa gestiona la interacción con la infraestructura y asegura que la lógica de negocio se ejecute en el contexto correcto. La lógica de aplicación se encarga de:
+
+- Cargar y persistir datos en una base de datos o API.
+- Manejar la seguridad y autorización de usuarios.
+- Coordinar flujos de trabajo.
+- Integrar interfaces de usuario o interfaces REST.
+
+**Ejemplo:**
+En el mismo caso de gestión de usuarios, la lógica de aplicación sería el código que gestiona la comunicación con la base de datos o interfaz REST para persistir o cargar usuarios.
+
+```kotlin
+class UserController(val userService: UserService, val userRepository: UserRepository) {
+    fun handleUserRegistration(userData: UserDTO) {
+        // Conversión de DTO a entidad de dominio
+        val user = User(userData.name, userData.email)
+
+        // Aquí se llama a la lógica de negocios
+        if (userService.registerUser(user)) {
+            // Persistir el usuario en la base de datos o llamar a un API
+            userRepository.save(user)
+        }
+    }
+}
+```
+
+## Diferenciación clara
+Para enseñar esta separación:
+- **Lógica de Negocios**: Se debe extraer en una biblioteca separada, enfocándose solo en las reglas de negocio y sin acoplarse a frameworks específicos o servicios externos.
+- **Lógica de Aplicación**: Se queda en la aplicación como tal, gestionando la infraestructura (base de datos, red, etc.).
+
+## Ventajas de la separación:
+1. **Reutilización**: Al tener la lógica de negocio en una biblioteca separada, puede ser reutilizada en diferentes proyectos.
+2. **Mantenibilidad**: Es más fácil mantener y actualizar reglas de negocio sin afectar el comportamiento general de la aplicación.
+3. **Pruebas**: Las pruebas unitarias para la lógica de negocio son más fáciles de realizar, ya que no están atadas a la infraestructura.
+
+## Separando la lógica en nuestra aplicación
+
+Apliquemos los conceptos de **lógica de negocio** y **lógica de aplicación** en nuestro proyecto. Vamos a extraer la lógica de negocio de nuestra aplicación y moverla a la biblioteca `lib`. Veamos primero la implementación actual de nuestra aplicación:
+
+```kotlin
+package cl.ravenhill
+
+import kotlinx.datetime.Clock
+
+fun echo(message: String) = "${Clock.System.now()} - $message"
+
+fun main(args: Array<String>) {
+    for (arg in args) {
+        println(echo(arg))
+    }
+}
+```
+
+En este código, la función `main` representa la **lógica de aplicación**, ya que maneja la entrada y salida de la aplicación. Por otro lado, la función `echo` constituye la **lógica de negocio**, encargada de procesar los mensajes recibidos sin depender de la infraestructura. Este diseño permite que ambas funciones se separen en módulos diferentes.
+
+### Agregando las dependencias de la biblioteca
+
+Para empezar, debemos agregar la dependencia de `kotlinx-datetime` a nuestra biblioteca. Abrimos el archivo `build.gradle.kts` de la biblioteca y añadimos la dependencia correspondiente:
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="lib/build.gradle.kts"
+        dependencies {
+            implementation(libs.kotlinx.datetime)
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="lib/build.gradle"
+        dependencies {
+            implementation(libs.kotlinx.datetime)
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+Con esto, podemos eliminar la dependencia de `kotlinx-datetime` del módulo `app`, ya que la biblioteca `lib` será la encargada de proveer esta funcionalidad. Aprovechemos y cambiemos el nombre de la aplicación de `Echo` a `EchoApp` para reflejar mejor su propósito, para esto debemos modificar el nombre del archivo y actualizar el `mainClass` en el archivo `build.gradle.kts` del módulo `app`:
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="app/build.gradle.kts"
+        plugins {
+            application
+        }
+
+        application {
+            // Cambiamos el nombre de la clase principal
+            mainClass.set("cl.ravenhill.EchoAppKt")
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="app/build.gradle"
+        plugins {
+            id 'application'
+        }
+
+        application {
+            // Cambiamos el nombre de la clase principal
+            mainClass.set("cl.ravenhill.EchoAppKt")
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+### Implementando la lógica de negocio
+
+Primero, creamos un nuevo paquete en la biblioteca llamado `cl.ravenhill` (o `com.github.tu-usuario` si prefieres seguir el formato de tu usuario de GitHub). Dentro de este paquete, añadimos un archivo llamado `Echo.kt`, que contendrá la lógica de negocio que hemos identificado.
+
+Este archivo será el lugar donde se procesa la lógica independiente de la infraestructura, es decir, donde no hay gestión de entradas o salidas específicas de la aplicación:
+
+```kotlin title="lib/src/main/kotlin/cl/ravenhill/Echo.kt"
+package cl.ravenhill
+
+import kotlinx.datetime.Clock
+
+fun echo(message: String) = "${Clock.System.now()} - $message"
+```
+
+Esta implementación permite reutilizar la función `echo` desde distintos módulos o aplicaciones, sin que dependa de la lógica específica de la aplicación.
+
+### Utilizando la biblioteca
+
+Ya tienes todo listo para utilizar la biblioteca de forma local. Para ello, debes añadir la dependencia de la biblioteca en el archivo `build.gradle.kts` del módulo `app`:

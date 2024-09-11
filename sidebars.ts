@@ -58,6 +58,17 @@ const sidebars: SidebarsConfig = {
                     ],
                 },
                 'build-systems/static-analysis',
+                {
+                    type: "category",
+                    label: "Mi primera biblioteca",
+                    link: {
+                        type: 'doc',
+                        id: 'build-systems/library/index',
+                    },
+                    items: [
+                        'build-systems/library/logic',
+                    ],
+                }
             ],
         },
         {
