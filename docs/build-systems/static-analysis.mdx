@@ -1,39 +1,44 @@
 ---
 title: Análisis Estático
 ---
-
+import Definition from "../../src/components/Definition";
 import ReadingTime from '../../src/components/ReadingTime';
+import References from "../../src/components/ReferencesComponent";
+import TabItem from "@theme/TabItem";
+import Tabs from "@theme/Tabs";
 
 <ReadingTime />
 
+
 ## ¿Qué es el análisis estático?
 
-Consiste en el examen del código fuente sin ejecutarlo (a diferencia del análisis dinámico, que requiere ejecución del programa)
-Generalmente se realiza mediante herramientas especializadas que pueden analizar el código de manera automática
+El **análisis estático** consiste en examinar el código fuente sin ejecutarlo, a diferencia del análisis dinámico, que requiere la ejecución del programa. Generalmente, se realiza mediante herramientas especializadas que pueden analizar el código de manera automática.
 
 ## Objetivos del Análisis Estático
 
-Identificar errores de programación, como uso incorrecto de tipos, referencias nulas, y violaciones de sintaxis antes de la ejecución del programa
-Asegurar la adherencia a estándares de programación y mejores prácticas para mejorar la legibilidad y mantenibilidad del código
-Descubrir vulnerabilidades de seguridad potenciales en el código fuente
+- **Identificar errores de programación**: Permite detectar errores como el uso incorrecto de tipos, referencias nulas y violaciones de sintaxis antes de que el programa sea ejecutado.
+- **Adherencia a estándares y mejores prácticas**: Ayuda a asegurar que el código siga estándares de programación y buenas prácticas, mejorando su legibilidad y mantenibilidad.
+- **Detección de vulnerabilidades de seguridad**: Descubre posibles vulnerabilidades de seguridad directamente en el código fuente, antes de que puedan ser explotadas.
 
 ## Herramientas Comunes de Análisis Estático
 
-Herramientas como ESLint para JavaScript, Flake8 para Python, y RuboCop para Ruby
-Herramientas como SonarQube, Fortify y Checkmarx que proporcionan análisis de seguridad en profundidad
+- **ESLint** para JavaScript, **Flake8** para Python y **RuboCop** para Ruby, que ayudan a mantener la calidad del código.
+- Herramientas más avanzadas como **SonarQube**, **Fortify** y **Checkmarx** que ofrecen análisis de seguridad en profundidad.
 
 ## Detekt
 
-Detekt es una herramienta de análisis estático diseñada específicamente para el lenguaje de programación Kotlin
-Ofrece una amplia configuración que permite adaptar el análisis a las necesidades específicas de cada proyecto, además de permitir la creación de reglas personalizadas
+**Detekt** es una herramienta de análisis estático diseñada específicamente para proyectos en **Kotlin**. Su propósito es identificar problemas relacionados con la calidad del código, como la complejidad, el estilo de codificación, posibles errores y antipatrones.
 
-Analiza el código Kotlin para identificar problemas relacionados con la calidad del código, como complejidad, estilo de codificación, posibles bugs, y antipatrones
+### Características principales
 
-Incluye un conjunto de reglas predefinidas que cubren varios aspectos del desarrollo, desde el estilo de codificación hasta la complejidad del código y los riesgos de seguridad
+- **Análisis de calidad del código**: Detekt permite analizar el código Kotlin para detectar problemas relacionados con la complejidad, estilo de codificación, bugs potenciales y antipatrones.
+- **Configuración flexible**: Ofrece una amplia gama de opciones de configuración, permitiendo adaptar el análisis a las necesidades específicas de cada proyecto.
+- **Creación de reglas personalizadas**: Además de las reglas predefinidas, Detekt permite la creación de reglas personalizadas que se ajusten a las políticas de codificación de tu equipo o empresa.
+- **Cobertura de varios aspectos**: Las reglas de Detekt abarcan desde el estilo de codificación hasta la complejidad del código y la detección de riesgos de seguridad.
 
-Permite a los desarrolladores definir y ajustar reglas específicas para satisfacer las políticas de codificación de su equipo o empresa
+### Integración de Detekt en el proyecto
 
-Para utilizar Detekt en el proyecto, lo primero que debemos hacer es agregar la versión al archivo `libs.versions.toml`:
+Para utilizar Detekt en tu proyecto, primero necesitas agregar la versión correspondiente al archivo `libs.versions.toml`:
 
 ```toml
 [versions]
@@ -47,24 +52,168 @@ detekt = "1.23.6"
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 ```
 
-Ahora podemos agregar la dependencia en el archivo `build.gradle.kts` del proyecto principal:
+### Aplicación de Detekt a los módulos del proyecto
 
-[//]: # (FIXME: Modificar esto luego de enseñar tareas y plugins)
+Una vez que hayas configurado la versión en el archivo `libs.versions.toml`, puedes aplicar Detekt a todos los módulos utilizando `subprojects` en tu archivo `build.gradle.kts` o `build.gradle`.
 
-```kotlin title="app/build.gradle.kts, lib/build.gradle.kts"
-plugins {
-    # ...
-    alias(libs.plugins.detekt)
-}
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="build.gradle.kts"
+        plugins {
+            // ...
+            alias(libs.plugins.detekt)
+        }
+        // ...
+        val detektId = libs.plugins.detekt.get().pluginId
+
+        subprojects {
+            apply(plugin = "jvm.conventions")
+            apply(plugin = detektId)
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="build.gradle"
+        plugins {
+            // ...
+            alias(libs.plugins.detekt)
+        }
+        // ...
+        def detektId = libs.plugins.detekt.get().pluginId
+
+        subprojects {
+            apply plugin: 'jvm.conventions'
+            apply plugin: detektId
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+### Beneficios
+
+- **Análisis uniforme**: La configuración centralizada asegura que todos los módulos del proyecto sigan las mismas reglas de calidad de código.
+- **Facilidad de mantenimiento**: Con la configuración de `subprojects`, aplicar Detekt a múltiples módulos se simplifica, permitiendo ajustes y actualizaciones en un solo lugar.
+
+Con esta integración, Detekt se aplica de manera uniforme en todo el proyecto, ayudando a garantizar que el código se mantenga limpio y libre de problemas potenciales.
+### Personalización de Reglas en Detekt
+
+Una de las características principales de **Detekt** es su capacidad para personalizar las reglas de análisis. Esto permite adaptar el análisis estático a las necesidades específicas de cada proyecto. Para personalizar las reglas, se puede crear un archivo de configuración `detekt.yml` en la raíz del proyecto con las reglas definidas:
+
+```yaml
+# Archivo básico de configuración de Detekt
+
+# Activa o desactiva la generación de reportes.
+reports:
+  xml:
+    active: true
+    destination: 'build/reports/detekt.xml'
+  html:
+    active: true
+    destination: 'build/reports/detekt.html'
+  txt:
+    active: false
+    destination: 'build/reports/detekt.txt'
+
+# Configuración de las reglas
+autoCorrect: true  # Permitir corrección automática de algunos problemas detectados
+
+# Validación de la configuración
+config:
+  validation: true  # Validar que la configuración de Detekt sea correcta
+
+# Reglas activas
+style:
+  MagicNumber:
+    active: true  # Desactivar si se quieren permitir números mágicos
+    ignoreNumbers: [-1, 0, 1, 2]  # Excepciones permitidas
+    ignoreHashCodeFunction: true
+  MaxLineLength:
+    active: true
+    value: 120  # Máximo de 120 caracteres por línea
+  WildcardImport:
+    active: true  # Desactiva el uso de imports con comodines (e.g., import kotlin.*)
+
+naming:
+  VariableNaming:
+    active: true
+    variablePattern: '[a-z][A-Za-z0-9]*'  # Estilo camelCase para variables
+
+complexity:
+  LongMethod:
+    active: true
+    threshold: 20  # Considera métodos largos con más de 20 líneas
+
+comments:
+  CommentOverPrivateFunction:
+    active: true  # Exigir comentarios para funciones privadas
 ```
 
-Una vez configurada la dependencia, podemos ejecutar Detekt en el proyecto utilizando el siguiente comando:
+No entraremos en detalle sobre todas las reglas disponibles, pero puedes consultar la [documentación oficial de Detekt](https://detekt.github.io/detekt/) para obtener más información sobre las reglas predefinidas y cómo crear reglas personalizadas.
 
-```bash
-./gradlew :app:detekt :lib:detekt
+El proceso de configuración de Detekt puede variar según las necesidades específicas de cada proyecto, por lo que es recomendable ajustar la configuración según sea necesario. Sin embargo, Detekt también provee una configuración por defecto que puede ser suficiente para muchos proyectos.
+
+### Extensión de Detekt con Plugins
+
+Otro beneficio clave de **Detekt** es su soporte para plugins, que permiten extender su funcionalidad con reglas adicionales o integraciones con otras herramientas. Por ejemplo, existen plugins para integrar Detekt con **SonarQube**, **GitHub Actions** y otros sistemas de **CI/CD**.
+
+En este caso, vamos a integrar **Ktlint**, una herramienta de análisis de calidad de código para Kotlin que se enfoca en las convenciones de estilo. Al integrarlo con Detekt, podemos aplicar las reglas de estilo de Ktlint junto con las reglas de análisis estático de Detekt.
+
+<Definition title="Linter" id="linter-def">
+    Un **linter** es una herramienta que analiza el código fuente para detectar errores, inconsistencias y violaciones de estilo de codificación. El propósito principal de un linter es mejorar la calidad del código y asegurar que siga las convenciones y estándares establecidos. Además de encontrar errores de sintaxis, un linter puede identificar problemas como el uso de variables no utilizadas, código duplicado o patrones de diseño incorrectos. Tanto **Detekt** como **Ktlint** actúan como linters para Kotlin, pero Detekt va más allá al ofrecer también análisis de complejidad, detección de bugs potenciales y deuda técnica.
+
+</Definition>
+
+#### Paso 1: Agregar Ktlint a Detekt
+
+Para agregar el plugin de **Ktlint**, primero debes definir la versión en el archivo `libs.versions.toml`:
+
+```toml
+# ...
+[libraries]
+# ...
+detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
 ```
 
-Por ejemplo, si tuvieramos un archivo `Echo.kt` con el siguiente contenido:
+#### Paso 2: Aplicar el Plugin de Ktlint en el Proyecto
+
+Una vez configurado el archivo `libs.versions.toml`, puedes aplicar el plugin de Ktlint en el archivo `build.gradle.kts` o `build.gradle` para incluir sus reglas en el análisis de Detekt.
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="build.gradle.kts"
+        // ...
+        val detektFormattingModule = libs.detekt.formatting.get().module.toString()
+        val detektFormattingVersion = libs.detekt.formatting.get().version
+
+        subprojects {
+            // ...
+            dependencies {
+                detektPlugins("$detektFormattingModule:$detektFormattingVersion")
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="build.gradle"
+        // ...
+        def detektFormattingModule = libs.detekt.formatting.get().module.toString()
+        def detektFormattingVersion = libs.detekt.formatting.get().version
+
+        subprojects {
+            // ...
+            dependencies {
+                detektPlugins("${detektFormattingModule}:${detektFormattingVersion}")
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+Con esta integración, **Detekt** aplicará tanto sus reglas predefinidas como las reglas de estilo de **Ktlint** en todos los módulos de tu proyecto, garantizando una mayor consistencia en el código
+
+### Ejecutando Detekt y Corrigiendo Problemas
+
+Supongamos que tienes un archivo con el siguiente código Kotlin:
 
 ```kotlin
 package cl.ravenhill
@@ -73,17 +222,112 @@ import kotlinx.datetime.*
 
 fun echo(message: String) = "${Clock.System.now()} - $message"
 
-fun main(args: Array<String>){
+fun main(args:Array<String>) {
     for (arg in args) {
-        println(echo("Hola, mundo!"))
+    println(echo(arg))
     }
 }
 ```
 
-Al ejecutar Detekt, obtendríamos un reporte como el siguiente:
+Para ejecutar **Detekt** en tu proyecto y analizar la calidad del código, utiliza el siguiente comando:
+
+```bash
+./gradlew check
+```
+
+Al ejecutarlo, Detekt generará un reporte que identifica problemas de formato, estilo y otras reglas configuradas. Un ejemplo de salida podría ser el siguiente:
 
 ```text
 > Task :app:detekt FAILED
-...\echo-app\app\src\main\kotlin\cl\ravenhill\Echo.kt:3:1: kotlinx.datetime.* is a wildcard import. Replace it with fully qualified imports. [WildcardImport]
-...\echo-app\app\src\main\kotlin\cl\ravenhill\Echo.kt:8:10: Private property `arg` is unused. [UnusedPrivateProperty]
+.../echo/app/src/main/kotlin/cl/ravenhill/Echo.kt:7:15: Missing spacing after ":" [SpacingAroundColon]
+.../echo/app/src/main/kotlin/cl/ravenhill/Echo.kt:9:1: Unexpected indentation (4) (should be 8) [Indentation]
+.../echo/app/src/main/kotlin/cl/ravenhill/Echo.kt:3:1: Wildcard import [NoWildcardImports]
+.../echo/app/src/main/kotlin/cl/ravenhill/Echo.kt:3:1: kotlinx.datetime.* is a wildcard import. Replace it with fully qualified imports. [WildcardImport]
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:detekt'.
+> Analysis failed with 4 weighted issues.
 ```
+
+En este ejemplo, **Detekt** ha detectado varios problemas en el archivo `Echo.kt`:
+
+- Falta de espacio después de los dos puntos (`:`).
+- Indentación incorrecta.
+- Uso de importaciones con comodines.
+
+Estos problemas afectan tanto la legibilidad del código como su adherencia a las buenas prácticas. Al corregir estos problemas, podemos mejorar la calidad general del código.
+
+El archivo corregido se vería así:
+
+```kotlin
+package cl.ravenhill
+
+// highlight-next-line
+import kotlinx.datetime.Clock
+
+fun echo(message: String) = "${Clock.System.now()} - $message"
+
+// highlight-next-line
+fun main(args: Array<String>) {
+    for (arg in args) {
+        // highlight-next-line
+        println(echo(arg))
+    }
+}
+```
+
+### ¿Qué se corrigió?
+
+1. **Espaciado adecuado**: Se añadió el espacio necesario después de los dos puntos (`:`) para cumplir con las reglas de formato.
+2. **Indentación correcta**: Se ajustó la indentación a 8 espacios para mejorar la legibilidad y seguir las convenciones del proyecto.
+3. **Importaciones explícitas**: Se eliminó el uso de comodines (`*`) y se usaron importaciones completamente calificadas, como recomienda **Detekt**.
+
+Al hacer estas correcciones, no solo eliminamos los errores del análisis de Detekt, sino que también mejoramos la consistencia y claridad del código.
+
+## Lo que sacamos de esto
+
+El análisis estático de código con herramientas como **Detekt** es esencial para mantener un código limpio, eficiente y alineado con las mejores prácticas. Detekt no solo permite detectar errores comunes y problemas de estilo en **Kotlin**, sino que también ayuda a identificar vulnerabilidades de seguridad, bugs potenciales y deuda técnica.
+
+### Puntos clave:
+
+- **Identificación temprana de errores**: El análisis estático permite encontrar problemas antes de que el código sea ejecutado, lo que ahorra tiempo y evita futuros errores en producción.
+- **Consistencia en el código**: Al aplicar reglas de estilo, como las proporcionadas por **Ktlint**, Detekt garantiza que todxs lxs desarrolladorxs del equipo sigan los mismos estándares, mejorando la legibilidad y mantenibilidad del proyecto.
+- **Capacidad de personalización**: Tanto con la personalización de reglas como con la integración de plugins, Detekt puede adaptarse a las necesidades específicas de cada proyecto, lo que lo convierte en una herramienta flexible y potente.
+- **Automatización en el flujo de trabajo**: La integración de Detekt con herramientas de CI/CD y otros sistemas, como **SonarQube** o **GitHub Actions**, permite automatizar el análisis de calidad de código, asegurando que cada cambio sea evaluado antes de ser aceptado.
+
+En resumen, Detekt, junto con herramientas complementarias como **Ktlint**, proporciona una solución integral para mejorar la calidad del código y asegurar que el desarrollo de proyectos en Kotlin siga las mejores prácticas. Aplicar estas herramientas de manera consistente ayuda a reducir errores, mejorar la seguridad y facilitar el mantenimiento del código a largo plazo.
+
+<References references={
+    [
+        {
+            title: "Static Program Analysis",
+            url: "https://en.wikipedia.org/wiki/Static_program_analysis",
+            type: "web",
+            siteOrAuthor: "Wikipedia",
+            publishedDate: "12 de agosto de 2024",
+        },
+        {
+            title: "Lint (Software)",
+            url: "https://en.wikipedia.org/w/index.php?title=Lint_(software)&oldid=1233458138",
+            type: "web",
+            siteOrAuthor: "Wikipedia",
+            publishedDate: "9 de julio de 2024",
+        },
+        {
+            title: "Features - Ktlint",
+            url: "https://pinterest.github.io/ktlint/1.3.1/",
+            type: "web",
+            siteOrAuthor: "Ktlint",
+            accessedDate: "10 de septiembre de 2024",
+        },
+        {
+            title: "Hello from Detekt | Detekt",
+            url: "https://detekt.dev/",
+            type: "web",
+            siteOrAuthor: "Detekt",
+            accessedDate: "10 de septiembre de 2024",
+        },
+    ]
+}/>

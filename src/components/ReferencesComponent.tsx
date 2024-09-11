@@ -6,6 +6,7 @@ interface Reference {
     url?: string; // The URL is optional for books
     type: 'web' | 'video' | 'book' | 'article' | 'paper'; // Types of references
     accessedDate?: string; // Accessed date for web resources
+    publishedDate?: string; // Published date for web resources
     siteOrAuthor?: string; // Site or author for web resources or books
     bookTitle?: string; // Title of the book (for book references)
     pages?: string; // Specific pages in the book
@@ -125,8 +126,14 @@ const renderReference = (reference: Reference) => {
         return (
             <li key={reference.id}>
                 {renderTypeEmoji(reference.type)}{' '}
-                {reference.author && <strong>{reference.author}.</strong>} "{reference.title}". In <em>{reference.bookTitle}</em>, {reference.pages}. {reference.location}:{' '}
-                {reference.publisher}, {reference.year}.
+                {reference.author && <strong>{reference.author}.</strong>} "{reference.title}".{' '}
+                {reference.bookTitle && (
+                    <>
+                        En <em>{reference.bookTitle}</em>, {reference.pages}.{' '}
+                    </>
+                )}
+                {reference.location && reference.publisher && `${reference.location}: ${reference.publisher}, `}
+                {reference.year}.
             </li>
         );
     }
@@ -135,16 +142,19 @@ const renderReference = (reference: Reference) => {
         return (
             <li key={reference.id}>
                 {renderTypeEmoji(reference.type)}{' '}
-                <strong>{reference.siteOrAuthor}.</strong> "{reference.title}"
-                Accedido {reference.accessedDate}.{' '}
-                <a href={reference.url} target="_blank" rel="noopener noreferrer">
-                    {reference.url}
-                </a>
+                {reference.siteOrAuthor && <strong>{reference.siteOrAuthor}.</strong>} "{reference.title}"{' '}
+                {reference.publishedDate && `En ${reference.siteOrAuthor} el ${reference.publishedDate}.`}{' '}
+                {reference.accessedDate && `Accedido el ${reference.accessedDate}.`}{' '}
+                {reference.url && (
+                    <a href={reference.url} target="_blank" rel="noopener noreferrer">
+                        {reference.url}
+                    </a>
+                )}
             </li>
         );
     }
 
-    // Other types of resources
+    // Otros tipos de recursos
     return (
         <li key={reference.id}>
             {renderTypeEmoji(reference.type)}{' '}
@@ -154,6 +164,7 @@ const renderReference = (reference: Reference) => {
         </li>
     );
 };
+
 
 /**
  * Renders a list of references categorized by type (books, web, video, article, and paper).
