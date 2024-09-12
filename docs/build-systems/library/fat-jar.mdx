@@ -136,15 +136,13 @@ Aunque este archivo es básico, en bibliotecas más avanzadas puede incluir info
 
 ## Resolviendo dependencias transitivas
 
-Para resolver el problema de las dependencias transitivas, debemos asegurarnos de que todas las dependencias requeridas por `lib` estén disponibles en el classpath de la aplicación. En este caso, la biblioteca `lib` requiere la biblioteca `kotlinx-datetime`, por lo que debemos empaquetarla junto con la biblioteca `lib`.
+Para manejar las dependencias transitivas de nuestra biblioteca `lib`, debemos asegurarnos de que todas las dependencias requeridas (como `kotlinx-datetime`) estén incluidas en el classpath de la aplicación. La solución común es crear un **fat JAR**.
 
-Para hacer esto, usaremos lo que se conoce como **fat JAR**.
-
-<Definition title={"Fat JAR"}>
-    Un fat JAR (también conocido como uber JAR) es un archivo JAR que contiene no solo las clases y recursos de tu propia aplicación, sino también todas las dependencias necesarias para ejecutarla
+<Definition title="Fat JAR">
+    Un fat JAR (también conocido como uber JAR) es un archivo JAR que incluye no solo las clases y recursos de la aplicación principal, sino también todas las dependencias necesarias para su ejecución.
 </Definition>
 
-Primero, creemos una extensión para proveer configuraciones para el plugin de compilación. Para ello, crea una clase `FatJarExtension` en el paquete `extensions` del módulo `convention-plugins`:
+Primero, crearemos una extensión que permita configurar nuestro plugin de construcción. Para ello, añadimos la clase `FatJarExtension` en el paquete `extensions` del módulo `convention-plugins`:
 
 ```kotlin title="convention-plugins/src/main/kotlin/extensions/FatJarExtension.kt"
 abstract class FatJarExtension {
@@ -153,9 +151,9 @@ abstract class FatJarExtension {
 }
 ```
 
-Luego, modifica el archivo `compile.conventions.gradle.kts` para registrar la extensión:
+Luego, actualizamos el archivo `compile.conventions.gradle.kts` para registrar la nueva extensión:
 
-<Tabs>
+<Tabs groupId={"gradle"}>
     <TabItem value="Kotlin DSL" label="Kotlin DSL">
         ```kotlin title="convention-plugins/src/main/kotlin/jvm.conventions.gradle.kts"
         import extensions.FatJarExtension
@@ -163,7 +161,7 @@ Luego, modifica el archivo `compile.conventions.gradle.kts` para registrar la ex
         extensions.create<FatJarExtension>("fatJar")
         ```
     </TabItem>
-    <TabItem value="Groovy" label="Groovy">
+    <TabItem value="Groovy DSL" label="Groovy DSL">
         ```groovy title="convention-plugins/src/main/groovy/jvm.conventions.gradle"
         import extensions.FatJarExtension
         // ...
@@ -172,9 +170,9 @@ Luego, modifica el archivo `compile.conventions.gradle.kts` para registrar la ex
     </TabItem>
 </Tabs>
 
-Ahora hagamos build a los plugins de convenciones para tener acceso al DSL desde el archivo `build.gradle.kts` de la biblioteca `lib` y utilicemos la extensión:
+Con esto configurado, podemos utilizar esta extensión en el archivo `build.gradle.kts` de la biblioteca `lib`:
 
-<Tabs>
+<Tabs groupId={"gradle"}>
     <TabItem value="Kotlin DSL" label="Kotlin DSL">
         ```kotlin title="lib/build.gradle.kts"
         fatJar {
@@ -183,7 +181,7 @@ Ahora hagamos build a los plugins de convenciones para tener acceso al DSL desde
         }
         ```
     </TabItem>
-    <TabItem value="Groovy" label="Groovy">
+    <TabItem value="Groovy DSL" label="Groovy DSL">
         ```groovy title="lib/build.gradle"
         fatJar {
             implementationTitle = project.name
@@ -192,3 +190,205 @@ Ahora hagamos build a los plugins de convenciones para tener acceso al DSL desde
         ```
     </TabItem>
 </Tabs>
+
+Finalmente, añadimos una tarea en el archivo `compile.conventions.gradle.kts` para construir el fat JAR:
+
+<Tabs groupId={"gradle"}>
+    <TabItem value={"Kotlin DSL"} label={"Kotlin DSL"}>
+        ```kotlin title="convention-plugins/src/main/kotlin/jvm.conventions.gradle.kts"
+        import java.time.LocalDateTime
+        // ...
+        tasks.register<Jar>("fatJar") {
+            group = "build"
+            description = "Creates a fat JAR with all dependencies"
+
+            val fatJarConfig = project.extensions.getByType<FatJarExtension>()
+
+            archiveClassifier = "all"   // (1)
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE // (2)
+            manifest {  // (3)
+                attributes["Implementation-Title"] = fatJarConfig.implementationTitle
+                attributes["Implementation-Version"] = fatJarConfig.implementationVersion
+                attributes["Build-Date"] = java.time.LocalDateTime.now().toString()
+            }
+            from(sourceSets.main.get().output)  // (4)
+            dependsOn(configurations.runtimeClasspath)  // (5)
+            from({  // (6)
+                configurations.runtimeClasspath.get()
+                    .filter { file -> file.name.endsWith("jar") }   // (7)
+                    .map { file -> zipTree(file) }  // (8)
+            })
+        }
+        ```
+    </TabItem>
+    <TabItem value={"Groovy DSL"} label={"Groovy DSL"}>
+        ```groovy title="convention-plugins/src/main/groovy/jvm.conventions.gradle"
+        import java.time.LocalDateTime
+        // ...
+        tasks.register('fatJar', Jar) {
+            group = 'build'
+            description = 'Creates a fat JAR with all dependencies'
+
+            def fatJarConfig = project.extensions.getByType(FatJarExtension)
+
+            archiveClassifier = 'all'  // (1)
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE  // (2)
+            manifest {  // (3)
+                attributes['Implementation-Title'] = fatJarConfig.implementationTitle
+                attributes['Implementation-Version'] = fatJarConfig.implementationVersion
+                attributes["Build-Date"] = java.time.LocalDateTime.now().toString()
+             }
+            from(sourceSets.main.get().output)  // (4)
+            dependsOn configurations.runtimeClasspath  // (5)
+            from {  // (6)
+                configurations.runtimeClasspath.get()
+                    .findAll { file -> file.name.endsWith('jar') }  // (7)
+                    .collect { file -> zipTree(file) }  // (8)
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+### Explicación de la tarea `fatJar`
+
+1. **`archiveClassifier`**: Define el sufijo del archivo JAR. En este caso, `all` indica que es un fat JAR, resultando en un archivo como `lib-1.0.0-all.jar`.
+2. **`duplicatesStrategy`**: Establece cómo manejar archivos duplicados. Usamos `EXCLUDE` para evitar conflictos y reducir el tamaño del JAR.
+3. **`manifest`**: Establece los atributos del manifiesto JAR, como el título, la versión de la implementación y la fecha de compilación.
+4. **`from(sourceSets.main.get().output)`**: Incluye los archivos compilados del proyecto en el JAR.
+5. **`dependsOn configurations.runtimeClasspath`**: Asegura que todas las dependencias de tiempo de ejecución se incluyan antes de crear el fat JAR.
+6. **`from { ... }`**: Añade las dependencias externas al JAR.
+7. **`.filter { file -> file.name.endsWith("jar") }`**: Filtra para incluir solo archivos JAR.
+8. **`.map { file -> zipTree(file) }`**: Descomprime los JARs para incluir su contenido en el fat JAR.
+
+### Probando la tarea
+
+Ejecuta la tarea `fatJar` para generar el fat JAR:
+
+```bash
+./gradlew :lib:fatJar
+```
+
+Esto creará el archivo JAR en `lib/build/libs/lib-1.0.0-all.jar`, que incluirá todas las dependencias transitivas como `kotlinx-datetime`.
+
+Podemos verificar el contenido del JAR descomprimiéndolo:
+
+```bash title="Unix"
+unzip -l lib/build/libs/lib-1.0.0-all.jar -d decompiled-fat-jar
+```
+
+```powershell title="Windows"
+7z x lib/build/libs/lib-1.0.0-all.jar -odecompiled-fat-jar
+```
+
+En el archivo `META-INF/MANIFEST.MF`, podrás ver los atributos del manifiesto que definimos en la tarea:
+
+```plaintext
+Manifest-Version: 1.0
+Implementation-Title: lib
+Implementation-Version: 1.0.0
+Build-Date: 2024-09-12T14:37:34.279851100
+```
+
+### Automatizando la creación del fat JAR
+
+Para automatizar el proceso de creación del **fat JAR** (JAR con todas las dependencias), podemos modificar la tarea `copyLib` en el archivo `compile.conventions.gradle.kts` para que dependa de la tarea `fatJar` en lugar de la tarea estándar `jar`.
+
+Esto nos permitirá que, al ejecutar la tarea `copyLib`, se genere y copie el fat JAR, asegurando que todas las dependencias transitivas estén incluidas.
+
+<Tabs groupId="gradle">
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="convention-plugins/src/main/kotlin/jvm.conventions.gradle.kts"
+        // Implementación anterior
+        tasks.named("copyLib") {
+            dependsOn("jar") // Dependía de la tarea jar estándar
+        }
+
+        // Nueva implementación
+        tasks.named("copyLib") {
+            dependsOn("fatJar") // Ahora depende del fat JAR
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="convention-plugins/src/main/groovy/jvm.conventions.gradle"
+        // Implementación anterior
+        tasks.named('copyLib') {
+            dependsOn 'jar'  // Dependía de la tarea jar estándar
+        }
+
+        // Nueva implementación
+        tasks.named('copyLib') {
+            dependsOn 'fatJar'  // Ahora depende del fat JAR
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+Ahora, al ejecutar la tarea `copyLib`, se generará el fat JAR automáticamente y este será copiado al directorio de la aplicación. Este proceso garantiza que el JAR contenga todas las dependencias transitivas, lo que facilita la distribución de la biblioteca o la ejecución de la aplicación sin tener que gestionar manualmente esas dependencias.
+
+
+## Ejecutando la aplicación con el fat JAR
+
+Una vez que hemos generado el **fat JAR**, el siguiente paso es agregar esta nueva dependencia en el archivo `build.gradle.kts` del módulo `app`. Esto permitirá que la aplicación utilice el JAR con todas las dependencias incluidas.
+
+<Tabs groupId="gradle">
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="app/build.gradle.kts"
+        dependencies {
+            implementation(
+                fileTree("libs") {
+                    include("lib-1.0.0-all.jar")  // Agregamos el fat JAR
+                    // Puedes agregar más JARs si es necesario
+                }
+            )
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="app/build.gradle"
+        dependencies {
+            implementation fileTree("libs") {
+                include "lib-1.0.0-all.jar"  // Agregamos el fat JAR
+                // Puedes agregar más JARs si es necesario
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+### Ejecutando la aplicación
+
+Con la dependencia configurada, ahora podemos ejecutar la aplicación utilizando el fat JAR:
+
+```bash
+./gradlew :app:run
+```
+
+Si todo ha sido configurado correctamente, deberías ver una salida similar a la siguiente:
+
+```plaintext
+> Task :app:run
+2024-09-12T17:50:25.821885Z - Hello,
+2024-09-12T17:50:25.830884600Z - world!
+```
+
+¡Y eso es todo! La aplicación ahora utiliza el **fat JAR** que incluye todas las dependencias necesarias.
+
+## ¿Qué aprendimos?
+
+En esta sección, hemos aprendido a gestionar las dependencias transitivas de una biblioteca mediante la creación de un **fat JAR**. Un **fat JAR** incluye todas las dependencias necesarias para ejecutar una aplicación o biblioteca, eliminando la necesidad de gestionar manualmente el classpath y asegurando que todas las dependencias estén disponibles en tiempo de ejecución.
+
+### Puntos clave:
+- **Error `NoClassDefFoundError`**: Este error ocurre cuando una clase requerida por la aplicación no está en el classpath. Lo resolvimos empaquetando todas las dependencias necesarias en un **fat JAR**.
+- **Classpath y transitividad de requerimientos**: Comprendimos cómo las dependencias de una biblioteca pueden tener sus propias dependencias transitivas, que también deben estar disponibles en el classpath para evitar errores.
+- **JARs y meta información**: Exploramos la estructura de un JAR, desde los archivos compilados hasta el archivo `MANIFEST.MF`, que contiene metadatos importantes sobre la biblioteca o aplicación.
+- **Automatización con fat JARs**: Configuramos un proceso automatizado para construir un **fat JAR** que incluye todas las dependencias, lo que simplifica la distribución de la biblioteca y facilita la ejecución de la aplicación sin preocuparse por las dependencias externas.
+
+Este enfoque nos permitió distribuir una biblioteca como un único archivo JAR que contiene todo lo necesario para funcionar correctamente. Esto es particularmente útil en proyectos grandes o cuando queremos compartir la biblioteca con otras aplicaciones o equipos sin tener que preocuparnos por dependencias adicionales.
+
+Finalmente, aprendimos a generar un **fat JAR** con Gradle y a utilizarlo dentro de nuestra aplicación de forma sencilla, permitiendo que todas las dependencias estén incluidas y asegurando que la aplicación funcione de manera robusta en cualquier entorno.
+
+## Próximos pasos
+
+En la próxima lección, veremos cómo **refinar la tarea de copiado** para tener mayor control sobre qué archivos se copian y dónde se colocan. Aprenderemos a filtrar archivos, excluir ciertos tipos y automatizar aún más el proceso de creación y distribución de archivos en nuestra biblioteca.
