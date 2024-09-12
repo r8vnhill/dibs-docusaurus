@@ -1,0 +1,194 @@
+---
+title: Compilando una biblioteca con dependencias
+---
+import TabItem from "@theme/TabItem";import Definition from "../../../src/components/Definition";
+import ReadingTime from "../../../src/components/ReadingTime";
+import Tabs from "@theme/Tabs";
+
+<ReadingTime/>
+
+En la página anterior dejamos un **cliffhanger**, anticipando que la ejecución de la aplicación no funcionaría como esperábamos y te invitamos a ejecutar el código para descubrir qué sucedía. En este capítulo, desvelaremos por qué ocurrió ese error y te guiaremos paso a paso para solucionarlo correctamente.
+
+## Ejecutando la aplicación
+
+Para ejecutar la aplicación, utiliza el comando `./gradlew :app:run`. Sin embargo, al ejecutar este comando, es probable que te encuentres con un error similar al siguiente:
+
+```plaintext
+> Task :app:run FAILED
+Exception in thread "main" java.lang.NoClassDefFoundError: kotlinx/datetime/Clock$System
+        at cl.ravenhill.EchoKt.echo(Echo.kt:5)
+        at cl.ravenhill.EchoAppKt.main(EchoApp.kt:5)
+Caused by: java.lang.ClassNotFoundException: kotlinx.datetime.Clock$System
+        at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641)
+        at java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188)
+        at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:526)
+        ... 2 more
+```
+
+Este error ocurre porque la biblioteca `kotlinx-datetime` no se ha añadido al **classpath** de la aplicación. Aunque la biblioteca se encuentra empaquetada en el archivo JAR, no está disponible en el classpath durante la ejecución, lo que impide que la aplicación encuentre las clases necesarias para funcionar.
+
+<Definition title={"Classpath"}>
+    El classpath es un parámetro de la JVM que define las rutas donde se encuentran las clases y recursos necesarios para la ejecución de una aplicación. Incluye tanto las clases propias del proyecto como las de bibliotecas externas que no forman parte de la librería estándar de Java.
+</Definition>
+
+## Transitividad de requerimientos
+
+Utilizaremos el término **transitividad de requerimientos** para referirnos a cómo la dependencia de una biblioteca puede requerir otras bibliotecas. Diremos que una biblioteca tiene una **dependencia transitiva** si requiere otra biblioteca para funcionar correctamente. La transitividad se da en que una biblioteca puede requerir otra biblioteca, que a su vez puede requerir otra biblioteca, y así sucesivamente. Si alguna de esas bibliotecas no se incluye en el classpath, la aplicación no funcionará correctamente.
+
+En nuestro caso, lo que sucede es que la biblioteca `lib` requiere la biblioteca `kotlinx-datetime`, pero esta última no se incluye en el classpath de la aplicación. Por lo tanto, debemos asegurarnos de que todas las dependencias transitivas de `lib` estén disponibles en el classpath.
+
+La manera más sencilla de abordar este problema es simplemente dejar que la transitividad de requerimientos llegue a la aplicación final y que la aplicación tenga como dependencia directa todas las bibliotecas necesarias. Sin embargo, esto resultará en que el "cliente" de la biblioteca `lib` también deberá incluir todas las dependencias transitivas de `lib`, lo que puede ser inconveniente, además de agregar pasos adicionales para poder utilizar nuestra biblioteca.
+
+Dicho esto, la solución en este caso sería simplemente repetir la dependencia de `kotlinx-datetime` en el archivo `build.gradle.kts` de la aplicación. De esta manera, la biblioteca `kotlinx-datetime` se incluirá en el classpath de la aplicación y se resolverá el error de `NoClassDefFoundError`.
+
+## JAR en detalle
+
+Para comprender mejor por qué la transitividad de dependencias no se resuelve automáticamente, es importante profundizar en cómo se empaquetan las bibliotecas en un archivo JAR. Un archivo JAR es esencialmente un archivo ZIP que contiene los archivos de clase y recursos de una biblioteca, junto con un archivo `META-INF/MANIFEST.MF` que describe la biblioteca y sus metadatos, como dependencias.
+
+Podemos descomprimir el archivo JAR de la biblioteca `lib` utilizando herramientas como `unzip` en Unix o `7-Zip` en Windows. Si no tienes instalada una herramienta, puedes consultar la [guía de instalación](../../installation), aunque este paso es opcional:
+
+```bash title="Unix"
+unzip -l lib/build/libs/lib-1.0.0.jar -d decompiled-jar
+```
+
+```powershell title="Windows"
+7z x lib/build/libs/lib-1.0.0.jar -odecompiled-jar
+```
+
+Esto generará una estructura de directorios como la siguiente:
+
+```plaintext
+./echo/decompiled-jar
+├───cl
+│   └───ravenhill
+│           EchoKt.class
+│
+└───META-INF
+        lib.kotlin_module
+        MANIFEST.MF
+```
+
+### Revisemos lo que se generó
+
+#### `cl.ravenhill.EchoKt.class`
+
+Este archivo contiene la clase compilada en bytecode de Java, por lo que no podemos leerlo directamente. Sin embargo, podemos usar un decompilador como [Fernflower](http://www.javadecompilers.com) para obtener una representación en texto del código. Aquí tienes un ejemplo del código decompilado del archivo `EchoKt.class`:
+
+```java
+// Source code is decompiled from a .class file using FernFlower decompiler.
+package cl.ravenhill;
+
+import kotlin.Metadata;
+import kotlin.jvm.internal.Intrinsics;
+import kotlinx.datetime.Instant;
+import kotlinx.datetime.Clock.System;
+import org.jetbrains.annotations.NotNull;
+
+@Metadata(
+   mv = {2, 0, 0},
+   k = 2,
+   xi = 48,
+   d1 = {"\u0000\n\n\u0000\n\u0002\u0010\u000e\n\u0002\b\u0002\u001a\u000e\u0010\u0000\u001a\u00020\u00012\u0006\u0010\u0002\u001a\u00020\u0001\u00a8\u0006\u0003"},
+   d2 = {"echo", "", "message", "lib"}
+)
+public final class EchoKt {
+   @NotNull
+   public static final String echo(@NotNull String message) {
+      Intrinsics.checkNotNullParameter(message, "message");
+      Instant var10000 = System.INSTANCE.now();
+      return "" + var10000 + " - " + message;
+   }
+}
+```
+
+Este es el resultado de convertir un archivo Kotlin a Java. A continuación, explicamos algunos puntos clave:
+
+1. **Paquete y Clases Importadas**:
+- El archivo pertenece al paquete `cl.ravenhill`.
+- Utiliza clases de Kotlin como `Instant` y `Clock` para gestionar fechas y tiempos, además de anotaciones como `@NotNull` para garantizar la seguridad frente a valores nulos.
+
+2. **Anotación `@Metadata`**:
+- Generada por el compilador de Kotlin, esta anotación almacena información del archivo original, como la versión de Kotlin y la estructura de la clase, facilitando la interoperabilidad entre Kotlin y Java.
+
+3. **Clase `EchoKt`**:
+- En Kotlin, las funciones fuera de una clase se agrupan en una clase generada automáticamente, llamada `EchoKt` en este caso.
+- La función `echo` es estática, recibe un parámetro `message`, y devuelve una cadena con la fecha y el mensaje concatenados.
+
+#### `META-INF`
+
+Dentro de esta carpeta, encontramos dos archivos:
+
+##### `lib.kotlin_module`
+
+Este archivo contiene información sobre el módulo de Kotlin al que pertenece la biblioteca. No es relevante para nuestro análisis actual.
+
+##### `MANIFEST.MF`
+
+El archivo de manifiesto contiene metadatos sobre el archivo JAR, como la versión y otra información importante. En JARs ejecutables, el archivo de manifiesto define el punto de entrada de la aplicación con el atributo `Main-Class`.
+
+En nuestro caso, el archivo de manifiesto de `lib` es simple:
+
+```plaintext
+Manifest-Version: 1.0
+```
+
+Aunque este archivo es básico, en bibliotecas más avanzadas puede incluir información importante como la versión de la biblioteca, el autor y otras propiedades. Para el final de esta lección tendremos un archivo más completo.
+
+## Resolviendo dependencias transitivas
+
+Para resolver el problema de las dependencias transitivas, debemos asegurarnos de que todas las dependencias requeridas por `lib` estén disponibles en el classpath de la aplicación. En este caso, la biblioteca `lib` requiere la biblioteca `kotlinx-datetime`, por lo que debemos empaquetarla junto con la biblioteca `lib`.
+
+Para hacer esto, usaremos lo que se conoce como **fat JAR**.
+
+<Definition title={"Fat JAR"}>
+    Un fat JAR (también conocido como uber JAR) es un archivo JAR que contiene no solo las clases y recursos de tu propia aplicación, sino también todas las dependencias necesarias para ejecutarla
+</Definition>
+
+Primero, creemos una extensión para proveer configuraciones para el plugin de compilación. Para ello, crea una clase `FatJarExtension` en el paquete `extensions` del módulo `convention-plugins`:
+
+```kotlin title="convention-plugins/src/main/kotlin/extensions/FatJarExtension.kt"
+abstract class FatJarExtension {
+    abstract var implementationTitle: String
+    abstract var implementationVersion: String
+}
+```
+
+Luego, modifica el archivo `compile.conventions.gradle.kts` para registrar la extensión:
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="convention-plugins/src/main/kotlin/jvm.conventions.gradle.kts"
+        import extensions.FatJarExtension
+        // ...
+        extensions.create<FatJarExtension>("fatJar")
+        ```
+    </TabItem>
+    <TabItem value="Groovy" label="Groovy">
+        ```groovy title="convention-plugins/src/main/groovy/jvm.conventions.gradle"
+        import extensions.FatJarExtension
+        // ...
+        extensions.create(FatJarExtension, "fatJar")
+        ```
+    </TabItem>
+</Tabs>
+
+Ahora hagamos build a los plugins de convenciones para tener acceso al DSL desde el archivo `build.gradle.kts` de la biblioteca `lib` y utilicemos la extensión:
+
+<Tabs>
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="lib/build.gradle.kts"
+        fatJar {
+            implementationTitle = project.name
+            implementationVersion = project.version.toString()
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy" label="Groovy">
+        ```groovy title="lib/build.gradle"
+        fatJar {
+            implementationTitle = project.name
+            implementationVersion = project.version.toString()
+        }
+        ```
+    </TabItem>
+</Tabs>
