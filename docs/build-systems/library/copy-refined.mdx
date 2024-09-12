@@ -54,14 +54,14 @@ Ahora que tenemos la extensión registrada, podemos configurarla para que solo c
     <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
         ```kotlin title="lib/build.gradle.kts"
         copyLib {
-            libNames = listOf("lib", /* Agregar más nombres si es necesario */)
+            libNames = listOf("lib-.+-all", /* Agregar más nombres si es necesario */)
         }
         ```
     </TabItem>
     <TabItem value={"Gradle Groovy DSL"} label={"Gradle Groovy DSL"}>
         ```groovy title="lib/build.gradle"
         copyLib {
-            libNames = ["lib", /* Agregar más nombres si es necesario */]
+            libNames = ["lib-.+-all", /* Agregar más nombres si es necesario */]
         }
         ```
     </TabItem>
@@ -165,11 +165,11 @@ Para la última parte, dividiremos la solución en partes para que sea más fác
                     }
                 }
 
-                    fun printMissingFilesReport(missingFiles: List<String>) = if (missingFiles.isEmpty()) {
-                        println("All expected libraries were copied successfully.")
-                    } else {
-                        println("Warning: The following files were not copied: $missingFiles")
-                    }
+                fun printMissingFilesReport(missingFiles: List<String>) = if (missingFiles.isEmpty()) {
+                    println("All expected libraries were copied successfully.")
+                } else {
+                    println("Warning: The following files were not copied: $missingFiles")
+                }
                 ```
             </TabItem>
             <TabItem value={"Gradle Groovy DSL"} label={"Gradle Groovy DSL"}>
@@ -215,7 +215,10 @@ Para la última parte, dividiremos la solución en partes para que sea más fác
                 fun shouldIncludeFile(fileName: String, libNames: List<String>, filesToCopy: MutableList<String>): Boolean {
                     var isJarIncluded = false
                     for (libName in libNames) {
-                        if (fileName.startsWith(libName)) {
+                        // Convertir cada libName a una expresión regular
+                        val regex = Regex("$libName.jar)
+                        // Verificar si el nombre del archivo coincide con la expresión regular
+                        if (regex.matches(fileName)) {
                             isJarIncluded = true
                             filesToCopy += fileName  // Añadir el archivo a la lista de archivos a copiar
                             break
@@ -237,13 +240,16 @@ Para la última parte, dividiremos la solución en partes para que sea más fác
                     }
                 }
 
-                boolean shouldIncludeFile(String fileName, List<String> libNames, List<String> filesToCopy) {
+                def shouldIncludeFile(String fileName, List<String> libNames, List<String> filesToCopy) {
                     def isJarIncluded = false
                     libNames.each { libName ->
-                        if (fileName.startsWith(libName)) {
+                        // Convertir cada libName a una expresión regular
+                        def regex = ~/^$libName.jar$/ // El operador ~ convierte una cadena en una expresión regular en Groovy
+                        // Verificar si el nombre del archivo coincide con la expresión regular
+                        if (regex.matcher(fileName).matches()) {
                             isJarIncluded = true
-                            filesToCopy.add(fileName)  // Añadir el archivo a la lista de archivos a copiar
-                            return false // Salir del bucle
+                            filesToCopy << fileName  // Añadir el archivo a la lista de archivos a copiar
+                            return
                         }
                     }
                     return isJarIncluded
@@ -259,9 +265,10 @@ Para la última parte, dividiremos la solución en partes para que sea más fác
                 ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
                 // ...
                 tasks.register<Copy>("copyLib") {
-                    // ...
+                // ...
                     include { fileTreeElement ->
-                        val isJarIncluded = libNames.any { fileTreeElement.name.startsWith(it) }
+                        val isJarIncluded = libNames.any { fileTreeElement.name.matches(Regex("$it.jar")) }
+                        if (isJarIncluded) filesToCopy.add(fileTreeElement.name)
                         println("Checking file: ${fileTreeElement.name} (Included: $isJarIncluded)") // Depuración
                         isJarIncluded
                     }
@@ -270,13 +277,16 @@ Para la última parte, dividiremos la solución en partes para que sea más fác
             </TabItem>
             <TabItem value={"Gradle Groovy DSL"} label={"Gradle Groovy DSL"}>
                 ```groovy title="convention-plugins/src/main/groovy/compile.conventions.gradle"
-                // ...
-                tasks.register(Copy, "copyLib") {
+
+                tasks.register("copyLib", Copy) {
                     // ...
                     include { fileTreeElement ->
-                        def isJarIncluded = libNames.any { fileTreeElement.name.startsWith(it) }
+                    def isJarIncluded = libNames.any { fileTreeElement.name ==~ /${it}\.jar/ }
+                        if (isJarIncluded) {
+                            filesToCopy << fileTreeElement.name
+                        }
                         println("Checking file: ${fileTreeElement.name} (Included: $isJarIncluded)") // Depuración
-                        isJarIncluded
+                        return isJarIncluded
                     }
                 }
                 ```
@@ -373,6 +383,8 @@ Para la última parte, dividiremos la solución en partes para que sea más fác
     </TabItem>
 </Tabs>
 :::
+
+Si ahora corremos la tarea `./gradlew :app:run`, deberiamos ver un mensaje que indica que sólo las bibliotecas que cumplan con la expresión regular  `lib-.+-all` fueron copiadas, esto significa que todos los archivos que tengan la forma `lib-<algo>-all.jar` serán copiados.
 
 ## Conclusión
 
