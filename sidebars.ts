@@ -69,6 +69,7 @@ const sidebars: SidebarsConfig = {
                     items: [
                         'build-systems/library/logic',
                         'build-systems/library/compile',
+                        'build-systems/library/copy-refined'
                     ],
                 }
             ],

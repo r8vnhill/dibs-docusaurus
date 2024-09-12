@@ -1,0 +1,374 @@
+---
+title: Refinando la Tarea de Copiado
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import ReadingTime from '../../../src/components/ReadingTime';
+
+<ReadingTime/>
+
+Hasta ahora, hemos creado una tarea que copia los archivos JAR de la biblioteca al módulo `app`. Sin embargo, esta tarea copia todos los archivos generados en el directorio `build/libs`, lo que puede no ser ideal. Podemos mejorar esta tarea permitiendo especificar qué archivos JAR deben ser copiados.
+
+## Definición de una Extensión
+
+Para lograr esto, definiremos una **extensión** que nos permita configurar la tarea `copyLib` para copiar solo los archivos que necesitamos. Esta extensión se colocará en el paquete `extensions` dentro del módulo `convention-plugins`.
+
+```kotlin title="convention-plugins/src/main/kotlin/extensions/CopyLibExtension.kt"
+package extensions
+
+abstract class CopyLibExtension {
+    abstract var libNames: List<String>
+}
+```
+
+En este código, `libNames` es una lista de cadenas que representará los nombres (o prefijos) de los archivos JAR que queremos copiar. Ahora, podemos registrar esta extensión en el archivo `compile.conventions.gradle.kts` para que esté disponible para la tarea `copyLib`.
+
+### Registro de la Extensión
+
+Vamos a registrar la extensión `CopyLibExtension` en nuestro archivo de convenciones:
+
+<Tabs groupId={"gradle"}>
+    <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
+        ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
+        import extensions.CopyLibExtension
+
+        // Crear la extensión `copyLib`
+        extensions.create<CopyLibExtension>("copyLib")
+        ```
+    </TabItem>
+    <TabItem value={"Gradle Groovy DSL"} label={"Gradle Groovy DSL"}>
+        ```groovy title="convention-plugins/src/main/groovy/compile.conventions.gradle"
+        import extensions.CopyLibExtension
+
+        // Crear la extensión `copyLib`
+        extensions.create("copyLib", CopyLibExtension)
+        ```
+    </TabItem>
+</Tabs>
+
+### Configurando la Tarea `copyLib`
+
+Ahora que tenemos la extensión registrada, podemos configurarla para que solo copie los archivos que coincidan con los nombres especificados en `libNames`. La configuración de la extensión la haremos en el archivo `build.gradle.kts` o `build.gradle` de la biblioteca.
+
+<Tabs groupId={"gradle"}>
+    <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
+        ```kotlin title="lib/build.gradle.kts"
+        copyLib {
+            libNames = listOf("lib", /* Agregar más nombres si es necesario */)
+        }
+        ```
+    </TabItem>
+    <TabItem value={"Gradle Groovy DSL"} label={"Gradle Groovy DSL"}>
+        ```groovy title="lib/build.gradle"
+        copyLib {
+            libNames = ["lib", /* Agregar más nombres si es necesario */]
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+Para la última parte, dividiremos la solución en partes para que sea más fácil de seguir.
+
+<Tabs>
+    <TabItem value={"Parte 1"} label={"Parte 1"}>
+        Primero debemos acceder a la extensión `CopyLibExtension` en la tarea `copyLib` para obtener los nombres de los archivos JAR que queremos copiar.
+
+        <Tabs groupId={"gradle"}>
+            <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
+                ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
+                // ...
+                tasks.register<Copy>("copyLib") {
+                    // ...
+                    val libNames = project.extensions.getByType<CopyLibExtension>().libNames
+                }
+                ```
+            </TabItem>
+            <TabItem value={"Gradle Groovy DSL"} label={"Gradle Groovy DSL"}>
+                ```groovy title="convention-plugins/src/main/groovy/compile.conventions.gradle"
+                // ...
+                tasks.register(Copy, "copyLib") {
+                    // ...
+                    def libNames = project.extensions.getByType(CopyLibExtension).libNames
+                }
+                ```
+            </TabItem>
+        </Tabs>
+    </TabItem>
+    <TabItem value={"Parte 2"} label={"Parte 2"}>
+        Luego debemos verificar si la lista de nombres de archivos JAR está vacía. Si no se especifican nombres, lanzaremos una excepción para indicar que se debe configurar la extensión.
+
+        <Tabs groupId={"gradle"}>
+            <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
+                ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
+                // ...
+                tasks.register<Copy>("copyLib") {
+                    // ...
+                    doFirst { validateLibNames(libNames) }
+                }
+
+                fun validateLibNames(libNames: List<String>) {
+                    if (libNames.isEmpty()) {
+                        throw GradleException("Error: No library names were specified.")
+                    }
+                }
+                ```
+            </TabItem>
+            <TabItem value={"Gradle Groovy DSL"} label={"Gradle Groovy DSL"}>
+                ```groovy title="convention-plugins/src/main/groovy/compile.conventions.gradle"
+                // ...
+                tasks.register(Copy, "copyLib") {
+                // ...
+                    doFirst { validateLibNames(libNames) }
+                }
+
+                def validateLibNames(libNames) {
+                    if (libNames.isEmpty()) {
+                        throw new GradleException("Error: No library names were specified.")
+                    }
+                }
+                ```
+            </TabItem>
+        </Tabs>
+    </TabItem>
+    <TabItem value={"Parte 3"} label={"Parte 3"}>
+        A continuación, veremos si los archivos JAR especificados en `libNames` existen en el directorio `build/libs`. Si no existen, lanzaremos una excepción para indicar que los archivos no se encontraron. Esto lo haremos en 3 pasos:
+
+        1. Verificar que el directorio de destino exista.
+        2. Obtener los nombres de los archivos copiados.
+        3. Encontrar los archivos que faltan.
+
+        <Tabs groupId={"gradle"}>
+            <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
+                ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
+                // ...
+                tasks.register<Copy>("copyLib") {
+                    // ...
+                    doLast { verifyCopiedFiles(filesToCopy, "$rootDir/app/libs") }
+                }
+
+                fun verifyCopiedFiles(filesToCopy: List<String>, targetDirPath: String) {
+                    val targetDir = file(targetDirPath)
+
+                    if (isValidDirectory(targetDir)) {
+                        println("Libraries copied successfully to app/libs")
+
+                        val copiedFiles = getCopiedFileNames(targetDir)
+                        val missingFiles = findMissingFiles(filesToCopy, copiedFiles)
+
+                        printMissingFilesReport(missingFiles)
+
+                        if (missingFiles.isNotEmpty()) {
+                            throw GradleException("Error: Some libraries were not copied.")
+                        }
+                    } else {
+                        throw GradleException("Error: Target directory does not exist or the copy operation failed.")
+                    }
+                }
+
+                    fun printMissingFilesReport(missingFiles: List<String>) = if (missingFiles.isEmpty()) {
+                        println("All expected libraries were copied successfully.")
+                    } else {
+                        println("Warning: The following files were not copied: $missingFiles")
+                    }
+                ```
+            </TabItem>
+            <TabItem value={"Gradle Groovy DSL"} label={"Gradle Groovy DSL"}>
+                ```groovy title="convention-plugins/src/main/groovy/compile.conventions.gradle"
+                // ...
+                tasks.register(Copy, "copyLib") {
+                    group = "build"
+                    description = "Copies the libraries to the application directory"
+
+                    from("build/libs")
+                    into("$rootDir/app/libs")
+
+                    def libNames = project.extensions.getByType(CopyLibExtension).libNames
+
+                    doFirst { validateLibNames(libNames) }
+                }
+
+                def validateLibNames(libNames) {
+                    if (libNames.isEmpty()) {
+                        throw new GradleException("No se han especificado nombres de librerías en `copyLibConfig`")
+                    }
+                }
+                ```
+            </TabItem>
+        </Tabs>
+    </TabItem>
+    <TabItem value={"Parte 4"} label={"Parte 4"}>
+        Finalmente, implementaremos el filtrado de archivos a incluir en la tarea `copyLib` para que solo se copien los archivos JAR especificados en `libNames`.
+
+        <Tabs groupId={"gradle"}>
+            <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
+                ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
+                // ...
+                tasks.register<Copy>("copyLib") {
+                    // ...
+                    include { fileTreeElement ->
+                        val isJarIncluded = shouldIncludeFile(fileTreeElement.name, libNames, filesToCopy)
+                        println("Checking file: ${fileTreeElement.name} (Included: $isJarIncluded)") // Depuración
+                        isJarIncluded
+                    }
+                }
+
+                fun shouldIncludeFile(fileName: String, libNames: List<String>, filesToCopy: MutableList<String>): Boolean {
+                    var isJarIncluded = false
+                    for (libName in libNames) {
+                        if (fileName.startsWith(libName)) {
+                            isJarIncluded = true
+                            filesToCopy += fileName  // Añadir el archivo a la lista de archivos a copiar
+                            break
+                        }
+                    }
+                    return isJarIncluded
+                }
+                ```
+            </TabItem>
+            <TabItem value={"Gradle Groovy DSL"} label={"Gradle Groovy DSL"}>
+                ```groovy title="convention-plugins/src/main/groovy/compile.conventions.gradle"
+                // ...
+                tasks.register(Copy, "copyLib") {
+                    // ...
+                    include { fileTreeElement ->
+                        def isJarIncluded = shouldIncludeFile(fileTreeElement.name, libNames, filesToCopy)
+                        println("Checking file: ${fileTreeElement.name} (Included: $isJarIncluded)") // Depuración
+                        isJarIncluded
+                    }
+                }
+
+                boolean shouldIncludeFile(String fileName, List<String> libNames, List<String> filesToCopy) {
+                    def isJarIncluded = false
+                    libNames.each { libName ->
+                        if (fileName.startsWith(libName)) {
+                            isJarIncluded = true
+                            filesToCopy.add(fileName)  // Añadir el archivo a la lista de archivos a copiar
+                            return false // Salir del bucle
+                        }
+                    }
+                    return isJarIncluded
+                }
+                ```
+            </TabItem>
+        </Tabs>
+
+        o un poco más conciso:
+
+        <Tabs groupId={"gradle"}>
+            <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
+                ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
+                // ...
+                tasks.register<Copy>("copyLib") {
+                    // ...
+                    include { fileTreeElement ->
+                        val isJarIncluded = libNames.any { fileTreeElement.name.startsWith(it) }
+                        println("Checking file: ${fileTreeElement.name} (Included: $isJarIncluded)") // Depuración
+                        isJarIncluded
+                    }
+                }
+                ```
+            </TabItem>
+            <TabItem value={"Gradle Groovy DSL"} label={"Gradle Groovy DSL"}>
+                ```groovy title="convention-plugins/src/main/groovy/compile.conventions.gradle"
+                // ...
+                tasks.register(Copy, "copyLib") {
+                    // ...
+                    include { fileTreeElement ->
+                        def isJarIncluded = libNames.any { fileTreeElement.name.startsWith(it) }
+                        println("Checking file: ${fileTreeElement.name} (Included: $isJarIncluded)") // Depuración
+                        isJarIncluded
+                    }
+                }
+                ```
+            </TabItem>
+        </Tabs>
+    </TabItem>
+</Tabs>
+
+:::tip Ejercicio
+<Tabs>
+    <TabItem value={"Enunciado"} label={"Enunciado"}>
+        Implementa las funciones `isValidDirectory`, `getCopiedFileNames` y `findMissingFiles` en el archivo `compile.conventions.gradle.kts` para verificar si los archivos JAR especificados en `libNames` se copiaron correctamente al directorio `app/libs`.
+    </TabItem>
+    <TabItem value={"Solución"} label={"Solución"}>
+        <Tabs groupId={"gradle"}>
+            <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
+                ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
+                fun isValidDirectory(directory: File) = directory.exists() && directory.isDirectory
+
+                fun getCopiedFileNames(directory: File): List<String> {
+                    val copiedFiles = mutableListOf<String>()
+                    for (file in directory.listFiles()!!) {
+                        copiedFiles.add(file.name)
+                    }
+                    return copiedFiles
+                }
+
+                fun findMissingFiles(filesToCopy: List<String>, copiedFiles: List<String>): List<String> {
+                    val missingFiles = mutableListOf<String>()
+                    for (file in filesToCopy) {
+                        if (!copiedFiles.contains(file)) {
+                            missingFiles.add(file)
+                        }
+                    }
+                    return missingFiles
+                }
+                ```
+            </TabItem>
+            <TabItem value={"Gradle Groovy DSL"} label={"Gradle Groovy DSL"}>
+                ```groovy title="convention-plugins/src/main/groovy/compile.conventions.gradle"
+                boolean isValidDirectory(File directory) {
+                    return directory.exists() && directory.isDirectory()
+                }
+
+                List<String> getCopiedFileNames(File directory) {
+                    def copiedFiles = []
+                    directory.listFiles().each { file ->
+                        copiedFiles.add(file.name)
+                    }
+                    return copiedFiles
+                }
+
+                List<String> findMissingFiles(List<String> filesToCopy, List<String> copiedFiles) {
+                    def missingFiles = []
+                    filesToCopy.each { file ->
+                        if (!copiedFiles.contains(file)) {
+                            missingFiles.add(file)
+                        }
+                    }
+                    return missingFiles
+                }
+                ```
+            </TabItem>
+        </Tabs>
+    </TabItem>
+    <TabItem value={"Solución (más corta)"}>
+        <Tabs groupId={"gradle"}>
+            <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
+                ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"	
+                fun isValidDirectory(directory: File) = directory.exists() && directory.isDirectory
+                
+                fun getCopiedFileNames(directory: File) = directory.listFiles()?.map { it.name } ?: emptyList()
+                
+                fun findMissingFiles(filesToCopy: List<String>, copiedFiles: List<String>) =
+                    filesToCopy.filterNot { it in copiedFiles }
+                ```
+            </TabItem>
+            <TabItem value={"Gradle Groovy DSL"} label={"Gradle Groovy DSL"}>
+                ```groovy title="convention-plugins/src/main/groovy/compile.conventions.gradle"
+                boolean isValidDirectory(File directory) {
+                    directory.exists() && directory.isDirectory()
+                }
+
+                List<String> getCopiedFileNames(File directory) {
+                    directory.listFiles()?.collect { it.name } ?: []
+                }
+
+                List<String> findMissingFiles(List<String> filesToCopy, List<String> copiedFiles) {
+                    filesToCopy.findAll { !copiedFiles.contains(it) }
+                }
+                ```
+            </TabItem>
+        </Tabs>
+    </TabItem>
+</Tabs>

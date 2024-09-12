@@ -1,8 +1,15 @@
 import React, { useEffect, useState } from 'react';
 
-function calculateReadingTime(text) {
-    const wordsPerMinute = 150;
-    const words = text.trim().split(/\s+/).length;
+function calculateReadingTime(html) {
+    const wordsPerMinute = 250;
+
+    // Eliminar saltos de línea y reducir espacios para evitar falsos positivos
+    const cleanHtml = html.replace(/\n/g, ' ').trim();
+
+    // Separar todo en palabras, incluyendo nombres de etiquetas, atributos y texto
+    const words = cleanHtml.split(/\s+/).length;
+
+    // Calcular el tiempo de lectura basado en palabras por minuto
     const minutes = Math.ceil(words / wordsPerMinute);
     return minutes;
 }
@@ -14,11 +21,12 @@ const ReadingTime = () => {
         const pageContentElement = document.querySelector('.theme-doc-markdown');
 
         if (pageContentElement instanceof HTMLElement) {
-            const pageContent = pageContentElement.innerText || '';
+            // Usar innerHTML para obtener todo el contenido HTML (incluyendo etiquetas y atributos)
+            const pageContent = pageContentElement.innerHTML || '';
             const minutes = calculateReadingTime(pageContent);
-            setReadingTime(minutes); // Actualiza el estado con el tiempo de lectura calculado
+            setReadingTime(minutes);
         }
-    }, []); // Solo ejecuta una vez después de que el componente se ha montado
+    }, []);
 
     return <p>⏱ Tiempo de lectura: {readingTime} {readingTime === 1 ? 'minuto' : 'minutos'}</p>;
 };

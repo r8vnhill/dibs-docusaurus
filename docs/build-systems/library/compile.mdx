@@ -5,6 +5,7 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import Definition from "../../../src/components/Definition";
 import ReadingTime from "../../../src/components/ReadingTime";
+import { useState } from 'react';
 
 <ReadingTime />
 
@@ -24,65 +25,167 @@ A continuación, veremos cómo automatizar el proceso de empaquetado de la bibli
 
 Aunque podríamos realizar este proceso manualmente, aprovecharemos las capacidades de automatización de Gradle para hacerlo de manera eficiente y siguiendo las buenas prácticas.
 
+## Empaquetando la Biblioteca
 
-## Empaquetando la biblioteca
+El primer paso para automatizar el empaquetado de la biblioteca será crear un **plugin de convenciones**. Para ello, crearemos un nuevo archivo en `convention-plugins/src/main/kotlin/compile.conventions.gradle.kts`.
 
-Lo primero que haremos será crear un nuevo plugin de convenciones para automatizar el proceso de empaquetado de la biblioteca, para esto, creemos un nuevo archivo `convention-plugins/src/main/kotlin/compile.conventions.gradle.kts`.
+En este archivo, definiremos una tarea personalizada que copie los archivos JAR del directorio `build/libs` al directorio `libs` del módulo `app`. Como vimos en la lección sobre [tareas personalizadas](../tasks/custom#tareas-basadas-en-otras-tareas), comenzaremos con una tarea básica y luego la mejoraremos.
 
-Dentro de este archivo, crearemos una tarea para copiar los archivos del directorio `build/libs` al directorio `libs` del módulo `app` como vimos en la lección sobre [tareas personalizadas](../tasks/custom#tareas-basadas-en-otras-tareas).
-
-<Tabs>
-    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+<Tabs groupId={"gradle"}>
+    <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
         ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
-        import org.gradle.api.tasks.Copy
-
         tasks.register<Copy>("copyLib") {
             group = "build"
-            description = "Copies the library to the application directory"
-            dependsOn("jar")
+            description = "Copia la biblioteca al directorio de la aplicación"
+
             from("build/libs")
             into("$rootDir/app/libs")
+
             doLast {
-                println("Library copied to app/libs")
+                println("Biblioteca copiada al directorio app/libs")
             }
         }
         ```
     </TabItem>
-    <TabItem value="Groovy DSL" label="Groovy DSL">
+    <TabItem value={"Gradle Groovy DSL"} label={"Gradle Groovy DSL"}>
         ```groovy title="convention-plugins/src/main/groovy/compile.conventions.gradle"
-        import org.gradle.api.tasks.Copy
-
-        tasks.register("copyLib", Copy) {
+        tasks.register(Copy, "copyLib") {
             group = "build"
-            description = "Copies the library to the application directory"
-            dependsOn "jar"
-            from "build/libs"
-            into "$rootDir/app/libs"
+            description = "Copia la biblioteca al directorio de la aplicación"
+
+            from("build/libs")
+            into("$rootDir/app/libs")
+
             doLast {
-                println "Library copied to app/libs"
+                println("Biblioteca copiada al directorio app/libs")
             }
         }
         ```
     </TabItem>
 </Tabs>
 
-En este caso, la tarea `copyLib` copiará los archivos generados por la tarea `jar` al directorio `app/lib` del proyecto. Para ello, la tarea `copyLib` depende de la tarea `jar` y copia los archivos del directorio `build/libs` al directorio `app/lib`.
+### Automatizando la Tarea
 
-Con esto, podemos agregar la tarea `copyLib` al ciclo de vida de construcción del proyecto utilizando `finalizedBy`, que ejecutará la tarea `copyLib` después de que la tarea `build` haya finalizado.
+Ya que hemos definido la tarea `copyLib`, podemos hacer que esta se ejecute automáticamente antes de la tarea `compileKotlin` en el módulo de la aplicación. Esto garantiza que, cada vez que se compile la biblioteca, también se copie el archivo JAR al módulo `app`.
 
-<Tabs>
-    <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
-        tasks.build {
-            finalizedBy("copyLib")
+<Tabs groupId={"gradle"}>
+    <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
+        ```kotlin title="lib/build.gradle.kts"
+        tasks.named("compileKotlin") {
+            dependsOn(":lib:copyLib")
         }
         ```
     </TabItem>
-    <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy title="convention-plugins/src/main/groovy/compile.conventions.gradle"
-        tasks.build {
-            finalizedBy 'copyLib'
+    <TabItem value={"Gradle Groovy DSL"} label={"Gradle Groovy DSL"}>
+        ```groovy title="lib/build.gradle"
+        tasks.named("compileKotlin") {
+            dependsOn(":lib:copyLib")
         }
         ```
     </TabItem>
 </Tabs>
+
+### Ejecutando la Tarea
+
+Cuando ejecutes la tarea `build` en el proyecto, se ejecutará primero la tarea `compileKotlin`, seguida de `copyLib`, que copiará el archivo JAR al directorio `libs` del módulo `app`.
+
+:::tip Ejercicio
+<Tabs>
+    <TabItem value={"Enunciado"} label={"Enunciado"}>
+        Ejecuta la tarea `build` y verifica si el archivo JAR de la biblioteca se copia correctamente al módulo `app`. Esto generará un error, ¿puedes identificar la causa?
+    </TabItem>
+    <TabItem value={"Solución"} label={"Solución"}>
+        El error será algo como esto:
+
+        ```plaintext
+        > Task :app:compileKotlin FAILED
+        e: file:///.../gradle-basics/app/src/main/kotlin/cl/ravenhill/EchoApp.kt:5:17 Unresolved reference 'echo'.
+
+        FAILURE: Build failed with an exception.
+        ```
+
+        Esto ocurre porque copiamos el archivo JAR, pero no configuramos el módulo `app` para utilizarlo como una dependencia.
+    </TabItem>
+</Tabs>
+:::
+
+## Configurando la Dependencia
+
+Para que el módulo `app` pueda utilizar la biblioteca empaquetada, actualizaremos las dependencias. Es similar a agregar una dependencia de una biblioteca externa, pero utilizaremos el archivo JAR local en lugar de un repositorio remoto.
+
+<Tabs groupId={"gradle"}>
+    <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
+        ```kotlin title="app/build.gradle.kts"
+        dependencies {
+            implementation(
+                fileTree("libs") {
+                    include("lib-1.0.0.jar")
+                    // include("...") // Agregar más bibliotecas si es necesario
+                }
+            )
+        }
+        ```
+    </TabItem>
+    <TabItem value={"Gradle Groovy DSL"} label={"Gradle Groovy DSL"}>
+        ```groovy title="app/build.gradle"
+        dependencies {
+            implementation fileTree(dir: "libs") {
+                include "lib-1.0.0.jar"
+                // include "..." // Agregar más bibliotecas si es necesario
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+Si ejecutas la tarea `build` todo debería funcionar, pero no lo hace debido a un error.
+
+:::tip Ejercicio
+<Tabs>
+    <TabItem value={"Enunciado"} label={"Enunciado"}>
+        Ejecuta la tarea `build` y analiza el error. ¿Puedes identificar la causa? ¿Cómo lo solucionarías?
+    </TabItem>
+    <TabItem value={"Solución"} label={"Solución"}>
+        El error debería ser similar a:
+
+        ```plaintext
+        > Task :lib:jar FAILED
+
+        FAILURE: Build failed with an exception.
+
+        * What went wrong:
+        A problem was found with the configuration of task ':lib:jar' (type 'Jar').
+        - Gradle detected a problem with the following location: 'E:/Documentos/.../lib-1.0.0.jar'.
+
+        Reason: Task ':lib:copyLib' uses this output of task ':lib:jar' without declaring an explicit dependency.
+        ```
+
+        El problema es que `copyLib` se ejecuta antes de que `jar` haya generado el archivo JAR. Para corregirlo, `copyLib` debe depender explícitamente de `jar`.
+    </TabItem>
+</Tabs>
+:::
+
+<details>
+    <summary>**Solución al error** ¡No abrir si quieres resolverlo por tu cuenta!</summary>
+
+    El problema surge porque `copyLib` necesita que `jar` termine antes de ejecutarse. Gradle nos avisa que debemos hacer explícita la dependencia entre estas tareas.
+
+    <Tabs groupId={"gradle"}>
+        <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
+            ```kotlin title="./convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
+            tasks.named("copyLib") {
+                dependsOn("jar")
+            }
+            ```
+        </TabItem>
+        <TabItem value={"Gradle Groovy DSL"} label={"Gradle Groovy DSL"}>
+            ```groovy title="lib/build.gradle"
+            tasks.named("copyLib") {
+                dependsOn("jar")
+            }
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+Aplicando esta corrección, al ejecutar la tarea `build`, la biblioteca se empaquetará y copiará correctamente al módulo `app`, que podrá utilizarla como una dependencia local.
