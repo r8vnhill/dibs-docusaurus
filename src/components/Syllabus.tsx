@@ -1,5 +1,5 @@
 // src/components/Syllabus.tsx
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 
 type CourseSection = {
     title: string;
@@ -10,22 +10,63 @@ const sections: CourseSection[] = [
     {
         title: "Introducción",
         contents: [
+            "Introducción a bibliotecas de software",
+            "Principios de código limpio y mantenible",
             "Sintaxis de lenguaje de programación",
             "Void-safety",
-            "Build systems",
-            "Herramientas de análisis estático",
+            "Repaso de programación orientada a objetos",
         ],
     },
     {
-        title: "Programación orientada a objetos",
+        title: "Build systems",
         contents: [
-            "Repaso de objetos, clases e interfaces",
+            "Introducción a build systems",
+            "Manejo de dependencias",
+            "Automatización de tareas",
+            "Compilación y empaquetado de aplicaciones",
+            "Compilación y empaquetado de bibliotecas",
+            "Publicación de bibliotecas",
+        ],
+    },
+    {
+        title: "APIs funcionales",
+        contents: [
+            "Funciones puras y efectos secundarios",
+            "Funciones de alto orden",
+            "Funciones lambda",
+            "Tipos de datos algebráicos",
+            "Optimización de funciones recursivas",
+            "Mónadas"
+        ],
+    },
+    {
+        title: "Testing",
+        contents: [
+            "Repaso de testing",
+            "Data-driven testing",
+            "Property-based testing",
+            "Generadores arbitrarios",
+            "Técnicas de desarrollo de propiedades",
+            "Shrinking"
+        ],
+    },
+    {
+        title: "Colecciones",
+        contents: [
+            "Iterator pattern",
+            "Colecciones inmutables",
+            "Colecciones mutables",
+            "Operaciones de colecciones",
+        ]
+    },
+    {
+        title: "APIs orientadas a objetos",
+        contents: [
             "Clases abiertas y cerradas/finales",
             "Funciones de extensión",
             "Registros (data classes)",
-            "Enumeraciones",
-            "Clases selladas",
             "Herencia múltiple",
+            "Soluciones al problema del diamante",
         ],
     },
 ];
@@ -48,9 +89,9 @@ const Syllabus: React.FC = () => {
                     <li key={index}>
                         <h3
                             onClick={() => toggleVisibility(index)}
-                            style={{ cursor: 'pointer' }}
+                            style={{cursor: 'pointer'}}
                         >
-                            {section.title}
+                            {`Unidad ${index + 1}: ${section.title}`}
                         </h3>
                         {visibleSections[index] && (
                             <ol>
