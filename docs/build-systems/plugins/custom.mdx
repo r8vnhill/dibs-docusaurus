@@ -12,7 +12,6 @@ import ReadingTime from "../../../src/components/ReadingTime";
 <GithubRepoLink user={"r8vnhill"} repo={"echo-app-kt"}/>
 <GithubRepoLink user={"r8vnhill"} repo={"echo-app-groovy"}/>
 
-\
 ## Plugins precompilados
 
 En la sección [mi primer plugin](../convention-plugins#mi-primer-plugin), exploramos cómo crear un plugin dentro de un archivo de convenciones. Estos se conocen como **plugins precompilados**, ya que su código se compila antes de ejecutar el script de construcción del proyecto raíz.
@@ -159,7 +158,7 @@ import org.gradle.api.Project
 class VersioningPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         // Definir una tarea que genera un archivo version.txt
-        project.tasks.register("generateVersionFile") {
+        project.tasks.register("writeVersionInfo") {
             group = "Versioning"
             description = "Generates a version file with the project version and build date"
 
@@ -188,8 +187,8 @@ class VersioningPlugin : Plugin<Project> {
 1. **Uso de la interfaz `Plugin<Project>`**: 
    - Nuestro plugin implementa la interfaz `Plugin<Project>`, lo que nos permite modificar el proyecto Gradle donde se aplique este plugin. El método `apply()` es el lugar donde definimos la lógica de nuestro plugin.
    
-2. **Registro de la tarea `generateVersionFile`**:
-   - Usamos `project.tasks.register("generateVersionFile")` para definir una nueva tarea dentro del proyecto, la cual tendrá el grupo `Versioning` y una descripción clara de su propósito.
+2. **Registro de la tarea `writeVersionInfo`**:
+   - Usamos `project.tasks.register("writeVersionInfo")` para definir una nueva tarea dentro del proyecto, la cual tendrá el grupo `Versioning` y una descripción clara de su propósito.
 
 3. **Obtención de la versión del proyecto**:
    - `val version = project.version.toString()` extrae la versión actual del proyecto definida en el archivo `build.gradle.kts`.
@@ -232,10 +231,10 @@ Una vez creado el plugin, podemos aplicarlo en el proyecto principal o en cualqu
 
 ### Ejecutar la tarea
 
-Finalmente, para generar o actualizar el archivo `version.txt`, ejecutamos la tarea `generateVersionFile` con el siguiente comando:
+Finalmente, para generar o actualizar el archivo `version.txt`, ejecutamos la tarea `writeVersionInfo` con el siguiente comando:
 
 ```bash
-./gradlew generateVersionFile
+./gradlew writeVersionInfo
 ```
 
 Esto generará o actualizará un archivo `version.txt` en la carpeta `build` del proyecto con contenido como el siguiente:
@@ -257,6 +256,15 @@ Cada vez que se ejecute la tarea, el archivo se actualizará con una nueva entra
     </TabItem>
     <TabItem value="Solución">
         ```kotlin
+        package plugins
+
+        import kotlinx.datetime.Clock
+        import kotlinx.datetime.TimeZone
+        import kotlinx.datetime.toLocalDateTime
+        import org.gradle.api.Plugin
+        import org.gradle.api.Project
+        import java.io.File
+
         class ProjectManagementPlugin : Plugin<Project> {
             override fun apply(project: Project) {
                 project.tasks.register("generateReadme") {

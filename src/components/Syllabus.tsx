@@ -44,6 +44,7 @@ const sections: CourseSection[] = [
         contents: [
             "Repaso de testing",
             "Data-driven testing",
+            "Aserciones avanzadas",
             "Property-based testing",
             "Generadores arbitrarios",
             "Técnicas de desarrollo de propiedades",

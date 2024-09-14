@@ -1,7 +1,7 @@
 ---
 title: Extensiones
 ---
-
+import GithubRepoLink from "../../../src/components/GithubRepoLink";
 import References from "../../../src/components/ReferencesComponent";
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
@@ -9,6 +9,10 @@ import ReadingTime from "../../../src/components/ReadingTime";
 
 <ReadingTime/>
 
+<GithubRepoLink user={"r8vnhill"} repo={"echo-app-kt"}/>
+<GithubRepoLink user={"r8vnhill"} repo={"echo-app-groovy"}/>
+
+<br/>
 A veces necesitamos una forma más conveniente y flexible de configurar plugins en nuestros proyectos. En lugar de repetir la misma configuración en varios archivos, podemos encapsular esa configuración en **extensiones**. Las extensiones permiten agregar propiedades y métodos adicionales a un plugin, facilitando su personalización y uso en todo el proyecto.
 
 ## ¿Qué es `ext`?
@@ -23,7 +27,7 @@ Vamos a modificar la tarea `greet` para que imprima un mensaje de saludo diferen
 
 <Tabs>
     <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin title="./echo/convention-plugins/src/main/kotlin/playground.gradle.kts"
+        ```kotlin title="./convention-plugins/src/main/kotlin/playground.gradle.kts"
         tasks.register("greet") {
             group = "playground"
             description = "Prints a greeting message"
@@ -34,7 +38,7 @@ Vamos a modificar la tarea `greet` para que imprima un mensaje de saludo diferen
         ```
     </TabItem>
     <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy title="./echo/convention-plugins/src/main/groovy/playground.gradle"
+        ```groovy title="./convention-plugins/src/main/groovy/playground.gradle"
         tasks.register('greet') {
             group = 'playground'
             description = 'Prints a greeting message'
@@ -52,13 +56,13 @@ Para personalizar el mensaje de saludo, podemos definir la propiedad `module` en
 
 <Tabs>
     <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin title="./echo/build.gradle.kts"
+        ```kotlin title="./build.gradle.kts"
         // Definir el valor de la propiedad directamente
         ext["module"] = "main"
         ```
     </TabItem>
     <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy title="./echo/build.gradle"
+        ```groovy title="./build.gradle"
         // Definir el valor de la propiedad directamente
         ext.module = 'main'
         ```
@@ -71,7 +75,7 @@ También podemos configurar la propiedad `module` dentro de un bloque `ext`, lo 
 
 <Tabs>
     <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin title="./echo/build.gradle.kts"
+        ```kotlin title="./build.gradle.kts"
         // Usar el bloque ext para configurar la propiedad
         ext {
             set("module", project.name)
@@ -79,7 +83,7 @@ También podemos configurar la propiedad `module` dentro de un bloque `ext`, lo 
         ```
     </TabItem>
     <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy title="./echo/build.gradle"
+        ```groovy title="./build.gradle"
         // Usar el bloque ext para configurar la propiedad
         ext {
             module = project.name
@@ -99,7 +103,7 @@ Finalmente, podemos ejecutar la tarea `greet` para ver el mensaje de saludo pers
 Al ejecutar la tarea `greet`, veremos un mensaje de saludo personalizado que incluye el nombre del módulo:
 
 ```plaintext
-Hello, from echo!
+Hello, from echo-app!
 ```
 
 ## Las limitaciones de `ext`
@@ -128,7 +132,7 @@ Para mejorar la seguridad y el tipado en nuestra tarea `greet`, vamos a definir 
 
 Primero, definimos una clase `GreetExtension` que contendrá la propiedad `module`. Colocamos esta clase en el paquete `extensions` dentro del módulo `convention-plugins`.
 
-```kotlin title="./echo/convention-plugins/src/main/kotlin/extensions/GreetExtension.kt"
+```kotlin title="./convention-plugins/src/main/kotlin/extensions/GreetExtension.kt"
 abstract class GreetExtension {
     abstract var module: String
 }
@@ -140,7 +144,7 @@ A continuación, registramos la extensión tipada en nuestro plugin `playground`
 
 <Tabs>
     <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin title="./echo/convention-plugins/src/main/kotlin/playground.gradle.kts"
+        ```kotlin title="./convention-plugins/src/main/kotlin/playground.gradle.kts"
         project.extensions.create<GreetExtension>("greeting")
 
         tasks.register("greet") {
@@ -154,7 +158,7 @@ A continuación, registramos la extensión tipada en nuestro plugin `playground`
         ```
     </TabItem>
     <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy title="./echo/convention-plugins/src/main/groovy/playground.gradle"
+        ```groovy title="./convention-plugins/src/main/groovy/playground.gradle"
         project.extensions.create("greeting", GreetExtension)
 
         tasks.register('greet') {
@@ -183,7 +187,7 @@ Ahora, configuramos la propiedad `module` de la extensión tipada en el archivo 
 
 <Tabs>
     <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin title="./echo/build.gradle.kts"
+        ```kotlin title="./build.gradle.kts"
         // Configurar la propiedad module de la extensión tipada
         greeting {
             module = project.name
@@ -191,7 +195,7 @@ Ahora, configuramos la propiedad `module` de la extensión tipada en el archivo 
         ```
     </TabItem>
     <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy title="./echo/build.gradle"
+        ```groovy title="./build.gradle"
         // Configurar la propiedad module de la extensión tipada
         greeting {
             module = project.name
@@ -226,7 +230,7 @@ Finalmente, implementamos una extensión tipada para la tarea `greet`, que nos p
 
 <References references={[
     {
-        title: "Extending Gradle",
+        title: "8. Extending Gradle",
         bookTitle: "Gradle in Action",
         pages: "191–222",
         location: "Shelter Island, NY",
