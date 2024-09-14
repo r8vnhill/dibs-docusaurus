@@ -31,47 +31,82 @@ usuario. Para hacer esto, definiremos la tarea como una clase en un archivo `.kt
 Primero, creamos un paquete llamado `tasks` en el directorio `src/main/kotlin` del módulo `convention-plugins`.
 Dentro de este paquete, crearemos un archivo llamado `FibonacciTask.kt` con el siguiente contenido:
 
-```kotlin title="convention-plugins/src/main/kotlin/FibonacciTask.kt"
-package tasks
+<Tabs>
+    <TabItem value="Implementación" label={"Implementación"}>
+        ```kotlin title="convention-plugins/src/main/kotlin/FibonacciTask.kt"
+        package tasks
 
-import org.gradle.api.DefaultTask
-import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.StopExecutionException
-import org.gradle.api.tasks.TaskAction
+        import org.gradle.api.DefaultTask
+        import org.gradle.api.provider.Property
+        import org.gradle.api.tasks.Input
+        import org.gradle.api.tasks.StopExecutionException
+        import org.gradle.api.tasks.TaskAction
 
-abstract class FibonacciTask : DefaultTask() {  // (1)
-    @get:Input  // (2)
-    abstract val number: Property<Int>  // (3)
+        abstract class FibonacciTask : DefaultTask() {  // (1)
+            @get:Input  // (2)
+            abstract val number: Property<Int>  // (3)
 
-    @TaskAction // (4)
-    fun calculateFibonacci() {
-        val n = number.get()  // (5)
-        if (n < 0) {
-            throw StopExecutionException("The number must be greater than or equal to 0")  // (6)
+            @TaskAction // (4)
+            fun calculateFibonacci() {
+                val n = number.get()  // (5)
+                if (n < 0) {
+                    throw StopExecutionException("The number must be greater than or equal to 0")  // (6)
+                }
+                var first = 0
+                var second = 1
+                repeat(n) {
+                    print("$first ")
+                    second += first
+                    first = second - first
+                }
+                println("\nThe $n-th Fibonacci number is: $first")
+            }
         }
-        var first = 0
-        var second = 1
-        repeat(n) {
-            print("$first ")
-            second += first
-            first = second - first
+        ```
+    </TabItem>
+    <TabItem value="Implementación (mejorada)" label={"Implementación (mejorada)"}>
+        ```kotlin title="convention-plugins/src/main/kotlin/FibonacciTask.kt"
+        package tasks
+
+        import org.gradle.api.DefaultTask
+        import org.gradle.api.provider.Property
+        import org.gradle.api.tasks.Input
+        import org.gradle.api.tasks.StopExecutionException
+        import org.gradle.api.tasks.TaskAction
+
+        abstract class FibonacciTask : DefaultTask() {
+            @get:Input
+            abstract val number: Property<Int>
+
+            @TaskAction
+            fun calculateFibonacci() {
+                val n = number.get().takeIf { it >= 0 }
+                    ?: throw StopExecutionException("The number must be greater than or equal to 0")
+                var (first, second) = 0 to 1
+                repeat(n) {
+                    print("$first ")
+                    second += first.also { first = second }
+                }
+                println("\nThe $n-th Fibonacci number is: $first")
+            }
         }
-        println("The $n-th Fibonacci number is: $first")
-    }
-}
-```
+        ```
+    </TabItem>
+</Tabs>
 
 ### Explicación:
 
-1. **Clase `FibonacciTask`**: Definimos una clase que extiende `DefaultTask`. Lo más común es que las tareas en Gradle hereden de `DefaultTask`. Notamos que la clase es **abstracta**, lo que indica que ciertos parámetros de la
-tarea, como el input, deben ser definidos antes de usarla.
-2. **Anotación `@get:Input`**: Anotamos la propiedad `number` para indicarle a Gradle que este valor es un input de
-la tarea. Esto permite que Gradle detecte cambios y decida si es necesario ejecutar la tarea nuevamente.
-3. **Propiedad `number`**: Utilizamos un `Property<Int>` para almacenar el número hasta el cual queremos calcular la
-secuencia de Fibonacci.
-4. **Método `@TaskAction`**: Este método contiene la lógica principal de la tarea. Gradle lo ejecuta automáticamente
-cuando la tarea se llama, ejecutándose entre los bloques `doFirst` y `doLast`.
+1. **Clase `FibonacciTask`**: Definimos una clase que extiende `DefaultTask`. Lo más común es que las tareas en Gradle hereden de `DefaultTask`. Notamos que la clase es **abstracta**, lo que indica que ciertos parámetros de la tarea, como el input, deben ser definidos antes de usarla.
+
+2. **Anotación `@get:Input`**: Anotamos la propiedad `number` para indicarle a Gradle que este valor es un input de la tarea. Esto permite que Gradle detecte cambios y decida si es necesario ejecutar la tarea nuevamente.
+
+3. **Propiedad `number`**: Utilizamos un `Property<Int>` para almacenar el número hasta el cual queremos calcular la secuencia de Fibonacci.
+
+4. **Método `@TaskAction`**: Este método contiene la lógica principal de la tarea. Gradle lo ejecuta automáticamente cuando la tarea se llama, ejecutándose entre los bloques `doFirst` y `doLast`.
+
+5. **Obtener el número**: Utilizamos `number.get()` para obtener el valor del número proporcionado por lx usuarix.
+
+6. **Validación del número**: Verificamos que el número sea mayor o igual a 0. Si no lo es, lanzamos una excepción `StopExecutionException` para detener la ejecución de la tarea. Gradle manejará esta excepción y mostrará un mensaje de error.
 
 ### Registro de la tarea en un archivo `*.gradle.kts`
 
@@ -174,7 +209,8 @@ se ejecute.
         ```plaintext
         > Task :fib_10
         Calculating the 10th Fibonacci number...
-        0 1 1 2 3 5 8 13 21 34 The 10-th Fibonacci number is: 55
+        0 1 1 2 3 5 8 13 21 34
+        The 10-th Fibonacci number is: 55
         Calculation complete.
         ```
 
@@ -189,7 +225,7 @@ se ejecute.
 Implementaremos una tarea para procesar archivos de texto. Tendremos archivos de entrada y salida. El texto debe ser
 tomado de un archivo de texto (input), transformado en mayúsculas, y ser guardado en otro archivo de texto (output).
 
-```kotlin title="convention-plugins/src/main/kotlin/TextProcessingTask.kt"
+```kotlin title="convention-plugins/src/main/kotlin/UppercaseTask.kt"
 package tasks
 
 import org.gradle.api.DefaultTask
@@ -199,7 +235,7 @@ import org.gradle.api.tasks.TaskAction
 import java.io.File
 import java.util.*
 
-abstract class TextProcessingTask : DefaultTask() {
+abstract class UppercaseTask : DefaultTask() {
     @get:InputFile  // (1)
     abstract var inputFile: File
 
@@ -208,8 +244,8 @@ abstract class TextProcessingTask : DefaultTask() {
 
     @TaskAction
     fun processText() {
-        val text = inputFile.readText()
-        val processedText = text.uppercase(Locale.getDefault())
+        val processedText = inputFile.readText()
+            .uppercase(Locale.getDefault())
         outputFile.writeText(processedText)
     }
 }
@@ -223,11 +259,11 @@ Ahora, registramos la tarea en un archivo `*.gradle.kts`:
 <Tabs>
 <TabItem value="Kotlin DSL" label="Kotlin DSL">
 ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
-import tasks.TextProcessingTask
+import tasks.UppercaseTask
 
 // ...
 
-tasks.register<TextProcessingTask>("processText") {
+tasks.register<UppercaseTask>("processText") {
     inputFile = file("input.txt")
     outputFile = file("output.txt")
     doFirst { println("Processing text...") }
@@ -237,11 +273,11 @@ tasks.register<TextProcessingTask>("processText") {
 </TabItem>
 <TabItem value="Groovy DSL" label="Groovy DSL">
 ```groovy title="convention-plugins/src/main/groovy/playground.gradle"
-import tasks.TextProcessingTask
+import tasks.UppercaseTask
 
 // ...
 
-tasks.register('processText', TextProcessingTask) {
+tasks.register('processText', UppercaseTask) {
     inputFile = file('input.txt')
     outputFile = file('output.txt')
     doFirst { println('Processing text...') }
@@ -278,14 +314,11 @@ ESTE ES EL CONTENIDO DEL ARCHIVO
 :::tip Ejercicio: Verificación de Números Pares e Impares
 <Tabs>
     <TabItem value="Ejercicio">
-        Vamos a implementar una tarea personalizada que procese un archivo de texto con una lista de números (uno por
-        línea). La tarea verificará si cada número es par o impar y luego escribirá los resultados en un archivo de
-        salida,
-        indicando si el número es "par" o "impar", o si el contenido no es un número válido.
+        Vamos a implementar una tarea personalizada que procese un archivo de texto con una lista de números (uno por línea). La tarea verificará si cada número es par o impar y luego escribirá los resultados en un archivo de salida, indicando si el número es "par" o "impar", o si el contenido no es un número válido.
 
         ### Pasos:
 
-        1. **Crea un archivo `NumbersTask.kt` en el paquete `tasks`** dentro del directorio
+        1. **Crea un archivo `ParityTask.kt` en el paquete `tasks`** dentro del directorio
         `src/main/kotlin/convention-plugins`. Este archivo contendrá una clase que extienda `DefaultTask` y será
         responsable de procesar el archivo de entrada y generar el archivo de salida.
 
@@ -336,7 +369,7 @@ ESTE ES EL CONTENIDO DEL ARCHIVO
 
     <TabItem value="Solución">
 
-        ```kotlin title="convention-plugins/src/main/kotlin/tasks/NumbersTask.kt"
+        ```kotlin title="convention-plugins/src/main/kotlin/tasks/ParityTask.kt"
         package tasks
 
         import org.gradle.api.DefaultTask
@@ -345,7 +378,7 @@ ESTE ES EL CONTENIDO DEL ARCHIVO
         import org.gradle.api.tasks.TaskAction
         import java.io.File
 
-        abstract class NumbersTask : DefaultTask() {
+        abstract class ParityTask : DefaultTask() {
             @get:InputFile
             abstract var inputFile: File
 
@@ -370,8 +403,8 @@ ESTE ES EL CONTENIDO DEL ARCHIVO
         }
         ```
     </TabItem>
-    <TabItem value="Solución (más corta)">
-        ```kotlin title="convention-plugins/src/main/kotlin/tasks/NumbersTask.kt"
+    <TabItem value="Solución (mejorada)">
+        ```kotlin title="convention-plugins/src/main/kotlin/tasks/ParityTask.kt"
         package tasks
 
         import org.gradle.api.DefaultTask
@@ -380,7 +413,7 @@ ESTE ES EL CONTENIDO DEL ARCHIVO
         import org.gradle.api.tasks.TaskAction
         import java.io.File
 
-        abstract class NumbersTask : DefaultTask() {
+        abstract class ParityTask : DefaultTask() {
             @get:InputFile
             abstract var inputFile: File
 
@@ -388,16 +421,14 @@ ESTE ES EL CONTENIDO DEL ARCHIVO
             abstract var outputFile: File
 
             @TaskAction
-            fun processNumbers() {
-                inputFile.readLines().map { line ->
-                    try {
-                        val num = line.toInt()
-                        "$num: ${if (num % 2 == 0) "par" else "impar"}"
-                    } catch (e: NumberFormatException) {
-                        "$line: no es un número válido"
-                    }
-                }.let { results -> outputFile.writeText(results.joinToString("\n")) }
-            }
+            fun processNumbers() = inputFile.readLines().map { line ->
+                try {
+                    val num = line.toInt()
+                    "$num: ${if (num % 2 == 0) "par" else "impar"}"
+                } catch (e: NumberFormatException) {
+                    "$line: no es un número válido"
+                }
+            }.let { results -> outputFile.writeText(results.joinToString("\n")) }
         }
         ```
     </TabItem>
