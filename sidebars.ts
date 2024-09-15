@@ -89,6 +89,18 @@ const sidebars: SidebarsConfig = {
                 "fp/pure",
                 {
                     type: 'category',
+                    label: 'Tipos de datos algebraicos',
+                    link: {
+                        type: 'doc',
+                        id: 'fp/adt/index',
+                    },
+                    items: [
+                        'fp/adt/enums',
+                        'fp/adt/sealed',
+                    ],
+                },
+                {
+                    type: 'category',
                     label: 'Optimización de Funciones Recursivas',
                     link: {
                         type: 'generated-index',
