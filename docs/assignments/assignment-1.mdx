@@ -5,7 +5,7 @@ title: Tarea 1
 Resuelva 4 de 5 ejercicios propuestos. Puede elegir los ejercicios que prefiera excepto por la P5, que es
 obligatoria. Cada ejercicio tiene un objetivo específico y se enfoca en diferentes aspectos de la programación.
 
-##  P1) [1.5 pts] Null-safety: Sistema de Gestión de Biblioteca
+##  P1) [1.5 pts] Void-safety: Sistema de Gestión de Biblioteca
 
 **Objetivo del Ejercicio:**
 Implementar un sistema para una biblioteca que maneje información sobre libros y pueda procesar correctamente las
@@ -46,32 +46,44 @@ fun main() {
 }
 ```
 
-## P2) [1.5 pts] Gradle: Tarea Gradle para Generar un Reporte de Dependencias
+## P2) [1.5 pts] Build-systems: Creación de una Tarea Personalizada para Analizar Comentarios ``TODO`` en el Código Fuente
 
-**Objetivo del Ejercicio:**
-Programar una tarea en Gradle que genere un reporte detallado de todas las dependencias del proyecto, incluyendo las
-versiones y los grupos a los que pertenecen, y que lo escriba en un archivo de texto.
+### a) [0.75 pts] Creación de una Tarea Personalizada en Gradle
 
-### Pasos Sugeridos para el Ejercicio:
+En el desarrollo de software, es común dejar comentarios `TODO` en el código para recordar tareas pendientes o mejoras futuras. Sin embargo, estos comentarios pueden acumularse y ser olvidados, afectando la calidad y mantenibilidad del código.
 
-#### Paso 1: Configuración del Proyecto
+Como parte de la mejora continua, deseas crear una tarea personalizada en Gradle que:
 
-Como base, utiliza el archivo `build.gradle` incluido en el proyecto. Asegúrate de que el proyecto tenga dependencias
-definidas en el bloque `dependencies` para que la tarea tenga algo que reportar.
+- Analiza los archivos fuente de tu proyecto, incluyendo archivos ```.kt``` y ```.kts```.
+- Cuenta el número de comentarios `TODO` en cada archivo.
+- Genera un reporte que liste los archivos que contienen comentarios `TODO` y el número de ocurrencias en cada uno.
+- La construcción debe fallar si el número total de comentarios `TODO` supera un umbral definido.
 
-#### Paso 2: Escribir la Tarea en Gradle
+_Hints:_
+- _Asegúrate de manejar archivos inexistentes (`FileNotFoundException`) o problemas de lectura/escritura (``IOException``)._
+- _Proporciona mensajes de error claros y útiles._
+- _Puedes utilizar la anotación `@get:InputFiles` para especificar una colección de archivos de entrada. Por ejemplo:_
+  ```kotlin
+  @get:InputFiles   // Indica que sourceFiles es un conjunto de archivos de entrada.
+  @get:PathSensitive(PathSensitivity.RELATIVE)  // Especifica que la ruta de los archivos es relativa.
+  abstract val sourceFiles: ConfigurableFileCollection
+  ```
 
-Agrega una tarea llamada `dependencyReport` al archivo `build.gradle` que recorra las configuraciones del proyecto
-utilizando `configurations`. Dentro de la tarea, itera sobre las dependencias y escribe los detalles de cada una en un
-archivo de texto, esto se puede hacer accediendo a la propiedad `allDependencies` de cada configuración.
+### b) [0.75 pts] Registro y Configuración de la Tarea en Gradle
 
-#### Paso 3: Ejecutar la Tarea
+Registra una tarea personalizada llamada `generateTodoReport` en cada submódulo de tu proyecto y agrega una dependencia a estas tareas en la tarea `check` del módulo raíz.
 
-Prueba la tarea ejecutando
+_Hints:_
+- _Puedes configurar `sourceFiles` con un conjunto de archivos, como en el siguiente ejemplo:
+    ```kotlin
+    sourceFiles.setFrom(fileTree("src") {
+        include("**/*.kt", "**/*.kts")  // Incluye archivos .kt y .kts en el árbol de archivos.
+    })
+    ```
 
-```bash
-./gradlew dependencyReport
-```
+### c) [0.5 pts] Bonus: Comentarios configurables
+
+Añade la posibilidad de configurar la tarea para especificar el tipo de comentarios a buscar (por ejemplo, `TODO`, `FIXME`, `HACK`, etc.).
 
 ## P3) [1.5 pts] OOP: Sistema de Gestión de Recetas de Cocina
 

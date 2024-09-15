@@ -1,0 +1,188 @@
+---
+title: Aserciones
+---
+import TabItem from "@theme/TabItem";
+import GithubRepoLink from "../../src/components/GithubRepoLink";
+import Tabs from "@theme/Tabs";
+import ReadingTime from "../../src/components/ReadingTime";
+
+<ReadingTime/>
+<GithubRepoLink repo={"assertions-kt"} user={"r8vnhill"}/>
+
+<br/>
+Las **aserciones** son instrucciones que verifican si una condición específica es verdadera en un punto particular del código. Si la condición es falsa, la aserción falla y se lanza una excepción, interrumpiendo la ejecución del programa o prueba. Los frameworks de testing capturan estas excepciones para generar reportes detallados de los resultados.
+
+Por ejemplo, consideremos una prueba escrita manualmente:
+
+```kotlin title="assert/src/test/kotlin/cl/ravenhill/calculator/CalculatorTest.kt"
+package cl.ravenhill.calculator
+
+import io.kotest.core.spec.style.FreeSpec
+
+class CalculatorTest : FreeSpec({
+    "Manual assertion test" {
+        if (Calculator.add(1, 2) != 3) {
+            throw AssertionError("1 + 2 should be 3")
+        } else {
+            println("Test passed")
+        }
+    }
+})
+```
+
+En este código, verificamos si `Calculator.add(1, 2)` es igual a `3`. Si no lo es, lanzamos una excepción `AssertionError` con un mensaje descriptivo; de lo contrario, imprimimos "Test passed".
+
+Supongamos ahora que tenemos la siguiente implementación errónea de ``Calculator``:
+
+```kotlin title="assert/src/main/kotlin/cl/ravenhill/calculator/Calculator.kt"
+package cl.ravenhill.calculator
+
+object Calculator {
+    fun add(a: Int, b: Int): Int = a - b
+}
+```
+
+En este caso, si ejecutamos el test obtendremos la siguiente salida:
+
+```plaintext
+java.lang.AssertionError: 1 + 2 should be 3
+	at cl.ravenhill.assertions.CalculatorTest$1$1.invokeSuspend(CalculatorTest.kt:8)
+	at cl.ravenhill.assertions.CalculatorTest$1$1.invoke(CalculatorTest.kt)
+	at cl.ravenhill.assertions.CalculatorTest$1$1.invoke(CalculatorTest.kt)
+	at io.kotest.core.spec.style.scopes.FreeSpecRootScope$invoke$1.invokeSuspend(FreeSpecRootScope.kt:26)
+	...
+Caused by: java.lang.AssertionError: 1 + 2 should be 3
+	at cl.ravenhill.assertions.CalculatorTest$1$1.invokeSuspend(CalculatorTest.kt:8)
+	at cl.ravenhill.assertions.CalculatorTest$1$1.invoke(CalculatorTest.kt)
+	at cl.ravenhill.assertions.CalculatorTest$1$1.invoke(CalculatorTest.kt)
+	at io.kotest.core.spec.style.scopes.FreeSpecRootScope$invoke$1.invokeSuspend(FreeSpecRootScope.kt:26)
+	...
+```
+
+Sin embargo, podemos simplificar y mejorar este test utilizando las aserciones que ofrece el framework:
+
+```kotlin title="assert/src/test/kotlin/cl/ravenhill/calculator/CalculatorTest.kt"
+package cl.ravenhill.calculator
+
+import io.kotest.assertions.fail
+import io.kotest.core.spec.style.FreeSpec
+
+class CalculatorTest : FreeSpec({
+    "Using framework assertions" {
+        if (Calculator.add(1, 2) != 3) {
+            fail("1 + 2 should be 3")
+        } else {
+            println("Test passed")
+        }
+    }
+})
+```
+
+Aquí, en lugar de lanzar una excepción manualmente, utilizamos la función `fail` proporcionada por el framework, que marca la prueba como fallida y proporciona el mensaje de error correspondiente. Esto también ayudará al framework a generar un informe detallado de la prueba.
+
+## Implementación de Aserciones Personalizadas
+
+Supongamos ahora que queremos implementar nuestras propias funciones de aserción personalizadas para simplificar la escritura de pruebas. Por ejemplo, podemos crear una función `assertTrue` que verifique si una condición es verdadera y lance una excepción si no lo es.
+
+```kotlin title="assert/src/test/kotlin/cl/ravenhill/assertions/assertTrue.kt"
+package cl.ravenhill.assertions
+
+import io.kotest.assertions.fail
+
+inline fun assertTrue(condition: Boolean, message: () -> String = { "Assertion failed" }) {
+    if (!condition) {
+        fail(message())
+    }
+}
+```
+
+**Explicación:**
+
+- **Función `assertTrue`**:
+    - Toma un parámetro `condition` de tipo `Boolean`, que representa la condición que esperas que sea verdadera.
+    - Tiene un parámetro opcional `message` de tipo `String`, para proporcionar un mensaje de error descriptivo si la aserción falla.
+    - Si `condition` es `false`, lanza una excepción `AssertionError` con el mensaje proporcionado.
+
+**Ejemplo de uso en tu prueba:**
+
+```kotlin
+class CalculatorTest : FreeSpec({
+    "Usando assertTrue" {
+        val result = Calculator.add(1, 2)
+        assertTrue(result == 3) { "1 + 2 should be 3" }
+    }
+})
+```
+
+En este ejemplo:
+
+- Calculamos el resultado de `Calculator.add(1, 2)`.
+- Usamos `assertTrue` para verificar que el resultado es igual a `3`.
+- Si la condición no se cumple, se lanza un `AssertionError` con el mensaje especificado.
+
+:::tip Ejercicio: Creación de una Aserción Personalizada para Verificar la Igualdad de Árboles Binarios
+<Tabs>
+    <TabItem value={"Enunciado"} label={"Enunciado"}>
+        Estás desarrollando una aplicación que manipula estructuras de datos de **árboles binarios**. Para asegurar la correcta funcionalidad de tu código, necesitas escribir pruebas unitarias que verifiquen que dos árboles binarios son estructuralmente iguales y contienen los mismos valores en los mismos nodos.
+
+        La estructura de los árboles binarios se define de la siguiente manera:
+
+        ```kotlin
+        data class TreeNode<T>(
+            val value: T,
+            val left: TreeNode<T>? = null,
+            val right: TreeNode<T>? = null
+        )
+        ```
+
+        Tu tarea es crear una **aserción personalizada** llamada `assertTreesEqual` que compare dos árboles binarios y verifique si son iguales en estructura y contenido. Esta aserción debe recorrer ambos árboles y comprobar recursivamente que:
+
+        - Los valores en los nodos correspondientes son iguales.
+        - La estructura de los subárboles izquierdo y derecho es la misma.
+
+        Si los árboles no son iguales, la aserción debe fallar y proporcionar un mensaje de error descriptivo que indique en qué punto de los árboles se encontró la diferencia.
+
+        ### **Restricciones:**
+
+        - No puedes utilizar métodos o bibliotecas externas que ya implementen comparaciones de árboles.
+        - Debes implementar la lógica de comparación por tu cuenta.
+
+        ### **Ejemplo de Uso:**
+
+        ```kotlin
+        val tree1 = TreeNode(
+            value = 1,
+            left = TreeNode(2),
+            right = TreeNode(3)
+        )
+
+        val tree2 = TreeNode(
+            value = 1,
+            left = TreeNode(2),
+            right = TreeNode(3)
+        )
+
+        val tree3 = TreeNode(
+            value = 1,
+            left = TreeNode(2),
+            right = TreeNode(4)
+        )
+
+        // Esta aserción debería pasar
+        assertTreesEqual(tree1, tree2)
+
+        // Esta aserción debería fallar con un mensaje indicando que hay una diferencia en el valor del nodo derecho
+        assertTreesEqual(tree1, tree3)
+        ```
+
+        ### _Hints:_
+
+        - Puedes crear una función interna que lleve el rastro de la **ruta actual** en el árbol (por ejemplo, "raíz", "izquierdo", "derecho") para mejorar los mensajes de error.
+        - Asegúrate de considerar todas las posibilidades:
+            - Ambos nodos son `null`.
+            - Uno es `null` y el otro no.
+            - Ambos tienen valores pero son diferentes.
+        - Utiliza recursión para recorrer los árboles de manera eficiente.
+    </TabItem>
+</Tabs>
+:::

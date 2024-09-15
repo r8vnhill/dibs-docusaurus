@@ -25,15 +25,14 @@ en un archivo `.kt`.
 ### Ejemplo: Fibonacci Revisited
 
 Hasta ahora, hemos creado una tarea que imprime los primeros 10 números de la secuencia de Fibonacci. Supongamos que
-ahora queremos extender esta tarea para calcular la secuencia hasta un número específico proporcionado por el
-usuario. Para hacer esto, definiremos la tarea como una clase en un archivo `.kt`.
+ahora queremos extender esta tarea para calcular la secuencia hasta un número específico proporcionado por lx usuarix. Para hacer esto, definiremos la tarea como una clase en un archivo `.kt`.
 
 Primero, creamos un paquete llamado `tasks` en el directorio `src/main/kotlin` del módulo `convention-plugins`.
 Dentro de este paquete, crearemos un archivo llamado `FibonacciTask.kt` con el siguiente contenido:
 
 <Tabs>
     <TabItem value="Implementación" label={"Implementación"}>
-        ```kotlin title="convention-plugins/src/main/kotlin/FibonacciTask.kt"
+        ```kotlin title="convention-plugins/src/main/kotlin/tasks/FibonacciTask.kt"
         package tasks
 
         import org.gradle.api.DefaultTask
@@ -65,7 +64,7 @@ Dentro de este paquete, crearemos un archivo llamado `FibonacciTask.kt` con el s
         ```
     </TabItem>
     <TabItem value="Implementación (mejorada)" label={"Implementación (mejorada)"}>
-        ```kotlin title="convention-plugins/src/main/kotlin/FibonacciTask.kt"
+        ```kotlin title="convention-plugins/src/main/kotlin/tasks/FibonacciTask.kt"
         package tasks
 
         import org.gradle.api.DefaultTask
@@ -100,7 +99,7 @@ Dentro de este paquete, crearemos un archivo llamado `FibonacciTask.kt` con el s
 
 2. **Anotación `@get:Input`**: Anotamos la propiedad `number` para indicarle a Gradle que este valor es un input de la tarea. Esto permite que Gradle detecte cambios y decida si es necesario ejecutar la tarea nuevamente.
 
-3. **Propiedad `number`**: Utilizamos un `Property<Int>` para almacenar el número hasta el cual queremos calcular la secuencia de Fibonacci.
+3. **Propiedad `number`**: Utilizamos un `Property<Int>` para almacenar el número hasta el cual queremos calcular la secuencia de Fibonacci. `Property` es como una caja que contiene un valor mutable que Gradle puede monitorear.
 
 4. **Método `@TaskAction`**: Este método contiene la lógica principal de la tarea. Gradle lo ejecuta automáticamente cuando la tarea se llama, ejecutándose entre los bloques `doFirst` y `doLast`.
 
@@ -225,7 +224,7 @@ se ejecute.
 Implementaremos una tarea para procesar archivos de texto. Tendremos archivos de entrada y salida. El texto debe ser
 tomado de un archivo de texto (input), transformado en mayúsculas, y ser guardado en otro archivo de texto (output).
 
-```kotlin title="convention-plugins/src/main/kotlin/UppercaseTask.kt"
+```kotlin title="convention-plugins/src/main/kotlin/tasks/UppercaseTask.kt"
 package tasks
 
 import org.gradle.api.DefaultTask
@@ -264,6 +263,8 @@ import tasks.UppercaseTask
 // ...
 
 tasks.register<UppercaseTask>("processText") {
+    group = "playground"
+    description = "Process text from input file and write to output file in uppercase"
     inputFile = file("input.txt")
     outputFile = file("output.txt")
     doFirst { println("Processing text...") }
@@ -278,6 +279,8 @@ import tasks.UppercaseTask
 // ...
 
 tasks.register('processText', UppercaseTask) {
+    group = 'playground'
+    description = 'Process text from input file and write to output file in uppercase'
     inputFile = file('input.txt')
     outputFile = file('output.txt')
     doFirst { println('Processing text...') }
@@ -319,7 +322,7 @@ ESTE ES EL CONTENIDO DEL ARCHIVO
         ### Pasos:
 
         1. **Crea un archivo `ParityTask.kt` en el paquete `tasks`** dentro del directorio
-        `src/main/kotlin/convention-plugins`. Este archivo contendrá una clase que extienda `DefaultTask` y será
+        `convention-plugins/src/main/kotlin`. Este archivo contendrá una clase que extienda `DefaultTask` y será
         responsable de procesar el archivo de entrada y generar el archivo de salida.
 
         2. **Configura la tarea con dos archivos, uno como entrada y otro como salida:**
@@ -349,6 +352,33 @@ ESTE ES EL CONTENIDO DEL ARCHIVO
         22
         9
         ```
+
+        Puedes crear este archivo de la siguiente manera:
+
+        <Tabs>
+        <TabItem value="Powershell">
+        ```powershell
+        @"
+        12
+        7
+        cinco
+        22
+        9
+        "@ | Out-File -FilePath input.txt
+        ```
+        </TabItem>
+        <TabItem value="Bash">
+        ```bash
+        cat <<EOF > input.txt
+        12
+        7
+        cinco
+        22
+        9
+        EOF
+        ```
+        </TabItem>
+        </Tabs>
 
         Ejecuta la tarea desde la línea de comandos:
 

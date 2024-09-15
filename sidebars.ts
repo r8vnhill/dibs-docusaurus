@@ -70,14 +70,63 @@ const sidebars: SidebarsConfig = {
                         'build-systems/library/logic',
                         'build-systems/library/compile',
                         'build-systems/library/fat-jar',
-                        'build-systems/library/copy-refined'
+                        'build-systems/library/copy-refined',
+                        'build-systems/library/documentation'
                     ],
                 }
             ],
         },
         {
             type: 'category',
-            label: 'Unidad 3: Programación Orientada a Objetos',
+            label: 'Unidad 3: APIs Funcionales',
+            link: {
+                type: 'doc',
+                id: 'fp/index',
+            },
+            items: [
+                "fp/recursion",
+                "fp/hof",
+                "fp/pure",
+                {
+                    type: 'category',
+                    label: 'Optimización de Funciones Recursivas',
+                    link: {
+                        type: 'generated-index',
+                        title: 'Optimización de Funciones Recursivas',
+                        description: 'Uno de los problemas con la recursión es el caso en que la pila de ejecución se desborda. Existen distintas soluciones',
+                    },
+                    items: [
+                        'fp/recursion-optimization/tail',
+                        'fp/recursion-optimization/trampoline',
+                    ],
+                },
+            ],
+        },
+        {
+            type: 'category',
+            label: 'Unidad 4: Testing',
+            link: {
+                type: 'doc',
+                id: 'testing/index',
+            },
+            items: [
+                "testing/assertions",
+                "testing/matchers",
+            ],
+        },
+        {
+            type: 'category',
+            label: 'Unidad 5: Colecciones',
+            link: {
+                type: 'doc',
+                id: 'collections/index',
+            },
+            items: [
+            ],
+        },
+        {
+            type: 'category',
+            label: 'Unidad 6: APIs Orientadas a Objetos',
             link: {
                 type: 'doc',
                 id: 'oop/index',
@@ -101,32 +150,6 @@ const sidebars: SidebarsConfig = {
                 'oop/enums',
                 'oop/sealed',
                 'oop/inheritance-2',
-            ],
-        },
-        {
-            type: 'category',
-            label: 'Unidad 4: Programación Funcional',
-            link: {
-                type: 'doc',
-                id: 'fp/index',
-            },
-            items: [
-                "fp/recursion",
-                "fp/hof",
-                "fp/pure",
-                {
-                    type: 'category',
-                    label: 'Optimización de Funciones Recursivas',
-                    link: {
-                        type: 'generated-index',
-                        title: 'Optimización de Funciones Recursivas',
-                        description: 'Uno de los problemas con la recursión es el caso en que la pila de ejecución se desborda. Existen distintas soluciones',
-                    },
-                    items: [
-                        'fp/recursion-optimization/tail',
-                        'fp/recursion-optimization/trampoline',
-                    ],
-                },
             ],
         },
     ],
