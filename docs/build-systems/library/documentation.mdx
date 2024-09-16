@@ -245,6 +245,110 @@ La documentación generada estará disponible en el directorio `lib/build/dokka/
 
 ## Integrando la documentación en el proceso de construcción
 
+Para integrar la generación de documentación en el proceso de construcción, empaquetaremos la documentación generada en un archivo `.jar` e incorporaremos la tarea de generación de documentación en la tarea de construcción principal.
+
+### Paso 1: Definir la tarea de empaquetado de la documentación
+
+Primero, definimos una tarea que empaquete la documentación generada por **Dokka** en un archivo `.jar`. Esto lo hacemos en el archivo `dokka.conventions.gradle.kts`:
+
+<Tabs groupId={"gradle"}>
+    <TabItem value="Gradle Kotlin DSL" label="Gradle Kotlin DSL">
+
+        ```kotlin title="convention-plugins/src/main/kotlin/dokka.conventions.gradle.kts"
+        // ...
+        tasks.register<Jar>("dokkaJar") {
+            group = "documentation"
+            description = "Creates a JAR with the Dokka documentation"
+            archiveClassifier = "docs"
+            from(tasks.named<DokkaTask>("dokkaHtml").get().outputDirectory)
+        }
+        ```
+
+    </TabItem>
+    <TabItem value="Gradle Groovy DSL" label="Gradle Groovy DSL">
+
+        ```groovy title="convention-plugins/src/main/kotlin/dokka.conventions.gradle"
+        // ...
+        tasks.register(Jar, "dokkaJar") {
+            group = "documentation"
+            description = "Creates a JAR with the Dokka documentation"
+            archiveClassifier = "docs"
+            from(tasks.named(DokkaTask, "dokkaHtml").get().outputDirectory)
+        }
+        ```
+
+    </TabItem>
+</Tabs>
+
+### Paso 2: Agregar la tarea `dokkaJar` a la construcción principal
+
+Una vez definida la tarea de empaquetado, la agregamos como dependencia de la tarea principal `fatJar` para que la generación de documentación se ejecute automáticamente como parte del proceso de construcción.
+
+<Tabs groupId={"gradle"}>
+    <TabItem value="Gradle Kotlin DSL" label="Gradle Kotlin DSL">
+
+        ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
+        // ...
+        plugins {
+            id("jvm.conventions")
+            id("dokka.conventions")
+        }
+        // ...
+        tasks.named("fatJar") {
+            dependsOn("dokkaJar")
+        }
+        ```
+
+    </TabItem>
+    <TabItem value="Gradle Groovy DSL" label="Gradle Groovy DSL">
+
+        ```groovy title="lib/build.gradle"
+        // ...
+        plugins {
+            id 'jvm.conventions'
+            id 'dokka.conventions'
+        }
+        // ...
+        tasks.named(Jar, "fatJar") {
+            dependsOn(":lib:dokkaJar")
+            from(":lib:dokkaJar")
+        }
+        ```
+
+    </TabItem>
+</Tabs>
+
+### Resultado final
+
+Al ejecutar la tarea `fatJar`, se generará tanto el JAR principal como el JAR con la documentación generada por Dokka, asegurando que la documentación se integre completamente en el proceso de construcción.
+
+## ¿Qué sacamos en limpio?
+
+En esta guía, hemos cubierto aspectos esenciales para la generación e integración de documentación en proyectos de **bibliotecas de software** utilizando **Kotlin** y **Dokka**. A continuación, resumimos los puntos clave:
+
+1. **Importancia de la Documentación**:
+    - **Facilita el Uso Correcto**: Una buena documentación permite que lxs usuarixs comprendan y utilicen la biblioteca de manera efectiva.
+    - **Previene Errores y Malentendidos**: Reduce la probabilidad de errores al clarificar cómo funcionan las funcionalidades.
+    - **Aumenta la Tasa de Adopción**: Las bibliotecas bien documentadas son más atractivas para lxs desarrolladorxs, promoviendo su adopción y uso continuo.
+
+2. **Generación de Documentación con Dokka**:
+    - **Herramienta Potente**: **Dokka** convierte los comentarios de documentación en Kotlin a formatos accesibles como HTML, Markdown y Javadoc.
+    - **Configuración Centralizada**: Definimos tareas de Dokka en `dokka.conventions.gradle.kts`, asegurando una configuración uniforme a lo largo del proyecto.
+    - **Personalización y Extensibilidad**: Dokka permite personalizar el estilo y formato de la documentación, adaptándose a las necesidades específicas del proyecto.
+
+3. **Integración de la Documentación en el Proceso de Construcción**:
+    - **Empaquetado en JAR**: Creamos una tarea `dokkaJar` que empaqueta la documentación generada en un archivo `.jar`.
+    - **Automatización del Proceso**: Incorporamos la tarea `dokkaJar` en la tarea principal `fatJar`, garantizando que la documentación se genere automáticamente durante el proceso de construcción.
+    - **Consistencia y Mantenimiento**: Al integrar Dokka en el flujo de construcción, aseguramos que la documentación esté siempre actualizada con las últimas versiones del código.
+
+4. **Mejores Prácticas en Documentación**:
+    - **Comentarios Claros y Concisos**: Mantener comentarios de documentación bien estructurados y descriptivos en el código fuente.
+    - **Actualización Continua**: Asegurar que la documentación se actualice junto con el código para reflejar cambios y nuevas funcionalidades.
+    - **Publicación Accesible**: Utilizar plataformas como GitHub Pages o Read the Docs para alojar la documentación, facilitando su acceso y consulta por parte de lxs usuarixs.
+
+### Próximos Pasos
+
+Hemos establecido una base sólida para generar e integrar documentación efectiva en proyectos de **bibliotecas de software**. En la próxima sección, exploraremos cómo **publicar una biblioteca de software**, cubriendo aspectos como la configuración para el despliegue y la distribución en GitHub Packages. Este paso es crucial para que tu biblioteca sea accesible y utilizable por la comunidad de desarrolladores.
 
 <References references={[
     {

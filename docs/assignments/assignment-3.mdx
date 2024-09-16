@@ -1,0 +1,46 @@
+---
+title: "Tarea 3 - Build Systems: Plugins"
+---
+
+Hasta ahora, has trabajado con plugins que implementan `Plugin<Project>`, lo que les permite aplicar configuraciones específicas a proyectos Gradle. Sin embargo, Gradle ofrece una interfaz más específica: `Plugin<Settings>`. Esta interfaz permite que el plugin se aplique al objeto `Settings`, permitiendo configurar aspectos globales del build, como los repositorios de plugins y convenciones de configuración para subproyectos.
+
+**Diferencias clave:**
+
+- **``Plugin<Project>``**: Se aplica específicamente a proyectos Gradle, permitiendo configurar tareas, dependencias y extensiones a nivel de proyecto.
+- **``Plugin<Settings>``**: Se aplica al objeto `Settings`, permitiendo configurar aspectos globales del build, como los repositorios de plugins y convenciones de configuración para subproyectos.
+
+## Ejemplo de plugin simple
+
+```kotlin
+import org.gradle.api.Plugin
+import org.gradle.api.initialization.Settings
+
+class GlobalSettingsPlugin : Plugin<Settings> {
+    override fun apply(settings: Settings) {
+        settings.pluginManagement {
+            repositories {
+                gradlePluginPortal()
+                mavenCentral()
+            }
+        }
+    }
+}
+```
+
+En este ejemplo, el plugin `GlobalSettingsPlugin` se aplica al objeto `Settings` y configura los repositorios de plugins necesarios para el proyecto.
+
+## Tarea
+
+Supongamos que quieres hacer un bot de Telegram. Con el fin de hacer una buena separación entre la lógica de negocio y aplicación, decides separar el código en dos subproyectos: `core` y `bot`. El subproyecto `core` contendrá la lógica para interactuar con la API de Telegram como enviar mensajes, recibir actualizaciones, etc. El subproyecto `bot` contendrá la lógica de aplicación específica, como manejar la base de datos y recibir comandos por consola.
+
+Para resolver este problema, decides ocupar [Kotlin Telegram Bot](https://github.com/kotlin-telegram-bot/kotlin-telegram-bot) para manejar la interacción con la API de Telegram. Sin embargo, te das cuenta de que si el bot crece podrías tener que crear más módulos que interactúen con la API de Telegram. Por lo tanto, decides implementar un plugin de Gradle que permita configurar la dependencia de Kotlin Telegram Bot solamente en los subproyectos que lo necesiten.
+
+## P1. Manejo de repositorios
+
+JitPack es un servicio que permite publicar proyectos de GitHub como dependencias de Maven o Gradle comúnmente usado por su facilidad de uso. Kotlin Telegram Bot está publicado en JitPack, por lo que necesitas configurar el repositorio de JitPack en tu plugin.
+
+Crea un plugin ``TelegramBotPlugin`` que configure el repositorio de JitPack en el objeto `Settings`, este repositorio debe tener la URL `https://jitpack.io`. Luego, haz que el plugin agregue la dependencia a ``io.github.kotlin-telegram-bot.kotlin-telegram-bot:telegram``. La versión más reciente de Kotlin Telegram Bot es `6.2.0`.
+
+## P2. Plugin para configurar Detekt
+
+## P3. Extensión de configuración

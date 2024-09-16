@@ -173,6 +173,7 @@ const sidebars: SidebarsConfig = {
                 'assignments/rules',
                 'assignments/assignment-1',
                 'assignments/assignment-2',
+                'assignments/assignment-3',
             ],
         }
     ]
