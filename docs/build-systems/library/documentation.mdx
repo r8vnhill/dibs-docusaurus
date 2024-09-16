@@ -39,6 +39,36 @@ Incluye:
 - Detalles de todas las funciones, métodos y clases disponibles, con ejemplos de uso.
 - Respuestas a preguntas comunes y soluciones a problemas típicos.
 
+## Documentando `lib`
+
+Lo primero que necesitamos para generar documentación es documentación, así que vamos a agregar comentarios de documentación a la biblioteca `lib`.
+
+````kotlin
+/**
+ * Returns a formatted message with the current timestamp and the provided message.
+ *
+ * This function retrieves the current system time and appends it to the given message, returning the result as a
+ * formatted string. The timestamp includes the date and time at the moment the function is called.
+ *
+ * ## Usage:
+ * This function can be used to log messages with a timestamp for debugging or tracking purposes.
+ *
+ * ### Example:
+ * ```kotlin
+ * val logMessage = echo("Task started")
+ * println(logMessage)
+ * ```
+ * Output:
+ * ```
+ * 2024-09-15T10:45:30.123456Z - Task started
+ * ```
+ *
+ * @param message The message to be echoed with the current timestamp.
+ * @return A string that combines the current system time with the provided message.
+*/
+fun echo(message: String): String = "${Clock.System.now()} - $message"
+````
+
 ## Dokka
 
 Dokka es una herramienta de generación de documentación para proyectos en Kotlin desarrollada por JetBrains. Similar a Javadoc para Java, Dokka convierte los comentarios de documentación en el código Kotlin a varios formatos de salida como HTML, Markdown, Javadoc y más. Esto permite generar documentación detallada y fácil de leer directamente desde el código fuente, facilitando el mantenimiento y la actualización de la documentación.
@@ -54,52 +84,167 @@ Dokka es una herramienta de generación de documentación para proyectos en Kotl
 
 ### Cómo utilizar Dokka
 
-Lo primero que debemos hacer es agregar el plugin de Dokka y su versión a nuestro catálogo de versiones:
+Para comenzar a utilizar **Dokka**, lo primero es agregar el plugin y su versión en nuestro archivo de catálogo de versiones `gradle/libs.versions.toml`:
 
 ```toml title="gradle/libs.versions.toml"
 [versions]
-# ...
+# Otras versiones...
 dokka = "1.9.20"
 
 [plugins]
-# ...
+# Otros plugins...
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 ```
 
-Luego, aplicamos el plugin de Dokka en nuestro archivo `build.gradle.kts`:
+### Aplicar el plugin de Dokka en `build.gradle.kts`
+
+Una vez definido en el catálogo, aplicamos el plugin de Dokka en el archivo `build.gradle.kts`:
 
 <Tabs groupId={"gradle"}>
     <TabItem value="Gradle Kotlin DSL" label="Gradle Kotlin DSL">
-```kotlin title="build.gradle.kts"
-plugins {
-    // ...
-    alias(libs.plugins.dokka)
-}
-// ...
-val dokkaId = libs.plugins.dokka.get().pluginId
+        ```kotlin title="build.gradle.kts"
+        plugins {
+            // Otros plugins...
+            alias(libs.plugins.dokka)
+        }
 
-subprojects {
-    // ...
-    apply(plugin = dokkaId)
-}
-```
+        val dokkaId = libs.plugins.dokka.get().pluginId
+
+        subprojects {
+            apply(plugin = dokkaId)
+            // Otras configuraciones...
+        }
+        ```
     </TabItem>
     <TabItem value="Gradle Groovy DSL" label="Gradle Groovy DSL">
-```groovy title="build.gradle"
-plugins {
-    // ...
-    alias(libs.plugins.dokka)
-}
-// ...
-def dokkaId = libs.plugins.dokka.get().pluginId
+        ```groovy title="build.gradle"
+        plugins {
+            // Otros plugins...
+            alias(libs.plugins.dokka)
+        }
 
-subprojects {
-    // ...
-    apply plugin: dokkaId
-}
-```
+        def dokkaId = libs.plugins.dokka.get().pluginId
+
+        subprojects {
+            apply plugin: dokkaId
+            // Otras configuraciones...
+        }
+        ```
     </TabItem>
 </Tabs>
+
+### Configuración de Dokka
+
+A continuación, configuramos Dokka en un archivo `dokka.conventions.gradle.kts` dentro del módulo `convention-plugins`. Para ello, primero agregamos Dokka como dependencia:
+
+```toml title="gradle/libs.versions.toml"
+[libraries]
+# Otras librerías...
+dokka = { module = "org.jetbrains.dokka:org.jetbrains.dokka.gradle.plugin", version.ref = "dokka" }
+```
+
+Esto nos permite acceder a la API de Dokka desde nuestro archivo de convenciones. Luego, aplicamos el plugin de Dokka en `convention-plugins/build.gradle.kts`:
+
+<Tabs groupId={"gradle"}>
+    <TabItem value="Gradle Kotlin DSL" label="Gradle Kotlin DSL">
+        ```kotlin title="convention-plugins/build.gradle.kts"
+        dependencies {
+            // Otras dependencias...
+            implementation(libs.dokka)
+        }
+        ```
+    </TabItem>
+    <TabItem value="Gradle Groovy DSL" label="Gradle Groovy DSL">
+        ```groovy title="convention-plugins/build.gradle"
+        dependencies {
+            // Otras dependencias...
+            implementation libs.dokka
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+### Archivo de configuración `dokka.conventions.gradle.kts`
+
+Finalmente, creamos el archivo `dokka.conventions.gradle.kts` en el módulo `convention-plugins` con la siguiente configuración para la tarea `DokkaTask`:
+
+<Tabs groupId={"gradle"}>
+    <TabItem value="Gradle Kotlin DSL" label="Gradle Kotlin DSL">
+        ```kotlin title="convention-plugins/src/main/kotlin/dokka.conventions.gradle.kts"
+        import org.jetbrains.dokka.gradle.DokkaTask
+
+        tasks.withType<DokkaTask>().configureEach {   // (1)
+            dokkaSourceSets {
+                configureEach {   // (2)
+                    reportUndocumented = true  // (3)
+                    sourceRoots.from(file("src/main/kotlin"))   // (4)
+                    platform = org.jetbrains.dokka.Platform.jvm  // (5)
+                }
+            }
+            outputDirectory = layout.buildDirectory.dir("dokka/html").get().asFile  // (6)
+        }
+        ```
+    </TabItem>
+    <TabItem value="Gradle Groovy DSL" label="Gradle Groovy DSL">
+        ```groovy title="convention-plugins/src/main/kotlin/dokka.conventions.gradle"
+        import org.jetbrains.dokka.gradle.DokkaTask
+
+        tasks.withType(DokkaTask).configureEach {   // (1)
+            dokkaSourceSets {
+                configureEach {   // (2)
+                    reportUndocumented.set(true)  // (3)
+                    sourceRoots.from(file("src/main/kotlin"))   // (4)
+                    platform.set(org.jetbrains.dokka.Platform.jvm)  // (5)
+                }
+            }
+            outputDirectory.set(layout.buildDirectory.dir("dokka/html"))  // (6)
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+#### Explicación de la configuración
+
+1. **Configurar cada tarea de Dokka:** Definimos configuraciones comunes para todas las tareas `DokkaTask`.
+2. **Configurar los conjuntos de fuentes:** Especificamos los conjuntos de fuentes de Dokka.
+3. **Habilitar el reporte de elementos no documentados:** Dokka generará advertencias para elementos no documentados.
+4. **Definir la raíz de las fuentes:** Establecemos el directorio donde se encuentran los archivos fuente (por ejemplo, `src/main/kotlin`).
+5. **Plataforma de destino:** Definimos la plataforma para la que se genera la documentación, en este caso, Kotlin JVM.
+6. **Directorio de salida:** Indicamos el directorio donde se almacenará la documentación generada en formato HTML.
+
+### Generar la documentación
+
+Ahora debemos agregar el plugin ``dokka.conventions`` a la biblioteca de la que queremos generar la documentación, en nuestro caso `lib`:
+
+<Tabs groupId={"gradle"}>
+    <TabItem value="Gradle Kotlin DSL" label="Gradle Kotlin DSL">
+        ```kotlin title="lib/build.gradle.kts"
+        plugins {
+            // Otros plugins...
+            id("dokka.conventions")
+        }
+        ```
+    </TabItem>
+    <TabItem value="Gradle Groovy DSL" label="Gradle Groovy DSL">
+        ```groovy title="lib/build.gradle"
+        plugins {
+            // Otros plugins...
+            id 'dokka.conventions'
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+Con esto, podemos generar la documentación ejecutando la tarea `dokkaHtml`:
+
+```bash
+./gradlew :lib:dokkaHtml
+```
+
+La documentación generada estará disponible en el directorio `lib/build/dokka/html`. Para ver la documentación en un navegador, abre el archivo `index.html` en tu navegador web. El resultado debiera verse como [este ejemplo de documentación de Echo](https://echo-docs.pages.dev).
+
+## Integrando la documentación en el proceso de construcción
+
 
 <References references={[
     {
