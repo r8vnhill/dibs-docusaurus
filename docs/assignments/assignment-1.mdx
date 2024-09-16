@@ -1,209 +1,73 @@
 ---
-title: Tarea 1
+title: "Tarea 1 - Introducción a Kotlin"
 ---
 
-Resuelva 4 de 5 ejercicios propuestos. Puede elegir los ejercicios que prefiera excepto por la P5, que es
-obligatoria. Cada ejercicio tiene un objetivo específico y se enfoca en diferentes aspectos de la programación.
+> Solamente puedes utilizar interfaces, clases abstractas, clases abiertas y cerradas (no puedes utilizar clases selladas, enums, data classes, funciones de extensión, ni ningún otro concepto avanzado de oop). Puedes utilizar conceptos de programación funcional, pero no son necesarios para resolver el ejercicio.
 
-##  P1) [1.5 pts] Void-safety: Sistema de Gestión de Biblioteca
+> Utiliza ``?.`` y ``?:`` para manejar valores nulos de manera segura. No utilices ``!!`` ni hagas chequeos manuales de nulos (por ejemplo, ``if (x != null)``).
 
-**Objetivo del Ejercicio:**
-Implementar un sistema para una biblioteca que maneje información sobre libros y pueda procesar correctamente las
-propiedades que pueden ser nulas.
+Crearás una biblioteca que permita a lxs desarrolladorxs gestionar eventos de manera flexible y segura. La biblioteca deberá permitir:
 
-### Paso 1: Definir la Clase de Libro
+- Registrar diferentes tipos de eventos.
+- Suscribirse a eventos específicos.
+- Filtrar eventos basados en criterios definidos.
+- Manejar posibles valores nulos de manera segura.
 
-Define una clase `Libro` con tres propiedades: `titulo: String?`, `autor: String?`, y `precio: Double?`. La clase
-también debe tener un método `describir(): String` que retorna una cadena con la información del libro en el formato
-`"Título: $titulo, Autor: $autor, Precio: $precio"`.
+Todos los eventos se definen por un nombre (``String``), una fecha (``LocalDate``), una descripción opcional (``String?``) y unx organizadorx opcional (``String?``). Cada evento puede ser de un tipo específico, como una conferencia o un webinar, y puede tener propiedades adicionales, como un número de asistentes o una URL de transmisión.
 
-Si:
-- `titulo` es nulo, se debe mostrar `"Sin Título"`.
-- `autor` es nulo, se debe mostrar `"Autor Desconocido"`.
-- `precio` es nulo, se debe mostrar `"Precio no Disponible"`.
+## P1. [2 pts] Definición de eventos
 
-### Paso 2: Calcular el Costo Total de los Libros Prestados
+Considera que existen dos tipos de eventos:
 
-Implementa una función `calcularTotal` que sume los precios de los libros que tienen precio asignado.
+- **``ConferenceEvent``:** Representa una conferencia con un número de asistentes.
+- **``WebinarEvent``:** Representa un webinar con una URL de transmisión.
 
-### Paso 3: Crear una Lista de Libros
+1. Define una jerarquía de clases que permita representar estos eventos de manera eficiente y segura.
+2. Implementa el método ``toString()`` que muestre la información relevante a cada tipo de evento, incluyendo propiedades opcionales. El formato de salida debe ser ``<event-type>(name='<name>', date=<date>{, description='<description>'}{, organizer='<organizer>}, propiedadAdicional='<valor>')``, donde los elementos entre `<>` son los valores de las propiedades correspondientes y los elementos entre `{ }` son opcionales y deben incluirse solo si la propiedad correspondiente está definida. Por ejemplo, ``ConferenceEvent(name='KotlinConf', date=2022-10-15, description='Annual Kotlin Conference', organizer='JetBrains', attendees=300)`` si todos los campos están definidos o ``ConferenceEvent(name='KotlinConf', date=2022-10-15, attendees=300)`` si la descripción y el organizador son nulos.
 
-Utilice el siguiente código para crear una lista de libros y mostrar la información de cada uno de ellos. Al final,
-muestra el costo total de los libros que tienen precio asignado.
+_Hints:_
+- _Utiliza parámetros por defecto para manejar propiedades opcionales._
+- _Piensa cómo minimizar la duplicación de código, aquí puede serte de utilidad saber que ``this::class.simpleName`` te entrega el nombre de la clase actual._
+
+### P2. [2 pts] Implementación de suscripciones
+
+Además, se requiere implementar un sistema de suscripciones que permita a lxs desarrolladorxs recibir notificaciones sobre eventos específicos. Para esto, se define la siguiente jerarquía:
 
 ```kotlin
-fun main() {
-    val libros = listOf(
-        Libro("El Señor de los Anillos", "J.R.R. Tolkien", 25.0),
-        Libro("A Warning", null, 15.0),
-        Libro(null, "George Orwell", 20.0),
-    )
+interface Subscriber {
+    fun update(event: Event)
+}
 
-    for (libro in libros) {
-        println(libro.describir())
+class EmailSubscriber(private val email: String?) : Subscriber {
+    override fun update(event: Event) {
+        TODO("Not implemented")
     }
-    println("Costo: ${calcularTotal(libros)}")
+}
+
+class SMSSubscriber(private val phoneNumber: String?) : Subscriber {
+    override fun update(event: Event) {
+        TODO("Not implemented")
+    }
 }
 ```
 
-## P2) [1.5 pts] Build-systems: Creación de una Tarea Personalizada para Analizar Comentarios ``TODO`` en el Código Fuente
+Implementa el método ``update(event: Event)`` en la clase ``EmailSubscriber`` que imprima un mensaje en la consola con la información del evento si el email no es nulo, o ``Test subscriber: email not set`` si el email es nulo.
 
-### a) [0.75 pts] Creación de una Tarea Personalizada en Gradle
+### c) [2 pts] Gestor de eventos
 
-En el desarrollo de software, es común dejar comentarios `TODO` en el código para recordar tareas pendientes o mejoras futuras. Sin embargo, estos comentarios pueden acumularse y ser olvidados, afectando la calidad y mantenibilidad del código.
+Finalmente, se requiere implementar un gestor de eventos que almacene una lista de eventos (``MutableList<Event>``) y un diccionario de suscriptores a eventos (``MutableMap<Event, MutableList<Subscriber>>``). El gestor debe permitir:
 
-Como parte de la mejora continua, deseas crear una tarea personalizada en Gradle que:
+- **Registrar eventos:** Agregar un evento a la lista de eventos.
+- **Suscribirse a eventos:** Agregar un suscriptor a la lista de suscriptores de un evento específico.
+- **Notificar eventos:** Notificar a lxs suscriptorxs de un evento específico.
 
-- Analiza los archivos fuente de tu proyecto, incluyendo archivos ```.kt``` y ```.kts```.
-- Cuenta el número de comentarios `TODO` en cada archivo. Un comentario `TODO` es cualquier línea que cumpla la expresión regular ``"""\s//\s*TODO.*""".toRegex()``.
-- Genera un reporte en un archivo que liste los archivos que contienen comentarios `TODO` y el número de ocurrencias en cada uno.
-- La construcción debe fallar si el número total de comentarios `TODO` supera un umbral definido.
-
-El formato de salida del reporte debe ser similar al siguiente ejemplo:
-
-```
-src\main\kotlin\cl\ravenhill\userdb\UpdateUser.kt: 5
-src\main\kotlin\cl\ravenhill\userdb\DeleteUser.kt: 2
-```
-
-_Hints:_
-- _Asegúrate de manejar archivos inexistentes (`FileNotFoundException`) o problemas de lectura/escritura (``IOException``)._
-- _Proporciona mensajes de error claros y útiles._
-- _Puedes utilizar la anotación `@get:InputFiles` para especificar una colección de archivos de entrada. Por ejemplo:_
-  ```kotlin
-  @get:InputFiles   // Indica que sourceFiles es un conjunto de archivos de entrada.
-  @get:PathSensitive(PathSensitivity.RELATIVE)  // Especifica que la ruta de los archivos es relativa.
-  abstract val sourceFiles: ConfigurableFileCollection
-  ```
-
-### b) [0.75 pts] Registro y Configuración de la Tarea en Gradle
-
-Registra una tarea personalizada llamada `generateTodoReport` en cada submódulo de tu proyecto y agrega una dependencia a estas tareas en la tarea `check` del módulo raíz.
-
-_Hints:_
-- _Puedes configurar `sourceFiles` con un conjunto de archivos, como en el siguiente ejemplo:
-    ```kotlin
-    sourceFiles.setFrom(fileTree("src") {
-        include("**/*.kt", "**/*.kts")  // Incluye archivos .kt y .kts en el árbol de archivos.
-    })
-    ```
-
-### c) [0.4 pts] Bonus: Comentarios configurables
-
-Añade la posibilidad de configurar la tarea para especificar una lista de tipos de comentarios a buscar (por ejemplo, `TODO`, `FIXME`, `HACK`, etc.).
-
-_Hint: para definir los tipos de comentarios como un input de la tarea, puedes utilizar una propiedad de tipo `ListProperty<String>` y asignarla con ``commentTypes.set(mutableListOf("TODO", "FIXME"))``._
-
-## P3) [1.5 pts] OOP: Sistema de Gestión de Recetas de Cocina
-
-**Objetivo del Ejercicio:**
-Desarrollar un sistema para almacenar y manejar recetas de cocina usando data classes para las recetas y funciones de
-extensión para proporcionar métodos adicionales, como calcular el tiempo total de cocina y verificar si una receta
-contiene ciertos ingredientes.
-
-#### Requisitos del Ejercicio:
-
-1. **Definir una clase para Recetas:**
- - `Receta`: Esta data class debe incluir al menos los siguientes campos: `nombre`, `ingredientes` (una lista de
-`String`), `tiempoPreparacion` (en minutos), y `tiempoCoccion` (en minutos).
- - Esta clase debe ser una clase abierta, cerrada, o una data class, según lo que sea más apropiado.
-
-2. **Funciones de Extensión:**
- - Extender la clase `Receta` con una función `tiempoTotal` que devuelva la suma del tiempo de preparación y cocción.
- - Extender la clase `Receta` con una función `contieneIngrediente` que verifique si un ingrediente específico está
-en la lista de ingredientes.
-
-## P4) [1.5 pts] Enumeraciones y clases selladas: Máquina de café
-
-**Objetivo:** Implementar una máquina de estados que modele el funcionamiento básico de una máquina de café, que puede
-estar en varios estados (por ejemplo, esperando, preparando café, sirviendo, y necesitando limpieza). La implementación
-se hará primero usando una enumeración y luego usando clases selladas.
-
-### Especificaciones del Sistema de la Máquina de Café
-
-1. **Estados de la Máquina de Café:**
-- **Esperando**: La máquina está esperando que el usuario elija una acción.
-- **Preparando**: La máquina está preparando el café.
-- **Sirviendo**: La máquina está sirviendo el café.
-- **NecesitaLimpieza**: La máquina necesita ser limpiada después de servir una cierta cantidad de cafés.
-
-2. **Transiciones de Estado:**
-- De **Esperando** a **Preparando** cuando el usuario selecciona "preparar café".
-- De **Preparando** a **Sirviendo** una vez que el café está listo.
-- De **Sirviendo** a **Esperando** para preparar otro café o a **NecesitaLimpieza** después de servir 5 cafés.
-- De **NecesitaLimpieza** a **Esperando** después de limpiar la máquina.
-
-**Nota:** Este ejercicio puede resolverse usando state pattern, pero en este caso se busca una solución más simple y directa.
-
-## P5) [1.5 pts] Herencia múltiple: Manejo de dispositivos inteligentes (Obligatorio)
-
-**Objetivo:** Implementar un sistema de dispositivos inteligentes que no solo se conecten y se controlen por voz, sino
-que también gestionen su estado interno y respondan de manera dinámica a los comandos en un entorno de domótica.
-
-### Funcionalidades de los Dispositivos
-
-1. **SmartLight**:
-- **Conexión/Desconexión**:
-- Puede conectarse a la red doméstica para recibir comandos.
-- Si está desconectado, no debe responder a ningún comando de encendido o apagado.
-- **Ahorro de Energía**:
-- En modo de ahorro de energía, el brillo de la luz se reduce automáticamente para consumir menos energía.
-- La luz debe estar encendida para que este modo sea efectivo.
-- **Control de Encendido/Apagado**:
-- La luz puede ser encendida o apagada.
-- Si se intenta cambiar el estado de la luz mientras está desconectada, debería informar que la acción no es posible.
-- **Control por Voz**: Puede ser encendida o apagada mediante comandos de voz.
-
-2. **SmartSpeaker**:
-- **Conexión/Desconexión**:
-- Puede conectarse a la red doméstica para recibir comandos.
-- Si está desconectado, no debe responder a ningún comando de reproducción de música.
-- **Control por Voz**:
-- Puede recibir comandos de voz para reproducir y pausar música.
-- **Reproducción de Música**:
-- Puede reproducir, pausar y detener música.
-- Si se le pide que reproduzca música sin estar conectado, debe notificar que no está listo.
-- **Ajuste de Volumen**:
-- Puede ajustar su volumen.
-- Si se intenta ajustar el volumen mientras está desconectado, se debería informar al usuario.
-- El volumen puede estar entre 0 y 100. Puedes usar `coerceIn(Int, Int)` para asegurarte de que el volumen esté en
-- ese rango.
-
-3. **SmartThermostat**:
-- **Conexión/Desconexión**:
-- Puede conectarse a la red doméstica para recibir comandos.
-- Si está desconectado, no debe responder a ningún comando de ajuste de temperatura.
-- **Control de Temperatura**:
-- Permite establecer una temperatura específica.
-- Si se intenta ajustar la temperatura mientras está desconectado, se debería informar al usuario.
-- **Modo de Ahorro de Energía**:
-- En este modo, el termostato baja la temperatura a 50% para maximizar la eficiencia energética.
-- Debe estar conectado para activar este modo.
-- **Monitoreo Ambiental**:
-- Puede informar sobre la temperatura actual, la humedad o incluso la calidad del aire si se integran **sensores adicionales**.
-- Si se le pide que informe sobre la temperatura mientras está desconectado, debe informar que no está listo.
-
-Puedes considerar la siguiente definición de interfaz para los sensores:
+Completa la siguiente implementación:
 
 ```kotlin
-interface WeatherSensor {
-    operator fun invoke()
+object EventManager {
+    private val events: MutableList<Event> = mutableListOf()
+    private val subscribers: MutableMap<Event, MutableList<Subscriber>> = mutableMapOf()
+
+    // Tu código aquí
 }
 ```
-
-No es necesario crear implementaciones de esta interfaz, pero puedes utilizarla para definir los métodos de monitoreo ambiental.
-
-### Consejos
-
-1. Comienza por identificar las características que comparten los dispositivos y las que son específicas de cada uno.
-2. Define interfaces para las características comunes.
-3. No te preocupes de la privacidad de los métodos inicialmente, enfócate en la estructura y el comportamiento.
-4. Utiliza enumeraciones para definir los estados en lugar de flags o cadenas.
-5. Utiliza delegación para refinar la privacidad de los métodos y evitar la duplicación de código.
-6. Por último, revisa tu diseño por potenciales simplificaciones y mejoras (intenta evitar usar delegación donde no sea necesario)
-7. Recuerda que puedes usar interfaces con implementaciones para compartir funcionalidades y clases abstractas para compartir estado. ¿Hay clases que puedan transformarse a interfaces? ¿Hay clases que puedan transformarse a clases abstractas?
-
-### Opcional: [0.5 pts] Diamond Problem (debes haber resuelto el ejercicio principal)
-
-Menciona una posible situación de "problema del diamante" que podría surgir en el diseño de este sistema, cómo se podría
-resolver, y qué implicaciones tendría en la implementación.

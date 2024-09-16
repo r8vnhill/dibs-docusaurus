@@ -62,26 +62,45 @@ centralizada de versiones:
     </TabItem>
 </Tabs>
 
-#### Uso de alias para plugins (desde `libs.versions.toml`)
+#### Uso de alias para plugins (desde un catálogo de versiones)
 
-Gradle también permite definir alias en un archivo `libs.versions.toml` para simplificar la declaración de los plugins:
+Gradle permite definir **alias** en un archivo `libs.versions.toml` (u otro catálogo de versiones) para simplificar la declaración de plugins en los scripts de construcción. Un alias es un nombre corto y descriptivo que hace referencia a un plugin específico, lo que facilita su gestión y reutilización en múltiples subproyectos.
+
+##### Definiendo un alias en `libs.versions.toml`
+
+Primero, definimos el alias para el plugin en el catálogo de versiones. Esto centraliza la configuración y facilita futuras actualizaciones de versiones.
+
+```toml title="gradle/libs.versions.toml"
+[plugins]
+some-plugin = { id = "org.example.some-plugin", version = "1.2.3" }
+```
+
+##### Aplicando el alias en los scripts de construcción
+
+Una vez definido el alias, podemos utilizarlo en nuestros scripts de construcción para aplicar el plugin de manera concisa y consistente.
 
 <Tabs>
-    <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin
+    <TabItem value="Kotlin DSL" label="Gradle Kotlin DSL">
+        ```kotlin title="build.gradle.kts"
         plugins {
             alias(libs.plugins.some.plugin)
         }
         ```
     </TabItem>
-    <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy
+    <TabItem value="Groovy DSL" label="Gradle Groovy DSL">
+        ```groovy title="build.gradle"
         plugins {
             alias libs.plugins.some.plugin
         }
         ```
     </TabItem>
 </Tabs>
+
+##### Beneficios de usar alias
+
+- **Centralización de versiones**: Facilita la actualización de versiones de plugins desde un único lugar, evitando inconsistencias.
+- **Mayor legibilidad**: Los alias descriptivos hacen que los scripts de construcción sean más fáciles de leer y mantener.
+- **Reutilización**: Permite aplicar fácilmente el mismo plugin en múltiples subproyectos sin redundancia.
 
 #### Aplicación por nombre "simple"
 
@@ -115,7 +134,10 @@ facilita el uso de diferentes configuraciones dentro del mismo bloque:
 
 ```kotlin
 plugins {
-    kotlin("jvm") version "1.6.21"
+    kotlin("jvm") version "2.0.20"
+    kotlin("js") version "2.0.20"
+    // En lugar de utilizar 2 plataformas diferentes, puedes usar una sola función
+    // kotlin("multiplatform") version "2.0.20"
 }
 ```
 
@@ -127,8 +149,9 @@ plugins en proyectos grandes.
 
 ### Aplicación mediante `apply`
 
-El método `apply` permite aplicar plugins de forma dinámica en cualquier parte del script de construcción. Esto podría
-ser útil si necesitas aplicar un plugin condicionalmente o en función de alguna lógica específica.
+El método `apply` permite aplicar plugins de forma dinámica en cualquier parte del script de construcción de Gradle. A diferencia de la aplicación directa en el bloque `plugins`, donde los plugins se aplican durante la fase de inicialización del proyecto, `apply` se ejecuta durante la fase de configuración.
+
+Esto es especialmente útil cuando necesitas aplicar un plugin de manera condicional o basándote en cierta lógica específica dentro del script de construcción. Por ejemplo, podrías querer aplicar un plugin solo si se detecta un entorno particular o si se cumple una determinada condición.
 
 <Tabs>
     <TabItem value="Kotlin DSL" label="Kotlin DSL">
