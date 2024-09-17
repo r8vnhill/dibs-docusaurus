@@ -71,7 +71,8 @@ const sidebars: SidebarsConfig = {
                         'build-systems/library/compile',
                         'build-systems/library/fat-jar',
                         'build-systems/library/copy-refined',
-                        'build-systems/library/documentation'
+                        'build-systems/library/documentation',
+                        'build-systems/library/publish',
                     ],
                 }
             ],
