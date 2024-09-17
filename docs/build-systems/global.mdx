@@ -9,8 +9,6 @@ import TabItem from "@theme/TabItem";
 
 <ReadingTime/>
 
-## Configuraciones Globales en Gradle
-
 En esta sección, aprenderemos a definir configuraciones que se aplican a todos los submódulos de un proyecto Gradle.
 Estas configuraciones globales se gestionan a través del archivo `build.gradle.kts` ubicado en la raíz del proyecto.
 Por ahora, nos enfocaremos en definir el **grupo** y la **versión** del proyecto, dos elementos fundamentales en
@@ -65,45 +63,66 @@ y la versión del proyecto. También aplicamos el plugin que gestionará las con
 
 <Tabs>
     <TabItem value="Kotlin DSL" label="Kotlin DSL">
-```kotlin title="build.gradle.kts"
-plugins {
-    id("jvm.conventions") // Aplica el plugin de convenciones para JVM
-}
+        ```kotlin title="build.gradle.kts"
+        plugins {
+            id("jvm.conventions") // Aplica el plugin de convenciones para JVM
+        }
 
-val projectGroup = extra["echo.group"] ?: error("La propiedad 'echo.group' no está definida.")
-val projectVersion = libs.versions.echo.get()
+        val projectGroup = extra["echo.group"] ?: error("La propiedad 'echo.group' no está definida.")
+        val projectVersion = libs.versions.echo.get()
 
-allprojects {
-    group = projectGroup
-    version = projectVersion
-}
-```
+        allprojects {
+            group = projectGroup
+            version = projectVersion
+        }
+        ```
+
+        ## ¿Qué acabamos de hacer?
+
+        1. **Cargar propiedades**: Usamos `extra["echo.group"]` para obtener el valor de `echo.group` definido en
+        `gradle.properties`. En caso de que esta propiedad no esté definida, lanzamos un error para evitar fallos
+        silenciosos.
+        2. **Configurar el grupo y la versión**: Establecemos el **grupo** y la **versión** para todos los submódulos del
+        proyecto utilizando `allprojects`. El grupo se obtiene del archivo `gradle.properties`, mientras que la versión se
+        obtiene del archivo `libs.versions.toml`.
     </TabItem>
     <TabItem value="Groovy DSL" label="Groovy DSL">
-```groovy title="build.gradle"
-plugins {
-    id 'jvm.conventions' // Aplica el plugin de convenciones para JVM
-}
+        ```groovy title="build.gradle"
+        // Aplicar plugin base de Kotlin
+        plugins {
+        alias libs.plugins.kotlin
+    }
 
-def projectGroup = project.extra["echo.group"] ?: throw new GradleException("La propiedad 'echo.group' no está definida.")
-def projectVersion = libs.versions.echo.get()
+        // Aplicar convenciones de JVM
+        apply from: "${rootDir}/convention-plugins/jvm.conventions.gradle"
 
-allprojects {
-    group = projectGroup
-    version = projectVersion
-}
-```
+        // Obtener propiedades del proyecto de manera segura
+        def projectGroup = project.findProperty("echo.group")
+        if (projectGroup == null) {
+        throw new GradleException("La propiedad 'echo.group' no está definida.")
+    }
+
+        def projectVersion = libs.versions.echo.orNull
+        if (projectVersion == null) {
+        throw new GradleException("La versión 'echo' no está definida en libs.versions.")
+    }
+
+        allprojects {
+        group = projectGroup
+        version = projectVersion
+    }
+        ```
+
+        ### ¿Qué acabamos de hacer?
+
+        1. **Aplicar el plugin de Kotlin**: Utilizamos el bloque `plugins` para aplicar el plugin de Kotlin mediante un alias del catálogo de versiones (`libs.plugins.kotlin`). Esto facilita la configuración del proyecto, utilizando una versión centralizada del plugin que está definida en `libs.versions.toml`.
+        2. **Aplicar un archivo de convenciones de JVM**: Utilizamos el comando `apply from:` para aplicar un script externo llamado `jvm.conventions.gradle`, ubicado en el módulo `convention-plugins`. Este archivo define las convenciones que aplicamos a todos los proyectos que usen la JVM. Al externalizar esta lógica, evitamos duplicar configuraciones en varios subproyectos y mantenemos un punto centralizado para configurar el comportamiento del entorno JVM.
+        3. **Obtener propiedades del proyecto de manera segura**:
+            - **`projectGroup`:** Utilizamos `project.findProperty()` para buscar la propiedad `echo.group` definida en el archivo `gradle.properties`. Si no se encuentra, lanzamos una excepción personalizada para asegurarnos de que no pasamos por alto la ausencia de esta configuración clave.
+            - **`projectVersion`:** Accedemos a la versión de la biblioteca `echo` desde el catálogo de versiones utilizando `libs.versions.echo.orNull`. Si no está definida, lanzamos otra excepción personalizada. Este patrón nos ayuda a manejar las propiedades de manera robusta, garantizando que siempre estén definidas y evitando problemas durante la construcción.
+        4. **Configurar propiedades en todos los subproyectos**: Utilizamos el bloque `allprojects` para aplicar las configuraciones de `group` y `version` a todos los subproyectos del repositorio. De esta forma, mantenemos consistencia en la identificación de los artefactos generados durante el proceso de construcción en todos los módulos del proyecto.
     </TabItem>
 </Tabs>
-
-## ¿Qué acabamos de hacer?
-
-1. **Cargar propiedades**: Usamos `extra["echo.group"]` para obtener el valor de `echo.group` definido en
-    `gradle.properties`. En caso de que esta propiedad no esté definida, lanzamos un error para evitar fallos
-    silenciosos.
-2. **Configurar el grupo y la versión**: Establecemos el **grupo** y la **versión** para todos los submódulos del
-    proyecto utilizando `allprojects`. El grupo se obtiene del archivo `gradle.properties`, mientras que la versión se
-    obtiene del archivo `libs.versions.toml`.
 
 ## Wrapping Up
 

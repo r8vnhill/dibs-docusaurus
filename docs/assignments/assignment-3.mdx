@@ -35,12 +35,45 @@ Supongamos que quieres hacer un bot de Telegram. Con el fin de hacer una buena s
 
 Para resolver este problema, decides ocupar [Kotlin Telegram Bot](https://github.com/kotlin-telegram-bot/kotlin-telegram-bot) para manejar la interacción con la API de Telegram. Sin embargo, te das cuenta de que si el bot crece podrías tener que crear más módulos que interactúen con la API de Telegram. Por lo tanto, decides implementar un plugin de Gradle que permita configurar la dependencia de Kotlin Telegram Bot solamente en los subproyectos que lo necesiten.
 
-## P1. Manejo de repositorios
+## P1. [2.5 pts] Manejo de repositorios
 
 JitPack es un servicio que permite publicar proyectos de GitHub como dependencias de Maven o Gradle comúnmente usado por su facilidad de uso. Kotlin Telegram Bot está publicado en JitPack, por lo que necesitas configurar el repositorio de JitPack en tu plugin.
 
 Crea un plugin ``TelegramBotPlugin`` que configure el repositorio de JitPack en el objeto `Settings`, este repositorio debe tener la URL `https://jitpack.io`. Luego, haz que el plugin agregue la dependencia a ``io.github.kotlin-telegram-bot.kotlin-telegram-bot:telegram``. La versión más reciente de Kotlin Telegram Bot es `6.2.0`.
 
-## P2. Plugin para configurar Detekt
+## P2. [3.5] Plugin para configurar Detekt
 
-## P3. Extensión de configuración
+Te das cuenta de que podrías necesitar varios plugins de Detekt en tu proyecto, pero los plugins no serán los mismos para todos los módulos. Por lo tanto, decides crear un plugin pre-compilado que permita especificar qué plugins de Detekt se deben aplicar a cada subproyecto de forma independiente.
+
+1. [1 pt] Crea una extensión que te permita configurar una lista de plugins de Detekt.
+2. [1 pt] Crea un plugin pre-compilado que registre la extensión y aplique el plugin ``DetektPlugin``, para esto necesitarás definir la siguiente dependencia:
+    ```toml
+    [libraries]
+    # ...
+    detekt = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+    ```
+3. [1.5 pts] Haz que el plugin aplique los plugins de Detekt especificados en la extensión. Para esto, puedes hacer ``"detektPlugins"(plugin)`` dentro de un bloque ``dependencies``, donde ``plugin`` es un String que contiene el nombre del plugin de Detekt. Por ejemplo:
+
+    ```kotlin
+    dependencies {
+        "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.18.1")
+        "detektPlugins"("com.faire:faire-detekt-rules:0.2.4")
+    }
+    ```
+
+### Ejemplo de uso
+
+```kotlin
+plugins {
+    id("detekt.conventions")
+}
+
+detektConfig {
+    plugins = listOf(
+        "io.gitlab.arturbosch.detekt:detekt-formatting:1.18.1",
+        "com.f  aire:faire-detekt-rules:0.2.4"
+    )
+}
+```
+
+_Hint: Define el bloque ``dependencies`` dentro de un bloque ``afterEvaluate`` para que se aplique después de que se hayan configurado todas las dependencias._
