@@ -123,6 +123,8 @@ const sidebars: SidebarsConfig = {
                 id: 'testing/index',
             },
             items: [
+                "testing/tdd",
+                "testing/exceptions",
                 "testing/assertions",
                 "testing/matchers",
             ],
