@@ -7,21 +7,21 @@ const sidebars: SidebarsConfig = {
             id: 'installation',
         },
         {
-            type: 'category',
             label: 'Unidad 1: Introducción',
+            type: 'category',
             items: [
                 'intro/introduction',
+                'intro/clean',
+                'intro/documentation',
                 'intro/Kotlin',
                 'intro/basics',
                 'intro/void-safety',
                 'intro/input',
-                'intro/clean',
-                'intro/documentation',
             ],
         },
         {
-            type: 'category',
             label: 'Unidad 2: Build Systems',
+            type: 'category',
             link: {
                 type: 'doc',
                 id: 'build-systems/index',
@@ -85,9 +85,6 @@ const sidebars: SidebarsConfig = {
                 id: 'fp/index',
             },
             items: [
-                "fp/recursion",
-                "fp/hof",
-                "fp/pure",
                 {
                     type: 'category',
                     label: 'Tipos de datos algebraicos',
@@ -100,6 +97,9 @@ const sidebars: SidebarsConfig = {
                         'fp/adt/sealed',
                     ],
                 },
+                "fp/recursion",
+                "fp/hof",
+                "fp/pure",
                 {
                     type: 'category',
                     label: 'Optimización de Funciones Recursivas',
@@ -177,6 +177,7 @@ const sidebars: SidebarsConfig = {
                 'assignments/assignment-1',
                 'assignments/assignment-2',
                 'assignments/assignment-3',
+                'assignments/assignment-4',
             ],
         }
     ]

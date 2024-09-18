@@ -80,7 +80,7 @@ A continuación, analizamos algunos ejemplos para identificar funciones puras e 
 
 Cuando una función es impura debido a que modifica el estado del programa, como en el siguiente ejemplo, se puede refactorizar para evitar esos efectos.
 
-#### Ejemplo de función impura:
+### Ejemplo de función impura:
 
 ```kotlin
 fun incrementArray(array: Array<Int>): Unit {
@@ -89,22 +89,28 @@ fun incrementArray(array: Array<Int>): Unit {
     }
 }
 ```
- 
-El problema aquí es que la función modifica el input, es decir, el arreglo pasado como argumento, lo que la convierte en impura. Para hacer que esta función sea pura, podemos evitar modificar el input creando un nuevo arreglo:
+
+El código anterior es impuro porque **modifica directamente el arreglo** pasado como argumento. Esto genera efectos secundarios, lo que hace que el comportamiento de la función dependa del estado externo.
+
+Para hacer que la función sea pura, debemos **evitar modificar el arreglo original**. En su lugar, vamos a devolver un **nuevo arreglo** con los valores incrementados. A continuación, utilizamos recursión para lograr esto:
 
 ```kotlin
-fun incrementArray(array: Array<Int>): Array<Int> {
-    val result = Array(array.size) { 0 }
-    for (i in array.indices) {
-    result[i] = array[i] + 1
-}
-    return result
-}
+fun incrementArray(array: Array<Int>, index: Int = 0): Array<Int> =
+    if (index >= array.size) {
+        arrayOf()   // (1)
+    } else {
+        arrayOf(array[index] + 1) + incrementArray(array, index + 1)    // (2)
+    }
 ```
+
+1. **Caso Base**: El caso base ocurre cuando el índice ha recorrido todos los elementos del arreglo (`index >= array.size`). En este caso, la función retorna un **arreglo vacío**, lo cual sirve como punto de finalización de la recursión.
+2. **Caso Recursivo**:
+    - En cada paso de la recursión, se crea un **nuevo arreglo** que contiene el valor incrementado del elemento actual, y luego se concatena con el resultado de la llamada recursiva para los elementos restantes.
+    - Esto genera un nuevo arreglo sin modificar el original.
 
 ### Ejemplo de Función Impura: Cálculo de Intereses Compuestos
 
-En este ejemplo, el código impreso durante la ejecución es un efecto secundario:
+En el código original, el uso de `println` para mostrar los balances en cada iteración es un **efecto secundario** que lo hace impuro:
 
 ```kotlin
 fun calculateCompoundInterest(
@@ -115,13 +121,14 @@ fun calculateCompoundInterest(
     var balance = principal
     for (year in 1..years) {
         balance += balance * rate
+        // highlight-next-line
         println("Año $year: Balance = $balance")
     }
     return balance
 }
 ```
 
-Para eliminar los efectos secundarios, podemos almacenar el historial de balances y devolver ambos resultados (el balance final y el historial) como un par.
+Para hacer la función **pura**, eliminamos los efectos secundarios (la impresión) y almacenamos el historial de balances en una lista que será parte del resultado. Utilizaremos **recursión** con parámetros por defecto para simplificar el diseño:
 
 ```kotlin
 fun calculateCompoundInterest(
@@ -129,63 +136,69 @@ fun calculateCompoundInterest(
     rate: Double,
     years: Int
 ): Pair<Double, List<String>> {
-    var balance = principal
-    val history = mutableListOf<String>()
-    for (year in 1..years) {
-    balance += balance * rate
-    history += "Año $year: Balance = $balance"
-}
-    return balance to history
-}
-```
-
-### Ejercicio: Eliminar Efectos Secundarios en Transferencias Bancarias
-
-En el siguiente ejemplo, la función `transferirFondos` tiene efectos secundarios, ya que modifica el estado de las cuentas y la base de datos:
-
-```kotlin
-fun transferirFondos(cuentaOrigen: Cuenta, cuentaDestino: Cuenta, monto: Int): Boolean {
-    if (cuentaOrigen.saldo >= monto) {
-        cuentaOrigen.saldo -= monto
-        cuentaDestino.saldo += monto
-        database.update(cuentaOrigen)
-        database.update(cuentaDestino)
-        return true
+    fun calculateRecursive(
+        currentYear: Int,
+        currentBalance: Double,
+        history: List<String>
+    ): Pair<Double, List<String>> = if (currentYear > years) {
+        currentBalance to history
+    } else {
+        val newBalance = currentBalance + currentBalance * rate
+        val newHistory = history + "Año $currentYear: Balance = $newBalance"
+        calculateRecursive(currentYear + 1, newBalance, newHistory)
     }
-    return false
+    return calculateRecursive(1, principal, emptyList())
 }
 ```
+
+:::note
+Usamos una **función auxiliar** en lugar de parámetros por defecto para evitar sobrecargar la función principal con demasiados parámetros, lo que afectaría su claridad. La función auxiliar maneja el estado interno, manteniendo la **simplicidad** y **legibilidad**, mientras que la función principal se enfoca solo en los parámetros esenciales. Esto sigue el principio de mantener las funciones con la menor cantidad de parámetros posible.
+:::
 
 :::tip Ejercicio: Eliminar Efectos Secundarios
 
 <Tabs>
     <TabItem value="Ejercicio" label="Ejercicio">
-        Modifica la función `transferirFondos` para eliminar los efectos secundarios. En lugar de modificar directamente las cuentas, devuelve un objeto que describa el resultado de la operación. **Hint**: Utiliza una `data class` para representar el resultado de la transferencia.
+        En el siguiente ejemplo, la función `transferirFondos` tiene efectos secundarios, ya que modifica el estado de las cuentas y la base de datos:
 
+        ```kotlin
+        object Database {
+            fun update(cuenta: Cuenta): Unit = TODO()
+        }
+
+        fun transferirFondos(cuentaOrigen: Cuenta, cuentaDestino: Cuenta, monto: Int) =
+            if (cuentaOrigen.saldo >= monto) {
+                cuentaOrigen.saldo -= monto
+                cuentaDestino.saldo += monto
+                database.update(cuentaOrigen)
+                database.update(cuentaDestino)
+                true
+            } else {
+                false
+            }
+        ```
+
+        Modifica la función `transferirFondos` para eliminar los efectos secundarios. En lugar de modificar directamente las cuentas, devuelve un objeto que describa el resultado de la operación. **Hint**: Utiliza una `data class` para representar el resultado de la transferencia.
     </TabItem>
     <TabItem value="Solución" label="Solución">
-```kotlin
-data class ResultadoTransferencia(
-    val exito: Boolean,
-    val nuevoSaldoOrigen: Int,
-    val nuevoSaldoDestino: Int
-)
-```
+        ```kotlin
+        data class TransferenciaResultado(
+            val cuentaOrigenActualizada: Cuenta,
+            val cuentaDestinoActualizada: Cuenta,
+            val exito: Boolean
+        )
+        ```
 
-```kotlin
-fun transferirFondos(
-    cuentaOrigen: Cuenta, 
-    cuentaDestino: Cuenta, 
-    monto: Int
-): ResultadoTransferencia {
-    if (cuentaOrigen.saldo >= monto) {
-        val nuevoSaldoOrigen = cuentaOrigen.saldo - monto
-        val nuevoSaldoDestino = cuentaDestino.saldo + monto
-        return ResultadoTransferencia(true, nuevoSaldoOrigen, nuevoSaldoDestino)
-    }
-    return ResultadoTransferencia(false, cuentaOrigen.saldo, cuentaDestino.saldo)
-}
-```
+        ```kotlin
+        fun transferirFondos(cuentaOrigen: Cuenta, cuentaDestino: Cuenta, monto: Int) =
+            if (cuentaOrigen.saldo >= monto) {
+                val nuevaCuentaOrigen = cuentaOrigen.copy(saldo = cuentaOrigen.saldo - monto)
+                val nuevaCuentaDestino = cuentaDestino.copy(saldo = cuentaDestino.saldo + monto)
+                TransferenciaResultado(nuevaCuentaOrigen, nuevaCuentaDestino, true)
+            } else {
+                TransferenciaResultado(cuentaOrigen, cuentaDestino, false)
+            }
+        ```
     </TabItem>
 </Tabs>
 :::

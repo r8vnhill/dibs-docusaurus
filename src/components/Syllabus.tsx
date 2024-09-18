@@ -64,10 +64,10 @@ const sections: CourseSection[] = [
         title: "APIs orientadas a objetos",
         contents: [
             "Clases abiertas y cerradas/finales",
-            "Funciones de extensión",
-            "Registros (data classes)",
+            "Métodos de extensión",
             "Herencia múltiple",
             "Soluciones al problema del diamante",
+            "Tipos anónimos",
         ],
     },
 ];

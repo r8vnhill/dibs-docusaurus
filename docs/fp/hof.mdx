@@ -1,9 +1,7 @@
 ---
-
 title: Funciones de Alto Orden
-
 ---
-
+import Definition from "../../src/components/Definition";
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 import ReadingTime from '../../src/components/ReadingTime';
@@ -30,23 +28,29 @@ En este caso, `W` es el tipo del objeto que posee la función, mientras que `X` 
 
 ## Ciudadanos de Primera Clase
 
-Una entidad en un lenguaje de programación es considerada un **"ciudadano de primera clase"** si puede ser:
+Una entidad en un lenguaje de programación es considerada un **"ciudadano de primera clase"** si puede:
 
-- Creada dinámicamente durante la ejecución del programa.
-- Asignada a variables.
-- Pasada como argumento a otras funciones.
-- Retornada desde funciones.
-- Almacenada en estructuras de datos como listas o diccionarios.
+- Ser creada dinámicamente durante la ejecución del programa.
+- Asignarse a variables.
+- Pasarse como argumento a otras funciones.
+- Retornarse desde funciones.
+- Almacenarse en estructuras de datos como listas o diccionarios.
 
-En Kotlin, las **funciones son ciudadanos de primera clase**, lo que significa que pueden ser tratadas como cualquier otro valor. Esto es importante porque permite pasar y devolver funciones de manera flexible, lo que habilita un estilo de programación más modular y reutilizable.
+En Kotlin, las **funciones son ciudadanos de primera clase**, lo que significa que pueden ser tratadas como cualquier otro valor. Esto permite un estilo de programación más modular y reutilizable, ya que puedes pasar y devolver funciones de manera flexible.
 
 ### Ejemplo
 
 ```kotlin
-val sumar: (Int, Int) -> Int = { a, b -> a + b }
+fun add(a: Int, b: Int): Int = a + b
+
+val add2: (Int, Int) -> Int = ::add
 ```
 
-Aquí, `sumar` es una función que se asigna a una variable, lo que demuestra cómo las funciones pueden ser manipuladas como cualquier otro valor en Kotlin.
+En este ejemplo, `add2` es una referencia a la función `add`, lo que demuestra cómo las funciones pueden ser asignadas a variables en Kotlin.
+
+:::info Operador de Referencia de Función
+El operador `::` en Kotlin se llama **operador de referencia de función** y se utiliza para obtener una referencia a una función existente. En el ejemplo, `::add` toma la función `add` y la convierte en un valor que puede asignarse a una variable (`add2`), pasarse como argumento o retornarse desde una función.
+:::
 
 ## Funciones de Alto Orden
 
@@ -90,8 +94,11 @@ Es equivalente a:
 
 Esto implica que la función acepta un parámetro de tipo `A` y retorna una función que a su vez toma un parámetro de tipo `B` y retorna un valor de tipo `C`. Este concepto es clave en la **currificación**, una técnica común en la programación funcional.
 
-:::tip Ejercicio: Interfaz y Enumeración de Acciones del Juego
+<Definition title={`Currificación`}>
+La **currificación** es el proceso de convertir una función que toma múltiples argumentos en una secuencia de funciones que toman un solo argumento. Esto permite aplicar parcialmente una función, es decir, proporcionar solo algunos de los argumentos necesarios y obtener una nueva función que espera los argumentos restantes.
+</Definition>
 
+:::tip Ejercicio: Tipos de Funciones
 <Tabs>
     <TabItem value="Ejercicio" label="Ejercicio">
         Indica el tipo de:
@@ -122,30 +129,32 @@ fun main() {
 }
 ```
 
-En este ejemplo, estamos utilizando el operador `::` para **referenciar una función**. Esto nos permite pasar las funciones `double` y `square` como argumentos a la función `map` sin ejecutarlas directamente.
+#### Implementación iterativa de `map`
 
-#### Implementación de `map`
-
-La implementación básica de `map` toma una lista de enteros y una función que se aplica a cada uno de los elementos de esa lista. La función `map` recorre la lista, aplica la función a cada elemento, y devuelve una nueva lista con los resultados.
+La implementación básica de `map` toma una lista de cualquier tipo y una función que se aplica a cada elemento de esa lista. La función `map` recorre la lista original, aplica la función a cada elemento, y devuelve una nueva lista con los resultados.
 
 ```kotlin
-fun map(list: List<Int>, f: (Int) -> Int): List<Int> {
-    val result = mutableListOf<Int>()
+fun <T, R> map(list: List<T>, f: (T) -> R): List<R> {
+    val result = mutableListOf<R>()
     for (i in list) {
-        result.add(f(i))
-    }
+    result.add(f(i))
+}
     return result
 }
 ```
 
-Aquí estamos creando una lista mutable llamada `result` que almacena los resultados. Luego, recorremos cada elemento de la lista original, aplicamos la función `f` y añadimos el resultado a `result`. Finalmente, la función devuelve esta nueva lista.
+En este código, se crea una lista mutable `result` que almacenará los resultados. A continuación, la función recorre cada elemento de la lista original, aplica la función `f`, y añade el resultado a `result`. Finalmente, se retorna la nueva lista con los resultados aplicados.
+
+:::danger Problema de Mutabilidad
+El uso de estructuras mutables como `MutableList` puede generar **efectos secundarios** y **errores inesperados**. En programación funcional, se recomienda evitar la mutabilidad y trabajar con estructuras inmutables para reducir el riesgo de errores y mejorar la mantenibilidad del código.
+:::
 
 #### Implementación Recursiva
 
 Una forma más **funcional** de implementar `map` sería utilizando **recursión** en lugar de un bucle. Esta implementación evita el uso de estructuras mutables, lo cual es más acorde con los principios de la programación funcional.
 
 ```kotlin
-fun map(list: List<Int>, f: (Int) -> Int): List<Int> = if (list.isEmpty()) {
+fun <T, R> map(list: List<T>, f: (T) -> R): List<R> = if (list.isEmpty()) {
     emptyList()
 } else {
     listOf(f(list.first())) + map(list.drop(1), f)
@@ -157,7 +166,7 @@ En este caso, la función `map` verifica si la lista está vacía. Si lo está, 
 :::tip Ejercicio: Implementación de `filter`
 <Tabs>
     <TabItem value="Ejercicio" label="Ejercicio">
-        Programa la función filter, que toma una lista de enteros y un predicado y retorna una nueva lista con sólo los elementos que cumplen el predicado; utiliza recursión
+        Programa la función ``filter``, que toma una lista de valores de tipo ``T`` y un predicado y retorna una nueva lista con sólo los elementos que cumplen el predicado; utiliza recursión
     </TabItem>
     <TabItem value="Solución" label="Solución">
         ```kotlin
@@ -175,3 +184,22 @@ En este caso, la función `map` verifica si la lista está vacía. Si lo está, 
         ```
     </TabItem>
 </Tabs>
+:::
+
+## ¿Qué vimos en este artículo?
+
+En esta lección, exploramos conceptos fundamentales de **funciones de alto orden** en Kotlin y cómo las funciones son tratadas como **ciudadanos de primera clase**. Esto permite que las funciones sean asignadas a variables, pasadas como parámetros, y retornadas desde otras funciones, habilitando un estilo de programación más modular y reutilizable.
+
+1. **Tipos de Funciones**: Aprendimos a expresar el tipo de una función en función de los tipos de sus parámetros y su tipo de retorno, tanto para funciones simples como para funciones miembro o de extensión.
+
+2. **Ciudadanos de Primera Clase**: Vimos cómo en Kotlin, las funciones son ciudadanos de primera clase, lo que significa que pueden ser tratadas como valores.
+
+3. **Operador `::`**: Exploramos el **operador de referencia de función** `::`, que permite obtener una referencia a una función existente para ser usada en otro contexto, como asignarla a una variable.
+
+4. **Funciones de Alto Orden**: Profundizamos en las funciones que aceptan otras funciones como parámetros o retornan funciones. Esto permite un mayor nivel de abstracción en el código.
+
+5. **Implementación de `map`**: Implementamos la función `map` de manera iterativa y recursiva, y discutimos las ventajas de evitar estructuras mutables para seguir los principios de la programación funcional.
+
+### Próxima lección: Funciones Lambda
+
+En la próxima lección, exploraremos las **funciones lambda** en Kotlin. Veremos cómo nos permiten escribir código más conciso y flexible, y cómo podemos utilizarlas para simplificar la creación de funciones de alto orden.

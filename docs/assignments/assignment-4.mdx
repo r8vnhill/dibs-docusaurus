@@ -1,0 +1,88 @@
+---
+title: "Tarea 4 - APIs Funcionales: Funciones de alto orden"
+---
+
+Implementa tres funciones recursivas que operan sobre grafos, utilizando funciones de orden superior y manteniendo la pureza de las funciones. No debes usar funciones integradas que recorran o transformen colecciones, ni estructuras iterativas.
+
+## Implementación del Grafo
+
+Primero, definiremos una implementación sencilla de un grafo. Utilizaremos una representación basada en nodos, donde cada nodo puede tener una lista de vecinos.
+
+```kotlin
+data class Node<T>(
+    val value: T,
+    val neighbors: List<Node<T>> = emptyList()
+)
+```
+
+- ``Node<T>``: Es una clase de datos genérica que representa un nodo en el grafo.
+- ``value: T``: El valor almacenado en el nodo.
+- ``neighbors: List<Node<T>>``: La lista de nodos vecinos (adyacentes).
+
+## Funciones a Implementar
+
+- ``countRec``: Cuenta cuántos nodos en el grafo satisfacen un predicado dado.
+- ``existsRec``: Determina si existe al menos un nodo en el grafo que satisfaga un predicado dado.
+- ``findRec``: Devuelve el primer nodo en el grafo que satisfaga un predicado dado, o ``null`` si no existe.
+
+## Especificaciones
+Firmas de las funciones:
+
+```kotlin
+fun <T> countRec(node: Node<T>, predicate: (T) -> Boolean): Int
+fun <T> existsRec(node: Node<T>, predicate: (T) -> Boolean): Boolean
+fun <T> findRec(node: Node<T>, predicate: (T) -> Boolean): T?
+```
+
+## Requisitos
+
+- **Recursión y Función Auxiliar:** Cada función debe utilizar recursión y puede requerir una función auxiliar para mantener la pureza.
+- **Pureza de Funciones:** Las funciones deben ser puras; es decir, no deben tener efectos secundarios ni modificar el estado externo.
+- **Sin Uso de Funciones Integradas para Recorrer Colecciones:** No debes usar funciones como `map`, `filter`, `forEach`, ni otras que recorran o transformen colecciones.
+- **Sin Estructuras Iterativas ni Variables Mutables:** No utilices bucles (``for``, ``while``) ni variables mutables.
+- **Manejo de Ciclos en el Grafo:** Debes asegurarte de que la función no entre en un ciclo infinito al recorrer grafos cíclicos.
+- Puedes mantener un conjunto inmutable de **nodos visitados** pasando este conjunto como parámetro en las funciones recursivas.
+
+## Ejemplos
+
+### Creación de un Grafo de Ejemplo:
+
+```kotlin
+Copy code
+// Creación de nodos
+val node1 = Node(value = 1)
+val node2 = Node(value = 2)
+val node3 = Node(value = 3)
+val node4 = Node(value = 4)
+val node5 = Node(value = 5)
+
+// Establecimiento de conexiones (aristas)
+val node1Connected = node1.copy(neighbors = listOf(node2, node3))
+val node2Connected = node2.copy(neighbors = listOf(node4))
+val node3Connected = node3.copy(neighbors = listOf(node4, node5))
+val node4Connected = node4.copy(neighbors = listOf(node1)) // Ciclo
+
+// Actualizar los nodos con sus vecinos conectados
+// En un grafo mutable, podríamos simplemente agregar vecinos, pero como estamos usando inmutabilidad, recreamos los nodos
+```
+
+### Usando countRec:
+
+```kotlin
+val countEven = countRec(node1Connected) { it % 2 == 0 }
+println(countEven) // Debería imprimir el número de nodos con valores pares
+```
+
+### Usando existsRec:
+
+```kotlin
+val hasValue5 = existsRec(node1Connected) { it == 5 }
+println(hasValue5) // Debería imprimir true si existe un nodo con valor 5
+```
+
+### Usando findRec:
+
+```kotlin
+val nodeWithValue3 = findRec(node1Connected) { it == 3 }
+println(nodeWithValue3) // Debería imprimir 3 si existe un nodo con ese valor, o null si no existe
+```

@@ -1,6 +1,8 @@
 ---
 title: TDD by Example
 ---
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 import GithubRepoLink from "../../src/components/GithubRepoLink";
 import Definition from "../../src/components/Definition";
 import ReadingTime from "../../src/components/ReadingTime";
@@ -9,9 +11,81 @@ import ReadingTime from "../../src/components/ReadingTime";
 <GithubRepoLink repo="example-based-testing" user="r8vnhill"/>
 
 <br/>
+
 ## Características básicas
 
-Supongamos que estamos diseñando un juego llamado *Bucket Monsters* (o *Bakémon*), similar a Pokémon, donde podemos tener diferentes criaturas con distintas características. Comenzaremos con un requisito básico: todos los *Bakémon* deben tener un nombre.
+Estamos diseñando un juego llamado *Bucket Monsters* (o *Bakémon*), similar a Pokémon, en el que las criaturas tienen diferentes características. El requisito inicial es que cada *Bakémon* debe tener un nombre.
+
+Para organizar los tests de manera didáctica, crearemos un módulo principal llamado `bakemon`, que contendrá la lógica de los *Bakémon*, y módulos separados para cada lección, enfocándose en distintos aspectos de los tests.
+
+### Creación del módulo principal y estructura de directorios:
+
+<Tabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        New-Item -Path "bakemon\src\main\kotlin" -ItemType Directory
+        Set-Content -Path "bakemon\build.gradle.kts" -Value "// Intentionally left blank"
+        ```
+    </TabItem>
+    <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+        ```powershell
+        mkdir bakemon\src\main\kotlin
+        "// Intentionally left blank" > bakemon\build.gradle.kts
+        ```
+    </TabItem>
+    <TabItem value="Unix" label="Unix">
+        ```bash
+        mkdir -p bakemon/src/main/kotlin
+        echo "// Intentionally left blank" > bakemon/build.gradle.kts
+        ```
+    </TabItem>
+</Tabs>
+
+### Creación de la estructura de directorios para los tests básicos:
+
+<Tabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        New-Item -Path "test-basics\src\test\kotlin" -ItemType Directory
+        New-Item -Path "test-basics\build.gradle.kts" -ItemType File
+        ```
+    </TabItem>
+    <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+        ```powershell
+        mkdir test-basics\src\test\kotlin
+        ni test-basics\build.gradle.kts
+        ```
+    </TabItem>
+    <TabItem value="Unix" label="Unix">
+        ```bash
+        mkdir -p test-basics/src/test/kotlin
+        touch test-basics/build.gradle.kts
+        ```
+    </TabItem>
+</Tabs>
+
+Y actualizamos el archivo `settings.gradle.kts` para incluir los módulos `bakemon` y `test-basics`:
+
+```kotlin title="settings.gradle.kts"
+rootProject.name = "example-based-testing"
+
+include(
+    ":bakemon",
+    ":test-basics"
+)
+```
+
+### Exponer el módulo `bakemon` a los tests:
+
+Ahora, necesitamos exponer el módulo `bakemon` para que los tests puedan acceder a él. Para hacerlo, actualizamos el archivo `test-basics/build.gradle.kts` con la siguiente configuración:
+
+```kotlin title="test-basics/build.gradle.kts"
+dependencies {
+    implementation(project(":bakemon"))
+}
+```
+
+En la [Unidad 2](../build-systems/library/compile), vimos cómo hacer que un módulo dependiera de otro empaquetando un JAR, lo cual es útil para la distribución. Sin embargo, en desarrollo local, es más sencillo referenciar el módulo directamente.
 
 ### Paso 1: Escribir una prueba que falle
 
@@ -19,7 +93,7 @@ Un enfoque útil para estructurar el desarrollo es definir primero la interfaz. 
 
 Primero, creamos una interfaz para nuestros *Bakémon*:
 
-```kotlin title="test-basics/src/main/kotlin/cl/ravenhill/bakemon/Bakemon.kt"
+```kotlin title="bakemon/src/main/kotlin/cl/ravenhill/bakemon/Bakemon.kt"
 package cl.ravenhill.bakemon
 
 interface Bakemon {
@@ -56,6 +130,7 @@ private const val BAKEMON_NAME = "Bigachu"
 class BakemonTest : FreeSpec({
     "A Bakémon" - {
         "should have a name" {
+            // highlight-next-line
             val bigachu: Bakemon = TODO()
             bigachu.name shouldBe BAKEMON_NAME
         }
@@ -64,6 +139,10 @@ class BakemonTest : FreeSpec({
 ```
 
 Si corremos este test ahora, **fallará**, que es justo lo que esperamos. El test está correctamente diseñado para capturar el comportamiento que queremos implementar más adelante.
+
+:::note
+Noten que utilizamos una constante `BAKEMON_NAME` para el nombre del *Bakémon*. Esto nos permite reutilizar el valor en varios lugares y facilita la actualización si es necesario.
+:::
 
 ### Paso 2: Hacer que la prueba pase
 
@@ -83,6 +162,7 @@ Lo primero que debemos hacer es eliminar el `TODO()`. No podemos testear directa
 Veamos cómo lo implementamos en el código de prueba:
 
 ```kotlin title="test-basics/src/test/kotlin/cl/ravenhill/bakemon/BakemonTest.kt"
+// ...
 class BakemonTest : FreeSpec({
     "A Bakémon" - {
         "should have a name" {
@@ -99,7 +179,7 @@ Aquí creamos un objeto anónimo que implementa la interfaz `Bakemon` y, mediant
 
 ### Paso 3: Refactorización
 
-El siguiente paso es transformar el **objeto anónimo** en una **clase nombrada**, lo que hará nuestro código más reutilizable y escalable. Dado que la funcionalidad del nombre es común a todos los *Bakémon*, podemos aprovechar una **clase abstracta** que defina esta propiedad común. Esto nos permitirá implementar más adelante las características específicas de cada tipo de *Bakémon*.
+El siguiente paso es extender la funcionalidad del **objeto anónimo** utilizando una **clase abstracta**, lo que hará nuestro código más reutilizable y escalable. Esto nos permitirá implementar más adelante las características específicas de cada tipo de *Bakémon*.
 
 #### Creación de la clase abstracta
 
@@ -149,6 +229,7 @@ class BakemonTest : FreeSpec({
 })
 ```
 
+
 ### ¿Qué hemos hecho?
 
 1. Hemos refactorizado el objeto anónimo para crear una **clase abstracta** `AbstractBakemon`, facilitando la implementación de futuras clases específicas de *Bakémon*.
@@ -159,7 +240,7 @@ Este patrón es fundamental para estructurar bien una biblioteca, permitiendo ex
 
 ## Combate en Bakémon
 
-Vamos a implementar el sistema de **combate** entre *Bakémon*. En esta primera versión, no consideraremos las ventajas o desventajas de los tipos, solo nos enfocaremos en la mecánica de **puntos de salud**. Esto nos permitirá avanzar con las bases del combate, para luego añadir más complejidad en futuras iteraciones.
+Vamos a implementar el sistema de **combate** entre *Bakémon*. Para mantener el ejemplo simple, no consideraremos las ventajas o desventajas de los tipos, solo nos enfocaremos en la mecánica de **puntos de salud**. Esto nos permitirá avanzar con las bases del combate, pero si quisiéramos agregar dichas ventajas, podríamos hacerlo fácilmente con [double dispatch o visitor pattern](https://refactoring.guru/design-patterns/visitor-double-dispatch).
 
 ### Paso 1: Escribir una prueba que falle
 
@@ -183,20 +264,20 @@ Como siempre, comenzamos siguiendo el enfoque **Test-Driven Development (TDD)**.
     class BakemonTest : FreeSpec({
         "A Bakémon" - {
             "should have a name" {
-                val bigachu: Bakemon = createBakemon()
+                val bigachu: Bakemon = AbstractBakemon(BAKEMON_NAME) {
+                    override val healthPoints: Int = TODO()
+                }
                 bigachu.name shouldBe BAKEMON_NAME
             }
 
             "should have health points" {
-                val bigachu: Bakemon = createBakemon()
+                val bigachu: Bakemon = AbstractBakemon(BAKEMON_NAME) {
+                    override val healthPoints: Int = TODO()
+                }
                 bigachu.healthPoints shouldBe BAKEMON_HEALTH
             }
         }
     })
-
-    private fun createBakemon(): Bakemon = object : AbstractBakemon(BAKEMON_NAME) {
-        override val healthPoints: Int = TODO()
-    }
     ```
 
 ### Paso 2: Hacer que la prueba pase
@@ -206,12 +287,118 @@ El siguiente paso en nuestro enfoque **TDD** es hacer que la prueba falle y lueg
 Para esto, basta con completar la implementación del método `createBakemon`:
 
 ```kotlin title="test-basics/src/test/kotlin/cl/ravenhill/bakemon/BakemonTest.kt"
-private fun createBakemon(): Bakemon = object : AbstractBakemon(BAKEMON_NAME) {
-    override val healthPoints: Int = BAKEMON_HEALTH
-}
+// ...
+class BakemonTest : FreeSpec({
+    "A Bakémon" - {
+        "should have a name" {
+            val bigachu: Bakemon = AbstractBakemon(BAKEMON_NAME) {
+                override val healthPoints: Int = BAKEMON_HEALTH
+            }
+            bigachu.name shouldBe BAKEMON_NAME
+        }
+
+        "should have health points" {
+            val bigachu: Bakemon = AbstractBakemon(BAKEMON_NAME) {
+                override val healthPoints: Int = BAKEMON_HEALTH
+            }
+            bigachu.healthPoints shouldBe BAKEMON_HEALTH
+        }
+    }
+})
 ```
 
 ### Paso 3: Refactorización
+
+Notemos primero que estamos repitiendo código en ambos tests.
+
+```kotlin title="test-basics/src/test/kotlin/cl/ravenhill/bakemon/BakemonTest.kt"
+// ...
+class BakemonTest : FreeSpec({
+    "A Bakémon" - {
+        "should have a name" {
+            // highlight-start
+            val bigachu: Bakemon = AbstractBakemon(BAKEMON_NAME) {
+                override val healthPoints: Int = BAKEMON_HEALTH
+            }
+            // highlight-end
+            bigachu.name shouldBe BAKEMON_NAME
+        }
+
+        "should have health points" {
+            // highlight-start
+            val bigachu: Bakemon = AbstractBakemon(BAKEMON_NAME) {
+                override val healthPoints: Int = BAKEMON_HEALTH
+            }
+            // highlight-end
+            bigachu.healthPoints shouldBe BAKEMON_HEALTH
+        }
+    }
+})
+```
+
+Para corregir esto, definiremos un método ``createBakemon`` con la lógica común para crear un *Bakémon*. Pero quizás noten que este método no sólo sería común para este test, o más bien, este módulo, sino que para cualquier test que involucre a un *Bakémon*. Por lo tanto, sería útil definir un módulo de utilidades para este propósito.
+
+<Tabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        New-Item -Path "test-utils\src\main\kotlin\cl\ravenhill\bakemon" -ItemType Directory
+        Set-Content -Path "test-utils\build.gradle.kts" -Value "// Intentionally left blank"
+        ```
+    </TabItem>
+    <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+        ```powershell
+        mkdir test-basics\src\main\kotlin\cl\ravenhill\bakemon
+        "// Intentionally left blank" > test-basics\build.gradle.kts
+        ```
+    </TabItem>
+    <TabItem value="Unix" label="Unix">
+        ```bash
+        mkdir -p test-basics/src/main/kotlin/cl/ravenhill/bakemon
+        echo "// Intentionally left blank" > test-basics/build.gradle.kts
+        ```
+    </TabItem>
+</Tabs>
+
+Como todos los módulos dependen de `bakemon`, podemos definirlo como una dependencia común en el archivo `build.gradle.kts` principal:
+
+```kotlin title="build.gradle.kts"
+// ...
+const val BAKEMON_MODULE = "bakemon"
+
+subprojects {
+    // ...
+    dependencies {
+        detektPlugins("$detektFormattingModule:$detektFormattingVersion")
+        if (name != BAKEMON_MODULE) {
+            implementation(kotestBundle)
+            implementation(project(":$BAKEMON_MODULE"))
+        }
+    }
+}
+```
+
+Y por último, hacemos que el módulo `test-basics` dependa de `test-utils`:
+
+```kotlin title="test-basics/build.gradle.kts"
+dependencies {
+    implementation(project(":test-utils"))
+}
+```
+
+Recordemos agregar la dependencia en el archivo `settings.gradle.kts`:
+
+```kotlin title="settings.gradle.kts"
+// ...
+include(
+    // ...
+    ":test-utils"
+)
+```
+
+Con esto, podemos definir un método `createBakemon` en el módulo `test-utils`:
+
+```kotlin title="test-utils/src/main/kotlin/cl/ravenhill/bakemon/BakemonUtils.kt"
+
 
 Para mejorar nuestro código, comenzamos modificando la **clase abstracta** `AbstractBakemon` para incluir la propiedad `healthPoints`:
 
