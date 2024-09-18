@@ -1,14 +1,39 @@
 ---
 title: Trampolín
 ---
-
+import References from "../../../src/components/ReferencesComponent";
+import GitHubRepoLink from "../../../src/components/GithubRepoLink";
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 import ReadingTime from '../../../src/components/ReadingTime';
 
 <ReadingTime />
+<GitHubRepoLink repo={"functional-programming-kt"} user={"r8vnhill"} />
 
 El **método del trampolín** es una técnica que se utiliza para convertir una **recursión por la cola** en una iteración, en aquellos lenguajes que no optimizan automáticamente las llamadas recursivas por la cola. Esta técnica permite evitar el desbordamiento de pila, ya que convierte lo que sería una serie de llamadas recursivas en un proceso iterativo. Aunque Kotlin soporta optimización de recursión por la cola mediante `tailrec`, el trampolín es útil en situaciones donde esta optimización no es suficiente o no está disponible.
+
+Comencemos por crear un módulo para el código llamado ``trampoline``.
+
+<Tabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        New-Item -Path "trampoline\src\main\kotlin" -ItemType Directory
+        Set-Content -Path "trampoline\build.gradle.kts" -Value "// Intentionally left blank"
+        ```
+    </TabItem>
+    <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+        ```powershell
+        mkdir trampoline\src\main\kotlin
+        "// Intentionally left blank" > trampoline\build.gradle.kts
+        ```
+    </TabItem>
+    <TabItem value="Unix" label="Unix">
+        ```bash
+        mkdir -p trampoline/src/main/kotlin
+        echo "// Intentionally left blank" > trampoline/build.gradle.kts
+        ```
+    </TabItem>
+</Tabs>
 
 ### Operaciones en el trampolín
 
@@ -19,12 +44,12 @@ En el método del trampolín, distinguimos dos tipos de operaciones:
 
 Este patrón puede representarse en Kotlin con una **interfaz sellada** (`sealed interface`), que nos permite definir estas dos operaciones de manera explícita.
 
-```kotlin
-sealed interface Trampoline
+```kotlin title="trampoline/src/main/kotlin/cl/ravenhill/trampoline/Trampoline.kt"
+sealed interface Trampoline<T>
 
-data class Done(val result: Int) : Trampoline
+data class Done<T>(val result: T) : Trampoline<T>
 
-data class More(val continuation: () -> Trampoline) : Trampoline
+data class More<T>(val continuation: () -> Trampoline<T>) : Trampoline<T>
 ```
 
 Aquí, `Trampoline` es una interfaz sellada que tiene dos implementaciones: `Done`, que contiene el resultado final, y `More`, que contiene una función de continuación que cuando se ejecuta devuelve otro `Trampoline`.
@@ -33,8 +58,8 @@ Aquí, `Trampoline` es una interfaz sellada que tiene dos implementaciones: `Don
 
 Ahora que tenemos la estructura base del trampolín, podemos definir una **función auxiliar** que acepta los argumentos necesarios para la recursión y devuelve una instancia del trampolín. Por ejemplo, a continuación implementamos una función que calcula la suma de los primeros números naturales de forma recursiva usando el método del trampolín:
 
-```kotlin
-fun sumFirstNaturals(n: Int, acc: Int = 0): Trampoline =
+```kotlin title="trampoline/src/main/kotlin/cl/ravenhill/sum/SumFirstNaturals.kt"
+fun sumFirstNaturals(n: Int, acc: Int = 0): Trampoline<Int> =
     if (n == 0) {
         Done(acc)
     } else {
@@ -48,13 +73,14 @@ En esta función, si `n` es igual a 0, devuelve un `Done` con el acumulador `acc
 
 Para ejecutar el trampolín y obtener el resultado final, necesitamos una función que itere sobre las operaciones de tipo `More` hasta alcanzar un `Done`, momento en el cual la computación ha finalizado y podemos devolver el resultado.
 
-```kotlin
-fun runTrampoline(trampoline: Trampoline): Int {
-    var current: Trampoline = trampoline
+```kotlin title="trampoline/src/main/kotlin/cl/ravenhill/trampoline/Trampoline.kt"
+// ...
+fun <T> runTrampoline(trampoline: Trampoline<T>): T {
+    var current = trampoline
     while (true) {
-        when (current) {
-            is Done -> return current.result
-            is More -> current = current.continuation()
+        when (val next = current) {
+            is Done -> return next.result
+            is More -> current = next.continuation()
         }
     }
 }
@@ -62,34 +88,153 @@ fun runTrampoline(trampoline: Trampoline): Int {
 
 Esta función toma un trampolín y evalúa su valor iterativamente. Si encuentra un `Done`, devuelve el resultado. Si encuentra un `More`, ejecuta la continuación y actualiza `current` para continuar la iteración.
 
-### Ejemplo en Otros Lenguajes
+El **método del trampolín** es una técnica utilizada para convertir una **recursión de cola** en una iteración, especialmente en lenguajes que no optimizan automáticamente las llamadas recursivas de cola. Esta técnica ayuda a evitar el desbordamiento de pila al transformar una serie de llamadas recursivas en un proceso iterativo. Aunque Kotlin soporta la optimización de recursión de cola mediante `tailrec`, el trampolín es útil en situaciones donde esta optimización no es suficiente o no está disponible.
 
-En **JavaScript**, podemos implementar el trampolín de forma similar:
+<details>
+   <summary>Ejemplos en otros lenguajes</summary>
 
-```javascript
-function trampoline(fn) {
-    let result = fn();
-    while (typeof result === 'function') {
-        result = result();
+    ## Ejemplo en TypeScript
+
+    En TypeScript, podemos implementar el método del trampolín utilizando funciones y clausuras (closures). Dado que JavaScript (y TypeScript al compilarse a JavaScript) no optimiza las llamadas recursivas de cola, el trampolín es especialmente útil para evitar desbordamientos de pila.
+
+    ```typescript
+    type Trampoline = Done | More;
+
+    interface Done {
+        type: 'Done';
+        result: number;
     }
-    return result;
-}
-```
 
-Esto permite implementar la recursión sin consumir espacio en la pila, tal como hacemos en Kotlin.
+    interface More {
+        type: 'More';
+        continuation: () => Trampoline;
+    }
 
-### Aplicación: Factorial usando el método del trampolín
+    function Done(result: number): Done {
+        return { type: 'Done', result };
+    }
 
-Vamos a implementar el cálculo del **factorial** usando el método del trampolín. Al igual que en el ejemplo de suma, la función factorial utiliza un acumulador para llevar el resultado parcial y evita el desbordamiento de pila mediante continuaciones.
+    function More(continuation: () => Trampoline): More {
+        return { type: 'More', continuation };
+    }
+    ```
+
+    Implementamos una función recursiva para sumar los primeros números naturales usando el trampolín:
+
+    ```typescript
+    function sumFirstNaturals(n: number, acc: number = 0): Trampoline {
+        if (n === 0) {
+            return Done(acc);
+        } else {
+            return More(() => sumFirstNaturals(n - 1, acc + n));
+        }
+    }
+    ```
+
+    Creamos una función `runTrampoline` que ejecuta las continuaciones hasta obtener el resultado final:
+
+    ```typescript
+    function runTrampoline(trampoline: Trampoline): number {
+        let current = trampoline;
+        while (true) {
+            if (current.type === 'Done') {
+                return current.result;
+            } else if (current.type === 'More') {
+                current = current.continuation();
+            }
+        }
+    }
+    ```
+
+    ```typescript
+    const result = runTrampoline(sumFirstNaturals(100000)); // Suma de los primeros 100,000 números naturales
+    console.log(result); // Imprime 5000050000
+    ```
+
+    ## Ejemplo en Python
+
+    En Python, la recursión de cola no es optimizada, por lo que el método del trampolín es útil para evitar el desbordamiento de la pila. Utilizaremos el decorador `@dataclass` y pattern matching para implementar el trampolín.
+
+    ```python
+    from dataclasses import dataclass
+    from typing import Callable, Union
+
+    class Trampoline:
+        pass
+
+    @dataclass
+    class Done(Trampoline):
+        result: int
+
+    @dataclass
+    class More(Trampoline):
+        continuation: Callable[[], Trampoline]
+    ```
+
+    Implementamos la función recursiva usando el trampolín:
+
+    ```python
+    def sum_first_naturals(n: int, acc: int = 0) -> Trampoline:
+        if n == 0:
+            return Done(acc)
+        else:
+            return More(lambda: sum_first_naturals(n - 1, acc + n))
+    ```
+
+    La función `run_trampoline` ejecuta las continuaciones hasta obtener el resultado final:
+
+    ```python
+    def run_trampoline(trampoline: Trampoline) -> int:
+        current = trampoline
+        while True:
+    def run_trampoline(trampoline: Trampoline) -> int:
+        current = trampoline
+        while True:
+            match current:
+                case Done(result=result):
+                    return result
+                case More(continuation=continuation):
+                    current = continuation()
+    ```
+
+    ```python
+    result = run_trampoline(sum_first_naturals(100000))
+    print(result)  # Imprime 5000050000
+    ```
+
+    ## Ejemplo en Haskell
+
+    En Haskell, aunque soporta la optimización de recursión de cola, podemos ilustrar el uso del trampolín para comprender mejor el concepto.
+
+    ```haskell
+    data Trampoline a = Done a | More (Trampoline a)
+
+    sumFirstNaturals :: Int -> Int -> Trampoline Int
+    sumFirstNaturals n acc
+        | n == 0    = Done acc
+        | otherwise = More (sumFirstNaturals (n - 1) (acc + n))
+    ```
+
+    ```haskell
+    runTrampoline :: Trampoline a -> a
+    runTrampoline (Done result) = result
+    runTrampoline (More next)   = runTrampoline next
+    ```
+
+    ```haskell
+    main :: IO ()
+    main = print $ runTrampoline (sumFirstNaturals 100000 0)
+    ```
+</details>
 
 :::tip Ejercicio: Factorial con Trampolín
 
 <Tabs>
     <TabItem value="Ejercicio" label="Ejercicio">
-        Implementa la función `factorial` utilizando el método del trampolín para evitar el desbordamiento de pila.
+        Vamos a implementar el cálculo del **factorial** usando el método del trampolín. Al igual que en el ejemplo de suma, la función factorial utiliza un acumulador para llevar el resultado parcial y evita el desbordamiento de pila mediante continuaciones.
     </TabItem>
     <TabItem value="Solución" label="Solución">
-        ```kotlin
+        ```kotlin title="trampoline/src/main/kotlin/cl/ravenhill/factorial/Factorial.kt"
         fun factorial(n: Int, acc: Int = 1): Trampoline = if (n == 0) {
             Done(acc)
         } else {
@@ -99,3 +244,13 @@ Vamos a implementar el cálculo del **factorial** usando el método del trampol�
     </TabItem>
 </Tabs>
 :::
+
+<References references={[
+    {
+        title: "Trampoline in Kotlin",
+        type: "web",
+        year: "2024",
+        siteOrAuthor: "Design Patterns",
+        url: "https://softwarepatternslexicon.com/patterns-kotlin/functional/trampoline/"
+    }
+]} />
