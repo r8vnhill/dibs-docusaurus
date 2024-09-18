@@ -104,6 +104,9 @@ const config: Config = {
                 "properties",
                 "ruby",
                 'groovy',
+                "scheme",
+                "erlang",
+                "elixir"
             ],
         },
     } satisfies Preset.ThemeConfig,

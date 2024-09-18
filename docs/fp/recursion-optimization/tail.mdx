@@ -1,9 +1,7 @@
 ---
-
 title: Recursión por la Cola
-
 ---
-
+import References from "../../../src/components/ReferencesComponent";
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 import ReadingTime from '../../../src/components/ReadingTime';
@@ -14,9 +12,34 @@ La **recursión por la cola** es un tipo específico de recursión en la que la 
 
 En Kotlin, podemos indicar que una función debe ser optimizada como recursión por la cola utilizando la palabra clave `tailrec`. Esto garantiza que el compilador aplique la optimización.
 
+Comencemos por crear un módulo para el código llamado ``tail-recursion``.
+
+<Tabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        New-Item -Path "tail-recursion\src\main\kotlin" -ItemType Directory
+        Set-Content -Path "tail-recursion\build.gradle.kts" -Value "// Intentionally left blank"
+        ```
+    </TabItem>
+    <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+        ```powershell
+        mkdir tail-recursion\src\main\kotlin
+        "// Intentionally left blank" > tail-recursion\build.gradle.kts
+        ```
+    </TabItem>
+    <TabItem value="Unix" label="Unix">
+        ```bash
+        mkdir -p tail-recursion/src/main/kotlin
+        echo "// Intentionally left blank" > tail-recursion/build.gradle.kts
+        ```
+    </TabItem>
+</Tabs>
+
+Recuerda añadir el módulo a la configuración de Gradle en el archivo `settings.gradle.kts`.
+
 ### Ejemplo: Factorial con Recursión por la Cola
 
-```kotlin
+```kotlin title="tail-recursion/src/main/kotlin/cl/ravenhill/factorial/Factorial.kt"
 tailrec fun factorial(n: Int, acc: Int): Int =
     if (n == 0) {
         acc
@@ -26,6 +49,20 @@ tailrec fun factorial(n: Int, acc: Int): Int =
 ```
 
 En este ejemplo, la función `factorial` utiliza un **acumulador** (`acc`) que lleva el resultado parcial de la operación, y la llamada recursiva es la última operación en la función, lo que permite la optimización.
+
+Esto será traducido por el compilador a algo como:
+
+```kotlin
+fun factorial(n: Int): Int {
+    var acc = 1
+    var current = n
+    while (current != 0) {
+        acc *= current
+        current--
+    }
+    return acc
+}
+```
 
 :::tip Ejercicio: Identificar Recursión por la Cola
 
@@ -71,7 +108,7 @@ El problema con nuestra segunda implementación de `factorial` es que la **últi
 
 Para solucionar este problema, podemos usar una **función auxiliar** que maneje el acumulador:
 
-```kotlin
+```kotlin title="tail-recursion/src/main/kotlin/cl/ravenhill/factorial/Factorial.kt"
 fun factorial(n: Int): Int {
     tailrec fun aux(n: Int, acc: Int): Int =
         if (n == 0) {
@@ -89,7 +126,7 @@ En este caso, la función `aux` realiza la recursión, y como la llamada recursi
 
 Otra opción es utilizar **parámetros por defecto** para lograr el mismo resultado sin necesidad de una función auxiliar:
 
-```kotlin
+```kotlin title="tail-recursion/src/main/kotlin/cl/ravenhill/factorial/Factorial.kt"
 tailrec fun factorial(n: Int, acc: Int = 1): Int = if (n == 0) {
     acc
 } else {
@@ -107,18 +144,125 @@ Este enfoque es más conciso y aprovecha los parámetros por defecto de Kotlin p
 
         **Hint**: Para obtener el último dígito de un número, puedes utilizar `n % 10`.
     </TabItem>
-    <TabItem value="Solución" label="Solución">
-        ```kotlin
+    <TabItem value="Solución (con función auxiliar)" label="Solución (con función auxiliar)">
+        ```kotlin title="tail-recursion/src/main/kotlin/cl/ravenhill/sumdigits/SumDigits.kt"
+        package cl.ravenhill.sumdigits
+
+        private const val TEN = 10
+
         fun sumDigits(n: Int): Int {
             tailrec fun aux(n: Int, sum: Int): Int = if (n == 0) {
                 sum
             } else {
-                val lastDigit = n % 10
-                aux(n / 10, sum + lastDigit)
+                val lastDigit = n % TEN
+                aux(n / TEN, sum + lastDigit)
             }
             return aux(n, 0)
         }
         ```
     </TabItem>
+    <TabItem value="Solución (con parámetros por defecto)" label="Solución (con parámetros por defecto)">
+        ```kotlin title="tail-recursion/src/main/kotlin/cl/ravenhill/sumdigits/SumDigits.kt"
+        package cl.ravenhill.sumdigits
+
+        private const val TEN = 10
+
+        tailrec fun sumDigits(n: Int, sum: Int = 0): Int = if (n == 0) {
+            sum
+        } else {
+            val lastDigit = n % TEN
+            sumDigits(n / TEN, sum + lastDigit)
+        }
+        ```
+    </TabItem>
 </Tabs>
 :::
+
+<details>
+    <summary>Ejemplos en otros lenguajes</summary>
+
+    ## Scala
+
+    Scala también soporta la optimización de recursión por la cola cuando se utiliza la anotación `@tailrec`. Esto transforma las llamadas recursivas en un bucle optimizado.
+
+    ```scala
+    import scala.annotation.tailrec
+
+    @tailrec
+    def factorial(n: Int, acc: Int = 1): Int = {
+        if (n == 0) acc
+        else factorial(n - 1, acc * n)
+    }
+
+    println(factorial(5)) // Imprime 120
+    ```
+
+    ## Haskell
+
+    Haskell, como lenguaje funcional puro, optimiza las llamadas recursivas de cola automáticamente. Para aprovechar esta optimización, es necesario asegurarse de que la llamada recursiva es la última operación en la función.
+
+    ```haskell
+    factorial :: Int -> Int -> Int
+    factorial 0 acc = acc
+    factorial n acc = factorial (n - 1) (acc * n)
+
+    main = print (factorial 5 1) -- Imprime 120
+    ```
+
+    ## Scheme (Racket)
+
+    Scheme, un lenguaje de la familia Lisp, también optimiza las llamadas recursivas de cola de manera nativa. En Scheme, la recursión de cola es una característica clave del lenguaje y se optimiza automáticamente.
+
+    ```scheme
+    (define (factorial n acc)
+        (if (= n 0)
+            acc
+            (factorial (- n 1) (* n acc))))
+
+    (display (factorial 5 1)) ;; Imprime 120
+    (newline)
+    ```
+
+    ## Erlang
+
+    Erlang, un lenguaje funcional diseñado para la concurrencia y tolerancia a fallos, también tiene optimización de recursión por la cola nativa.
+
+    ```erlang
+    -factorial(0, Acc) -> Acc;
+    factorial(N, Acc) -> factorial(N - 1, N * Acc).
+
+    main() -> io:format("~p~n", [factorial(5, 1)]).
+    ```
+
+    ### Elixir
+
+    Elixir, que corre sobre la máquina virtual de Erlang, también soporta optimización de recursión por la cola nativamente.
+
+    ```elixir
+    defmodule Factorial do
+        def factorial(0, acc), do: acc
+        def factorial(n, acc), do: factorial(n - 1, acc * n)
+    end
+
+    IO.puts Factorial.factorial(5, 1)  # Imprime 120
+    ```
+</details>
+
+<References references={[
+    {
+        title: "2. Getting started with functional programming in Kotlin",
+        type: "book",
+        bookTitle: "Functional Programming in Kotlin",
+        pages: "17–30",
+        author: "Marco Vermeulen, Rúnar Bjarnason, Paul Chiusano",
+        publisher: "Manning Publications Co. LLC",
+        year: "2021",
+    },
+    {
+        title: "Kotlin and Tail Recursion | Baeldung on Kotlin",
+        type: "web",
+        year: "2017",
+        url: "https://www.baeldung.com/kotlin/tail-recursion/",
+        siteOrAuthor: "Graham Cox",
+    },
+]} />
