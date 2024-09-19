@@ -20,8 +20,12 @@ const config: Config = {
     organizationName: 'ravenhill', // Usually your GitHub org/user name.
     projectName: 'dibs', // Usually your repo name.
 
+    markdown: {
+        mermaid: true,
+    },
+    themes: ['@docusaurus/theme-mermaid'],
     onBrokenLinks: 'throw',
-    onBrokenMarkdownLinks: 'warn',
+    onBrokenMarkdownLinks: 'throw',
 
     // Even if you don't use internationalization, you can use this field to set
     // useful metadata like html lang. For example, if your site is Chinese, you

@@ -104,15 +104,15 @@ public final class EchoKt {
 Este es el resultado de convertir un archivo Kotlin a Java. A continuación, explicamos algunos puntos clave:
 
 1. **Paquete y Clases Importadas**:
-- El archivo pertenece al paquete `cl.ravenhill`.
-- Utiliza clases de Kotlin como `Instant` y `Clock` para gestionar fechas y tiempos, además de anotaciones como `@NotNull` para garantizar la seguridad frente a valores nulos.
+    - El archivo pertenece al paquete `cl.ravenhill`.
+    - Utiliza clases de Kotlin como `Instant` y `Clock` para gestionar fechas y tiempos, además de anotaciones como `@NotNull` para garantizar la seguridad frente a valores nulos.
 
 2. **Anotación `@Metadata`**:
-- Generada por el compilador de Kotlin, esta anotación almacena información del archivo original, como la versión de Kotlin y la estructura de la clase, facilitando la interoperabilidad entre Kotlin y Java.
+    - Generada por el compilador de Kotlin, esta anotación almacena información del archivo original, como la versión de Kotlin y la estructura de la clase, facilitando la interoperabilidad entre Kotlin y Java.
 
 3. **Clase `EchoKt`**:
-- En Kotlin, las funciones fuera de una clase se agrupan en una clase generada automáticamente, llamada `EchoKt` en este caso.
-- La función `echo` es estática, recibe un parámetro `message`, y devuelve una cadena con la fecha y el mensaje concatenados.
+    - En Kotlin, las funciones fuera de una clase se agrupan en una clase generada automáticamente, llamada `EchoKt` en este caso.
+    - La función `echo` es estática, recibe un parámetro `message`, y devuelve una cadena con la fecha y el mensaje concatenados.
 
 #### `META-INF`
 
@@ -155,14 +155,14 @@ Luego, actualizamos el archivo `compile.conventions.gradle.kts` para registrar l
 
 <Tabs groupId={"gradle"}>
     <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin title="convention-plugins/src/main/kotlin/jvm.conventions.gradle.kts"
+        ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
         import extensions.FatJarExtension
         // ...
         extensions.create<FatJarExtension>("fatJar")
         ```
     </TabItem>
     <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy title="convention-plugins/src/main/groovy/jvm.conventions.gradle"
+        ```groovy title="convention-plugins/src/main/groovy/compile.conventions.gradle"
         import extensions.FatJarExtension
         // ...
         extensions.create(FatJarExtension, "fatJar")
@@ -195,71 +195,57 @@ Finalmente, añadimos una tarea en el archivo `compile.conventions.gradle.kts` p
 
 <Tabs groupId={"gradle"}>
     <TabItem value={"Kotlin DSL"} label={"Kotlin DSL"}>
-        ```kotlin title="convention-plugins/src/main/kotlin/jvm.conventions.gradle.kts"
-        import java.time.LocalDateTime
+        ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
+        import java.time.LocalDateTime  // (1)
+
+        plugins {
+            id("jvm.conventions")   // (2)
+        }
+
         // ...
+
         tasks.register<Jar>("fatJar") {
             group = "build"
             description = "Creates a fat JAR with all dependencies"
 
             val fatJarConfig = project.extensions.getByType<FatJarExtension>()
 
-            archiveClassifier = "all"   // (1)
-            duplicatesStrategy = DuplicatesStrategy.EXCLUDE // (2)
-            manifest {  // (3)
+            archiveClassifier = "all"   // (3)
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE // (4)
+            manifest {  // (5)
                 attributes["Implementation-Title"] = fatJarConfig.implementationTitle
                 attributes["Implementation-Version"] = fatJarConfig.implementationVersion
-                attributes["Build-Date"] = java.time.LocalDateTime.now().toString()
+                attributes["Build-Date"] = LocalDateTime.now().toString()
             }
-            from(sourceSets.main.get().output)  // (4)
-            dependsOn(configurations.runtimeClasspath)  // (5)
-            from({  // (6)
+            from(sourceSets.main.get().output)  // (6)
+            dependsOn(configurations.runtimeClasspath)  // (7)
+            from({  // (8)
                 configurations.runtimeClasspath.get()
-                    .filter { file -> file.name.endsWith("jar") }   // (7)
-                    .map { file -> zipTree(file) }  // (8)
+                .filter { file -> file.name.endsWith("jar") }   // (9)
+                .map { file -> zipTree(file) }  // (10)
             })
         }
         ```
+
+
+        ### Explicación de la tarea `fatJar`
+
+        1. **`import java.time.LocalDateTime`**: Importa la clase `LocalDateTime` para obtener la fecha y hora actuales. No tenemos acceso a ``kotlinx-datetime`` en este punto, por lo que usamos la clase estándar de Java.
+        2. **`plugins { id("jvm.conventions") }`**: Aplica el plugin `jvm.conventions` para acceder a las convenciones de construcción de JVM. Esto es necesario para acceder a las rutas de salida y las dependencias del proyecto.
+        3. **`archiveClassifier`**: Define el sufijo del archivo JAR. En este caso, `all` indica que es un fat JAR, resultando en un archivo como `lib-1.0.0-all.jar`.
+        4. **`duplicatesStrategy`**: Establece cómo manejar archivos duplicados. Usamos `EXCLUDE` para evitar conflictos y reducir el tamaño del JAR.
+        5. **`manifest`**: Establece los atributos del manifiesto JAR, como el título, la versión de la implementación y la fecha de compilación. ``Implementation-Title`` y ``Implementation-Version`` son atributos comunes y necesarios para publicar la biblioteca, mientras que ``Build-Date`` es personalizado.
+        6. **`from(sourceSets.main.get().output)`**: Incluye los archivos compilados del proyecto en el JAR.
+        7. **`dependsOn(configurations.runtimeClasspath)`**: Asegura que todas las dependencias de tiempo de ejecución se incluyan antes de crear el fat JAR.
+        8. **`from { ... }`**: Añade las dependencias externas al JAR.
+        9. **`.filter { file -> file.name.endsWith("jar") }`**: Filtra para incluir solo archivos JAR.
+        10. **`.map { file -> zipTree(file) }`**: Descomprime los JARs para incluir su contenido en el fat JAR.
     </TabItem>
     <TabItem value={"Groovy DSL"} label={"Groovy DSL"}>
-        ```groovy title="convention-plugins/src/main/groovy/jvm.conventions.gradle"
-        import java.time.LocalDateTime
-        // ...
-        tasks.register('fatJar', Jar) {
-            group = 'build'
-            description = 'Creates a fat JAR with all dependencies'
-
-            def fatJarConfig = project.extensions.getByType(FatJarExtension)
-
-            archiveClassifier = 'all'  // (1)
-            duplicatesStrategy = DuplicatesStrategy.EXCLUDE  // (2)
-            manifest {  // (3)
-                attributes['Implementation-Title'] = fatJarConfig.implementationTitle
-                attributes['Implementation-Version'] = fatJarConfig.implementationVersion
-                attributes["Build-Date"] = java.time.LocalDateTime.now().toString()
-             }
-            from(sourceSets.main.get().output)  // (4)
-            dependsOn configurations.runtimeClasspath  // (5)
-            from {  // (6)
-                configurations.runtimeClasspath.get()
-                    .findAll { file -> file.name.endsWith('jar') }  // (7)
-                    .collect { file -> zipTree(file) }  // (8)
-            }
-        }
+        ```groovy title="convention-plugins/src/main/groovy/compile.conventions.gradle"
         ```
     </TabItem>
 </Tabs>
-
-### Explicación de la tarea `fatJar`
-
-1. **`archiveClassifier`**: Define el sufijo del archivo JAR. En este caso, `all` indica que es un fat JAR, resultando en un archivo como `lib-1.0.0-all.jar`.
-2. **`duplicatesStrategy`**: Establece cómo manejar archivos duplicados. Usamos `EXCLUDE` para evitar conflictos y reducir el tamaño del JAR.
-3. **`manifest`**: Establece los atributos del manifiesto JAR, como el título, la versión de la implementación y la fecha de compilación.
-4. **`from(sourceSets.main.get().output)`**: Incluye los archivos compilados del proyecto en el JAR.
-5. **`dependsOn configurations.runtimeClasspath`**: Asegura que todas las dependencias de tiempo de ejecución se incluyan antes de crear el fat JAR.
-6. **`from { ... }`**: Añade las dependencias externas al JAR.
-7. **`.filter { file -> file.name.endsWith("jar") }`**: Filtra para incluir solo archivos JAR.
-8. **`.map { file -> zipTree(file) }`**: Descomprime los JARs para incluir su contenido en el fat JAR.
 
 ### Probando la tarea
 
@@ -298,7 +284,7 @@ Esto nos permitirá que, al ejecutar la tarea `copyLib`, se genere y copie el fa
 
 <Tabs groupId="gradle">
     <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin title="convention-plugins/src/main/kotlin/jvm.conventions.gradle.kts"
+        ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
         // Implementación anterior
         tasks.named("copyLib") {
             dependsOn("jar") // Dependía de la tarea jar estándar
@@ -311,7 +297,7 @@ Esto nos permitirá que, al ejecutar la tarea `copyLib`, se genere y copie el fa
         ```
     </TabItem>
     <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy title="convention-plugins/src/main/groovy/jvm.conventions.gradle"
+        ```groovy title="convention-plugins/src/main/groovy/compile.conventions.gradle"
         // Implementación anterior
         tasks.named('copyLib') {
             dependsOn 'jar'  // Dependía de la tarea jar estándar
@@ -361,8 +347,8 @@ Una vez que hemos generado el **fat JAR**, el siguiente paso es agregar esta nue
 
 Con la dependencia configurada, ahora podemos ejecutar la aplicación utilizando el fat JAR:
 
-```bash
-./gradlew :app:run
+```powershell
+./gradlew :app:run --args="Hello, world!"
 ```
 
 Si todo ha sido configurado correctamente, deberías ver una salida similar a la siguiente:

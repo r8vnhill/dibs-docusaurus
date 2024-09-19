@@ -1,7 +1,5 @@
 ---
-
 title: Void-Safety
-
 ---
 
 import ReadingTime from '../../src/components/ReadingTime';
@@ -13,7 +11,7 @@ import TabItem from '@theme/TabItem';
 
 ## El Problema de los Punteros Nulos
 
-Los punteros o referencias nulas, descritos por Tony Hoare como "el error de mil millones de dólares", son una fuente común de errores en tiempo de ejecución. Este problema ocurre cuando una variable, que se espera que contenga una referencia a un objeto, en realidad contiene un valor nulo. Al intentar acceder a los métodos o propiedades de dicho objeto nulo, se producen fallos críticos.
+Los punteros o referencias nulas, descritos por Tony Hoare como "[el error de mil millones de dólares](https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare/)", son una fuente común de errores en tiempo de ejecución. Este problema ocurre cuando una variable, que se espera que contenga una referencia a un objeto, en realidad contiene un valor nulo. Al intentar acceder a los métodos o propiedades de dicho objeto nulo, se producen fallos críticos.
 
 ## Motivación
 
@@ -23,37 +21,37 @@ El manejo inadecuado de valores nulos es una causa importante de errores difíci
 
 - **Java**: En Java, las referencias nulas son comunes, lo que obliga a lxs desarrolladorxs a realizar verificaciones constantes para evitar errores, lo que lleva a código redundante y difícil de mantener. Las excepciones `NullPointerException` son frecuentes si no se manejan adecuadamente.
 
-- **C#**: En C#, los tipos de referencia son no anulables por defecto, pero se pueden declarar como anulables utilizando `?`. Esto obliga a los desarrolladores a tener más cuidado con los valores nulos y mejora la seguridad del código.
+- **C#**: En C#, los tipos de referencia son no anulables por defecto, pero se pueden declarar como anulables utilizando `?`. Esto obliga a lxs desarrolladorxs a tener más cuidado con los valores nulos y mejora la seguridad del código.
 
 - **Scala**: Scala introduce el tipo `Option`, el cual obliga a lxs desarrolladorxs a manejar explícitamente la posibilidad de que no haya un valor (`None`). Sin embargo, no elimina por completo el riesgo de `NullPointerException`, ya que `Option` puede contener un valor nulo si no se maneja correctamente.
 
-### Solución en Kotlin: Seguridad de Tipos frente a Nulos
+## Solución en Kotlin: Seguridad de Tipos frente a Nulos
 
 Kotlin introduce un sistema de tipos que diferencia entre referencias anulables y no anulables, evitando así la mayoría de los errores de `NullPointerException` en tiempo de ejecución.
 
-#### Tipos no nullables y nullables
+### Tipos no anulables y no anulables
 
-En Kotlin, las variables son no nullables por defecto, lo que significa que no pueden contener `null` a menos que se declare explícitamente con `?`:
-
-```kotlin
-var a: String = "No es nulo"
-var b: String? = "Posiblemente nulo"
-a = null // Error: tipo no nullable
-b = null // Permitido: tipo nullable
-```
-
-#### Inferencia de tipos y nulabilidad
-
-La inferencia de tipos en Kotlin también aplica a los valores nullable, siguiendo las mismas reglas:
+En Kotlin, las variables son no anulables por defecto, lo que significa que no pueden contener `null` a menos que se declare explícitamente con `?`:
 
 ```kotlin
-var c = "Hola" // Tipo inferido como String, no nullable
-c = null // Error: c es no nullable
+var a: String = "Not null"
+var b: String? = "Maybe null"
+a = null // Error: a is not nullable
+b = null // Allowed: b is nullable
 ```
 
-#### Llamadas Seguras en Kotlin
+### Inferencia de tipos y nulabilidad
 
-Kotlin obliga a manejar explícitamente variables que pueden ser nulas, asegurándose de que no se acceda a métodos o propiedades sin la validación adecuada. Si una variable puede ser nula, Kotlin requiere una verificación previa:
+La inferencia de tipos en Kotlin también aplica a los valores anulables, siguiendo las mismas reglas:
+
+```kotlin
+var c = "Hello" // Inferred type as String, not nullable
+c = null // Error: c is not nullable
+```
+
+### Llamadas Seguras en Kotlin
+
+Kotlin maneja las variables nulas de forma explícita, asegurando que no se acceda a métodos o propiedades sin verificar primero si son nulas. Si una variable puede ser nula, debes validar su estado antes de usarla:
 
 ```kotlin
 val a: String? = TODO()
@@ -64,105 +62,149 @@ if (a != null) {
 }
 ```
 
-Para simplificar, el operador de llamada segura (`?.`) permite realizar operaciones solo si la variable no es nula:
+Kotlin utiliza los [Smart Casts](https://kotlinlang.org/docs/typecasts.html#smart-casts) para permitir el acceso seguro a las propiedades de una variable tras verificar su nulabilidad.
+
+Para simplificar este proceso, puedes usar el **operador de llamada segura** (`?.`), que realiza la operación solo si la variable no es nula:
 
 ```kotlin
-println(a?.length) // Si a es nulo, devuelve null sin lanzar una excepción.
+println(a?.length)
 ```
 
-#### Operador Elvis
+Aquí, `a?.length` devolverá `null` si `a` es nulo, evitando errores en tiempo de ejecución.
 
-El operador Elvis (`?:`) proporciona una manera elegante de manejar valores nulos, permitiendo devolver un valor por defecto cuando una expresión resulta nula:
+#### Función `let`
+
+La función `let` es útil para ejecutar un bloque de código solo cuando una variable no es nula. Este método toma la variable no nula y la pasa como argumento al bloque de código que se ejecuta dentro de `let`:
+
+```kotlin
+a?.let { println(it.length) }
+```
+
+En este caso, si `a` no es nulo, el valor de `a` es pasado al bloque como `it`, una **variable implícita** que representa el valor de la variable que llamó a `let`. Dentro del bloque, puedes acceder a las propiedades y métodos de `a` de forma segura utilizando `it`. Si `a` es nulo, el bloque de código no se ejecuta y el programa continúa sin lanzar excepciones.
+
+Esto hace que `let` sea una forma limpia y segura de manejar valores opcionales, evitando verificaciones manuales de nulabilidad y mejorando la legibilidad del código.
+
+### Operador Elvis
+
+El operador Elvis (`?:`) ofrece una forma eficiente de manejar valores nulos, permitiendo retornar un valor por defecto cuando una expresión resulta nula:
 
 ```kotlin
 val a: String? = TODO()
-val l = a?.length ?: -1 // Si a es nulo, l será -1
+val l = a?.length ?: -1 // Si 'a' es nulo, 'l' será -1
 ```
 
-Este operador es extremadamente útil para evitar nulos en el flujo de datos sin necesidad de condicionales complejos, haciendo el código más claro y conciso.
+Este operador es muy útil para evitar valores nulos en el flujo de datos sin agregar condicionales complejos, lo que hace que el código sea más limpio y fácil de leer.
 
-:::tip Ejercicio: Procesamiento de Temperaturas de Ciudades
-
+:::tip Ejercicio
 <Tabs>
-    <TabItem value="Ejercicio" label="Ejercicio">
-        1. **Datos de Entrada**: Define un mapa (`Map<String, Int?>`) donde las claves sean los nombres de las ciudades y los valores representen las temperaturas registradas, que pueden ser nulas si no hay datos disponibles.
-
-        2. **Procesamiento de Datos**: Itera sobre el mapa utilizando un bucle y llamadas seguras para manejar los valores nulos.
-
-        3. **Salida del Programa**: Imprime el nombre de la ciudad junto con su temperatura. Si la temperatura es nula, imprime el mensaje `Temperatura no disponible`.
-
-        Este ejercicio permite ver cómo Kotlin maneja de manera segura los valores nulos, evitando errores en tiempo de ejecución y mejorando la estabilidad del software.
+    <TabItem value="Enunciado" label="Enunciado">
+        1. **Datos de Entrada**: Crea una lista de cadenas opcionales (`List<String?>`). Algunas cadenas pueden ser `null`, y el objetivo es procesar esta lista.
+        2. **Procesamiento de Datos**:
+        - Imprime el largo de cada cadena si no es nula.
+        - Si una cadena es nula, imprime `"Cadena no disponible"`.
+        - Para las cadenas no nulas, convierte el texto a mayúsculas y muéstralo.
+        3. **Salida del Programa**: Imprime el largo de cada cadena, o `"Cadena no disponible"` si es nula. Después, imprime el texto en mayúsculas si la cadena no es nula.
     </TabItem>
     <TabItem value="Solución" label="Solución">
         ```kotlin
-        fun main() {
-            val temperaturasPorCiudad = mapOf(
-                "Madrid" to 22,
-                "París" to null,
-                "Berlín" to 18,
-                "Roma" to null,
-                "Londres" to 15
-            )
-            for ((ciudad, temperatura) in temperaturasPorCiudad) {
-                val temperaturaFormateada = temperatura?.toString() ?: "Temperatura no disponible"
-                println("La temperatura en $ciudad es: $temperaturaFormateada")
+        fun procesarCadenas(cadenas: List<String?>) {
+            for (cadena in cadenas) {
+                // Usar el operador Elvis ?: para manejar el caso de cadenas nulas
+                val longitud = cadena?.length ?: "Cadena no disponible"
+                println("Longitud: $longitud")
+
+                // Usar let para convertir las cadenas no nulas a mayúsculas
+                cadena?.let {
+                    println("Texto en mayúsculas: ${it.uppercase()}")
+                } ?: println("Texto en mayúsculas no disponible")
             }
+        }
+
+        fun main() {
+            val cadenas = listOf("Hola", null, "Kotlin", null, "Mundo")
+            procesarCadenas(cadenas)
         }
         ```
     </TabItem>
 </Tabs>
 :::
 
-#### Ejemplos en Otros Lenguajes
+<details>
+    <summary>Ejemplos en otros lenguajes</summary>
+    ## Ejemplos en Otros Lenguajes
 
-**Scala** utiliza el tipo `Option` para manejar valores que pueden ser nulos. Aquí tienes un ejemplo similar al de Kotlin:
+    ### Scala
 
-```scala
-val temperaturasPorCiudad = Map(
-  "Madrid" -> Some(22),
-  "París" -> None,
-  "Berlín" -> Some(18),
-  "Roma" -> None,
-  "Londres" -> Some(15)
-)
+    Utiliza `Option`, `map`, y `foreach` para trabajar con valores opcionales de forma funcional, similar a cómo Kotlin usa `?.let`.
 
-temperaturasPorCiudad.foreach {
-  case (ciudad, Some(temp)) => println(s"La temperatura en $ciudad es: $temp")
-  case (ciudad, None) => println(s"Temperatura en $ciudad no disponible")
-}
-```
+    ```scala
+    val cadenas = List(Some("Hola"), None, Some("Scala"), None, Some("Mundo"))
 
-**Rust** usa el tipo `Option` de manera similar:
+    cadenas.foreach { cadena =>
+        val longitud = cadena.map(_.length).getOrElse("Cadena no disponible")
+        println(s"Longitud: $longitud")
 
-```rust
-let temperaturas_por_ciudad = vec![
-    ("Madrid", Some(22)),
-    ("París", None),
-    ("Berlín", Some(18)),
-    ("Roma", None),
-    ("Londres", Some(15)),
-];
-
-for (ciudad, temp) in temperaturas_por_ciudad {
-    match temp {
-        Some(t) => println!("La temperatura en {} es: {}", ciudad, t),
-        None => println!("Temperatura en {} no disponible", ciudad),
+        cadena.map(_.toUpperCase).foreach { texto =>
+            println(s"Texto en mayúsculas: $texto")
+        }
     }
-}
-```
+    ```
 
-**JavaScript** no tiene un manejo explícito de nullables como Kotlin, pero puedes usar validaciones similares:
+    Aquí, `map` se utiliza para transformar los valores opcionales y `getOrElse` para proporcionar un valor predeterminado en caso de `None`. `foreach` se usa para imprimir el resultado cuando el valor está presente.
 
-```javascript
-const temperaturasPorCiudad = {
-    "Madrid": 22,
-    "París": null,
-    "Berlín": 18,
-    "Roma": null,
-    "Londres": 15
-};
+    ### Rust
 
-for (const [ciudad, temperatura] of Object.entries(temperaturasPorCiudad)) {
-    console.log(`La temperatura en ${ciudad} es: ${temperatura ?? "Temperatura no disponible"}`);
-}
-```
+    En **Rust**, puedes usar `map` y `and_then` (equivalente a `flatMap`) para trabajar con valores de tipo `Option`.
+
+    ```rust
+    let cadenas: Vec<Option<&str>> = vec![
+        Some("Hola"),
+        None,
+        Some("Rust"),
+        None,
+        Some("Mundo"),
+    ];
+
+    for cadena in cadenas {
+        let longitud = cadena.map(|texto| texto.len()).unwrap_or_else(|| {
+            println!("Longitud: Cadena no disponible");
+            return 0;
+        });
+
+        if longitud > 0 {
+            println!("Longitud: {}", longitud);
+        }
+
+        cadena.map(|texto| texto.to_uppercase())
+            .map(|texto| println!("Texto en mayúsculas: {}", texto))
+            .unwrap_or_else(|| println!("Texto en mayúsculas no disponible"));
+    }
+    ```
+
+    En este ejemplo, `map` transforma los valores cuando están presentes, y `unwrap_or_else` proporciona un valor predeterminado o ejecuta un bloque en caso de `None`. `and_then` (alias `flatMap`) no es necesario en este caso, ya que `map` es suficiente para las transformaciones simples.
+
+    ### TypeScript
+
+    Aunque **TypeScript** no tiene un manejo explícito de `null` como Kotlin o Scala, puedes usar validaciones similares con `?.` y el operador `??`.
+
+    ```typescript
+    const cadenas: (string | null)[] = ["Hola", null, "TypeScript", null, "Mundo"];
+
+    cadenas.forEach(cadena => {
+        const longitud = cadena?.length ?? "Cadena no disponible";
+        console.log(`Longitud: ${longitud}`);
+
+        cadena?.toUpperCase
+            ? console.log(`Texto en mayúsculas: ${cadena.toUpperCase()}`)
+            : console.log("Texto en mayúsculas no disponible");
+    });
+    ```
+</details>
+
+## En resumen
+
+La seguridad ante valores nulos, o **void-safety**, es un aspecto clave para evitar errores comunes y costosos en los sistemas de software. Como hemos visto, lenguajes como Kotlin proporcionan herramientas poderosas para manejar estos escenarios, con un sistema de tipos que diferencia claramente entre referencias nulas y no nulas. Al utilizar operadores como `?.` y `?:`, junto con funciones como `let`, Kotlin garantiza que las operaciones con valores opcionales sean seguras, eliminando la posibilidad de errores de `NullPointerException` en tiempo de ejecución.
+
+Otras soluciones, como las que hemos visto en lenguajes como Scala y Rust, también abordan el problema de los valores nulos a través de tipos como `Option`, que obligan a manejar de forma explícita la posibilidad de que un valor no esté presente. Estas soluciones mejoran la claridad y seguridad del código, y proporcionan herramientas eficientes para trabajar con valores opcionales, evitando verificaciones manuales y errores difíciles de detectar.
+
+Manejar la nulabilidad correctamente no solo mejora la calidad del código, sino que también hace que el software sea más robusto y mantenible. En la próxima lección, exploraremos cómo manejar la entrada de usuario.
