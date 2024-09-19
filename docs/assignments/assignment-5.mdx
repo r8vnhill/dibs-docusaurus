@@ -1,0 +1,104 @@
+---
+title: "Tarea 5 - APIs Funcionales: Mónadas"
+---
+
+### Ejercicio: Implementación y Uso de una Mónada Personalizada en un Intérprete de Lenguaje Simple en Kotlin
+
+Vas a implementar una mónada personalizada llamada `Logger` que te permitirá llevar un registro (**log**) de las operaciones realizadas durante la evaluación de expresiones en un pequeño lenguaje de programación. Este lenguaje admite operaciones aritméticas básicas y variables.
+
+Además, extenderás el intérprete para manejar operaciones que pueden fallar (por ejemplo, divisiones por cero) utilizando la mónada `Either` o `Result`. Deberás combinar ambas mónadas para gestionar el registro y el manejo de errores.
+
+```kotlin
+sealed interface Expr
+
+data class Val(val value: Int) : Expr()
+
+data class Add(val left: Expr, val right: Expr) : Expr()
+
+data class Sub(val left: Expr, val right: Expr) : Expr()
+
+data class Mul(val left: Expr, val right: Expr) : Expr()
+
+data class Div(val left: Expr, val right: Expr) : Expr()
+```
+
+## P1. Implementar la Mónada Logger
+
+En este primer paso, vas a crear una mónada `Logger` que encapsula un valor y lleva un registro (**log**) de mensajes. Esto te permitirá realizar cálculos que, además de producir un resultado, acumulen información sobre el proceso (como pasos de cálculo o mensajes de depuración).
+
+La mónada `Logger` tendrá la siguiente estructura:
+
+```kotlin
+data class Logger<A>(val log: List<String>, val value: A)
+```
+
+- **`unit`** (también conocida como `unit` o `pure`): Crea un `Logger` a partir de un valor, iniciando con un log vacío.
+- **`flatMap`** (también conocida como `bind`): Aplica una función al valor del `Logger`, combinando los registros de log.
+
+### Ejemplo de Uso
+
+A continuación, se muestra un ejemplo de cómo utilizar la mónada `Logger`:
+
+```kotlin
+fun main() {
+    val computation = unit(5).flatMap { x ->
+        Logger(listOf("Multiplicando $x por 2"), x * 2)
+    }.flatMap { y ->
+        Logger(listOf("Sumando $y y 10"), y + 10)
+    }
+
+    println("Log:")
+    computation.log.forEach { println(it) }
+    println("Resultado: ${computation.value}")
+}
+```
+
+**Salida esperada**:
+
+```
+Log:
+Multiplicando 5 por 2
+Sumando 10 y 10
+Resultado: 20
+```
+
+# P2. Escribir la Función de Evaluación
+
+Escribe una función `eval` que evalúe una expresión y devuelva un `Logger<Result<Int>>` que contenga el resultado de la evaluación y el registro de operaciones realizadas.
+
+Para este lenguaje, extendamos el intérprete utilizando la mónada `Either` para manejar posibles errores, como divisiones por cero. Al usar `Either`, podemos capturar y propagar errores en lugar de detener la ejecución abruptamente.
+
+## P3. Extender el Intérprete para Manejar Errores
+
+El objetivo es extender el intérprete para que las evaluaciones de expresiones puedan fallar de manera controlada. Esto lo hacemos utilizando la mónada `Either`, que nos permite representar un resultado exitoso (`Right`) o un error (`Left`).
+
+Comienza definiendo una clase para representar los posibles errores que pueden ocurrir durante la evaluación.
+
+```kotlin
+sealed class EvalError(val message: String)
+
+object DivisionByZero : EvalError("Division by zero")
+```
+
+La función de evaluación recorrerá la expresión y devolverá un `Either<EvalError, Int>`, que puede contener el resultado de la evaluación o un error.
+
+Aquí te mostramos cómo usar la función `eval` con el nuevo manejo de errores:
+
+```kotlin
+fun main() {
+    val expr = Div(Val(10), Val(0))  // División por cero
+
+    val result = eval(expr)
+
+    when (result) {
+        is Right -> println("Resultado: ${result.value}")
+        is Left -> println("Error: ${result.value.message}")
+    }
+}
+```
+
+### Salida esperada:
+
+```
+Error: Division by zero
+```

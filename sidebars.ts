@@ -78,8 +78,8 @@ const sidebars: SidebarsConfig = {
             ],
         },
         {
-            type: 'category',
             label: 'Unidad 3: APIs Funcionales',
+            type: 'category',
             link: {
                 type: 'doc',
                 id: 'fp/index',
@@ -93,6 +93,7 @@ const sidebars: SidebarsConfig = {
                         id: 'fp/adt/index',
                     },
                     items: [
+                        'fp/adt/product',
                         'fp/adt/enums',
                         'fp/adt/sealed',
                     ],
@@ -178,6 +179,7 @@ const sidebars: SidebarsConfig = {
                 'assignments/assignment-2',
                 'assignments/assignment-3',
                 'assignments/assignment-4',
+                'assignments/assignment-5',
             ],
         }
     ]
