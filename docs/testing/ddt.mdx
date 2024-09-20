@@ -1,0 +1,314 @@
+---
+title: "Data-driven testing"
+---
+import References from "../../src/components/ReferencesComponent";
+import GithubRepoLink from "../../src/components/GithubRepoLink";
+import ReadingTime from "../../src/components/ReadingTime";
+import TabItem from "@theme/TabItem";
+import Tabs from "@theme/Tabs";
+
+<ReadingTime/>
+<GithubRepoLink repo="example-based-testing" user="r8vnhill"/>
+
+<br/>
+En la lección anterior, aprendimos cómo manejar casos excepcionales en nuestros programas utilizando un enfoque de **Desarrollo Basado en Pruebas (TDD)**, pero dejamos pendiente un paso clave: la **refactorización**. En esta lección, abordaremos cómo podemos mejorar nuestros tests para hacerlos más eficientes y reutilizables.
+
+## El problema con nuestros tests actuales
+
+Hasta ahora, hemos escrito pruebas para casos específicos, lo cual funciona bien cuando estamos cubriendo pocos escenarios. Sin embargo, cuando necesitamos probar múltiples casos similares, escribir un test para cada situación puede volverse tedioso, repetitivo, y difícil de mantener.
+
+Consideremos el siguiente ejemplo:
+
+```kotlin
+"cannot be set to a negative value" {
+    shouldThrowUnit<IllegalArgumentException> {
+        // highlight-next-line
+        bigachu.currentHealthPoints = NEGATIVE_CURRENT_HP
+    }.message shouldBe "Current health points is not in [0, $BAKEMON_MAX_HP]: $NEGATIVE_CURRENT_HP"
+}
+
+"cannot be set to a value exceeding the maximum health" {
+    shouldThrowUnit<IllegalArgumentException> {
+        // highlight-next-line
+        bigachu.currentHealthPoints = OVER_MAX_CURRENT_HP
+    }.message shouldBe "Current health points is not in [0, $BAKEMON_MAX_HP]: $OVER_MAX_CURRENT_HP"
+}
+```
+
+Como podemos ver, la lógica del test es prácticamente la misma, pero cambia el valor de `currentHealthPoints` y el mensaje de error esperado. Repetir estos bloques de código no es la manera más eficiente de probar todos los casos posibles.
+
+### Mejora en los tests: reutilización de lógica
+
+Podemos hacer los tests más flexibles y menos repetitivos si estructuramos nuestras pruebas para aceptar diferentes valores de entrada, manteniendo la lógica común. De esta forma, en lugar de duplicar código, podemos aplicar la misma lógica a distintos escenarios.
+
+En las próximas secciones, exploraremos dos enfoques importantes para mejorar la flexibilidad de nuestros tests: **data-driven testing** y **property-based testing**. Estos enfoques nos ayudarán a escribir pruebas más concisas y efectivas, lo que facilita probar una amplia gama de casos con menos código.
+
+## Data-driven testing
+
+También conocido como **Table-Driven Testing (TDT)**, esta técnica separa los datos de prueba (entradas y salidas) del código de prueba. De esta manera, los casos de prueba pueden ser gestionados y agregados fácilmente modificando solo los datos, mientras que la lógica de prueba permanece inalterada.
+
+Ventajas de DDT:
+
+- **Facilidad de extensión**: Agregar nuevos casos de prueba se reduce a modificar la tabla de datos, sin necesidad de alterar la lógica de prueba.
+- **Mantenimiento eficiente**: La implementación de las pruebas se mantiene igual, reduciendo la duplicación de código y los errores al agregar o modificar casos.
+
+Siempre que sea posible, se recomienda utilizar **DDT** en lugar de tests tradicionales, ya que mejora la claridad y escalabilidad de las pruebas.
+
+### Implementación manual
+
+La implementación manual de **Data-Driven Testing (DDT)** es sencilla y flexible, lo que permite crear pruebas reutilizables para distintos conjuntos de datos. Este enfoque ayuda a simplificar los casos de prueba, especialmente cuando múltiples entradas deben ser validadas de la misma manera. Después de ver este ejemplo manual, compararemos el enfoque con la solución más elegante proporcionada por **Kotest**, que facilita la implementación de DDT.
+
+Comencemos creando un módulo para los tests basados en datos:
+
+<Tabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        New-Item -Path "data-driven-testing\src\test\kotlin" -ItemType Directory
+        Set-Content -Path "data-driven-testing\build.gradle.kts" -Value "// Intentionally left blank"
+        ```
+    </TabItem>
+    <TabItem value="Windows (corto)" label={"Windows (corto)"}>
+        ```powershell
+        mkdir data-driven-testing\src\test\kotlin
+        "Intentionally left blank" > data-driven-testing\build.gradle.kts
+        ```
+    </TabItem>
+    <TabItem value="Linux/Mac" label={"Linux/Mac"}>
+        ```bash
+        mkdir -p data-driven-testing/src/test/kotlin
+        echo "// Intentionally left blank" > data-driven-testing/build.gradle.kts
+        ```
+    </TabItem>
+</Tabs>
+
+A continuación, creamos un archivo de prueba dentro de nuestro módulo de testing:
+
+```kotlin title="data-driven-testing/src/test/kotlin/cl/ravenhill/bakemon/BakemonDDTest.kt"
+import cl.ravenhill.bakemon.createBakemon
+import io.kotest.assertions.throwables.shouldThrowUnit
+import io.kotest.core.spec.style.FreeSpec
+import io.kotest.matchers.shouldBe
+
+class BakemonDDTest : FreeSpec({
+
+    "A Bakémon" - {
+        "should have current health property that" - {
+            "should be settable to a value outside the valid range" {
+                listOf(-100, -1, 101, 1000).forEach { invalidHp ->
+                    shouldThrowUnit<IllegalArgumentException> {
+                        createBakemon("Bigachu", 100).currentHealthPoints = invalidHp
+                    }.message shouldBe "Current health points is not in [0, 100]: $invalidHp"
+                }
+            }
+        }
+    }
+})
+```
+
+- **Lista de valores**: Usamos una lista de valores inválidos (`listOf(-100, -1, 101, 1000)`) que representan puntos de salud fuera del rango permitido.
+- **Recorrido de datos**: Utilizamos un bucle `forEach` para recorrer la lista y ejecutar el mismo test para cada valor, verificando que se arroje una excepción `IllegalArgumentException` cuando intentamos asignar un valor no permitido.
+- **Validación del mensaje**: Para cada caso, también verificamos que el mensaje de la excepción coincida con lo esperado.
+
+Este enfoque manual es funcional, pero como veremos más adelante, Kotest ofrece una forma más elegante y versátil de implementar **Data-Driven Testing**.
+
+### Implementación con Kotest
+
+Kotest ofrece una forma más elegante y concisa de implementar **Data-Driven Testing (DDT)** a través de la función `withData`. Esta función permite definir una tabla de datos y ejecutar una lógica de prueba para cada valor, mejorando la legibilidad del código y la organización de los casos de prueba. A diferencia de la implementación manual, `withData` sigue ejecutando todos los casos de prueba incluso si uno de ellos falla, lo que genera un reporte más completo con todos los fallos.
+
+#### Configuración
+
+Para empezar, es necesario agregar la dependencia de **Kotest DataTest** en nuestro proyecto. Si tienes un catálogo de versiones configurado, puedes añadir la biblioteca de pruebas de datos de la siguiente manera:
+
+```toml title="gradle/libs.versions.toml"
+# ...
+[libraries]
+# ...
+kotest-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest" }
+# ...
+[bundles]
+kotest = ["kotest-runner-junit5", "kotest-datatest"]
+```
+
+Este enfoque es ventajoso cuando ya tienes un **bundle** para Kotest configurado, ya que simplemente agregas la nueva biblioteca de pruebas de datos sin modificar mucho la configuración del proyecto.
+
+#### Reescribiendo el Test con `withData`
+
+Una vez que hemos agregado la dependencia, podemos reescribir nuestro test para aprovechar `withData`, lo que simplifica considerablemente la implementación de los casos de prueba:
+
+```kotlin title="data-driven-testing/src/test/kotlin/cl/ravenhill/bakemon/BakemonDDTest.kt"
+package cl.ravenhill.bakemon
+
+import io.kotest.assertions.throwables.shouldThrowUnit
+import io.kotest.core.spec.style.FreeSpec
+import io.kotest.datatest.withData
+import io.kotest.matchers.shouldBe
+
+class BakemonDDTest : FreeSpec({
+
+    "A Bakémon" - {
+        "should have current health property that" - {
+            "should be settable to a value outside the valid range" - {
+                withData(-100, -1, 101, 1000) { invalidHp ->
+                    shouldThrowUnit<IllegalArgumentException> {
+                        createBakemon("Bigachu", 100).currentHealthPoints = invalidHp
+                    }.message shouldBe "Current health points is not in [0, 100]: $invalidHp"
+                }
+            }
+        }
+    }
+})
+```
+
+#### Ventajas de Usar `withData`
+
+1. **Legibilidad mejorada**: Al eliminar la necesidad de bucles `forEach`, la estructura del test se vuelve más clara y directa.
+2. **Manejo de fallos**: A diferencia de la implementación manual, `withData` continúa ejecutando todos los casos, incluso si uno de ellos falla, generando un reporte con todos los errores al final.
+3. **Sintaxis concisa**: Es más simple y menos propenso a errores, ya que la sintaxis es más concisa y reduce la necesidad de escribir mucho código repetitivo.
+
+:::warning
+El **`-`** antes de `withData` es clave para seguir el estilo de Kotest y separar adecuadamente los niveles de especificación del test.
+:::
+
+## Expandiendo el juego
+
+Ahora, vamos a agregar una funcionalidad que permita a un **Bakémon** atacar a otro, independientemente de su tipo. Cada vez que un Bakémon ataque a otro, reducirá sus puntos de salud en **10**.
+
+Sin embargo, para mantener las reglas del juego claras, si los puntos de salud resultan ser negativos tras el ataque, estos deben ajustarse automáticamente a **0** en lugar de permitir valores negativos.
+
+### Reglas del ataque
+
+1. **Reducción fija**: Cada ataque reduce 10 puntos de salud al Bakémon objetivo.
+2. **Puntos de salud no negativos**: Si los puntos de salud bajan a un valor inferior a **0**, se deben ajustar a **0** automáticamente.
+
+Este ajuste asegura que los puntos de salud no caigan en números negativos, manteniendo la integridad del sistema de salud en el juego.
+
+### Paso 1: Mostrar que falla
+
+Comencemos agregando un método a la interfaz `Bakemon`:
+
+```kotlin title="bakemon/src/main/kotlin/cl/ravenhill/bakemon/Bakemon.kt"
+interface Bakemon {
+    val name: String
+    val maxHealthPoints: Int
+    var currentHealthPoints: Int
+
+    fun attack(target: Bakemon)
+}
+```
+
+El siguiente test utiliza **Data-Driven Testing** con Kotest para validar que un Bakémon puede atacar a otro, probando múltiples combinaciones de nombres y puntos de salud de los Bakémon involucrados.
+
+```kotlin
+// ...
+class BakemonDDTest : FreeSpec({
+
+    "A Bakémon" - {
+        // ...
+        "should be able to attack another Bakémon" - {
+            withData("Bigachu", "Psygoose") { attackerName ->
+                withData("Bigachu", "Psygoose") { targetName ->
+                    withData(0, 1, 50, 99, 100) { attackerHealth ->
+                        withData(0, 1, 50, 99, 100) { targetHealth ->
+                            val attacker = createBakemon(attackerName, attackerHealth)
+                            val target = createBakemon(targetName, targetHealth)
+
+                            val initialTargetHealth = target.currentHealthPoints
+                            attacker.attack(target)
+                            val expectedDamage = 10
+                            val expectedTargetHealth = initialTargetHealth - expectedDamage
+
+                            target.currentHealthPoints shouldBe expectedTargetHealth
+                        }
+                    }
+                }
+            }
+        }
+    }
+})
+```
+
+El uso de `withData` permite combinar varios conjuntos de datos, lo que ayuda a probar diferentes combinaciones de escenarios de ataque entre Bakémon. En este caso, estamos probando múltiples combinaciones de nombres y niveles de salud para asegurarnos de que el Bakémon atacante siempre reduzca la salud del objetivo en **10** puntos. Kotest ejecutará automáticamente todas las combinaciones posibles, proporcionando una forma eficiente de validar el comportamiento del ataque en diversos escenarios.
+
+:::note
+En este caso, dado que son 2 nombres y 5 niveles de salud, se ejecutarán $2 \cdot 2 \cdot 5 \cdot 5 = 100$ casos de prueba distintos con tan solo 18 líneas de código.
+:::
+
+### Paso 2: Hacer que funcione
+
+Para hacer que el test pase, simplemente implementamos el método `attack` dentro de la clase `AbstractBakemon`. El método reduce los puntos de salud del objetivo (`target`) en 10. Si la reducción da como resultado un valor negativo, se maneja la excepción y se ajusta el valor a 0 para evitar tener puntos de salud negativos.
+
+```kotlin title="bakemon/src/main/kotlin/cl/ravenhill/bakemon/AbstractBakemon.kt"
+// ...
+private const val BASE_DAMAGE = 10
+
+abstract class AbstractBakemon(
+    override val name: String,
+    final override val maxHealthPoints: Int
+) : Bakemon {
+    // ...
+    override fun attack(target: Bakemon) = try {
+        target.currentHealthPoints -= BASE_DAMAGE
+    } catch (e: IllegalArgumentException) {
+        println(e.message) // Mostramos el mensaje de error para proporcionar contexto
+        target.currentHealthPoints = 0
+    }
+}
+```
+
+#### Observaciones
+
+Este código es sencillo y efectivo para los propósitos del test, ya que garantiza que:
+
+- El Bakémon atacado reduce sus puntos de salud en la cantidad definida por `BASE_DAMAGE`.
+- Si los puntos de salud del objetivo caen por debajo de 0, se captura el error y los puntos de salud se ajustan a 0.
+
+Aunque en este caso optamos por no realizar una refactorización adicional, siempre es recomendable revisar nuestro código para identificar posibles mejoras. Algunas consideraciones que podrías tener en mente para futuras mejoras incluyen:
+
+- **Gestión de errores**: Dependiendo de la complejidad de la aplicación, podrías optar por mecanismos más avanzados de manejo de errores o logs para capturar excepciones.
+- **Modularidad**: En proyectos más grandes, podrías mover la lógica de ataque a una clase o componente separada para seguir los principios de responsabilidad única.
+- **Validaciones adicionales**: Podrías considerar añadir validaciones adicionales o ajustables, como permitir diferentes tipos de ataques que afecten el daño.
+
+Recuerda que, aunque en este caso no sea necesario, la refactorización sigue siendo un paso esencial para mantener la calidad del código en proyectos más grandes o complejos.
+
+:::tip Ejercicio
+<Tabs>
+    <TabItem value={"Enunciado"} label={"Enunciado"}>
+        Implementa una clase `CalculatorTest` que pruebe una calculadora simple con las operaciones de suma y resta.
+
+        Tus tests deben probar distintas combinaciones de números y operaciones, utilizando **Data-Driven Testing** con Kotest para simplificar la implementación.
+
+        Para simplificar, haz que cada elemento que le pasas a ``withData`` sea un ``Pair`` donde el primer parámetro sea la operación, y el segundo sea una lambda que realice la misma operación en dos números.
+    </TabItem>
+    <TabItem value={"Solución"} label={"Solución"}>
+        ```kotlin
+        class CalculatorTest : FreeSpec({
+            "A calculator" - {
+                "can apply a combination of operations" - {
+                    withData(1, 2, 3, 4) { a ->
+                        withData(1, 2, 3, 4) { b ->
+                            withData(
+                                a + b to { x: Int, y: Int -> x + y },
+                                a - b to { x: Int, y: Int -> x - y }
+                            ) { (expectedResult, operation) ->
+                                val result = operation(a, b)
+                                result shouldBe expectedResult
+                            }
+                        }
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
+:::
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos el concepto de **Data-Driven Testing (DDT)** y cómo podemos utilizarlo para mejorar la eficiencia y legibilidad de nuestros tests al eliminar la repetición de código. Vimos cómo implementar DDT de manera manual, y luego descubrimos cómo Kotest nos proporciona una forma más elegante y simplificada de hacer lo mismo usando la función `withData`. Esto nos permitió probar múltiples combinaciones de datos de manera concisa, manteniendo nuestros tests claros y fáciles de mantener.
+
+Además, expandimos nuestro ejemplo de **Bakémon** para permitir ataques entre personajes, utilizando DDT para validar las diferentes combinaciones de nombres y puntos de salud, garantizando un comportamiento correcto en diferentes escenarios.
+
+### Próxima lección
+
+En la próxima lección, profundizaremos en el concepto de **aserciones** y aprenderemos cómo crear nuestras propias aserciones personalizadas. Esto nos permitirá escribir pruebas más expresivas y específicas, adaptadas a las necesidades de nuestras aplicaciones y bibliotecas.

@@ -126,6 +126,7 @@ const sidebars: SidebarsConfig = {
             items: [
                 "testing/tdd",
                 "testing/exceptions",
+                 "testing/ddt",
                 "testing/assertions",
                 "testing/matchers",
             ],
