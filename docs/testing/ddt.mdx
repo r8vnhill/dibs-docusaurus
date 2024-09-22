@@ -303,6 +303,94 @@ Recuerda que, aunque en este caso no sea necesario, la refactorización sigue si
 </Tabs>
 :::
 
+<details>
+    <summary>Ejemplos en otros frameworks y lenguajes con soporte nativo para Data-Driven Testing (DDT)</summary>
+
+    ## Ejemplos en otros frameworks y lenguajes con soporte nativo para Data-Driven Testing (DDT)
+
+    ### Ejemplos en JUnit (Java)
+
+    **JUnit** soporta nativamente **Data-Driven Testing** a través de la anotación `@ParameterizedTest`, combinada con fuentes de datos como `@ValueSource`, `@CsvSource`, y más.
+
+    ```java
+    import static org.junit.jupiter.api.Assertions.assertThrows;
+
+    import org.junit.jupiter.params.ParameterizedTest;
+    import org.junit.jupiter.params.provider.ValueSource;
+
+    class BakemonTest {
+
+        @ParameterizedTest
+        @ValueSource(ints = {-1, 101, 200})
+        void testHealthPointsOutOfRange(int healthPoints) {
+            Bakemon bakemon = new Bakemon("Bigachu", 100);
+            assertThrows(IllegalArgumentException.class, () -> {
+                bakemon.setCurrentHealthPoints(healthPoints);
+            });
+        }
+    }
+    ```
+
+    Con `@ParameterizedTest`, puedes pasar múltiples valores a un solo test, lo que elimina la necesidad de bucles manuales y permite la generación automática de informes de errores por cada caso fallido.
+
+    ### Ejemplos en Pytest (Python)
+
+    **Pytest** también soporta nativamente **DDT** con la función `@pytest.mark.parametrize`, lo que permite definir una lista de valores para el test.
+
+    ```python
+    import pytest
+
+    @pytest.mark.parametrize("hp", [-1, 101, 150])
+    def test_health_out_of_range(hp):
+        bakemon = Bakemon("Bigachu", 100)
+        with pytest.raises(ValueError):
+            bakemon.current_health_points = hp
+    ```
+
+    Pytest facilita la ejecución de múltiples casos de prueba con diferentes datos sin necesidad de duplicar la lógica de prueba, lo que también mejora la claridad de los reportes de test.
+
+    ### Ejemplos en NUnit (C#)
+
+    **NUnit**, uno de los frameworks más populares en **.NET**, soporta **DDT** de forma nativa mediante el uso de `TestCase` y `TestCaseSource`.
+
+    ```csharp
+    using NUnit.Framework;
+
+    [TestFixture]
+    public class BakemonTest
+    {
+        [TestCase(-1)]
+        [TestCase(101)]
+        [TestCase(200)]
+        public void TestHealthPointsOutOfRange(int healthPoints)
+        {
+            var bakemon = new Bakemon("Bigachu", 100);
+            Assert.Throws<ArgumentOutOfRangeException>(() => bakemon.SetCurrentHealthPoints(healthPoints));
+        }
+    }
+    ```
+
+    El atributo `TestCase` de NUnit permite definir distintos parámetros para el mismo test, lo que facilita el manejo de múltiples entradas.
+
+    ### Ejemplos en Mocha (JavaScript/Node.js)
+
+    **Mocha** soporta **Data-Driven Testing** de forma nativa a través de la biblioteca `mocha-param`. Con `mocha-param`, puedes definir parámetros para tus pruebas de manera similar a otros frameworks.
+
+    ```javascript
+    const { expect } = require("chai");
+    const param = require("mocha-param");
+
+    describe("Bakemon", () => {
+        param([-1, 101, 150]).it("should throw an error for health points %s", (hp) => {
+            const bakemon = new Bakemon("Bigachu", 100);
+            expect(() => bakemon.setHealthPoints(hp)).to.throw(Error);
+        });
+    });
+    ```
+
+    La biblioteca `mocha-param` permite definir parámetros y generar automáticamente una prueba para cada uno, integrando esta funcionalidad directamente en el flujo de trabajo de Mocha.
+</details>
+
 ## ¿Qué aprendimos?
 
 En esta lección, exploramos el concepto de **Data-Driven Testing (DDT)** y cómo podemos utilizarlo para mejorar la eficiencia y legibilidad de nuestros tests al eliminar la repetición de código. Vimos cómo implementar DDT de manera manual, y luego descubrimos cómo Kotest nos proporciona una forma más elegante y simplificada de hacer lo mismo usando la función `withData`. Esto nos permitió probar múltiples combinaciones de datos de manera concisa, manteniendo nuestros tests claros y fáciles de mantener.

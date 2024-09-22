@@ -8,52 +8,6 @@ import ReadingTime from '../../src/components/ReadingTime';
 
 <ReadingTime />
 
-## Tipos de Funciones
-
-El **tipo de una función** se define en función de los tipos de sus parámetros y su tipo de retorno. En Kotlin, podemos expresar esto de la siguiente manera:
-
-```kotlin
-f: (A, B) -> C
-```
-
-Aquí, `A` y `B` representan los tipos de los parámetros que la función acepta, y `C` es el tipo de dato que la función devuelve como resultado. Este tipo de notación es útil para entender cómo las funciones manipulan los datos.
-
-Cuando hablamos de una **función miembro** o una **función de extensión** de un objeto, el tipo de función se expresa incluyendo el tipo del objeto que contiene la función:
-
-```kotlin
-f: W.(X, Y) -> Z
-```
-
-En este caso, `W` es el tipo del objeto que posee la función, mientras que `X` y `Y` son los tipos de los parámetros que la función acepta, y `Z` es el tipo de retorno.
-
-## Ciudadanos de Primera Clase
-
-Una entidad en un lenguaje de programación es considerada un **"ciudadano de primera clase"** si puede:
-
-- Ser creada dinámicamente durante la ejecución del programa.
-- Asignarse a variables.
-- Pasarse como argumento a otras funciones.
-- Retornarse desde funciones.
-- Almacenarse en estructuras de datos como listas o diccionarios.
-
-En Kotlin, las **funciones son ciudadanos de primera clase**, lo que significa que pueden ser tratadas como cualquier otro valor. Esto permite un estilo de programación más modular y reutilizable, ya que puedes pasar y devolver funciones de manera flexible.
-
-### Ejemplo
-
-```kotlin
-fun add(a: Int, b: Int): Int = a + b
-
-val add2: (Int, Int) -> Int = ::add
-```
-
-En este ejemplo, `add2` es una referencia a la función `add`, lo que demuestra cómo las funciones pueden ser asignadas a variables en Kotlin.
-
-:::info Operador de Referencia de Función
-El operador `::` en Kotlin se llama **operador de referencia de función** y se utiliza para obtener una referencia a una función existente. En el ejemplo, `::add` toma la función `add` y la convierte en un valor que puede asignarse a una variable (`add2`), pasarse como argumento o retornarse desde una función.
-:::
-
-## Funciones de Alto Orden
-
 Las **funciones de alto orden** son aquellas que **reciben** otras funciones como parámetros o **retornan** una función como resultado. Esto permite un nivel adicional de abstracción y reutilización de código.
 
 Por ejemplo, una función que aplique otra función a todos los elementos de una lista podría tener el siguiente tipo:
@@ -137,8 +91,8 @@ La implementación básica de `map` toma una lista de cualquier tipo y una funci
 fun <T, R> map(list: List<T>, f: (T) -> R): List<R> {
     val result = mutableListOf<R>()
     for (i in list) {
-    result.add(f(i))
-}
+        result.add(f(i))
+    }
     return result
 }
 ```
@@ -186,19 +140,252 @@ En este caso, la función `map` verifica si la lista está vacía. Si lo está, 
 </Tabs>
 :::
 
+### Fold
+
+Imagina que tienes una lista de números y quieres sumarlos todos. Una forma de hacerlo es recorrer cada número y sumar su valor al total. Este proceso de "acumular" valores es exactamente lo que hace una función como `fold`.
+
+En programación funcional, **`fold`** toma una lista y la "reduce" a un solo valor aplicando una operación (por ejemplo, sumar o multiplicar) a todos sus elementos, uno por uno.
+
+#### ¿Cómo funciona?
+
+1. **Elemento inicial**: Necesitamos un valor inicial que actúe como "base". Este valor se usa para comenzar la acumulación.
+2. **Función de acumulación**: Usamos una función que toma dos valores: el acumulador (que guarda el resultado parcial) y el siguiente elemento de la lista. La función combina estos dos valores y devuelve un nuevo valor acumulado.
+3. **Recorrer la lista**: Aplicamos esta función de acumulación a cada elemento de la lista, combinándolo con el valor acumulado hasta ese punto.
+
+#### Ejemplo con suma
+
+Si tienes la lista `[1, 2, 3]` y quieres sumar los números, el proceso sería algo así:
+
+- Partimos con un acumulador inicial, por ejemplo, `0`.
+- Tomamos el primer número (`1`) y lo sumamos al acumulador (`0 + 1 = 1`).
+- Tomamos el siguiente número (`2`) y lo sumamos al acumulador (`1 + 2 = 3`).
+- Tomamos el último número (`3`) y lo sumamos al acumulador (`3 + 3 = 6`).
+
+El resultado final es `6`.
+
+#### Implementación recursiva de `fold`
+
+A continuación, vamos a implementar una versión recursiva de `fold`:
+
+```kotlin
+fun <T, R> fold(list: List<T>, initial: R, combine: (R, T) -> R) =
+    if (list.isEmpty()) {
+        initial // Caso base: devolvemos el valor acumulado
+    } else {
+        // Caso recursivo: combinamos el primer elemento de la lista con el valor acumulado,
+        // luego seguimos procesando el resto de la lista
+        val first = list.first() // Primer elemento
+        val rest = list.drop(1)  // Resto de la lista
+        val newAcc = combine(initial, first) // Actualizamos el acumulador
+        fold(rest, newAcc, combine) // Llamada recursiva con la nueva lista y acumulador
+    }
+```
+
+#### Ejemplo de uso
+
+Vamos a usar esta función para sumar una lista de números:
+
+```kotlin
+fun sum(a: Int, b: Int) = a + b
+
+fun main() {
+    val numbers = listOf(1, 2, 3, 4, 5)
+    val result = fold(numbers, 0, ::sum)
+    println(result)  // Imprime: 15
+}
+```
+
+Aquí usamos la función `sum` para combinar los números. El valor inicial es `0`, y la lista es `[1, 2, 3, 4, 5]`. El resultado final será `15`.
+
+:::tip Ejercicio
+<Tabs>
+    <TabItem value="Enunciado" label="Enunciado">
+        Supongamos que necesitas implementar una función que construya un acrónimo a partir de una lista de palabras. En específico, tu objetivo es construir una nueva palabra a partir de la primera letra de cada palabra de la lista. Si la palabra tiene menos de 3 letras, la ignoras.
+
+        Implementa la función ``acronym: (List<String>) -> String`` que cumpla con esta especificación utilizando la función ``fold``.
+    </TabItem>
+    <TabItem value="Solución" label="Solución">
+        ```kotlin
+        fun combine(acc: String, word: String): String =
+            if (word.length >= 3) acc + word.first() else acc
+        fun acronym(words: List<String>) = fold(words, "", ::combine)
+        ```
+    </TabItem>
+</Tabs>
+:::
+
+<details>
+    <summary>Ejemplos en otros lenguajes</summary>
+    ## Ejemplos de Funciones de Alto Orden en Otros Lenguajes
+
+    ### Scala
+
+    En Scala, la implementación de `map` usando recursión sería de esta manera:
+
+    ```scala
+    def double(n: Int): Int = n * 2
+    def square(n: Int): Int = n * n
+
+    def map[T, R](list: List[T], f: T => R): List[R] = list match {
+        case Nil => Nil
+        case head :: tail => f(head) :: map(tail, f)
+    }
+
+    @main def main(): Unit = {
+        val nums = List(1, 2, 3, 4)
+        println(map(nums, double))  // List(2, 4, 6, 8)
+        println(map(nums, square))  // List(1, 4, 9, 16)
+    }
+    ```
+
+    En este código, la recursión se logra verificando si la lista está vacía (caso base) y aplicando la función `f` al primer elemento, seguido de una llamada recursiva sobre el resto de la lista.
+
+    ### TypeScript
+
+    En TypeScript, podemos implementar una versión recursiva de `map` como esta:
+
+    ```typescript
+    function double(n: number): number {
+        return n * 2;
+    }
+
+    function square(n: number): number {
+        return n * n;
+    }
+
+    function map<T, R>(list: T[], f: (arg: T) => R): R[] {
+        if (list.length === 0) {
+            return [];
+        }
+        const [head, ...tail] = list;
+        return [f(head), ...map(tail, f)];
+    }
+
+    const nums = [1, 2, 3, 4];
+    console.log(map(nums, double));  // [2, 4, 6, 8]
+    console.log(map(nums, square));  // [1, 4, 9, 16]
+    ```
+
+    Este código es recursivo y utiliza el operador de desestructuración para separar la lista en su **cabeza** (primer elemento) y **cola** (resto de la lista), aplicando `map` sobre el resto de los elementos.
+
+    ### Python
+
+    La implementación recursiva en Python sería algo como esto:
+
+    ```python
+    from typing import Callable
+
+    def double(n: int) -> int:
+        return n * 2
+
+    def square(n: int) -> int:
+        return n * n
+
+    def map_list(lst: list[int], func: Callable[[int], int]) -> list[int]:
+        if not lst:
+            return []
+        return [func(lst[0])] + map_list(lst[1:], func)
+
+    nums = [1, 2, 3, 4]
+    print(map_list(nums, double))  # [2, 4, 6, 8]
+    print(map_list(nums, square))  # [1, 4, 9, 16]
+    ```
+
+    En este código, usamos la recursión para ir reduciendo la lista hasta que esté vacía (caso base), aplicando la función al primer elemento y concatenando el resultado con la llamada recursiva para el resto de la lista.
+
+    ### Haskell
+
+    En Haskell, la versión recursiva de `map` es casi natural debido a su enfoque en la recursión:
+
+    ```haskell
+    double :: Int -> Int
+    double n = n * 2
+
+    square :: Int -> Int
+    square n = n * n
+
+    map' :: (a -> b) -> [a] -> [b]
+    map' _ [] = []
+    map' f (x:xs) = f x : map' f xs
+
+    main = do
+    print (map' double [1, 2, 3, 4])  -- [2, 4, 6, 8]
+    print (map' square [1, 2, 3, 4])  -- [1, 4, 9, 16]
+    ```
+
+    En Haskell, la recursión es un enfoque estándar. El caso base es la lista vacía, y en cada paso se aplica la función al primer elemento, seguido de una llamada recursiva al resto de la lista.
+
+    ### Clojure
+
+    La implementación recursiva en Clojure también es directa:
+
+    ```clojure
+    (defn double-it [n]
+        (* n 2))
+
+    (defn square [n]
+        (* n n))
+
+    (defn map-fn [f lst]
+        (if (empty? lst)
+            '()
+            (cons (f (first lst)) (map-fn f (rest lst)))))
+
+    (println (map-fn double-it [1, 2, 3, 4]))  ; (2 4 6 8)
+    (println (map-fn square [1, 2, 3, 4]))     ; (1 4 9 16)
+    ```
+
+    Aquí también usamos recursión de forma explícita, con `first` y `rest` para descomponer la lista en su cabeza y cola respectivamente, aplicando `map-fn` sobre los elementos restantes.
+
+    ### Java
+
+    En Java, la recursión es menos común, pero podemos implementar `map` de manera recursiva usando las estructuras básicas del lenguaje:
+
+    ```java
+    import java.util.ArrayList;
+    import java.util.List;
+    import java.util.function.Function;
+
+    public class Main {
+        public static int doubleIt(int n) {
+            return n * 2;
+        }
+
+        public static int square(int n) {
+            return n * n;
+        }
+
+        public static <T, R> List<R> map(List<T> list, Function<T, R> func) {
+            if (list.isEmpty()) {
+                return new ArrayList<>();
+            }
+            List<R> result = new ArrayList<>();
+            result.add(func.apply(list.get(0)));
+            result.addAll(map(list.subList(1, list.size()), func));
+            return result;
+        }
+
+        public static void main(String[] args) {
+            List<Integer> nums = List.of(1, 2, 3, 4);
+            System.out.println(map(nums, Main::doubleIt));  // [2, 4, 6, 8]
+            System.out.println(map(nums, Main::square));    // [1, 4, 9, 16]
+        }
+    }
+    ```
+
+    Aquí usamos recursión en lugar de bucles. `map` se llama a sí misma con la sublista restante, aplicando la función al primer elemento de la lista original.
+</details>
+
 ## ¿Qué vimos en este artículo?
 
-En esta lección, exploramos conceptos fundamentales de **funciones de alto orden** en Kotlin y cómo las funciones son tratadas como **ciudadanos de primera clase**. Esto permite que las funciones sean asignadas a variables, pasadas como parámetros, y retornadas desde otras funciones, habilitando un estilo de programación más modular y reutilizable.
+En esta lección, exploramos el concepto de **funciones de alto orden**, que son aquellas que aceptan funciones como parámetros o devuelven funciones como resultado. Estas funciones permiten una mayor abstracción y modularidad, lo que facilita la reutilización de código y la creación de soluciones más flexibles.
 
-1. **Tipos de Funciones**: Aprendimos a expresar el tipo de una función en función de los tipos de sus parámetros y su tipo de retorno, tanto para funciones simples como para funciones miembro o de extensión.
+- Vimos cómo **las funciones son ciudadanos de primera clase** en Kotlin, lo que significa que pueden ser tratadas como valores que se asignan a variables, se pasan como argumentos y se devuelven desde otras funciones.
+- Aprendimos a definir y usar **funciones de alto orden**, observando su tipo y cómo aplicar funciones a los elementos de una lista usando ejemplos como `map` y `filter`.
+- Exploramos las implementaciones tanto **iterativas** como **recursivas** de funciones de alto orden, destacando las ventajas de la recursión en un enfoque funcional y los peligros de la mutabilidad en el diseño de código.
+- Finalmente, revisamos el concepto de **fold**, una poderosa función para reducir listas a un solo valor, y cómo se puede implementar recursivamente para sumar elementos o construir estructuras más complejas como acrónimos.
 
-2. **Ciudadanos de Primera Clase**: Vimos cómo en Kotlin, las funciones son ciudadanos de primera clase, lo que significa que pueden ser tratadas como valores.
-
-3. **Operador `::`**: Exploramos el **operador de referencia de función** `::`, que permite obtener una referencia a una función existente para ser usada en otro contexto, como asignarla a una variable.
-
-4. **Funciones de Alto Orden**: Profundizamos en las funciones que aceptan otras funciones como parámetros o retornan funciones. Esto permite un mayor nivel de abstracción en el código.
-
-5. **Implementación de `map`**: Implementamos la función `map` de manera iterativa y recursiva, y discutimos las ventajas de evitar estructuras mutables para seguir los principios de la programación funcional.
+A lo largo de la lección, también vimos ejemplos prácticos de estos conceptos en varios lenguajes de programación, desde Kotlin hasta Python, Scala, TypeScript, Haskell, y otros, demostrando cómo las funciones de alto orden son un pilar fundamental en la programación funcional y son ampliamente soportadas en distintos lenguajes.
 
 ### Próxima lección: Funciones Lambda
 

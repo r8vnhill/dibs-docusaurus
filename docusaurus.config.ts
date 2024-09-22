@@ -110,7 +110,8 @@ const config: Config = {
                 'groovy',
                 "scheme",
                 "erlang",
-                "elixir"
+                "elixir",
+                "clojure"
             ],
         },
     } satisfies Preset.ThemeConfig,

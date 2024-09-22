@@ -15,6 +15,8 @@ const sidebars: SidebarsConfig = {
                 'intro/documentation',
                 'intro/Kotlin',
                 'intro/basics',
+                'intro/types',
+                'intro/oop',
                 'intro/void-safety',
                 'intro/input',
             ],

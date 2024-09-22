@@ -10,6 +10,26 @@ import ReadingTime from "../../src/components/ReadingTime";
 <GithubRepoLink repo={"assertions-kt"} user={"r8vnhill"}/>
 
 <br/>
+<details>
+    <summary>Si quieres seguir el código del tutorial puedes comenzar desde [este punto](https://github.com/r8vnhill/assertions-kt/tree/base).</summary>
+
+    Si tienes ``gh`` instalado, puedes obtener el código haciendo:
+
+    ```bash
+    gh repo clone r8vnhill/assertions-kt
+    cd assertions-kt || exit
+    git checkout base
+    ```
+
+    Si quieres tener tu propia copia del código, puedes hacer un fork del repositorio y clonarlo desde tu cuenta de GitHub.
+
+    ```bash
+    gh repo fork r8vnhill/assertions-kt
+    cd assertions-kt || exit
+    git checkout base
+    ```
+</details>
+
 Las **aserciones** son instrucciones que verifican si una condición específica es verdadera en un punto particular del código. Si la condición es falsa, la aserción falla y se lanza una excepción, interrumpiendo la ejecución del programa o prueba. Los frameworks de testing capturan estas excepciones para generar reportes detallados de los resultados.
 
 Por ejemplo, consideremos una prueba escrita manualmente:
@@ -120,69 +140,52 @@ En este ejemplo:
 - Usamos `assertTrue` para verificar que el resultado es igual a `3`.
 - Si la condición no se cumple, se lanza un `AssertionError` con el mensaje especificado.
 
-:::tip Ejercicio: Creación de una Aserción Personalizada para Verificar la Igualdad de Árboles Binarios
+:::tip Ejercicio
 <Tabs>
     <TabItem value={"Enunciado"} label={"Enunciado"}>
-        Estás desarrollando una aplicación que manipula estructuras de datos de **árboles binarios**. Para asegurar la correcta funcionalidad de tu código, necesitas escribir pruebas unitarias que verifiquen que dos árboles binarios son estructuralmente iguales y contienen los mismos valores en los mismos nodos.
+        Crea una aserción ``assertIsOrdered: (List<Int>, IsStrictlyOrdered) -> Unit`` que verifique si una lista de enteros está ordenada de forma ascendente.
+        - Si el segundo parámetro es ``IsStrictlyOrdered.ENABLED``, la lista debe estar ordenada de forma estrictamente ascendente (sin elementos repetidos).
+        - Si el segundo parámetro es ``IsStrictlyOrdered.DISABLED``, la lista puede contener elementos repetidos.
 
-        La estructura de los árboles binarios se define de la siguiente manera:
+        _Hint: Puedes usar la función ``zipWithNext`` para comparar elementos consecutivos de la lista._
 
-        ```kotlin
-        data class TreeNode<T>(
-            val value: T,
-            val left: TreeNode<T>? = null,
-            val right: TreeNode<T>? = null
-        )
-        ```
-
-        Tu tarea es crear una **aserción personalizada** llamada `assertTreesEqual` que compare dos árboles binarios y verifique si son iguales en estructura y contenido. Esta aserción debe recorrer ambos árboles y comprobar recursivamente que:
-
-        - Los valores en los nodos correspondientes son iguales.
-        - La estructura de los subárboles izquierdo y derecho es la misma.
-
-        Si los árboles no son iguales, la aserción debe fallar y proporcionar un mensaje de error descriptivo que indique en qué punto de los árboles se encontró la diferencia.
-
-        ### **Restricciones:**
-
-        - No puedes utilizar métodos o bibliotecas externas que ya implementen comparaciones de árboles.
-        - Debes implementar la lógica de comparación por tu cuenta.
-
-        ### **Ejemplo de Uso:**
+        **Ejemplo de ``zipWithNext``:**
 
         ```kotlin
-        val tree1 = TreeNode(
-            value = 1,
-            left = TreeNode(2),
-            right = TreeNode(3)
-        )
-
-        val tree2 = TreeNode(
-            value = 1,
-            left = TreeNode(2),
-            right = TreeNode(3)
-        )
-
-        val tree3 = TreeNode(
-            value = 1,
-            left = TreeNode(2),
-            right = TreeNode(4)
-        )
-
-        // Esta aserción debería pasar
-        assertTreesEqual(tree1, tree2)
-
-        // Esta aserción debería fallar con un mensaje indicando que hay una diferencia en el valor del nodo derecho
-        assertTreesEqual(tree1, tree3)
+        val list = listOf(1, 2, 3, 5, 5, 7)
+        val pairs = list.zipWithNext()
+        println(pairs) // [(1, 2), (2, 3), (3, 5), (5, 5), (5, 7)]
         ```
-
-        ### _Hints:_
-
-        - Puedes crear una función interna que lleve el rastro de la **ruta actual** en el árbol (por ejemplo, "raíz", "izquierdo", "derecho") para mejorar los mensajes de error.
-        - Asegúrate de considerar todas las posibilidades:
-            - Ambos nodos son `null`.
-            - Uno es `null` y el otro no.
-            - Ambos tienen valores pero son diferentes.
-        - Utiliza recursión para recorrer los árboles de manera eficiente.
+    </TabItem>
+    <TabItem value={"Solución"} label={"Solución"}>
+        ```kotlin
+        fun assertIsOrdered(
+            list: List<Int>,
+            isStrictlyOrdered: IsStrictlyOrdered
+        ) {
+            val condition = when (isStrictlyOrdered) {
+                IsStrictlyOrdered.ENABLED -> { a: T, b: T -> a <= b }
+                IsStrictlyOrdered.DISABLED -> { a: T, b: T -> a < b }
+            }
+            val isOrdered = list.zipWithNext().all { (a, b) -> condition(a, b) }
+            if (!isOrdered) {
+                val orderType =
+                    if (isStrictlyOrdered == IsStrictlyOrdered.ENABLED) "strictly"
+                    else "non-strictly"
+                fail("List is not $orderType ordered: $list")
+            }
+        }
+        ```
     </TabItem>
 </Tabs>
 :::
+
+## Resumen
+
+En esta lección aprendimos sobre **aserciones**, una herramienta fundamental en los tests que nos permite verificar que las condiciones de nuestro código sean correctas. Comenzamos viendo ejemplos simples de cómo podemos implementar aserciones manualmente y cómo utilizar las aserciones proporcionadas por los frameworks de pruebas para mejorar la legibilidad y el manejo de errores en nuestros tests.
+
+También vimos cómo crear **aserciones personalizadas**, lo que nos permite adaptar nuestras pruebas a necesidades más específicas. Aprendimos a implementar una aserción genérica `assertTrue` y una más específica, `assertIsOrdered`, que verifica si una lista está ordenada correctamente, ya sea de forma estricta o no estricta.
+
+### Próxima lección
+
+En la siguiente lección, profundizaremos en el uso de **matchers**, una forma más expresiva de escribir aserciones. Los matchers nos permitirán crear tests más legibles y declarativos, facilitando la comprensión y el mantenimiento de nuestras pruebas.
