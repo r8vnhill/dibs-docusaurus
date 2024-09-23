@@ -1,7 +1,7 @@
 ---
 title: Void-Safety
 ---
-
+import References from "../../src/components/ReferencesComponent";
 import ReadingTime from '../../src/components/ReadingTime';
 
 <ReadingTime />
@@ -58,7 +58,7 @@ val a: String? = TODO()
 if (a != null) {
     println(a.length) // Acceso seguro
 } else {
-    println("a es nulo")
+    println("a is null")
 }
 ```
 
@@ -77,12 +77,18 @@ Aquí, `a?.length` devolverá `null` si `a` es nulo, evitando errores en tiempo 
 La función `let` es útil para ejecutar un bloque de código solo cuando una variable no es nula. Este método toma la variable no nula y la pasa como argumento al bloque de código que se ejecuta dentro de `let`:
 
 ```kotlin
-a?.let { println(it.length) }
+a?.let { str -> println(str.length) }
 ```
 
-En este caso, si `a` no es nulo, el valor de `a` es pasado al bloque como `it`, una **variable implícita** que representa el valor de la variable que llamó a `let`. Dentro del bloque, puedes acceder a las propiedades y métodos de `a` de forma segura utilizando `it`. Si `a` es nulo, el bloque de código no se ejecuta y el programa continúa sin lanzar excepciones.
+En este caso, si `a` no es nulo, el valor de `a` es pasado al bloque como `str`. Dentro del bloque, puedes acceder a las propiedades y métodos de `a` de forma segura utilizando `str`. Si `a` es nulo, el bloque de código no se ejecuta y el programa continúa sin lanzar excepciones.
 
 Esto hace que `let` sea una forma limpia y segura de manejar valores opcionales, evitando verificaciones manuales de nulabilidad y mejorando la legibilidad del código.
+
+:::note Variable implícita `it`
+En Kotlin, cuando se pasa un solo parámetro a una función lambda, puedes referirte a él de forma implícita como `it`. Esto es útil para reducir la verbosidad del código y hacerlo más legible.
+
+Por ejemplo, en `a?.let { println(it.length) }`, `it` representa el valor de `a` dentro del bloque de código de `let`, haciéndolo equivalente a `a?.let { str -> println(str.length) }`.
+:::
 
 ### Operador Elvis
 
@@ -100,9 +106,9 @@ Este operador es muy útil para evitar valores nulos en el flujo de datos sin ag
     <TabItem value="Enunciado" label="Enunciado">
         1. **Datos de Entrada**: Crea una lista de cadenas opcionales (`List<String?>`). Algunas cadenas pueden ser `null`, y el objetivo es procesar esta lista.
         2. **Procesamiento de Datos**:
-        - Imprime el largo de cada cadena si no es nula.
-        - Si una cadena es nula, imprime `"Cadena no disponible"`.
-        - Para las cadenas no nulas, convierte el texto a mayúsculas y muéstralo.
+            - Imprime el largo de cada cadena si no es nula.
+            - Si una cadena es nula, imprime `"Cadena no disponible"`.
+            - Para las cadenas no nulas, convierte el texto a mayúsculas y muéstralo.
         3. **Salida del Programa**: Imprime el largo de cada cadena, o `"Cadena no disponible"` si es nula. Después, imprime el texto en mayúsculas si la cadena no es nula.
     </TabItem>
     <TabItem value="Solución" label="Solución">
@@ -199,6 +205,45 @@ Este operador es muy útil para evitar valores nulos en el flujo de datos sin ag
             : console.log("Texto en mayúsculas no disponible");
     });
     ```
+    ### Swift
+
+    En **Swift**, puedes usar `Optional` y `map` para trabajar con valores opcionales de manera segura, similar a `let` en Kotlin.
+
+    ```swift
+    let cadenas: [String?] = ["Hola", nil, "Swift", nil, "Mundo"]
+
+    for cadena in cadenas {
+        let longitud = cadena?.count ?? "Cadena no disponible"
+        print("Longitud: \(longitud)")
+
+        cadena.map { texto in
+            print("Texto en mayúsculas: \(texto.uppercased())")
+        } ?? print("Texto en mayúsculas no disponible")
+    }
+    ```
+
+    ### Elixir
+
+    En **Elixir**, se puede usar `case` y `with` para manejar valores que podrían ser nulos o `nil`.
+
+    ```elixir
+    cadenas = ["Hola", nil, "Elixir", nil, "Mundo"]
+
+    for cadena <- cadenas do
+        longitud =
+            case cadena do
+                nil -> "Cadena no disponible"
+                _ -> String.length(cadena)
+            end
+
+        IO.puts("Longitud: #{longitud}")
+
+        case cadena do
+            nil -> IO.puts("Texto en mayúsculas no disponible")
+            _ -> IO.puts("Texto en mayúsculas: #{String.upcase(cadena)}")
+        end
+    end
+    ```
 </details>
 
 ## En resumen
@@ -208,3 +253,30 @@ La seguridad ante valores nulos, o **void-safety**, es un aspecto clave para evi
 Otras soluciones, como las que hemos visto en lenguajes como Scala y Rust, también abordan el problema de los valores nulos a través de tipos como `Option`, que obligan a manejar de forma explícita la posibilidad de que un valor no esté presente. Estas soluciones mejoran la claridad y seguridad del código, y proporcionan herramientas eficientes para trabajar con valores opcionales, evitando verificaciones manuales y errores difíciles de detectar.
 
 Manejar la nulabilidad correctamente no solo mejora la calidad del código, sino que también hace que el software sea más robusto y mantenible. En la próxima lección, exploraremos cómo manejar la entrada de usuario.
+
+<References references={[
+    {
+        title: "6. The Kotlin type system",
+        bookTitle: "Kotlin in action",
+        pages: "133–170",
+        location: "Shelter Island, NY",
+        publisher: "Manning Publications Co",
+        year: "2017",
+        type: "book",
+        author: 'Dmitry Jemerov, Svetlana Isakova',
+    },
+    {
+        accessedDate: '22 de septiembre de 2024',
+        siteOrAuthor: 'Wikipedia',
+        title: 'Void Safety',
+        type: 'web',
+        url: 'https://en.wikipedia.org/w/index.php?title=Void_safety&oldid=1245392044',
+    },
+    {
+        accessedDate: '22 de septiembre de 2024',
+        siteOrAuthor: 'Kotlin Help',
+        title: 'Null Safety | Kotlin',
+        type: 'web',
+        url: 'https://kotlinlang.org/docs/null-safety.html',
+    },
+]}/>

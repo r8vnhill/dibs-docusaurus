@@ -1,14 +1,12 @@
 ---
 title: Clases Abiertas y Cerradas
 ---
-
+import References from "../../src/components/ReferencesComponent";
 import ReadingTime from '../../src/components/ReadingTime';
 
 <ReadingTime />
 
-El diseño de clases abiertas y cerradas es fundamental para manejar adecuadamente la herencia y prevenir el **Problema de la Base Frágil (Fragile Base Class Problem)**, un problema común en la programación orientada a objetos. Este ocurre cuando los cambios en una clase base (o superclase) causan que las clases derivadas no se comporten como se esperaba, introduciendo errores o inconsistencias.
-
-#### Problema de la Base Frágil (Fragile Base Class Problem)
+## Problema de la Base Frágil (Fragile Base Class Problem)
 
 Cuando una clase base cambia sin tener en cuenta sus subclases, es posible que esas subclases pierdan funcionalidad o introduzcan errores al depender del comportamiento anterior de la clase base. Esto sucede frecuentemente cuando las subclases sobrescriben métodos de la clase base sin un entendimiento profundo de cómo se debe extender el comportamiento.
 
@@ -18,7 +16,7 @@ Joshua Bloch, en su libro *Effective Java*, sugiere lo siguiente para evitar est
 
 Esto significa que, si vas a permitir que una clase sea heredada, debes diseñarla con la herencia en mente, documentando claramente cómo se espera que las subclases la extiendan. Si no puedes garantizar esto, lo mejor es evitar que sea heredada.
 
-### Clases Abiertas y Cerradas en Kotlin
+## Clases Abiertas y Cerradas en Kotlin
 
 Kotlin trata el problema de la base frágil limitando la herencia de manera predeterminada. Esto obliga a lxs desarrolladorxs a ser conscientes al decidir qué clases y métodos deben ser heredados.
 
@@ -26,13 +24,13 @@ Kotlin trata el problema de la base frágil limitando la herencia de manera pred
 
 - **Clases Cerradas o Finales:** De manera predeterminada, las clases en Kotlin son *cerradas*, lo que significa que no pueden ser heredadas a menos que se especifique lo contrario con `open`. Este comportamiento predeterminado protege las clases de ser modificadas a través de la herencia, evitando problemas como el de la base frágil.
 
-#### Métodos en Clases Abiertas
+### Métodos en Clases Abiertas
 
 Si deseas que un método en una clase abierta sea sobrescribible por subclases, también debes marcarlo explícitamente con `open`. Esto asegura que solo los métodos que realmente deberían ser modificados por las subclases sean sobrescritos.
 
 Por otro lado, los métodos en clases cerradas (o en clases que no están marcadas como `open`) no pueden ser sobrescritos, ya que la herencia no es permitida para esas clases.
 
-#### Clases y Métodos Abstractos
+### Clases y Métodos Abstractos
 
 Las **clases y métodos abstractos** son siempre abiertos por naturaleza. Al ser abstractos, están destinados a ser implementados en las clases derivadas, por lo que no necesitas marcarlos con `open`. Sin embargo, cualquier método que no sea abstracto en una clase abstracta debe seguir siendo marcado como `open` si deseas que pueda ser sobrescrito.
 
@@ -46,13 +44,11 @@ open class UniversityStudent(
     name: String,
     val university: String
 ) : AbstractStudent(name) {
-    override fun study() {
+    override fun study() =
         println("Studying at $university")
-    }
 
-    open fun party() {
+    open fun party() =
         println("Partying at $university")
-    }
 }
 ```
 
@@ -70,16 +66,184 @@ class PhDStudent(
     university: String,
     val thesisTopic: String
 ) : UniversityStudent(name, university) {
-    override fun study() {
+    override fun study() =
         println("I'm studying a lot!")
-    }
 
-    override fun party() {
+    override fun party() =
         println("I'm too busy to party!")
-    }
 }
 ```
 
 En este caso:
 - `PhDStudent` hereda de `UniversityStudent` y sobrescribe los métodos `study` y `party`, proporcionando comportamientos específicos para esta subclase.
 - A pesar de que `UniversityStudent` es una clase abierta, `PhDStudent` es una clase cerrada porque no se marcó con `open`. Esto significa que no puede ser extendida por otras clases.
+
+## Ejemplos en otros lenguajes
+
+<details>
+    <summary>Ver ejemplos en otros lenguajes</summary>
+
+    ### Java
+
+    En **Java**, las clases y métodos son abiertas por defecto, lo que significa que cualquier clase puede ser heredada a menos que se marque explícitamente con `final`. Esto puede dar lugar al problema de la base frágil si no se controla adecuadamente.
+
+    ```java
+    // Clase abierta
+    public class UniversityStudent {
+        private String university;
+
+        public UniversityStudent(String university) {
+            this.university = university;
+        }
+
+        public void study() {
+            System.out.println("Studying at " + university);
+        }
+    }
+    ```
+
+    ```java
+    // Clase cerrada
+    public final class PhDStudent extends UniversityStudent {
+        private String thesisTopic;
+
+        public PhDStudent(String university, String thesisTopic) {
+            super(university);
+            this.thesisTopic = thesisTopic;
+        }
+
+        @Override
+        public void study() {
+            System.out.println("Studying a lot on " + thesisTopic);
+        }
+    }
+    ```
+
+    ### C#
+
+    En **C#**, todas las clases son abiertas por defecto. Para evitar herencia accidental, las clases pueden ser marcadas como `sealed`.
+
+    ```csharp
+    // Clase abierta
+    public class UniversityStudent {
+        public string University { get; private set; }
+
+        public UniversityStudent(string university) {
+            University = university;
+        }
+
+        public void Study() {
+            Console.WriteLine($"Studying at {University}");
+        }
+    }
+    ```
+
+    ```csharp
+    // Clase cerrada
+    public sealed class PhDStudent : UniversityStudent {
+        public string ThesisTopic { get; private set; }
+
+        public PhDStudent(string university, string thesisTopic) : base(university) {
+            ThesisTopic = thesisTopic;
+        }
+
+        public override void Study() {
+            Console.WriteLine($"Studying a lot on {ThesisTopic}");
+        }
+    }
+    ```
+
+    ### Python
+
+    En **Python**, las clases son abiertas por defecto y se pueden heredar sin restricciones. Sin embargo, puedes usar convenciones o controlarlo manualmente.
+
+    ```python
+    class UniversityStudent:
+        def __init__(self, name, university):
+            self.name = name
+            self.university = university
+
+        def study(self):
+            print(f"Studying at {self.university}")
+    ```
+
+    Aunque no hay una forma directa de hacer que una clase sea "cerrada" en Python, puedes usar una convención o lanzar excepciones para evitar herencia.
+
+    ```python
+    class PhDStudent(UniversityStudent):
+        def study(self):
+            print("I'm studying a lot!")
+
+        def __new__(cls, *args, **kwargs):
+            if cls != PhDStudent:
+                raise TypeError("No subclasses allowed")
+            return super().__new__(cls)
+    ```
+
+    ### Swift
+
+    En **Swift**, todas las clases y métodos son cerrados por defecto, lo que significa que no se pueden heredar a menos que se marque con `open` o `public`.
+
+    ```swift
+    open class UniversityStudent {
+        var university: String
+
+        init(university: String) {
+            self.university = university
+        }
+
+        func study() {
+            print("Studying at \(university)")
+        }
+    }
+    ```
+
+    ```swift
+    class PhDStudent: UniversityStudent {
+        var thesisTopic: String
+
+        init(university: String, thesisTopic: String) {
+            self.thesisTopic = thesisTopic
+            super.init(university: university)
+        }
+
+        override func study() {
+            print("Studying a lot on \(thesisTopic)")
+        }
+    }
+    ```
+</details>
+
+## ¿Qué hemos aprendido?
+
+En esta lección, aprendimos la diferencia entre clases abiertas y cerradas, y cómo gestionarlas para evitar el problema de la base frágil. Las clases abiertas permiten la herencia, mientras que las cerradas la restringen para evitar modificaciones no deseadas. Vimos cómo lenguajes como **Kotlin**, **Java**, **C#**, **Python**, y **Swift** abordan este tema, y la importancia de diseñar herencia de manera consciente para mejorar la calidad y mantenibilidad del código.
+
+<References references={[
+    {
+        accessedDate: '22 de septiembre de 2024',
+        siteOrAuthor: 'Wikipedia',
+        title: 'Fragile base class',
+        type: 'web',
+        url: 'https://en.wikipedia.org/w/index.php?title=Fragile_base_class&oldid=1197518970',
+    },
+    {
+        title: "4. Classes, objects, and interfaces",
+        bookTitle: "Kotlin in action",
+        pages: "67–102",
+        location: "Shelter Island, NY",
+        publisher: "Manning Publications Co",
+        year: "2017",
+        type: "book",
+        author: 'Dmitry Jemerov, Svetlana Isakova',
+    },
+    {
+        title: "4. Classes and Interfaces",
+        bookTitle: "Effective Java, Third edition.",
+        pages: "73–116",
+        location: "Boston",
+        publisher: "Addison-Wesley",
+        year: "2018",
+        type: "book",
+        author: 'Joshua Bloch',
+    }
+]}/>

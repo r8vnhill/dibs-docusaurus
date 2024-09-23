@@ -1,0 +1,123 @@
+---
+title: Creación de aplicaciones en otros frameworks
+---
+
+## Java/Kotlin: Maven
+
+Mientras Gradle utiliza archivos de configuración basados en Groovy o Kotlin DSL para gestionar proyectos, **Maven** usa archivos XML llamados `pom.xml` (Project Object Model). Aunque los dos sistemas de construcción son muy diferentes en cuanto a sintaxis y enfoques, los conceptos que manejan son similares. Vamos a explorar cómo lograr una configuración equivalente a la aplicación **Echo App** usando Maven.
+
+### Configuración básica en Maven
+
+En Maven, la estructura del proyecto y los archivos de configuración están organizados alrededor del archivo `pom.xml`. Aquí, configuramos nuestras dependencias, el plugin de compilación de Kotlin y el main class.
+
+#### Dependencias
+
+En lugar de un archivo `libs.versions.toml` como en Gradle, en Maven definimos las versiones directamente dentro del `pom.xml`. Para incluir la dependencia `kotlinx-datetime`, se utiliza la siguiente configuración dentro del bloque `<dependencies>`:
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.jetbrains.kotlinx</groupId>
+        <artifactId>kotlinx-datetime</artifactId>
+        <version>0.6.1</version>
+    </dependency>
+    <!-- Otras dependencias -->
+</dependencies>
+```
+
+### Repositorios en Maven
+
+Al igual que en Gradle, necesitamos asegurarnos de que Maven pueda buscar las dependencias en el repositorio correcto. Para esto, añadimos el repositorio de Maven Central en el `pom.xml` dentro del bloque `<repositories>`:
+
+```xml
+<repositories>
+    <repository>
+        <id>central</id>
+        <url>https://repo.maven.apache.org/maven2</url>
+    </repository>
+</repositories>
+```
+
+### Plugin de Kotlin
+
+Maven requiere que añadamos explícitamente el plugin de Kotlin para compilar nuestro código. Esto se realiza en el bloque `<build>`:
+
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-maven-plugin</artifactId>
+            <version>2.0.20</version>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>compile</goal>
+                        <goal>test-compile</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+```
+
+### Especificando el `mainClass`
+
+Para hacer la aplicación ejecutable con Maven, se define la clase principal de la aplicación en el plugin `maven-jar-plugin`:
+
+```xml
+<build>
+    <plugins>
+        <!-- Plugin de Kotlin -->
+        <plugin>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-maven-plugin</artifactId>
+            <!-- ... -->
+        </plugin>
+
+        <!-- Plugin para empaquetar la aplicación -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>3.2.0</version>
+            <configuration>
+                <archive>
+                    <manifest>
+                        <addClasspath>true</addClasspath>
+                        <mainClass>cl.ravenhill.echo.EchoAppKt</mainClass>
+                    </manifest>
+                </archive>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+```
+
+### Crear y Ejecutar la Aplicación
+
+Para compilar y ejecutar la aplicación con Maven, puedes utilizar los siguientes comandos:
+
+- **Compilar**: `mvn compile`
+- **Ejecutar**: `mvn exec:java -Dexec.mainClass="cl.ravenhill.echo.EchoAppKt" -Dexec.args="Hello, World!"`
+
+### Empaquetar y Distribuir
+
+Para empaquetar la aplicación en un **JAR ejecutable**, utilizamos el siguiente comando:
+
+```bash
+mvn package
+```
+
+Esto genera un archivo `.jar` en la carpeta `target/`. El JAR se puede ejecutar independientemente de Maven usando:
+
+```bash
+java -jar target/echo-app-1.0-SNAPSHOT.jar "Hello, World!"
+```
+
+### Comparación con Gradle
+
+- **Simplicidad de configuración**: Mientras Gradle tiene una sintaxis más concisa, Maven utiliza XML, lo cual puede ser más verboso. Sin embargo, ambos sistemas de construcción permiten manejar dependencias y configurar plugins de forma efectiva.
+- **Uso de plugins**: En Gradle, aplicamos plugins directamente en el archivo `build.gradle.kts` usando la palabra clave `plugins`. En Maven, los plugins se configuran dentro del bloque `<build>` en el archivo `pom.xml`.
+- **Declaración de dependencias**: En Maven, las dependencias se declaran en XML dentro del bloque `<dependencies>`, mientras que en Gradle se utilizan bloques `dependencies { }` más concisos.
+- **Ejecución de la aplicación**: En Gradle, usamos `gradle run` para ejecutar la aplicación durante el desarrollo, mientras que en Maven se utiliza `mvn exec:java`.

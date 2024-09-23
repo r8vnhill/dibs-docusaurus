@@ -1,0 +1,203 @@
+---
+title: Matchers personalizados
+---
+import References from "../../../src/components/ReferencesComponent";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import GithubRepoLink from "../../../src/components/GithubRepoLink";
+import ReadingTime from "../../../src/components/ReadingTime";
+
+<ReadingTime/>
+<GithubRepoLink user={"r8vnhill"} repo={"assertions-kt"}/>
+
+<br/>
+Los **Matchers personalizados** permiten definir condiciones específicas que no están cubiertas por los matchers estándar de Kotest.
+
+
+En Kotest, todos los matchers implementan la interfaz `Matcher<T>`, donde `T` es el tipo de valor que se está probando. Esta interfaz contiene un método abstracto `test(T)`, que retorna un objeto `MatcherResult`.
+
+
+### Estructura de `Matcher` y `MatcherResult`
+
+
+La interfaz `Matcher<T>` se define de la siguiente manera:
+
+
+```kotlin
+
+interface Matcher<in T> {
+
+    // Método abstracto para probar la condición
+   fun test(value: T): MatcherResult
+
+   companion object {
+      // Permite crear un matcher personalizado de forma concisa
+      inline operator fun <T> invoke(crossinline tester: (T) -> MatcherResult) = object : Matcher<T> {
+         override fun test(value: T) = tester(value)
+      }
+   }
+}
+```
+
+
+:::note ``crossinline``
+El modificador **`crossinline`** se utiliza en las funciones lambda que se pasan a funciones en línea (`inline`). Garantiza que la función lambda no se utilice para saltar fuera del contexto de la función (`noinline`). En este caso, `crossinline` asegura que el bloque lambda dentro de `invoke` no termine de forma prematura, lo que podría romper el flujo de la función in-line.
+:::
+
+La interfaz `MatcherResult` contiene la lógica de verificación del matcher, especificando si la prueba ha pasado y proporcionando mensajes de error cuando falla:
+
+```kotlin
+interface MatcherResult {
+    // Verifica si la condición pasó
+    fun passed(): Boolean
+
+    // Mensaje de fallo en caso negativo
+    fun failureMessage(): String
+
+    // Mensaje de fallo en caso de negación (not)
+    fun negatedFailureMessage(): String
+
+    companion object {
+        // Método para crear un MatcherResult
+        operator fun invoke(
+            passed: Boolean,
+            failureMessageFn: () -> String,
+            negatedFailureMessageFn: () -> String
+        ): MatcherResult = object : MatcherResult {
+            override fun passed(): Boolean = passed
+            override fun failureMessage(): String = failureMessageFn()
+            override fun negatedFailureMessage(): String = negatedFailureMessageFn()
+      }
+   }
+}
+```
+
+### Ejemplo de Matcher Personalizado
+
+
+Para comenzar, crearemos un módulo llamado `matchers` que contendrá nuestro matcher personalizado:
+
+
+<Tabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        New-Item -Path "matchers\src\test\kotlin" -ItemType Directory
+        Set-Content -Path "matchers\build.gradle.kts" -Value "// Intentionally left blank"
+        ```
+    </TabItem>
+    <TabItem value="Windows (corto)" label="Windows (corto)">
+        ```powershell
+        mkdir matchers\src\test\kotlin
+        "Intentionally left blank" > matchers\build.gradle.kts
+        ```
+    </TabItem>
+    <TabItem value="Linux/Mac" label="Linux/Mac">
+        ```bash
+        mkdir -p matchers/src/test/kotlin
+        echo "// Intentionally left blank" > matchers/build.gradle.kts
+        ```
+    </TabItem>
+</Tabs>
+
+:::note
+Definiremos los matchers solo para el módulo `matchers`, pero podrías colocarlos en un módulo compartido como `test-utils` si quieres reutilizarlos en otros módulos.
+:::
+
+#### Definir un Matcher Personalizado
+
+A continuación, implementaremos un matcher personalizado en **Kotest** para verificar si un número es par:
+
+
+```kotlin title="matchers/src/test/kotlin/cl/ravenhill/matchers/BeEven.kt"
+package cl.ravenhill.matchers
+
+import io.kotest.matchers.Matcher
+import io.kotest.matchers.MatcherResult
+
+fun beEven() = Matcher<Int> { value ->
+    MatcherResult(
+        passed = value % 2 == 0,
+        failureMessageFn = { "$value should be even" },
+        negatedFailureMessageFn = { "$value should not be even" }
+    )
+}
+```
+
+#### Usar el Matcher Personalizado en Pruebas
+
+Ahora, utilizamos el matcher `beEven()` en las pruebas para verificar si los números son pares:
+
+```kotlin title="matchers/src/test/kotlin/cl/ravenhill/matchers/BeEvenTest.kt"
+package cl.ravenhill.matchers
+
+import cl.ravenhill.matchers.beEven
+import io.kotest.core.spec.style.FreeSpec
+import io.kotest.datatest.withData
+import io.kotest.matchers.should
+import io.kotest.matchers.shouldNot
+
+class BeEvenTest : FreeSpec({
+    "Even numbers" - {
+        withData(2, 4, 6, 8, 10) { number ->
+            number should beEven()
+        }
+    }
+
+    "Odd numbers" - {
+        withData(1, 3, 5, 7, 9) { number ->
+            number shouldNot beEven()
+        }
+    }
+})
+```
+
+:::note
+Aunque aquí reimplementamos `beEven()` para propósitos didácticos, **Kotest** ya lo incluye dentro de su amplia gama de **matchers**. Para acceder a ellos, puedes agregar esta dependencia en tu archivo `libs.versions.toml`:
+
+```toml title="libs.versions.toml"
+# ...
+[libraries]
+# ...
+kotest-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest" }
+# ...
+[bundles]
+kotest = ["kotest-runner-junit5", "kotest-datatest", "kotest-assertions-core"]
+```
+:::
+
+:::tip Ejercicio
+<Tabs>
+    <TabItem value={"Enunciado"} label={"Enunciado"}>
+        Implementa un matcher ``beCloseTo: (Double, Double) -> Matcher<Double>`` que compare si dos valores son iguales con una tolerancia arbitraria. Por ejemplo, ``beCloseTo(0.1, 0.2, 0.01)`` debería ser verdadero si la diferencia entre ``0.1`` y ``0.2`` es menor a ``0.01``.
+    </TabItem>
+    <TabItem value={"Solución"} label={"Solución"}>
+        ```kotlin
+        fun beCloseTo(expected: Double, tolerance: Double) = Matcher<Double> { value ->
+            MatcherResult(
+                passed = abs(value - expected) < tolerance,
+                failureMessageFn = {
+                    "$value should be in the vicinity of $expected within a tolerance of ${
+                        expected - tolerance..expected + expected
+                    }"
+                },
+                negatedFailureMessageFn = {
+                    "$value should not be in the vicinity of $expected within a tolerance of ${
+                        expected - tolerance..expected + expected
+                    }"
+                }
+            )
+        }
+        ```
+    </TabItem>
+</Tabs>
+:::
+
+<References references={[
+    {
+        accessedDate: '23 de septiembre de 2024',
+        siteOrAuthor: 'Kotest',
+        title: 'Custom Matchers | Kotest',
+        type: 'web',
+        url: 'https://kotest.io/docs/assertions/custom-matchers.html',
+    }
+]}/>

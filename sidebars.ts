@@ -16,7 +16,20 @@ const sidebars: SidebarsConfig = {
                 'intro/Kotlin',
                 'intro/basics',
                 'intro/types',
-                'intro/oop',
+                {
+                    type: 'category',
+                    label: 'Introducción a la programación orientada a objetos',
+                    link: {
+                        type: 'doc',
+                        id: 'intro/oop/oop',
+                    },
+                    items: [
+                        "intro/oop/oop-langs",
+                    ]
+                },
+                'intro/open-closed',
+                'intro/properties',
+                'intro/operator-overload',
                 'intro/void-safety',
                 'intro/input',
             ],
@@ -33,7 +46,17 @@ const sidebars: SidebarsConfig = {
                 'build-systems/basic-config',
                 'build-systems/convention-plugins',
                 'build-systems/global',
-                'build-systems/my-app',
+                {
+                    type: 'category',
+                    label: 'Mi primera aplicación',
+                    link: {
+                        type: 'doc',
+                        id: 'build-systems/my-app',
+                    },
+                    items: [
+                        'build-systems/my-app-langs'
+                    ],
+                },
                 {
                     type: 'category',
                     label: 'Tareas',
@@ -95,9 +118,39 @@ const sidebars: SidebarsConfig = {
                         id: 'fp/adt/index',
                     },
                     items: [
-                        'fp/adt/product',
-                        'fp/adt/enums',
-                        'fp/adt/sealed',
+                        {
+                            type: 'category',
+                            label: 'Tipos producto',
+                            link: {
+                                type: 'doc',
+                                id: 'fp/adt/product'
+                            },
+                            items: [
+                                "fp/adt/product-langs",
+                            ]
+                        },
+                        {
+                            type: 'category',
+                            label: 'Tipos suma',
+                            link: {
+                                type: 'doc',
+                                id: 'fp/adt/sum/index',
+                            },
+                            items: [
+                                {
+                                    type: 'category',
+                                    label: 'Enumeraciones',
+                                    link: {
+                                        type: 'doc',
+                                        id: 'fp/adt/sum/enums',
+                                    },
+                                    items: [
+                                        "fp/adt/sum/enums-langs",
+                                    ]
+                                },
+                                'fp/adt/sum/sealed',
+                            ],
+                        },
                     ],
                 },
                 "fp/recursion",
@@ -119,8 +172,8 @@ const sidebars: SidebarsConfig = {
             ],
         },
         {
-            type: 'category',
             label: 'Unidad 4: Testing',
+            type: 'category',
             link: {
                 type: 'doc',
                 id: 'testing/index',
@@ -130,7 +183,39 @@ const sidebars: SidebarsConfig = {
                 "testing/exceptions",
                  "testing/ddt",
                 "testing/assertions",
-                "testing/matchers",
+                {
+                    label: 'Matchers',
+                    type: 'category',
+                    link: {
+                        type: 'doc',
+                        id: 'testing/matchers/index',
+                    },
+                    items: [
+                        {
+                            type: 'category',
+                            label: 'Matchers comunes',
+                            link: {
+                                type: 'doc',
+                                id: 'testing/matchers/common',
+                            },
+                            items: [
+                                'testing/matchers/common-langs',
+                            ],
+                        },
+                        {
+                            type: 'category',
+                            label: 'Matchers personalizados',
+                            link: {
+                                type: 'doc',
+                                id: 'testing/matchers/custom',
+                            },
+                            items: [
+                                "testing/matchers/custom-langs",
+                            ]
+                        },
+                        "testing/matchers/composition",
+                    ]
+                },
             ],
         },
         {
@@ -166,7 +251,6 @@ const sidebars: SidebarsConfig = {
                 'oop/infix',
                 'oop/data-classes',
                 'oop/companion',
-                'oop/enums',
                 'oop/sealed',
                 'oop/inheritance-2',
             ],

@@ -28,7 +28,7 @@ const ReadingTime = () => {
         }
     }, []);
 
-    return <p>⏱ Tiempo de lectura: {readingTime} {readingTime === 1 ? 'minuto' : 'minutos'}</p>;
+    return <p>⏱ Dedicación recomendada: {readingTime} {readingTime === 1 ? 'minuto' : 'minutos'}</p>;
 };
 
 export default ReadingTime;

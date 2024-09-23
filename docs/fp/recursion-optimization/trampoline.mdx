@@ -88,33 +88,49 @@ fun <T> runTrampoline(trampoline: Trampoline<T>): T {
 
 Esta función toma un trampolín y evalúa su valor iterativamente. Si encuentra un `Done`, devuelve el resultado. Si encuentra un `More`, ejecuta la continuación y actualiza `current` para continuar la iteración.
 
-El **método del trampolín** es una técnica utilizada para convertir una **recursión de cola** en una iteración, especialmente en lenguajes que no optimizan automáticamente las llamadas recursivas de cola. Esta técnica ayuda a evitar el desbordamiento de pila al transformar una serie de llamadas recursivas en un proceso iterativo. Aunque Kotlin soporta la optimización de recursión de cola mediante `tailrec`, el trampolín es útil en situaciones donde esta optimización no es suficiente o no está disponible.
+:::tip Ejercicio: Factorial con Trampolín
+<Tabs>
+    <TabItem value="Ejercicio" label="Ejercicio">
+        Vamos a implementar el cálculo del **factorial** usando el método del trampolín. Al igual que en el ejemplo de suma, la función factorial utiliza un acumulador para llevar el resultado parcial y evita el desbordamiento de pila mediante continuaciones.
+    </TabItem>
+    <TabItem value="Solución" label="Solución">
+        ```kotlin title="trampoline/src/main/kotlin/cl/ravenhill/factorial/Factorial.kt"
+        fun factorial(n: Int, acc: Int = 1): Trampoline = if (n == 0) {
+            Done(acc)
+        } else {
+            More { factorial(n - 1, acc * n) }
+        }
+        ```
+    </TabItem>
+</Tabs>
+:::
 
+## Ejemplos en otros lenguajes
 <details>
-   <summary>Ejemplos en otros lenguajes</summary>
+    <summary>Ver ejemplos en otros lenguajes</summary>
 
-    ## Ejemplo en TypeScript
+    ### TypeScript
 
     En TypeScript, podemos implementar el método del trampolín utilizando funciones y clausuras (closures). Dado que JavaScript (y TypeScript al compilarse a JavaScript) no optimiza las llamadas recursivas de cola, el trampolín es especialmente útil para evitar desbordamientos de pila.
 
     ```typescript
-    type Trampoline = Done | More;
+    type Trampoline<T> = Done<T> | More<T>;
 
-    interface Done {
+    interface Done<T> {
         type: 'Done';
-        result: number;
+        result: T;
     }
 
-    interface More {
+    interface More<T> {
         type: 'More';
-        continuation: () => Trampoline;
+        continuation: () => Trampoline<T>;
     }
 
-    function Done(result: number): Done {
+    function Done<T>(result: T): Done<T> {
         return { type: 'Done', result };
     }
 
-    function More(continuation: () => Trampoline): More {
+    function More<T>(continuation: () => Trampoline<T>): More<T> {
         return { type: 'More', continuation };
     }
     ```
@@ -122,7 +138,7 @@ El **método del trampolín** es una técnica utilizada para convertir una **rec
     Implementamos una función recursiva para sumar los primeros números naturales usando el trampolín:
 
     ```typescript
-    function sumFirstNaturals(n: number, acc: number = 0): Trampoline {
+    function sumFirstNaturals(n: number, acc: number = 0): Trampoline<number> {
         if (n === 0) {
             return Done(acc);
         } else {
@@ -147,34 +163,38 @@ El **método del trampolín** es una técnica utilizada para convertir una **rec
     ```
 
     ```typescript
-    const result = runTrampoline(sumFirstNaturals(100000)); // Suma de los primeros 100,000 números naturales
-    console.log(result); // Imprime 5000050000
+    const result = runTrampoline(sumFirstNaturals(100000));
+    console.log(result);
     ```
 
-    ## Ejemplo en Python
+    ### Python
 
     En Python, la recursión de cola no es optimizada, por lo que el método del trampolín es útil para evitar el desbordamiento de la pila. Utilizaremos el decorador `@dataclass` y pattern matching para implementar el trampolín.
 
     ```python
     from dataclasses import dataclass
-    from typing import Callable, Union
+    from typing import Callable, TypeVar, Generic
 
-    class Trampoline:
+    T = TypeVar('T')
+
+    class Trampoline(ABC, Generic[T]):
         pass
 
+    # Caso Done con tipo genérico T
     @dataclass
-    class Done(Trampoline):
-        result: int
+    class Done(Trampoline[T]):
+        result: T
 
+    # Caso More con tipo genérico T
     @dataclass
-    class More(Trampoline):
-        continuation: Callable[[], Trampoline]
+    class More(Trampoline[T]):
+        continuation: Callable[[], Trampoline[T]]
     ```
 
     Implementamos la función recursiva usando el trampolín:
 
     ```python
-    def sum_first_naturals(n: int, acc: int = 0) -> Trampoline:
+    def sum_first_naturals(n: int, acc: int = 0) -> Trampoline[int]:
         if n == 0:
             return Done(acc)
         else:
@@ -187,9 +207,6 @@ El **método del trampolín** es una técnica utilizada para convertir una **rec
     def run_trampoline(trampoline: Trampoline) -> int:
         current = trampoline
         while True:
-    def run_trampoline(trampoline: Trampoline) -> int:
-        current = trampoline
-        while True:
             match current:
                 case Done(result=result):
                     return result
@@ -199,51 +216,107 @@ El **método del trampolín** es una técnica utilizada para convertir una **rec
 
     ```python
     result = run_trampoline(sum_first_naturals(100000))
-    print(result)  # Imprime 5000050000
+    print(result)
     ```
 
-    ## Ejemplo en Haskell
+    ### Rust
 
-    En Haskell, aunque soporta la optimización de recursión de cola, podemos ilustrar el uso del trampolín para comprender mejor el concepto.
+    En Rust, podemos implementar el trampolín utilizando enumeraciones (``enum``) y clausuras. Aunque Rust soporta optimización de recursión de cola, el trampolín es útil para casos más complejos.
 
-    ```haskell
-    data Trampoline a = Done a | More (Trampoline a)
+    ```rust
+    enum Trampoline<T> {
+        Done(T),
+        More(Box<dyn FnOnce() -> Trampoline<T>>),
+    }
 
-    sumFirstNaturals :: Int -> Int -> Trampoline Int
-    sumFirstNaturals n acc
-        | n == 0    = Done acc
-        | otherwise = More (sumFirstNaturals (n - 1) (acc + n))
+    fn sum_first_naturals(n: i32, acc: i32) -> Trampoline<i32> {
+        if n == 0 {
+            Trampoline::Done(acc)
+        } else {
+            Trampoline::More(Box::new(move || sum_first_naturals(n - 1, acc + n)))
+        }
+    }
+
+    fn run_trampoline(mut trampoline: Trampoline) -> i32 {
+        loop {
+            match trampoline {
+                Trampoline::Done(result) => return result,
+                Trampoline::More(next) => trampoline = next(),
+            }
+        }
+    }
+
+    // Ejemplo
+    fn main() {
+        let result = run_trampoline(sum_first_naturals(100000, 0));
+        println!("{}", result);  // Imprime 5000050000
+    }
     ```
 
-    ```haskell
-    runTrampoline :: Trampoline a -> a
-    runTrampoline (Done result) = result
-    runTrampoline (More next)   = runTrampoline next
+    ### Clojure
+
+    En **Clojure**, se puede utilizar la función `trampoline` incorporada, que convierte una llamada recursiva en iteración, evitando así desbordamientos de pila.
+
+    ```clojure
+    (defn sum-first-naturals [n acc]
+        (if (zero? n)
+            acc
+            #(sum-first-naturals (dec n) (+ acc n))))
+
+    (def result (trampoline sum-first-naturals 100000 0))
+    (println result)
     ```
 
-    ```haskell
-    main :: IO ()
-    main = print $ runTrampoline (sumFirstNaturals 100000 0)
+    Clojure usa `#()` para definir funciones de continuación de manera diferida, y `trampoline` es invocado para ejecutar las llamadas recursivas.
+
+    ### Ruby
+
+    En **Ruby**, la recursión de cola no es optimizada, por lo que el método del trampolín es útil para evitar el desbordamiento de pila.
+
+    ```ruby
+    class Done
+        def initialize(result)
+            @result = result
+        end
+
+        attr_reader :result
+    end
+
+    class More
+        def initialize(&continuation)
+            @continuation = continuation
+        end
+
+        def continue
+            @continuation.call
+        end
+    end
+
+    def sum_first_naturals(n, acc = 0)
+        if n == 0
+            Done.new(acc)
+        else
+            More.new { sum_first_naturals(n - 1, acc + n) }
+        end
+    end
+
+    def run_trampoline(trampoline)
+        loop do
+            return trampoline.result if trampoline.is_a?(Done)
+            trampoline = trampoline.continue
+        end
+    end
+
+    result = run_trampoline(sum_first_naturals(100000))
+    puts result
     ```
+
+    Aquí usamos clases `Done` y `More`, y la función `run_trampoline` ejecuta la continuación hasta obtener el resultado final.
 </details>
 
-:::tip Ejercicio: Factorial con Trampolín
+## Conclusión
 
-<Tabs>
-    <TabItem value="Ejercicio" label="Ejercicio">
-        Vamos a implementar el cálculo del **factorial** usando el método del trampolín. Al igual que en el ejemplo de suma, la función factorial utiliza un acumulador para llevar el resultado parcial y evita el desbordamiento de pila mediante continuaciones.
-    </TabItem>
-    <TabItem value="Solución" label="Solución">
-        ```kotlin title="trampoline/src/main/kotlin/cl/ravenhill/factorial/Factorial.kt"
-        fun factorial(n: Int, acc: Int = 1): Trampoline = if (n == 0) {
-            Done(acc)
-        } else {
-            More { factorial(n - 1, acc * n) }
-        }
-        ```
-    </TabItem>
-</Tabs>
-:::
+El **método del trampolín** es una técnica utilizada para convertir una **recursión de cola** en una iteración, especialmente en lenguajes que no optimizan automáticamente las llamadas recursivas de cola. Esta técnica ayuda a evitar el desbordamiento de pila al transformar una serie de llamadas recursivas en un proceso iterativo. Aunque Kotlin soporta la optimización de recursión de cola mediante `tailrec`, el trampolín es útil en situaciones donde esta optimización no es suficiente o no está disponible.
 
 <References references={[
     {

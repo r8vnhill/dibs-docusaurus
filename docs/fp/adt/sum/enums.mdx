@@ -1,0 +1,193 @@
+---
+title: Enumeraciones
+---
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import ReadingTime from '../../../../src/components/ReadingTime';
+
+<ReadingTime/>
+
+En **Kotlin**, las enumeraciones se definen usando la palabra clave `enum class`. Esto asegura que solo se puedan asignar valores válidos a una variable, evitando errores como asignar estados mal escritos o no previstos:
+
+```kotlin
+enum class DeliveryState {
+    PENDING, PAID, SHIPPED, DELIVERED, CANCELLED
+}
+```
+
+El uso de **enumeraciones** permite que el código trabaje exclusivamente con los estados predefinidos, mejorando la consistencia y evitando errores por valores inválidos.
+
+## Uso en un `when` exhaustivo
+
+En Kotlin, un `when` es exhaustivo cuando cubre todos los posibles valores de una enumeración. Esto significa que no necesitas un bloque `else` si has manejado todos los estados posibles:
+
+```kotlin
+fun handleOrderState(state: DeliveryState) = when (state) {
+    DeliveryState.PENDING -> println("Order is pending")
+    DeliveryState.PAID -> println("Order is paid")
+    DeliveryState.SHIPPED -> println("Order is shipped")
+    DeliveryState.DELIVERED -> println("Order is delivered")
+    DeliveryState.CANCELLED -> println("Order is cancelled")
+}
+```
+
+Aquí tienes un ejemplo de cómo usar la función:
+
+```kotlin
+fun main() {
+    handleOrderState(DeliveryState.PENDING)
+    handleOrderState(DeliveryState.PAID)
+}
+```
+
+## Ventajas de las Enumeraciones
+
+1. **Validación Automática de Valores**: Las enumeraciones garantizan que solo se asignen valores predefinidos y válidos a las variables, eliminando el riesgo de errores debido a entradas incorrectas o mal escritas.
+2. **Legibilidad del Código**: Proporcionan nombres claros y representativos para un conjunto fijo de valores, lo que facilita la comprensión del código.
+3. **Mantenibilidad**: Centralizan los estados válidos en un solo lugar, lo que facilita las modificaciones y actualizaciones del código, reduciendo el riesgo de inconsistencias.
+
+## Métodos en Enumeraciones
+
+Las enumeraciones en Kotlin pueden contener tanto métodos abstractos como concretos, lo que permite que cada valor de la enumeración tenga su propia implementación personalizada, al mismo tiempo que comparten comportamientos comunes.
+
+```kotlin
+enum class DeliveryState {
+    PENDING {
+        override fun signal() = "Order is pending"
+    },
+    PAID {
+        override fun signal() = "Order is paid"
+    },
+    SHIPPED {
+        override fun signal() = "Order is shipped"
+    },
+    DELIVERED {
+        override fun signal() = "Order is delivered"
+    },
+    CANCELLED {
+        override fun signal() = "Order is cancelled"
+    };
+
+    abstract fun signal(): String
+
+    // Método común que determina si el estado es final
+    fun isFinalState() = this == DELIVERED || this == CANCELLED
+}
+```
+
+En este ejemplo:
+- Cada valor de la enumeración proporciona su propia implementación del método abstracto `signal`, devolviendo un mensaje específico.
+- El método concreto `isFinalState` está disponible para todos los valores de la enumeración y se utiliza para verificar si el estado es final (es decir, `DELIVERED` o `CANCELLED`).
+
+Este enfoque permite tener tanto comportamientos específicos como comunes en una enumeración.
+
+```kotlin
+fun handleOrderState(state: DeliveryState) = if (state.isFinalState()) {
+    println("Final state: ${state.signal()}")
+} else {
+    println("Non-final state: ${state.signal()}")
+}
+```
+
+En esta función, dependiendo del estado del pedido, se imprime si está en un estado final o no, utilizando los métodos `signal` e `isFinalState`.
+
+## Funciones Útiles en Enumeraciones
+
+1. **``entries``**: Puedes acceder a todas las entradas de la enumeración con `entries`:
+    ```kotlin
+    fun listOrderStates() = DeliveryState.entries.forEach { println(it) }
+    ```
+
+2. **``valueOf``**: Puedes buscar un valor de la enumeración por su nombre con `valueOf`, aunque debes manejar posibles excepciones si el valor no existe:
+    ```kotlin
+    fun getOrderState(name: String) = DeliveryState.valueOf(name)
+    ```
+
+## Limitaciones de las Enumeraciones
+
+1. **Datos Asociados Limitados**: Las enumeraciones son adecuadas para representar un conjunto fijo de valores, pero tienen limitaciones cuando se requiere manejar información dinámica o extensa para cada valor. Si necesitas asociar datos específicos a cada valor, estos deben definirse de manera estática, lo que puede no ser ideal para casos con datos más complejos o cambiantes.
+
+2. **Manejo de Estados Complejos**: Para situaciones en las que el estado requiere un comportamiento o estructura más detallada, las enumeraciones pueden volverse difíciles de gestionar y mantener. En estos casos, recurrir a alternativas como las **clases selladas** puede ofrecer una solución más flexible y extensible, facilitando el manejo de estados más elaborados.
+
+:::tip Ejercicio: Interfaz y Enumeración de Acciones del Juego
+<Tabs>
+    <TabItem value="Enunciado" label="Enunciado">
+        Implementa una interfaz `GameAction`, una clase `Player` y una enumeración `GameEvent` que representen las
+        acciones de un juego.
+        - **Interfaz `GameAction`**:
+            - Define una interfaz `GameAction` que incluya un método `execute(player: Player)`.
+            - El método `execute` debe afectar al estado de un jugador de acuerdo con el tipo de evento.
+        - **Clase `Player`**:
+            - Crea una clase `Player` que contenga dos propiedades: `healthPoints` y `manaPoints`.
+            - La clase debe incluir métodos para aumentar y disminuir los puntos de salud (`healthPoints`) y los puntos de
+        maná (`manaPoints`) en una cantidad dada.
+        - **Enumeración `GameEvent`**:
+            - Define una enumeración `GameEvent` que implemente `GameAction`.
+            - La enumeración debe incluir los siguientes tipos de eventos:
+                - `HEALTH_BOOST`: Incrementa los puntos de salud del jugador.
+                - `MANA_DRAIN`: Disminuye los puntos de maná del jugador.
+                - `POISON`: Disminuye los puntos de salud del jugador.
+                - `ENERGY_SURGE`: Incrementa los puntos de maná del jugador.
+    </TabItem>
+    <TabItem value="Solución" label="Solución">
+        ```kotlin
+        class Player(health: Int, mana: Int) {
+            var health = health
+                private set
+            var mana = mana
+                private set
+
+            fun increaseHealth(amount: Int) {
+                health += amount
+            }
+
+            fun decreaseHealth(amount: Int) {
+                health -= amount
+            }
+
+            fun increaseMana(amount: Int) {
+                mana += amount
+            }
+
+            fun decreaseMana(amount: Int) {
+                mana -= amount
+            }
+        }
+        ```
+
+
+        ```kotlin
+        enum class GameEvent : GameAction {
+            HEALTH_BOOST {
+                override fun execute(player: Player) {
+                    player.increaseHealth(20)
+                }
+            },
+            MANA_DRAIN {
+                override fun execute(player: Player) {
+                    player.decreaseMana(15)
+                }
+            },
+            POISON {
+                override fun execute(player: Player) {
+                    player.decreaseHealth(10)
+                }
+            },
+            ENERGY_SURGE {
+                override fun execute(player: Player) {
+                    player.increaseMana(20)
+                }
+            };
+        }
+        ```
+    </TabItem>
+</Tabs>
+:::
+
+## ¿Con qué nos vamos?
+
+En resumen, las **enumeraciones en Kotlin** ofrecen una forma poderosa de gestionar un conjunto fijo de valores predefinidos, como estados o eventos en un sistema. Su uso garantiza la validez de los valores, mejora la legibilidad del código y simplifica la mantenibilidad. Además, permiten comportamientos personalizados a través de métodos abstractos y concretos dentro de la misma enumeración.
+
+Las **enumeraciones** son útiles para situaciones en las que los valores son limitados y conocidos de antemano. Sin embargo, en casos que requieren mayor flexibilidad o estados más complejos, las **clases selladas** pueden ser una alternativa más adecuada.
+
+Finalmente, hemos explorado la implementación de un sistema de **eventos de juego** usando enumeraciones, lo que demuestra cómo se pueden aplicar en casos de uso práctico para manejar acciones específicas que afectan el estado de un jugador.
