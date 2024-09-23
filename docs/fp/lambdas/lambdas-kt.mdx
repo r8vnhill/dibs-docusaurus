@@ -1,0 +1,248 @@
+---
+title: Funciones lambda
+---
+
+import References from "../../../src/components/ReferencesComponent";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import ReadingTime from '../../../src/components/ReadingTime';
+
+<ReadingTime />
+
+Las **funciones lambda**, también conocidas como funciones anónimas, son una forma concisa y flexible de representar funciones **sin un nombre explícito**. Son especialmente útiles cuando necesitamos una función que se puede pasar como argumento, o cuando queremos escribir una función de manera breve sin necesidad de definirla previamente. En su forma más simple, una función lambda es un **bloque de código sin nombre** que puede ser asignado a una variable o pasado como parámetro a otras funciones, permitiendo una gran flexibilidad en la escritura de código.
+
+:::info Funciones anónimas en _Kotlin_
+En **_Kotlin_**, las **funciones anónimas** y las **lambdas** son similares, pero no exactamente iguales. La diferencia radica principalmente en la **sintaxis** y en cómo se manejan ciertas características como los retornos. Sin embargo, ambas pueden usarse de manera intercambiable en la mayoría de los casos.
+Las funciones anónimas tienen una sintaxis más "tradicional", similar a una función regular, y permite declarar el tipo de retorno. Ejemplo:
+
+```kotlin
+val sumar = fun(a: Int, b: Int): Int {
+    return a + b
+}
+```
+
+En la práctica usar una u otra será un tema de preferencia, pero es más común ver **lambdas** en el código de _Kotlin_.
+:::
+
+### Definición
+
+Una **función lambda** es una función sin nombre que puede tomar argumentos y devolver un valor. Es una instancia de un tipo de función que puede ser tratada como un valor. A menudo se usan para expresar bloques de código que se ejecutarán más adelante, como en el caso de funciones de orden superior que toman funciones como parámetros, la evaluación perezosa o computaciones diferidas.
+
+La sintaxis general de una función lambda en Kotlin es:
+
+```kotlin
+val lambdaName: (T, S, ...) -> R = { t, s, ... -> body }
+```
+
+Donde:
+- **``lambdaName``**: Nombre de la variable que almacena la función lambda.
+- **``T, S, ...``**: Tipos de los argumentos de la función lambda (``...`` indica que puede haber más de un argumento, pero se presenta como pseudocódigo y no es sintáxis válida).
+- **``R``**: Tipo de retorno de la función lambda.
+- **``t, s, ...``**: Nombres de los argumentos de la función lambda (nuevamente ``...`` indica que puede haber más de un argumento, pero es pseudocódigo).
+- **``body``**: Cuerpo de la función lambda.
+
+Por ejemplo, si quisiéramos definir una función lambda que suma dos números:
+
+```kotlin
+val sumar: (Int, Int) -> Int = { a, b -> a + b }
+```
+
+Podemos llamar a esta lambda de la siguiente manera:
+
+```kotlin
+val resultado = sumar(5, 10)  // 15
+```
+
+<details>
+    <summary>Breve historia y teoría</summary>
+
+    El concepto de **funciones lambda** proviene del **Cálculo Lambda**, una formalización matemática desarrollada por Alonzo Church en la década de 1930. Esta notación sentó las bases para la **programación funcional**, que influyó en el diseño de muchos lenguajes modernos como Kotlin, Scala, JavaScript y Python.
+
+    El **Cálculo Lambda** introdujo una manera de definir y aplicar funciones de manera concisa, lo que permitió que los lenguajes de programación funcional adoptaran funciones como ciudadanos de primera clase. Esto significa que las funciones pueden ser asignadas a variables, pasadas como argumentos o retornadas desde otras funciones.
+
+    ### Elementos clave del Cálculo Lambda
+    1. **Variable ($x$)**: Un símbolo que representa un parámetro o valor.
+    2. **Abstracción ($\lambda x.M$)**: Una función anónima que toma un parámetro $x$ y evalúa una expresión $M$.
+    3. **Aplicación ($M\ N$)**: La aplicación de una función $M$ a un argumento $N$. Tanto $M$ como $N$ pueden ser variables, abstracciones u otras aplicaciones.
+
+    ### Operaciones de reducción
+    - **$\alpha$-conversión**: $(\lambda x.M[x] \to \lambda y.M[y])$ — Cambiar el nombre de un parámetro.
+    - **$\beta$-reducción**: $(\lambda x.M)N \to M[x := N]$ — Sustituir el parámetro de la función por el argumento en su cuerpo.
+
+    Kotlin adoptó las funciones lambda para ofrecer una **sintaxis concisa y flexible** que facilita el uso de funciones de orden superior y la programación funcional, eliminando la necesidad de definir explícitamente funciones con nombre.
+
+    :::note 🌭 Turing Completo 🌭
+    El Cálculo Lambda es **Turing completo**, lo que significa que puede expresar cualquier algoritmo computacional. Este hecho lo convierte en un modelo de computación poderoso y versátil.
+    :::
+</details>
+
+
+### Lambdas en _Kotlin_ con funciones de orden superior
+
+Las **funciones lambda** son especialmente útiles cuando se combinan con **funciones de orden superior**.
+
+A continuación, veremos un ejemplo usando `filter`, una función de orden superior que toma una lambda como argumento:
+
+```kotlin
+val numeros = listOf(1, 2, 3, 4, 5)
+// Aplicamos filter para obtener solo los números pares
+val numerosPares = filter(numeros) { it % 2 == 0 }
+println(numerosPares)  // Output: [2, 4]
+```
+
+En este caso, la función `filter` recibe una lambda que evalúa si un número es par.
+
+:::info Trailing lambda
+En **Kotlin**, si el último parámetro de una función es una lambda, es buena práctica mover la lambda fuera de los paréntesis. Esto se conoce como **trailing lambda** y mejora la legibilidad del código. Las siguientes dos llamadas son equivalentes:
+
+```kotlin
+val numerosPares = filter(numeros, { it % 2 == 0 })
+val numerosPares = filter(numeros) { it % 2 == 0 }
+```
+:::
+
+### Aplicando lambdas en funciones de orden superior
+
+Puedes crear tus propias funciones de orden superior que acepten lambdas como parámetros. Aquí hay un ejemplo simple:
+
+```kotlin
+fun procesarEnteros(a: Int, b: Int, operacion: (Int, Int) -> Int) =
+    operacion(a, b)
+
+val suma = procesarEnteros(3, 4) { x, y -> x + y }
+println(suma)  // Output: 7
+```
+
+En este ejemplo:
+- La función `procesarEnteros` acepta dos enteros y una lambda que define cómo operarlos.
+- Al llamar a `procesarEnteros`, proporcionamos una lambda que suma los dos números.
+
+
+## Destructuring declarations
+
+Las **declaraciones de desestructuración** permiten descomponer objetos complejos en componentes individuales, asignándolos a variables separadas en una sola declaración. Esto simplifica la extracción de valores de estructuras como **pares**, **listas**, **diccionarios** o **tipos de datos personalizados**, facilitando su manipulación.
+
+### Ventajas
+- **Sintaxis concisa**: Permite extraer varios valores de un objeto en una única línea de código.
+- **Versátil**: Se puede utilizar en diferentes contextos, como asignaciones de variables, bucles de iteración y parámetros de funciones.
+- **Legibilidad**: Mejora la claridad del código al eliminar la necesidad de múltiples llamadas a getters.
+
+### Ejemplo
+
+```kotlin
+data class Person(val name: String, val age: Int)
+
+val person = Person("Alice", 29)
+val (name, age) = person
+println("Name: $name, Age: $age")  // Output: Name: Alice, Age: 29
+```
+
+En este ejemplo, descomponemos el objeto `person` en sus componentes `name` y `age` utilizando la sintaxis de desestructuración: `val (component1, component2, ...)`. Esta técnica se puede aplicar en diversos escenarios, mejorando la simplicidad y eficiencia en la manipulación de datos.
+
+```kotlin
+val (first, second) = listOf(1, 2)  // También funciona con listas
+```
+
+### Under the Hood
+
+En Kotlin, todas las **data classes** automáticamente declaran operadores `componentN` para cada una de las variables de la clase, lo que permite la desestructuración de sus propiedades de manera sencilla. Sin embargo, también es posible personalizar este comportamiento en clases no marcadas como `data`, definiendo manualmente los métodos `componentN`.
+
+Por ejemplo, podemos desestructurar una clase personalizada como `Point` definiendo los operadores correspondientes:
+
+```kotlin
+class Point(val x: Int, val y: Int) {
+    operator fun component1() = x
+    operator fun component2() = y
+}
+
+val (x, y) = Point(10, 20)
+println("x: $x, y: $y")  // Output: x: 10, y: 20
+```
+
+Este enfoque te permite controlar explícitamente cómo se descomponen las propiedades de la clase, incluso en aquellas que no son `data classes`.
+
+:::tip Ejercicio
+<Tabs>
+    <TabItem value={"Enunciado"} label={"Enunciado"}>
+        ¿Cuáles son los tipos de ``head`` y ``tail``?
+
+        1. ``val (head, tail) = listOf("D.Gray-Man", "Made in Abyss")``
+        2. ``val (head, tail) = listOf("D.Gray-Man", "Made in Abyss", "FLCL")``
+    </TabItem>
+    <TabItem value={"Solución"} label={"Solución"}>
+        1. En el primer caso, ``head`` es de tipo ``String`` y ``tail`` es de tipo ``String``.
+        2. En el segundo caso, ``head`` es de tipo ``String`` y ``tail`` es de tipo ``List<String>``.
+    </TabItem>
+</Tabs>
+:::
+
+### Desestructuración en Lambdas
+
+En Kotlin, una lambda puede desestructurar cualquier estructura que tenga definidos sus operadores `componentN`. Esto permite acceder fácilmente a los valores de un objeto directamente dentro de la lambda, mejorando la legibilidad y la simplicidad del código.
+
+```kotlin
+val sumPair = { (a, b): Pair<Int, Int> -> a + b }
+val increasePairBy = { (a, b): Pair<Int, Int>, n: Int -> Pair(a + n, b + n) }
+
+println(sumPair(3 to 4))  // Output: 7
+println(increasePairBy(3 to 4, 2))  // Output: (5, 6)
+```
+
+En estos ejemplos:
+- `sumPair` desestructura el par `(a, b)` y devuelve la suma de sus componentes.
+- `increasePairBy` desestructura el par `(a, b)` y devuelve un nuevo par donde ambos valores han sido incrementados por `n`.
+
+Este uso de desestructuración en lambdas es particularmente útil cuando trabajamos con estructuras de datos más complejas y deseamos acceder a sus valores de manera directa y concisa.
+
+:::warning Estructuras anidadas
+La desestructuración en _Kotlin_ no es compatible con estructuras anidadas, como pares de pares o listas de pares. Para descomponer estructuras anidadas, es necesario realizar la desestructuración de forma manual.
+:::
+
+:::tip Ejercicio
+<Tabs>
+    <TabItem value={"Enunciado"} label={"Enunciado"}>
+        Indica el número de parámetros que recibe cada una de las siguientes lambdas:
+
+        1. ``val f1 = { a: Int, b: Int -> /* ... */ }``
+        2. ``val f2 = { (a, b): Pair<Int, Int> -> /* ... */ }``
+        3. ``val f3 = { a: Int, (b, c): Pair<Int, Int> -> /* ... */ }``
+        4. ``val f4 = { (a, b): Pair<Int, Int>, (c, d): Pair<Int, Int> -> /* ... */ }``
+    </TabItem>
+    <TabItem value={"Solución"} label={"Solución"}>
+        1. ``f1`` recibe dos parámetros: ``a`` y ``b``.
+        2. ``f2`` recibe un parámetro de tipo ``Pair<Int, Int>``.
+        3. ``f3`` recibe dos parámetros: un entero ``a`` y un par de enteros ``b`` y ``c``.
+        4. ``f4`` recibe dos pares de enteros.
+    </TabItem>
+</Tabs>
+:::
+
+## En conclusión
+
+Las **funciones lambda** en Kotlin ofrecen una forma concisa y poderosa de trabajar con funciones como valores, lo que facilita el uso de la **programación funcional** y mejora la expresividad del código. Junto con características como las **declaraciones de desestructuración** y su integración en **funciones de orden superior**, las lambdas permiten un código más limpio y flexible. Además, su origen en el **Cálculo Lambda** refuerza su importancia como una herramienta versátil y fundamental en el desarrollo moderno. La capacidad de pasar, almacenar y devolver funciones, junto con la concisión y claridad de las lambdas, hace que sean un recurso invaluable en Kotlin, promoviendo un estilo de programación más declarativo y expresivo.
+
+<References references={[
+    {
+        title: "5. Programming with Lambdas",
+        type: "book",
+        bookTitle: "Kotlin in Action",
+        pages: "103–132",
+        author: "Dmitry Jemerov, Svetlana Isakova",
+        publisher: "Manning Publications Co",
+        year: "2017",
+    },
+    {
+        title: "Lambda Calculus",
+        type: "web",
+        accessedDate: "September 23, 2024",
+        url: "https://en.wikipedia.org/w/index.php?title=Lambda_calculus&oldid=1245353579",
+        siteOrAuthor: "Wikipedia",
+    },
+    {
+        title: "Higher-Order Functions and Lambdas | Kotlin",
+        type: "web",
+        accessedDate: "September 23, 2024",
+        url: "https://kotlinlang.org/docs/lambdas.html",
+        siteOrAuthor: "Kotlin Help",
+    }
+]} />

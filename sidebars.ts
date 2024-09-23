@@ -148,13 +148,34 @@ const sidebars: SidebarsConfig = {
                                         "fp/adt/sum/enums-langs",
                                     ]
                                 },
-                                'fp/adt/sum/sealed',
+                                {
+                                    type: 'category',
+                                    label: 'Clases selladas',
+                                    link: {
+                                        type: 'doc',
+                                        id: 'fp/adt/sum/sealed',
+                                    },
+                                    items: [
+                                        "fp/adt/sum/sealed-langs",
+                                    ]
+                                },
                             ],
                         },
                     ],
                 },
                 "fp/recursion",
                 "fp/hof",
+                {
+                    label: 'Funciones lambda',
+                    type: 'category',
+                    link: {
+                        type: 'doc',
+                        id: 'fp/lambdas/lambdas-kt'
+                    },
+                    items: [
+                        "fp/lambdas/lambdas-langs",
+                    ]
+                },
                 "fp/pure",
                 {
                     type: 'category',
@@ -236,22 +257,9 @@ const sidebars: SidebarsConfig = {
                 id: 'oop/index',
             },
             items: [
-                'oop/objects',
-                'oop/classes',
-                'oop/lateinit',
-                'oop/visibility',
-                'oop/inheritance',
-                'oop/constructors',
-                'oop/interfaces',
-                'oop/abstract-classes',
-                'oop/open-closed',
-                'oop/operator-overload',
-                'oop/properties',
                 'oop/extension',
                 'oop/infix',
-                'oop/data-classes',
                 'oop/companion',
-                'oop/sealed',
                 'oop/inheritance-2',
             ],
         },

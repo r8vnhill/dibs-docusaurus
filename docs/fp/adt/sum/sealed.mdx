@@ -1,7 +1,176 @@
 ---
-title: Clases selladas
+title: Clases Selladas
 ---
 
-import ReadingTime from "../../../../src/components/ReadingTime";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import ReadingTime from "../../../../src/components/ReadingTime"
 
 <ReadingTime/>
+
+Las **clases e interfaces selladas** son clases abstractas que restringen la herencia a un conjunto específico de subclases, controlando las posibles extensiones. Esto las hace ideales para escenarios donde se quiere limitar las variantes posibles, como cuando se modelan estados finitos o se define una jerarquía cerrada de tipos.
+
+### Características Clave
+
+- **Clases e Interfaces Selladas**:
+    - **Propósito**: Controlar y restringir la jerarquía de tipos. Solo las subclases definidas en el mismo paquete y módulo pueden extenderlas.
+    - **Restricciones**: Las subclases deben estar dentro del mismo paquete y módulo que la clase o interfaz sellada.
+
+    - **Beneficios**:
+        - **Seguridad de Tipos**: Garantiza que todas las posibles subclases estén controladas y conocidas en tiempo de compilación.
+        - **Patrones Exhaustivos**: Facilita el uso de `when` exhaustivos, mejorando la legibilidad y evitando errores de estado no manejados.
+        - **Mantenimiento**: Simplifica el mantenimiento del código, ya que no se puede extender la clase fuera de su contexto definido.
+
+### Ejemplo: Sistema de Pagos
+
+```kotlin
+sealed interface Payment
+data class CreditCard(val number: String) : Payment
+data class Cash(val amount: Int) : Payment
+data object Unpaid : Payment
+```
+
+Aquí, `Payment` es una interfaz sellada que permite solo tres implementaciones posibles: `CreditCard`, `Cash` y `Unpaid`. Este enfoque garantiza que, al manejar pagos, siempre sabrás qué opciones pueden estar presentes.
+
+### Tercer Enfoque: Modelado de Estados con Clases Selladas
+
+Las clases selladas también son muy útiles para modelar estados de un sistema. Veamos un ejemplo donde se modelan los estados de un pedido en una tienda en línea:
+
+```kotlin
+sealed class DeliveryState {
+    abstract fun signal(): String
+    open fun isFinalState() = false
+}
+
+data object Pending : DeliveryState() {
+    override fun signal() = "Order is pending"
+}
+
+data object Paid : DeliveryState() {
+    override fun signal() = "Order is paid"
+}
+
+data class Shipped(val trackingNumber: String) : DeliveryState() {
+    override fun signal() = "Order is shipped with tracking number $trackingNumber"
+}
+
+data object Delivered : DeliveryState() {
+    override fun signal() = "Order is delivered"
+    override fun isFinalState() = true
+}
+
+data class Cancelled(val reason: String) : DeliveryState() {
+    override fun signal() = "Order is cancelled because $reason"
+    override fun isFinalState() = true
+}
+```
+
+### Manejo con `when` Exhaustivo
+
+El uso de un `when` exhaustivo asegura que todos los posibles estados sean manejados, lo que ayuda a evitar errores en tiempo de ejecución.
+
+```kotlin
+fun handleOrderState(state: DeliveryState) = when (state) {
+    is Pending -> println(state.signal())
+    is Paid -> println(state.signal())
+    is Shipped -> println(state.signal())
+    is Delivered -> println(state.signal())
+    is Cancelled -> println(state.signal())
+}
+```
+
+### Ejemplo de Uso
+
+```kotlin
+fun main() {
+    handleOrderState(Pending)
+    handleOrderState(Paid)
+    handleOrderState(Shipped("123"))
+    handleOrderState(Delivered)
+    handleOrderState(Cancelled("no stock"))
+}
+```
+
+### Uso de Reflexión con Clases Selladas
+
+Para obtener las subclases de una clase o interfaz sellada en Kotlin, puedes usar reflexión. Para ello, es necesario añadir la dependencia de reflexión en el archivo `build.gradle.kts`:
+
+```kotlin
+dependencies {
+    implementation(kotlin("reflect"))
+}
+```
+
+Y luego puedes listar las subclases selladas:
+
+```kotlin
+fun listOrderStates() = DeliveryState::class.sealedSubclasses
+```
+
+:::tip Ejercicio: Sistema Multimedia
+<Tabs>
+    <TabItem value="Ejercicio" label="Ejercicio">
+
+        Desarrolla un sistema que maneje distintos tipos de contenido multimedia. Define una interfaz sellada `Media`
+        que represente diferentes tipos de contenido, como `Music` y `Video`. La interfaz debe incluir dos métodos:
+        `play()` y `pause()`.
+
+        Instrucciones:
+
+        1. **Interfaz `Media`**:
+            - Define una interfaz sellada `Media` con los métodos `play()` y `pause()`.
+
+        2. **Clases `Music` y `Video`**:
+            - Implementa dos clases: `Music`, que tendrá un método adicional `skip()`, y `Video`, con un método
+            `fastForward()`.
+
+        ### Ejemplo de Uso
+
+        ```kotlin
+        fun main() {
+            val mediaList: List<Media> = listOf(
+                Music("Ace of Spades", "Motörhead"),
+                Music("MANIAC", "Stray Kids"),
+                Video("Le Locataire", duration = 125)
+            )
+
+            mediaList.forEach {media ->
+                media.play()
+                media.pause()
+
+                when (media) {
+                    is Music -> media.skip()
+                    is Video -> media.fastForward()
+                }
+            }
+
+            println("Media types: ${listMediaTypes()}")
+        }
+        ```
+    </TabItem>
+    <TabItem value="Solución" label="Solución">
+        ```kotlin
+        sealed interface Media {
+            fun play()
+            fun pause()
+        }
+
+        data class Music(val title: String, val artist: String) : Media {
+            override fun play() = println("Playing $title by $artist")
+
+            override fun pause() = println("Pausing $title by $artist")
+
+            fun skip() = println("Skipping $title by $artist")
+        }
+
+        data class Video(val title: String, val duration: Int) : Media {
+            override fun play() = println("Playing $title")
+
+            override fun pause() = println("Pausing $title")
+
+            fun fastForward() = println("Fast forwarding $title")
+        }
+        ```
+    </TabItem>
+</Tabs>
+:::
