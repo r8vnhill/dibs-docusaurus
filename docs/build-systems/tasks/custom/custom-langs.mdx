@@ -1,0 +1,93 @@
+---
+title: Tareas personalizadas en otros frameworks
+---
+
+## JVM: Maven
+
+En Maven, las tareas personalizadas equivalentes se logran mediante **plugins**. Los plugins en Maven son responsables de todas las tareas de construcción, y las tareas personalizadas se definen agregando configuraciones específicas de los plugins dentro del archivo `pom.xml`. A diferencia de Gradle, Maven no tiene un mecanismo directo para registrar tareas personalizadas de manera dinámica, como `tasks.register` en Gradle. Aquí se usa el concepto de "objetivos" de los plugins.
+
+### Ejemplo: Crear una tarea para imprimir un mensaje
+
+En Maven, podrías usar el **Maven Antrun Plugin** para ejecutar scripts personalizados como una tarea que imprima un mensaje.
+
+```xml
+<project>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <id>greet</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo message="Hello, Maven!"/>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+En este ejemplo, hemos configurado una tarea que se ejecuta durante la fase de `validate`, similar a cómo en Gradle definimos una tarea con `tasks.register`.
+
+#### Similitudes
+
+- Ambos frameworks permiten definir acciones personalizadas que pueden ejecutarse durante el ciclo de vida del proyecto (como el ciclo de vida de Gradle).
+- En ambos, puedes definir tareas que impriman mensajes o realicen acciones específicas antes o después de la ejecución de otras tareas.
+
+#### Diferencias
+
+- **Gradle** permite registrar tareas dinámicamente con `tasks.register`, mientras que **Maven** requiere la configuración previa de objetivos dentro de plugins específicos.
+- En **Maven**, las tareas se ejecutan en fases predefinidas del ciclo de vida (como `validate`, `compile`, etc.), mientras que en **Gradle**, las tareas pueden ser configuradas y encadenadas más dinámicamente con `dependsOn` u otras propiedades.
+
+### Ejemplo: Dependencias entre Tareas en Maven
+
+Para configurar dependencias entre tareas en Maven, puedes usar el concepto de fases y objetivos. Por ejemplo, si quisieras que una tarea se ejecute después de compilar el proyecto, configurarías el plugin en la fase `compile` o posterior.
+
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.8</version>
+            <executions>
+                <execution>
+                    <id>greet-after-compile</id>
+                    <phase>compile</phase>
+                    <goals>
+                        <goal>run</goal>
+                    </goals>
+                    <configuration>
+                        <tasks>
+                            <echo message="Compilation is done!"/>
+                        </tasks>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+```
+
+#### Similitudes
+
+- Tanto en Gradle como en Maven se puede definir la secuencia de ejecución de tareas, asegurando que una tarea dependa de otra.
+
+#### Diferencias
+
+- En **Gradle**, se utiliza `dependsOn` para establecer dependencias directas entre tareas específicas, mientras que en **Maven** las dependencias entre tareas se gestionan a través de las fases del ciclo de vida y los objetivos de los plugins.
+
+### Tareas Basadas en Otras Tareas en Maven
+
+En lugar de extender o crear nuevas tareas basadas en otras como en Gradle, en **Maven** puedes usar configuraciones dentro del mismo plugin para realizar múltiples acciones. Sin embargo, la flexibilidad es más limitada en comparación con Gradle, ya que no puedes crear tareas tan dinámicas o complejas sin recurrir a la creación de un plugin personalizado.

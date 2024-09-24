@@ -66,7 +66,17 @@ const sidebars: SidebarsConfig = {
                     },
                     items: [
                         'build-systems/tasks/default',
-                        'build-systems/tasks/custom',
+                        {
+                            label: 'Tareas personalizadas',
+                            type: 'category',
+                            link: {
+                                type: 'doc',
+                                id: 'build-systems/tasks/custom/custom-kt',
+                            },
+                            items: [
+                                'build-systems/tasks/custom/custom-langs',
+                            ],
+                        },
                         'build-systems/tasks/classes',
                     ],
                 },
