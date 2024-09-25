@@ -1,0 +1,160 @@
+---
+title: Matchers compuestos
+---
+import Solution from "../../../../src/components/exercise/Solution";
+import Hint from "../../../../src/components/exercise/Hint";
+import Exercise from "../../../../src/components/exercise/Exercise";
+import References from "../../../../src/components/ReferencesComponent";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import GithubRepoLink from "../../../../src/components/GithubRepoLink";
+import ReadingTime from "../../../../src/components/ReadingTime";
+
+<ReadingTime/>
+<GithubRepoLink user={"r8vnhill"} repo={"assertions-kt"}/>
+
+<br/>
+Los **matchers** se pueden combinar para crear reglas más complejas mediante la **composición** de otros matchers más simples. Esto permite verificar condiciones complejas de forma declarativa y legible.
+
+Existen dos operaciones lógicas clave para componer matchers:
+
+- **Suma lógica** (`Matcher.any` o `or`): Se satisface si al menos uno de los matchers es verdadero.
+- **Producto lógico** (`Matcher.all` o `and`): Se satisface solo si todos los matchers son verdaderos.
+
+### Ejemplo de composición de Matchers
+
+Vamos a implementar un matcher para verificar que una contraseña es "fuerte". En este contexto, una contraseña fuerte debe:
+
+- Contener al menos un número.
+- Contener al menos una letra mayúscula.
+- Contener al menos una letra minúscula.
+- Tener al menos 16 caracteres.
+
+<Tabs>
+    <TabItem value="and" label="and">
+        ```kotlin title="matchers/src/test/kotlin/cl/ravenhill/matchers/BeStrongPassword.kt"
+        package cl.ravenhill.matchers
+
+        import io.kotest.matchers.and
+        import io.kotest.matchers.string.contain
+        import io.kotest.matchers.string.containADigit
+        import io.kotest.matchers.string.haveMinLength
+
+        val beStrongPassword = containADigit() and
+                contain("[A-Z]".toRegex()) and
+                contain("[a-z]".toRegex()) and
+                haveMinLength(16)
+        ```
+    </TabItem>
+    <TabItem value="all" label="all">
+        ```kotlin title="matchers/src/test/kotlin/cl/ravenhill/matchers/BeStrongPassword.kt"
+        package cl.ravenhill.matchers
+
+        import io.kotest.matchers.Matcher
+        import io.kotest.matchers.compose.all
+        import io.kotest.matchers.string.contain
+        import io.kotest.matchers.string.containADigit
+        import io.kotest.matchers.string.haveMinLength
+
+        val beStrongPassword = Matcher.all(
+            containADigit(),
+            contain("[A-Z]".toRegex()),
+            contain("[a-z]".toRegex()),
+            haveMinLength(16)
+        )
+        ```
+    </TabItem>
+</Tabs>
+
+### Uso en las pruebas
+
+Una vez que hemos definido el matcher `beStrongPassword`, podemos utilizarlo en nuestras pruebas para asegurarnos de que las contraseñas cumplen con los requisitos de fortaleza:
+
+```kotlin title="matchers/src/test/kotlin/cl/ravenhill/matchers/BeStrongPasswordTest.kt"
+package cl.ravenhill.matchers
+
+import io.kotest.core.spec.style.FreeSpec
+import io.kotest.matchers.should
+
+class StrongPasswordTest : FreeSpec({
+    "A strong password" - {
+        "should contain a digit, uppercase and lowercase letters, and at least 16 characters" {
+            "Password1AaBbCcDdEeFf" should beStrongPassword
+        }
+    }
+})
+```
+
+La composición de matchers es una herramienta poderosa que permite crear validaciones complejas de manera concisa y reutilizable.
+
+<Exercise title={"Validación de Correo Electrónico"}>
+    Crea un matcher compuesto que valide si una cadena es un correo electrónico válido. Un correo válido debe:
+
+    1. Contener un símbolo `@`.
+    2. Tener al menos un carácter antes del `@`.
+    3. Tener al menos un carácter después del `@` y antes del `.`.
+    4. Terminar con un dominio que tenga al menos 2 caracteres después del `.`.
+
+    <Hint hints={[
+        <>
+            Puedes utilizar <code>indexOf: String.(String) -&gt; Int</code> para encontrar la posición de un carácter en una cadena.
+        </>,
+        <>
+            Puedes utilizar <code>substringAfterLast: String.(String) -&gt; String</code> para obtener la parte de una cadena después de la última ocurrencia de un carácter.
+        </>,
+        <>
+            Algunos matchers útiles son <code>contain</code> y <code>haveLengthAtLeast</code>.
+        </>,
+    ]}/>
+
+    <Solution>
+        ```kotlin title="matchers/src/test/kotlin/cl/ravenhill/matchers/BeValidEmail.kt"
+        package cl.ravenhill.matchers
+
+        import io.kotest.matchers.Matcher
+        import io.kotest.matchers.MatcherResult
+        import io.kotest.matchers.and
+        import io.kotest.matchers.string.contain
+
+        fun beValidEmail(): Matcher<String> {
+            val containsAt = contain("@")
+            val hasTextBeforeAt = Matcher<String> { value ->
+                MatcherResult(
+                    value.indexOf("@") > 0,
+                    { "The email should have text before '@'" },
+                    { "The email has valid text before '@'" }
+                )
+            }
+            val hasTextAfterAt = Matcher<String> { value ->
+                MatcherResult(
+                    value.indexOf("@") < value.lastIndexOf(".") - 1,
+                    { "The email should have text between '@' and '.'" },
+                    { "The email has valid text between '@' and '.'" }
+                )
+            }
+            val validDomain = Matcher<String> { value ->
+                MatcherResult(
+                    value.substringAfterLast(".").length >= 2,
+                    { "The domain should have at least 2 characters" },
+                    { "The domain is valid" }
+                )
+            }
+
+            return containsAt and hasTextBeforeAt and hasTextAfterAt and validDomain
+        }
+        ```
+    </Solution>
+</Exercise>
+
+## Conclusión
+
+
+<References references={[
+    {
+        accessedDate: '22 de septiembre de 2024',
+        siteOrAuthor: 'Kotest',
+        title: 'Composed Matchers | Kotest',
+        type: 'web',
+        url: 'https://kotest.io/docs/assertions/composed-matchers.html',
+    },
+]}/>

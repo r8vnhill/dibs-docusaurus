@@ -2,7 +2,103 @@
 title: Creación de aplicaciones en otros frameworks
 ---
 
-## Java/Kotlin: Maven
+## C/C++: CMake
+
+**CMake** es una herramienta de automatización de la construcción de software que genera archivos de proyecto para compiladores como **Make** o **Ninja**. Aunque no es un sistema de construcción en sí mismo, su flexibilidad y compatibilidad con múltiples lenguajes lo hacen una opción popular en proyectos C, C++ y más.
+
+### Estructura del Proyecto en CMake
+
+A diferencia de **Gradle**, donde las configuraciones están dispersas en varios archivos (`build.gradle.kts`, `settings.gradle.kts`), en **CMake** la configuración principal del proyecto se define en un solo archivo llamado `CMakeLists.txt`. Aquí se definen los objetivos (`targets`), las fuentes del proyecto y las configuraciones de compilación.
+
+#### Ejemplo: Proyecto CMake Básico
+
+Veamos un ejemplo de un proyecto en **CMake** que hace eco de un mensaje de texto, similar a la aplicación **EchoApp** que creamos con Gradle.
+
+Primero, creamos un archivo `CMakeLists.txt` para definir la configuración del proyecto:
+
+```cmake title="CMakeLists.txt"
+cmake_minimum_required(VERSION 3.10)
+
+# Nombre del proyecto y versión
+project(EchoApp VERSION 1.0)
+
+# Añadir el ejecutable al proyecto
+add_executable(echo_app main.cpp)
+```
+
+Y el archivo fuente `main.cpp` contiene la lógica de la aplicación:
+
+```cpp title="main.cpp"
+#include <iostream>
+#include <chrono>
+#include <ctime>
+
+void echo(const std::string& message) {
+    auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::cout << std::ctime(&now) << " - " << message << std::endl;
+}
+
+int main(int argc, char* argv[]) {
+    for (int i = 1; i < argc; ++i) {
+        echo(argv[i]);
+    }
+    return 0;
+}
+```
+
+#### Similitudes con Gradle
+
+- **Definición del Proyecto**: En ambos lenguajes, se comienza definiendo el proyecto con un nombre y versión. En **Gradle**, usamos `build.gradle.kts` para este propósito, mientras que en **CMake**, utilizamos `CMakeLists.txt`.
+- **Objetivos Ejecutables**: Tanto Gradle como CMake permiten definir un objetivo ejecutable (en Gradle, el plugin `application`, y en CMake, la función `add_executable`).
+
+#### Diferencias
+
+- **Simplicidad**: Gradle tiene una estructura más modular con múltiples archivos (`build.gradle.kts`, `settings.gradle.kts`, etc.), mientras que CMake agrupa toda la configuración en un único archivo (`CMakeLists.txt`).
+- **Ecosistema de Bibliotecas**: En Gradle, las dependencias se gestionan fácilmente a través de repositorios como **Maven Central**. En CMake, debes gestionar las bibliotecas de manera más manual, por ejemplo, utilizando `find_package` o añadiendo rutas específicas de bibliotecas.
+
+### Agregando Bibliotecas Externas
+
+En **CMake**, añadir dependencias externas puede ser más laborioso que en Gradle. Por ejemplo, si quisiéramos añadir una biblioteca para manejar fechas y horas en C++, tendríamos que hacer lo siguiente:
+
+```cmake
+find_package(Date REQUIRED)  # Buscar la biblioteca Date
+
+# Incluir la biblioteca al objetivo ejecutable
+target_link_libraries(echo_app PRIVATE Date::Date)
+```
+
+En Gradle, la adición de bibliotecas se hace de manera más directa, como hemos visto con la inclusión de `kotlinx-datetime`:
+
+```kotlin
+dependencies {
+    implementation(libs.kotlinx.datetime)
+}
+```
+
+### Publicando la Aplicación
+
+En **Gradle**, puedes generar un archivo ejecutable empaquetado utilizando el comando `installDist`, que crea un directorio con los archivos necesarios para ejecutar la aplicación sin necesidad de instalar Gradle. En **CMake**, la generación de un ejecutable empaquetado se realiza con la siguiente secuencia de comandos:
+
+```bash
+mkdir build
+cd build
+cmake ..
+make
+```
+
+Esta secuencia compila y genera el binario `echo_app`, que puedes ejecutar de manera independiente.
+
+### Similitudes en la Publicación
+
+- **Ambos sistemas permiten empaquetar aplicaciones ejecutables** que pueden ser distribuidas sin depender del sistema de construcción (Gradle o CMake).
+- Ambos utilizan un directorio `build` para almacenar los archivos generados.
+
+### Diferencias en la Publicación
+
+- **Instalación**: Gradle usa el comando `installDist` para crear un directorio con un script ejecutable, mientras que CMake requiere la creación manual de un directorio `build` y la ejecución de comandos como `cmake` y `make`.
+- **Scripts de Ejecución**: Gradle genera scripts de ejecución que simplifican el proceso para el usuario final. En CMake, debes asegurarte de que los binarios generados estén configurados correctamente para ejecutarse en diferentes sistemas.
+
+## JVM: Maven
 
 Mientras Gradle utiliza archivos de configuración basados en Groovy o Kotlin DSL para gestionar proyectos, **Maven** usa archivos XML llamados `pom.xml` (Project Object Model). Aunque los dos sistemas de construcción son muy diferentes en cuanto a sintaxis y enfoques, los conceptos que manejan son similares. Vamos a explorar cómo lograr una configuración equivalente a la aplicación **Echo App** usando Maven.
 

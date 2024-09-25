@@ -1,0 +1,233 @@
+---
+title: Iterator pattern
+---
+import Hint from "../../../src/components/exercise/Hint";
+import Solution from "../../../src/components/exercise/Solution";
+import Exercise from "../../../src/components/exercise/Exercise";
+import References from "../../../src/components/ReferencesComponent";
+import ReadingTime from "../../../src/components/ReadingTime";
+
+<ReadingTime/>
+
+
+El **Iterator pattern** es un patrón de diseño de comportamiento que permite recorrer los elementos de una colección de manera secuencial, sin exponer su representación interna (por ejemplo, si es una lista, conjunto o árbol). Este patrón proporciona una interfaz común para acceder a los elementos, lo que facilita recorrer estructuras de datos de manera consistente y uniforme.
+
+### Problema que resuelve
+
+Cuando se trabaja con diferentes tipos de colecciones, la forma de recorrerlas puede variar dependiendo de su implementación interna. El patrón iterador permite:
+
+1. **Ocultar la implementación interna de la colección**: No es necesario conocer si es un array, lista enlazada o cualquier otro tipo de estructura.
+2. **Proporcionar una interfaz unificada** para recorrer cualquier tipo de colección de forma segura.
+3. **Separar las responsabilidades**: El iterador maneja la lógica de recorrido, mientras que la colección se enfoca en almacenar los elementos.
+
+### Estructura del patrón
+
+El **Patrón Iterador** involucra los siguientes componentes principales:
+
+1. **Interfaz Iterator**: Define los métodos que el iterador debe implementar, como `hasNext()` y `next()`, para permitir recorrer la colección.
+2. **Interfaz Iterable**: Define un método para devolver un iterador asociado con la colección.
+3. **Clases Concretas de Iterador**: Implementan los métodos definidos por la interfaz del iterador para manejar el recorrido específico de la colección.
+4. **Clases Concretas de Colección**: Implementan la interfaz iterable para devolver un iterador específico de esa colección.
+
+### Ejemplo de Implementación
+
+Supongamos que tenemos una clase `Book` y queremos crear una biblioteca que pueda almacenar varios libros y recorrerlos utilizando el patrón iterador.
+
+#### 1. Definir el Iterador
+
+Primero, creamos una interfaz `Iterator` que defina los métodos básicos de un iterador.
+
+```kotlin
+interface Iterator<T> {
+    fun hasNext(): Boolean
+    fun next(): T
+}
+```
+
+#### 2. Crear una Colección Iterable
+
+Ahora definimos la interfaz `Iterable`, que tiene un método para obtener un iterador.
+
+```kotlin
+interface Iterable<T> {
+    fun iterator(): Iterator<T>
+}
+```
+
+#### 3. Clase `Book` y la Colección `Library`
+
+Definimos una clase `Book` y una colección `Library` que implementa la interfaz `Iterable`.
+
+```kotlin
+data class Book(val title: String, val author: String)
+
+class Library(vararg books: Book) : Iterable<Book> {
+    private val books = books.toList()
+    override fun iterator() = BookIterator(books)
+}
+```
+
+#### 4. Implementar el Iterador de `Library`
+
+Ahora implementamos la clase `BookIterator` que recorre los libros dentro de la biblioteca.
+
+```kotlin
+class BookIterator(private val books: List<Book>) : Iterator<Book> {
+    private var position = 0
+
+    override fun hasNext(): Boolean = position < books.size
+
+    override fun next(): Book {
+        if (!hasNext()) throw NoSuchElementException()
+        return books[position++]
+    }
+}
+```
+
+### Uso del Patrón Iterador
+
+Ahora que tenemos la implementación completa, podemos recorrer la biblioteca usando el iterador:
+
+```kotlin
+fun main() {
+    val library = Library(
+        Book("Red Drragon", "Thomas Harris"),
+        Book("At the Mountains of Madness", "H.P. Lovecraft"),
+        Book("The Fellowship of the Ring", "J.R.R. Tolkien")
+    )
+    val iterator = library.iterator()
+
+    while (iterator.hasNext()) {
+        println("${iterator.next()}")
+    }
+}
+```
+
+### Ventajas del Patrón Iterador
+
+- **Separación de responsabilidades**: La colección no necesita preocuparse por cómo se recorre, lo que hace que sea más fácil modificar o extender el comportamiento del iterador.
+- **Abstracción**: Permite ocultar los detalles de la estructura de la colección, exponiendo solo los elementos a través de la interfaz `Iterator`.
+- **Recorridos simultáneos**: Se pueden crear múltiples iteradores que recorran la misma colección simultáneamente, sin interferir entre sí.
+
+### Desventajas del Patrón Iterador
+
+- **Complejidad adicional**: En algunos casos, puede añadir complejidad innecesaria, especialmente si la colección es simple y el recorrido es trivial.
+- **Sobrecarga en recursos**: Si la colección es grande o el iterador mantiene referencias adicionales, puede haber un impacto en el rendimiento.
+
+<Exercise title={"Recorrer un árbol binario con un iterador"}>
+    Implementa un iterador para recorrer un árbol binario en orden BFS (Breadth-First Search). Por ejemplo, para el siguiente árbol:
+
+    ```
+        1
+       / \
+      2   3
+     / \
+    4   5
+    ```
+
+    El recorrido en orden debería devolver `[1, 2, 3, 4, 5]`.
+
+    ```kotlin
+    data class BinaryTree(
+        val value: Int,
+        val left: BinaryTree? = null,
+        val right: BinaryTree? = null
+    ) : Iterable<Int> {
+        // Implementa aquí el iterador
+    }
+    ```
+
+    <Hint hints={[
+        <>
+            Puedes utilizar una cola (<code>Queue</code>) para almacenar los nodos del árbol que aún no han sido visitados. Los métodos siguientes métodos pueden serte útiles:
+            <ul>
+                <li><code>add: (E) → Boolean</code>: Añade un elemento a la cola.</li>
+                <li><code>poll: () → E?</code>: Extrae y elimina el primer elemento de la cola.</li>
+                <li><code>isEmpty: () → Boolean</code> e <code>isNotEmpty: () → Boolean</code>: Verifican si la cola está vacía o no.</li>
+            </ul>
+        </>
+    ]} />
+
+    <Solution>
+        ```kotlin
+        import java.util.LinkedList
+        import java.util.Queue
+
+        data class BinaryTree(
+            val value: Int,
+            val left: BinaryTree? = null,
+            val right: BinaryTree? = null
+        ) : Iterable<Int> {
+
+            override fun iterator(): Iterator<Int> = BinaryTreeIterator(this)
+
+            private class BinaryTreeIterator(root: BinaryTree) : Iterator<Int> {
+                private val queue: Queue<BinaryTree> = LinkedList()
+
+                init {
+                    queue.add(root)
+                }
+
+                override fun hasNext(): Boolean = queue.isNotEmpty()
+
+                override fun next(): Int {
+                    if (!hasNext()) throw NoSuchElementException()
+                    val node = queue.poll() // Sacar el primer nodo de la cola
+                    node.left?.let { queue.add(it) } // Agregar el subárbol izquierdo a la cola
+                    node.right?.let { queue.add(it) } // Agregar el subárbol derecho a la cola
+                    return node.value
+                }
+            }
+        }
+        ```
+    </Solution>
+</Exercise>
+
+## Patrón Iterator en Kotlin
+
+Kotlin incluye el **patrón Iterator** de forma nativa en su biblioteca estándar, lo que permite recorrer colecciones de manera segura y eficiente. Este patrón proporciona una forma estructurada de acceder a los elementos de una colección sin exponer su estructura interna.
+
+La interfaz `Iterable` en Kotlin se define de la siguiente manera:
+
+```kotlin
+public interface Iterable<out T> {
+    public operator fun iterator(): Iterator<T>
+}
+```
+
+El método `iterator` es un **operador** que facilita el uso de la sintaxis del bucle `for` para iterar sobre colecciones. Cada vez que utilizas un bucle `for` con una colección, Kotlin llama internamente a este método para obtener el iterador.
+
+### Ejemplo de uso:
+
+```kotlin
+fun main() {
+    val library: Library = TODO()
+    for (book in library) {
+        println(book)
+    }
+}
+```
+
+En este ejemplo, la colección `library` debe implementar la interfaz `Iterable`, lo que permite iterar sobre sus elementos utilizando el bucle `for`. Esto hace que el código sea más claro y fácil de leer, eliminando la necesidad de gestionar manualmente los índices o iteradores.
+
+## En resumen
+
+El patrón **Iterator** en Kotlin permite recorrer colecciones de manera segura y eficiente, sin exponer su estructura interna. Utilizando la interfaz `Iterable`, se puede implementar un iterador para cualquier estructura de datos y aprovechar la sintaxis nativa del bucle `for`.
+
+### Puntos clave:
+
+- **Abstracción**: Oculta la estructura interna de las colecciones.
+- **Uniformidad**: Permite recorrer cualquier tipo de colección de manera consistente.
+- **Facilidad de uso**: Simplifica el acceso a los elementos a través de un enfoque estándar en Kotlin.
+
+Este patrón separa la lógica de recorrido del almacenamiento de datos, haciendo el código más modular y reutilizable.
+
+<References references={[
+    {
+        accessedDate: '24 de septiembre de 2024',
+        siteOrAuthor: 'Refactoring Guru',
+        title: '“Iterator”',
+        type: 'web',
+        url: 'https://refactoring.guru/design-patterns/iterator',
+    },
+]}/>

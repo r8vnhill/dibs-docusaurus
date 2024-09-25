@@ -2,6 +2,108 @@
 title: Tareas personalizadas en otros frameworks
 ---
 
+## Javascript/Typescript: Gulp
+
+En el ecosistema de JavaScript, una alternativa a Gradle es usar **NPM** junto con **Gulp**, pero en este caso usaremos **TypeScript** en lugar de JavaScript para definir las tareas personalizadas. En lugar de un DSL como el de Gradle, NPM y Gulp utilizan **JavaScript** o **TypeScript** para configurar las tareas.
+
+### Definición de Tareas en Gulp (TypeScript)
+
+En Gulp, podemos definir tareas personalizadas de manera similar a Gradle, pero utilizando TypeScript. Un ejemplo equivalente a la tarea `greet` de Gradle sería:
+
+```typescript title="gulpfile.ts"
+import { task, series } from 'gulp';
+
+task('greet', (done) => {
+    console.log('Hello, Gulp with TypeScript!');
+    done();
+});
+```
+
+### Ejecución de Tareas
+
+Al igual que en Gradle, puedes ejecutar esta tarea personalizada con el siguiente comando:
+
+```bash
+gulp greet
+```
+
+#### Similitudes
+- Tanto Gradle como Gulp permiten definir tareas personalizadas para acciones específicas en un proyecto.
+- Gradle y Gulp permiten definir dependencias entre tareas y establecer acciones específicas que se ejecutan antes o después de otras tareas.
+
+#### Diferencias
+- **Sistema de dependencias**: Gradle maneja las dependencias de manera integrada, mientras que Gulp requiere NPM, Yarn o PNPM para gestionar las dependencias externas.
+- **Configuración diferida**: Gradle permite diferir la configuración de tareas con `tasks.register`, mientras que en Gulp las tareas son configuradas y ejecutadas inmediatamente cuando son requeridas.
+
+### Acciones y Dependencias en Gulp
+
+De manera similar a las acciones `doFirst` y `doLast` en Gradle, Gulp permite encadenar tareas usando `series` o `parallel`. Aquí tienes un ejemplo equivalente a las acciones y dependencias de Gradle, pero utilizando TypeScript:
+
+```typescript title="gulpfile.ts"
+import { task, series } from 'gulp';
+
+task('message', (done) => {
+    console.log('Calculating the Fibonacci sequence...');
+    done();
+});
+
+task('fib', (done) => {
+    let first = 0;
+    let second = 1;
+
+    for (let i = 0; i < 10; i++) {
+        console.log(first);
+        second += first;
+        first = second - first;
+    }
+    console.log(`The 10th Fibonacci number is: ${first}`);
+    done();
+});
+
+export default series('message', 'fib');
+```
+
+Al igual que en Gradle, la tarea `message` se ejecutará antes de `fib`, utilizando la función `series` de Gulp para crear la dependencia.
+
+### Tareas Basadas en Otras Tareas
+
+En Gulp, no existe un mecanismo específico para "heredar" o basarse en una tarea existente como en Gradle. Sin embargo, es posible componer nuevas tareas utilizando funciones como `series` o `parallel` para encadenar tareas ya definidas. Esto es similar a cómo en Gradle puedes registrar tareas basadas en otras existentes.
+
+Por ejemplo, si quisiéramos definir una tarea como cuando nos basamos en ``Copy``, podríamos lograr un comportamiento similar definiendo una tarea que dependa de otras y realice una operación personalizada, como copiar archivos, usando el paquete `gulp.src()` y `gulp.dest()`:
+
+```typescript title="gulpfile.ts"
+import { task, series, src, dest } from 'gulp';
+
+task('copyCompiledClasses', (done) => {
+    src('build/classes/**/*.js')
+        .pipe(dest('compiled-classes'));
+    done();
+});
+
+task('build', series('compile', 'copyCompiledClasses'));
+```
+
+#### Similitudes
+
+- En ambos casos, se puede crear una nueva tarea personalizada basada en tareas preexistentes.
+- Tanto Gradle como Gulp permiten usar la salida de una tarea para alimentar otra (por ejemplo, copiar archivos después de compilar).
+
+#### Diferencias
+
+- Gradle permite un manejo más robusto de tareas preexistentes, proporcionando acciones específicas como `doFirst` y `doLast`. Gulp, por otro lado, se basa en el encadenamiento mediante `series` o `parallel` para manejar dependencias entre tareas.
+- Gulp requiere el uso de `src()` y `dest()` para manejar operaciones como la copia de archivos, mientras que Gradle permite hacerlo directamente con tareas como `Copy`.
+
+### Comparación Final
+
+**Gradle** es más robusto para proyectos grandes que requieren tanto la gestión de tareas como de dependencias dentro de un mismo sistema. **Gulp** con **NPM** (en este caso con TypeScript) es una solución más ligera para automatizar tareas específicas, como la compilación o la minificación de archivos en proyectos web.
+
+En ambos sistemas puedes:
+- Definir tareas personalizadas.
+- Encadenar tareas con dependencias.
+- Ejecutar scripts que realicen operaciones específicas dentro del proyecto.
+
+La diferencia principal radica en el ecosistema y en el lenguaje que usan. Gradle es ideal para proyectos JVM (Java, Kotlin, Groovy), mientras que Gulp con TypeScript está orientado a proyectos en el ecosistema de JavaScript.
+
 ## JVM: Maven
 
 En Maven, las tareas personalizadas equivalentes se logran mediante **plugins**. Los plugins en Maven son responsables de todas las tareas de construcción, y las tareas personalizadas se definen agregando configuraciones específicas de los plugins dentro del archivo `pom.xml`. A diferencia de Gradle, Maven no tiene un mecanismo directo para registrar tareas personalizadas de manera dinámica, como `tasks.register` en Gradle. Aquí se usa el concepto de "objetivos" de los plugins.

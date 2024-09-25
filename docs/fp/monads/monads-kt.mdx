@@ -1,0 +1,184 @@
+---
+title: Mónadas
+---
+import GitHubRepoLink from "../../../src/components/GithubRepoLink";
+import ReadingTime from '../../../src/components/ReadingTime';
+import References from "../../../src/components/ReferencesComponent";
+import TabItem from "@theme/TabItem";
+import Tabs from "@theme/Tabs";
+
+<ReadingTime/>
+<GitHubRepoLink repo={"functional-programming-kt"} user={"r8vnhill"}/>
+
+<br/>
+Para comenzar creemos un nuevo módulo para las mónadas llamado ``monads``.
+
+<Tabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        New-Item -Path "monads\src\main\kotlin" -ItemType Directory
+        Set-Content -Path "monads\build.gradle.kts" -Value "// Intentionally left blank"
+        ```
+    </TabItem>
+    <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+        ```powershell
+        mkdir monads\src\main\kotlin
+        "// Intentionally left blank" > monads\build.gradle.kts
+        ```
+    </TabItem>
+    <TabItem value="Unix" label="Unix">
+        ```bash
+        mkdir -p monads/src/main/kotlin
+        echo "// Intentionally left blank" > monads/build.gradle.kts
+        ```
+    </TabItem>
+</Tabs>
+
+Recuerda agregar el módulo a tu archivo ``settings.gradle.kts``:
+
+## Definición
+
+Una **mónada** es un patrón de diseño en programación funcional que permite manejar tipos de datos que encapsulan un valor junto con un contexto asociado, facilitando la composición de funciones de manera segura y estructurada.
+
+### Componentes Principales
+
+- **`pure`**: Una función que toma un valor y lo coloca dentro de una mónada, encapsulándolo en su contexto.
+- **`flatMap`**: Una función que permite aplicar una función que devuelve una mónada a un valor ya encapsulado en otra mónada. "Desempaqueta" el valor, aplica la función, y vuelve a encapsular el resultado.
+
+## Motivación
+
+Las mónadas simplifican el manejo de operaciones encadenadas que implican efectos secundarios, como:
+- Manejo de errores.
+- Valores opcionales.
+- Cálculos asíncronos.
+
+Esto permite mantener la pureza de las funciones y evita la propagación del estado o los efectos secundarios, lo que resulta en código más predecible y modular.
+
+## Leyes de las Mónadas
+
+Las mónadas deben cumplir con tres leyes fundamentales para garantizar un comportamiento consistente y predecible al componer funciones.
+
+### 1. Ley de Identidad Izquierda
+
+```kotlin
+Monad.pure(a).flatMap(f) == f(a)
+```
+
+Encapsular un valor en una mónada con `pure` y luego aplicarle una función con `flatMap` debe ser equivalente a aplicar la función directamente al valor, sin la mónada de por medio.
+
+### 2. Ley de Identidad Derecha
+
+```kotlin
+m.flatMap(Monad.Companion::pure) == m
+```
+
+Aplicar la función `pure` a un valor ya encapsulado en una mónada no debe alterar el valor ni su contexto. El resultado debe ser idéntico a la mónada original.
+
+### 3. Ley de Asociatividad
+
+```kotlin
+m.flatMap(f).flatMap(g) == m.flatMap { x -> f(x).flatMap(g) }
+```
+
+El orden en el que se agrupan las operaciones con `flatMap` no debe cambiar el resultado. Es decir, la composición de funciones debe ser asociativa.
+
+## Implementación de Mónadas en Kotlin
+
+Una implementación básica de una mónada en Kotlin podría verse de la siguiente manera:
+
+```kotlin
+data class Monad<T>(private val value: T) {
+    inline fun <R> flatMap(f: (T) -> Monad<R>): Monad<R> = f(value)
+    companion object {
+        fun <T> pure(value: T): Monad<T> = Monad(value)
+    }
+}
+```
+
+En este código, estamos implementando una clase `Monad` genérica que sigue las leyes de las mónadas.
+
+1. **`pure`**:
+   - El método `pure` es una función de fábrica que toma un valor de tipo `T` y lo encapsula dentro de una instancia de `Monad`. Este método es responsable de envolver un valor en la mónada, creando el contexto necesario.
+2. **`flatMap`**:
+   - El método `flatMap` toma una función `f` como argumento, la cual acepta un valor de tipo `T` y devuelve una nueva mónada `Monad<R>`. La función extrae el valor encapsulado, aplica la función `f`, y devuelve una nueva mónada con el resultado.
+   - Este método es el núcleo de la composición monádica, ya que permite encadenar transformaciones monádicas manteniendo el contexto monádico.
+
+<details>
+    <summary><code>inline fun</code></summary>
+
+    La palabra clave `inline` en Kotlin se utiliza para indicar al compilador que debe copiar el cuerpo de la función en cada lugar donde se la llama, en lugar de realizar una llamada normal a la función. Esto puede mejorar el rendimiento al eliminar la sobrecarga de llamadas, especialmente en **funciones de orden superior** que aceptan funciones lambda como argumentos, como `flatMap` o `filter`.
+
+    Además, las funciones en línea permiten el uso de **parámetros de tipo reificados** (`reified type parameters`), lo que permite acceder a información de tipo en tiempo de ejecución. Esto es útil porque, debido al **borrado de tipos** (*type erasure*) en la JVM, normalmente no es posible acceder a la información de tipo genérico en tiempo de ejecución.
+
+    #### ¿Por qué es necesaria la palabra clave `inline` para usar tipos reificados?
+
+    En Kotlin (y en muchos lenguajes que corren sobre la JVM), los **tipos genéricos** sufren de **borrado de tipos** (*type erasure*). Esto significa que, en tiempo de ejecución, la información sobre los tipos genéricos se pierde. Por ejemplo, si tienes una función genérica con un parámetro `T`, el compilador no retiene la información sobre el tipo exacto de `T` en el bytecode generado.
+
+    ```kotlin
+    fun <T> genericFunction(value: T) {
+        // En tiempo de compilación, sabemos que T es un tipo genérico.
+        // En tiempo de ejecución, T desaparece debido al type erasure.
+    }
+    ```
+
+    Debido a este borrado de tipos, **no es posible usar `T::class` o acceder a la clase de `T` directamente** en tiempo de ejecución en funciones genéricas regulares.
+
+    Sin embargo, cuando una función es **inlined**, su código se "copia" en cada sitio donde es llamada. Esto significa que la función deja de ser un bloque de código separado y se inserta en el contexto de la llamada. Al hacer esto, el compilador puede **preservar la información de los tipos concretos** cuando inserta el código en cada llamada, lo que permite usar tipos reificados.
+
+    ```kotlin
+    inline fun <reified T> printClassName() {
+        println(T::class)  // Esto es posible porque la función es inline
+    }
+
+    fun main() {
+        printClassName<String>()  // En este contexto, T se reifica como String
+    }
+    ```
+
+    Si la función no fuera `inline`, no se podría acceder a `T::class` porque la información sobre el tipo `T` se habría perdido durante la compilación debido al borrado de tipos.
+
+    #### Beneficios de usar funciones en línea con tipos reificados:
+
+    - **Acceso a información de tipo en tiempo de ejecución**: Permite usar `T::class` o `T::class.java`, lo que normalmente no es posible en funciones genéricas debido al borrado de tipos.
+    - **Optimización de funciones lambda**: Al evitar la creación de objetos lambda innecesarios y reducir el costo de las llamadas a funciones de orden superior.
+    - **Mayor flexibilidad en la programación genérica**: Te permite escribir código más potente y dinámico que necesita información de tipo en tiempo de ejecución.
+
+    Para más información, consulta la [documentación oficial sobre funciones en línea y parámetros de tipo reificados](https://kotlinlang.org/docs/inline-functions.html#reified-type-parameters).
+</details>
+
+
+### Ejemplo de uso
+
+```kotlin
+Monad.pure(5)
+    .flatMap { Monad.pure(it * 2) }
+    .flatMap { Monad.pure(it + 1) }
+    .flatMap { Monad.pure(it / 2) }
+    .flatMap { Monad.pure(it + 1) }
+    .let(::println) // Monad(value=6)
+```
+
+## Beneficios de las Mónadas
+
+- **Composición Segura de Funciones**: Las mónadas permiten encadenar funciones que operan en contextos especiales, como valores opcionales o resultados con error, sin la necesidad de manejar explícitamente esos contextos en cada paso. Esto garantiza que la lógica del programa permanezca clara y enfocada.
+- **Manejo Limpio de Efectos Secundarios**: Encapsulan efectos secundarios (como errores, valores nulos o cálculos asíncronos) de manera que no interfieran con la lógica principal del código. Esto permite mantener la pureza funcional y evita la propagación de estados no deseados.
+- **Reutilización de Código**: Las mónadas facilitan la reutilización de funciones mediante la composición, permitiendo aplicar la misma lógica en diferentes contextos (como listas, valores opcionales o resultados), sin duplicar código ni cambiar la lógica central.
+
+## Conclusión
+
+Las mónadas permiten manejar contextos computacionales como errores o valores opcionales de forma limpia y segura mediante las operaciones `pure` y `flatMap`. En Kotlin, hemos visto cómo estas estructuras ayudan a mantener la pureza funcional y a reutilizar lógica sin necesidad de gestionar efectos secundarios explícitamente.
+
+Al implementar mónadas, facilitamos código más modular, predecible y fácil de mantener.
+
+<References references={[
+    {
+        title: "Monads and functors",
+        bookTitle: "Functional Programming in Kotlin",
+        pages: "231–257",
+        publisher: "Manning Publications Co. LLC",
+        year: "2021",
+        type: "book",
+        author: 'Marco Vermeulen, Rúnar Bjarnason, Paul Chiusano',
+    },
+]}
+/>

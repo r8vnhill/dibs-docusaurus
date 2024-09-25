@@ -1,0 +1,163 @@
+---
+title: Option
+---
+import References from "../../../../src/components/ReferencesComponent";
+import Solution from "../../../../src/components/exercise/Solution";
+import Exercise from "../../../../src/components/exercise/Exercise";
+
+`Option` es una estructura de datos que representa la presencia o ausencia de un valor, lo que permite manejar escenarios donde un valor puede estar ausente sin recurrir a valores nulos, evitando así el riesgo de errores como `NullPointerException`.
+
+### Componentes Principales
+
+- **`Some`**: Contiene un valor cuando este está presente.
+- **`None`**: Indica la ausencia de un valor.
+
+### Implementación
+
+A continuación, se presenta una implementación simple de `Option` en Kotlin que sigue el patrón monádico:
+
+```kotlin
+sealed class Option<out A> {
+    inline fun <B> flatMap(f: (A) -> Option<B>): Option<B> = when (this) {
+        is None -> this
+        is Some -> f(value)
+    }
+
+    companion object {
+        fun <T> pure(value: T): Option<T> = Some(value)
+    }
+}
+
+data object None : Option<Nothing>()
+
+data class Some<out T>(val value: T) : Option<T>()
+```
+
+:::info Varianza
+En Kotlin, la varianza de un tipo genérico se define mediante los modificadores `in` (contravariante) y `out` (covariante). Esto es equivalente al concepto de varianza en otros lenguajes de programación, donde `in` corresponde a `-` en Scala (contravarianza) y `out` en Kotlin es equivalente a `+` en Scala (covarianza) y
+
+Los términos en Kotlin siguen el **principio get-put**:
+
+- `out` (covarianza) se utiliza cuando solo se necesitan **leer** (get) valores del tipo.
+- `in` (contravarianza) se utiliza cuando solo se necesita **escribir** (put) valores del tipo.
+
+Este enfoque permite controlar cómo los tipos genéricos son utilizados, manteniendo consistencia en las operaciones sin introducir comportamientos inesperados.
+:::
+
+
+### Explicación
+
+- **`pure`**: Toma un valor y lo envuelve en `Some`, creando una instancia de `Option` que indica que el valor está presente.
+- **`flatMap`**: Permite aplicar una función a un valor encapsulado en `Some`, devolviendo una nueva mónada `Option`. Si el valor es `None`, no se realiza ninguna operación y se devuelve `None`.
+
+### Ejemplo de Uso
+
+Supongamos que queremos encadenar varias operaciones sobre un valor que puede estar presente o no:
+
+```kotlin
+val result = Option.pure(5)
+    .flatMap { Option.pure(it * 2) }  // Multiplicamos por 2
+    .flatMap { Option.pure(it + 3) }  // Sumamos 3
+    .flatMap { Option.pure(it / 4) }  // Dividimos por 4
+
+println(result) // Imprime: Some(2)
+```
+
+En este ejemplo, cada operación se encadena de forma segura utilizando `flatMap`, garantizando que si en algún punto el valor fuera `None`, el encadenamiento se detendría y devolvería `None` sin errores de acceso a `null`.
+
+:::note Semejanza con `?.`
+
+El operador de llamada segura, `?.`, en Kotlin se comporta de manera similar a `flatMap` cuando trabajamos con valores opcionales (`Option`). Ambos mecanismos permiten aplicar una operación a un valor únicamente si este está presente, evitando errores por acceso a valores nulos.
+
+### Ejemplo con `?.`:
+
+```kotlin
+val result: Int? = 5
+    ?.let { it * 2 }  // Multiplicamos por 2
+    ?.let { it + 3 }  // Sumamos 3
+    ?.let { it / 4 }  // Dividimos por 4
+
+println(result) // Imprime: 2
+```
+
+Ambos ejemplos (con `Option` y `?.`) permiten encadenar operaciones de forma segura. La diferencia es que `Option` encapsula explícitamente el valor dentro de una estructura monádica (`Some` o `None`), mientras que el operador `?.` trabaja con valores `null`. Sin embargo, el principio subyacente es el mismo: garantizar que las operaciones solo se apliquen si el valor está presente, sin causar errores por acceder a `null`.
+:::
+
+### Ventajas de Usar ``Option``
+
+1. **Seguridad**: Evita el uso de valores nulos, proporcionando un enfoque más seguro para trabajar con valores opcionales.
+2. **Composición limpia**: Facilita el encadenamiento de operaciones sobre valores opcionales sin necesidad de verificaciones explícitas de `null`.
+3. **Expresividad**: Hace que el código sea más expresivo y claro, al representar explícitamente la ausencia de un valor con `None`.
+
+<details>
+    <summary>¿Por qué es importante que ``Option`` sea covariante en ``A``?</summary>
+
+    Es importante que ``Option`` sea **covariante** en ``A`` para permitir la substitución de subtipos y garantizar la compatibilidad de tipos en contextos donde se espera un ``Option`` de un tipo más general.
+
+    Supongamos que tenemos una jerarquía de clases:
+
+    ```kotlin
+    open class Animal
+    class Dog : Animal
+    ```
+
+    Y una función que acepta un ``Option<Animal>``:
+
+    ```kotlin
+    fun handleAnimal(option: Option<Animal>) {
+        // Procesa el animal
+    }
+        ```
+
+    Si ``Option`` es covariante en ``A``, podemos pasar un ``Option<Dog>`` a esta función sin problemas:
+
+    ```kotlin
+    val dogOption: Option<Dog> = Some(Dog())
+    handleAnimal(dogOption)
+    ```
+
+    Sin la covarianza, el código anterior no sería válido porque ``Option<Dog>`` no sería un subtipo de ``Option<Animal>``, y la función ``handleAnimal`` no aceptaría ese argumento.
+</details>
+
+<Exercise title={"Extensiones para Option"}>
+    Implementa las siguientes funciones para la mónada `Option`:
+    - `getOrElse: (Option<T>, T) -> T`: Proporciona un valor por defecto si el `Option` es `None`.
+    - `map: (Option<T>, (T) -> U) -> Option<U>`: Aplica una transformación al valor contenido en `Option`.
+
+    <Solution>
+        ```kotlin
+        fun <T> getOrElse(option: Option<T>, default: T) = when (option) {
+            is None -> default
+            is Some -> option.value
+        }
+
+        fun <T, U> map(option: Option<T>, f: (T) -> U) = option.flatMap {
+            Option.pure(f(it))
+        }
+        ```
+    </Solution>
+</Exercise>
+
+<References references={
+    [
+        {
+            title: "6. Simple Algebraic Data Types",
+            type: "book",
+            bookTitle: "Category Theory for Programmers",
+            author: "Bartosz Milewski",
+            pages: "55–68",
+            publisher: "Millington Keynes",
+            year: "2019",
+            location: "Lightning Source UK",
+        },
+        {
+            title: "Handling errors without exceptions",
+            bookTitle: "Functional Programming in Kotlin",
+            type: "book",
+            author: "Marco Vermeulen, Rúnar Bjarnason, Paul Chiusano",
+            pages: "56–76",
+            publisher: "Manning Publications Co. LLC",
+            year: "2021",
+        },
+    ]
+} />
