@@ -6,11 +6,15 @@ import ReadingTime from '../../../../src/components/ReadingTime';
 import References from "../../../../src/components/ReferencesComponent";
 import TabItem from "@theme/TabItem";
 import Tabs from "@theme/Tabs";
+import Exercise from "../../../../src/components/exercise/Exercise";
+import Solution from "../../../../src/components/exercise/Solution";
+import Hint from "../../../../src/components/exercise/Hint";
 
 <ReadingTime/>
 <GithubRepoLink user={"r8vnhill"} repo={"echo-app-kt"}/>
 <GithubRepoLink user={"r8vnhill"} repo={"echo-app-groovy"}/>
 
+<br/>
 Gradle no solo ofrece tareas predefinidas, sino que también permite definir **tareas personalizadas** para realizar acciones específicas dentro de tu proyecto. Estas tareas pueden variar en complejidad y se definen en los archivos `build.gradle.kts` o en otros archivos `*.gradle.kts`.
 
 Para definir tareas personalizadas, podemos hacerlo en el módulo `convention-plugins`, dentro de un archivo como `playground.gradle.kts`. Utilizamos la función `tasks.register` para especificar el nombre y las acciones a ejecutar. Aquí tienes un ejemplo básico:
@@ -59,12 +63,10 @@ plugins {
 
 Ahora puedes ejecutar la tarea con `./gradlew greet` y verás el mensaje impreso en la consola.
 
-:::tip Ejercicio
-<Tabs>
-    <TabItem value="Enunciado" label="Enunciado">
-        Cambia la definición de la tarea de `tasks.register` a `tasks.create` en el archivo `playground.gradle.kts`. ¿Qué sucede ahora si ejecutas `./gradlew build` en el proyecto? ¿Por qué?
-    </TabItem>
-    <TabItem value="Solución" label="Solución">
+<Exercise title={"Diferencia entre tasks.register y tasks.create"}>
+    Cambia la definición de la tarea de `tasks.register` a `tasks.create` en el archivo `playground.gradle.kts`. ¿Qué sucede ahora si ejecutas `./gradlew build` en el proyecto? ¿Por qué?
+
+    <Solution>
         Al ejecutar `./gradlew build`, se imprimirá el mensaje "Hello, Gradle!" a pesar de que no se haya llamado explícitamente a la tarea `greet`. El motivo es que al usar `tasks.create`, la tarea `greet` se configura y ejecuta su bloque de configuración inmediatamente durante la fase de configuración del build de Gradle.
 
         Esto significa que cualquier código dentro del bloque `{ ... }` de la tarea, como `println("Hello, Gradle!")`, se ejecuta en ese momento, independientemente de si la tarea `greet` se ejecuta o no durante la fase de ejecución.
@@ -72,9 +74,8 @@ Ahora puedes ejecutar la tarea con `./gradlew greet` y verás el mensaje impreso
         Por lo tanto, el mensaje se imprime al ejecutar cualquier tarea del proyecto, incluyendo `./gradlew build`, porque la fase de configuración siempre se ejecuta antes de la fase de ejecución en Gradle.
 
         En contraste, cuando usas `tasks.register`, la tarea se registra para una configuración diferida. El bloque de configuración no se ejecuta hasta que la tarea es requerida para su ejecución. Esto mejora el rendimiento al evitar configurar tareas que no se utilizan. Por eso, con `tasks.register`, el mensaje "Hello, Gradle!" no se imprime al ejecutar `./gradlew build`, a menos que la tarea `greet` sea llamada explícitamente.
-    </TabItem>
-</Tabs>
-:::
+    </Solution>
+</Exercise>
 
 ## Acciones en Gradle
 
@@ -149,7 +150,16 @@ Cuando ejecutas esta tarea con `./gradlew fib`, verás la siguiente salida:
 
 ```plaintext
 > Task :fib
-0 1 1 2 3 5 8 13 21 34
+0
+1
+1
+2
+3
+5
+8
+13
+21
+34
 The 10th Fibonacci number is: 55
 ```
 
@@ -194,7 +204,11 @@ tasks.named('fib') {
 </TabItem>
 </Tabs>
 
-Aquí noten que hemos usado `tasks.named("fib")` en lugar de `tasks.register("fib")` para obtener la tarea `fib` ya definida y agregarle la dependencia.
+Aquí noten que hemos usado `tasks.named("fib")` en lugar de `tasks.register("fib")` para obtener la tarea `fib` ya definida y agregarle la dependencia, eso nos permite extender las funcionalidades de la tarea sin modificar su definición original, lo que se alinea con el principio **open-closed** del diseño de software.
+
+:::info Open-closed Principle
+El **Principio de Abierto/Cerrado** (Open-closed Principle) es un principio de diseño de software que establece que las entidades de software (clases, módulos, funciones, etc.) deben estar abiertas para la extensión, pero cerradas para la modificación. Esto se traduce en que se deberían poder extender las funcionalidades de una entidad sin modificar su código fuente.
+:::
 
 Esto hace que `message` se ejecute antes de `fib`, y el resultado en la consola será algo como:
 
@@ -203,24 +217,35 @@ Esto hace que `message` se ejecute antes de `fib`, y el resultado en la consola 
 Calculating the Fibonacci sequence...
 
 > Task :fib
-0 1 1 2 3 5 8 13 21 34
+0
+1
+1
+2
+3
+5
+8
+13
+21
+34
 The 10th Fibonacci number is: 55
 ```
 
-## Ejemplo Práctico: Contar el Tamaño del Proyecto Compilado
+<Exercise title={"Contar el tamaño del proyecto compilado"}>
+    Implementa una tarea personalizada que cuente el tamaño de los archivos compilados de tu proyecto.
 
-Un ejercicio útil es crear una tarea personalizada que calcule el tamaño de los archivos compilados del proyecto. Además, haremos que esta tarea dependa de `compileKotlin` para asegurarnos de que el código se compile antes de contar el tamaño.
+    <Hint hints={[
+        <>
+            Usa <code>fileTree("ruta").files</code> para obtener los archivos.
+        </>,
+        <>
+            Utiliza <code>length: File.() -&gt; Long</code> para calcular el tamaño de un archivo.
+        </>,
+        <>
+            Asegúrate de que la tarea dependa de <code>compileKotlin</code>.
+        </>
+    ]} />
 
-:::tip Ejercicio
-<Tabs>
-    <TabItem value="Ejercicio" label="Ejercicio">
-        Crea una tarea en Gradle que calcule el tamaño de los archivos compilados de tu proyecto.
-
-        - Usa `fileTree("ruta").files` para obtener los archivos.
-        - Utiliza `length()` para calcular el tamaño.
-        - Asegúrate de que la tarea dependa de `compileKotlin`.
-    </TabItem>
-    <TabItem value="Solución" label="Solución">
+    <Solution>
         <Tabs groupId={"gradle"}>
             <TabItem value="Kotlin DSL" label="Kotlin DSL">
             ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
@@ -243,63 +268,38 @@ Un ejercicio útil es crear una tarea personalizada que calcule el tamaño de lo
             </TabItem>
             <TabItem value="Groovy DSL" label="Groovy DSL">
             ```groovy title="convention-plugins/src/main/groovy/playground.gradle"
-            tasks.register('countCompiledSize') {
-                group = 'build'
-                description = 'Counts the size of the compiled classes'
-                dependsOn(tasks.compileKotlin)
+            Próximamente
+            ```
+            </TabItem>
+        </Tabs>
+    </Solution>
+
+    <Solution title={"mejorada"}>
+        <Tabs groupId={"gradle"}>
+            <TabItem value="Kotlin DSL" label="Kotlin DSL">
+            ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+            tasks.register("countCompiledSize") {
+                group = "build"
+                description = "Counts the size of the compiled classes"
+                dependsOn("compileKotlin")
 
                 doLast {
-                    def files = fileTree('app/build/classes/kotlin/main').files +
-                        fileTree('lib/build/classes/kotlin/main').files
-                    def size = 0L
-                    files.each { file ->
-                        size += file.length()
-                    }
-                    println("The total size of the compiled classes is ${size} bytes")
+                    val files = fileTree("app/build/classes/kotlin/main").files +
+                        fileTree("lib/build/classes/kotlin/main").files
+                    val size = files.sumOf { it.length() }
+                    println("The total size of the compiled classes is $size bytes")
                 }
             }
             ```
             </TabItem>
-        </Tabs>
-    </TabItem>
-    <TabItem value={"Solución (más corta)"} label={"Solución (más corta)"}>
-        <Tabs groupId={"gradle"}>
-            <TabItem value="Kotlin DSL" label="Kotlin DSL">
-                ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
-                tasks.register("countCompiledSize") {
-                    group = "build"
-                    description = "Counts the size of the compiled classes"
-                    dependsOn("compileKotlin")
-
-                    doLast {
-                        val files = fileTree("app/build/classes/kotlin/main").files +
-                            fileTree("lib/build/classes/kotlin/main").files
-                        val size = files.sumOf { it.length() }
-                        println("The total size of the compiled classes is $size bytes")
-                    }
-                }
-                ```
-            </TabItem>
             <TabItem value="Groovy DSL" label="Groovy DSL">
-                ```groovy title="convention-plugins/src/main/groovy/playground.gradle"
-                tasks.register("countCompiledSize") {
-                    group = "build"
-                    description = "Counts the size of the compiled classes"
-                    dependsOn("compileKotlin")
-
-                    doLast {
-                        def files = fileTree("app/build/classes/kotlin/main").files +
-                            fileTree("lib/build/classes/kotlin/main").files
-                        def size = files.sum { it.length() }
-                        println("The total size of the compiled classes is $size bytes")
-                    }
-                }
-                ```
+            ```groovy title="convention-plugins/src/main/groovy/playground.gradle"
+            Próximamente
+            ```
             </TabItem>
         </Tabs>
-    </TabItem>
-</Tabs>
-:::
+    </Solution>
+</Exercise>
 
 ## Tareas Basadas en Otras Tareas
 
@@ -335,7 +335,7 @@ tasks.register('copyCompiledClasses', Copy) {
 
 Esta tarea copiará los archivos compilados al directorio `compiled-classes` después de que se haya completado la compilación.
 
-### Resumen
+## Resumen
 
 Hemos aprendido cómo definir **tareas personalizadas** en Gradle, usando acciones `doFirst` y `doLast`, así como establecer dependencias entre tareas. También exploramos cómo crear tareas basadas en otras tareas existentes.
 

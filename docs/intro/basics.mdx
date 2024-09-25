@@ -6,6 +6,9 @@ import Definition from '../../src/components/Definition';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import ReadingTime from '../../src/components/ReadingTime';
+import Exercise from '../../src/components/exercise/Exercise';
+import Solution from '../../src/components/exercise/Solution';
+import Hint from '../../src/components/exercise/Hint';
 
 <ReadingTime/>
 
@@ -48,10 +51,19 @@ fun sum(a: Int, b: Int): Int = a + b
 En funciones simples de una sola expresión, el tipo de retorno puede deducirse y omitirse:
 
 ```kotlin
-fun sum(a: Int, b: Int) = a + b
+fun sum(a: Int, b: Int): Int = a + b
 ```
 
 Esto hace que el código sea más conciso y legible.
+
+
+::::info Inferencia de tipos
+Kotlin es un lenguaje con **inferencia de tipos**, lo que significa que el compilador puede deducir el tipo de una variable o expresión en función del contexto. En el ejemplo anterior, como la función es de una sola expresión, el tipo de retorno se puede inferir automáticamente.
+
+:::warning No abusar de la inferencia de tipos
+Aunque la inferencia de tipos puede hacer que el código sea más limpio y conciso, es importante no abusar de ella. En algunos casos, especificar explícitamente los tipos puede mejorar la legibilidad y la claridad del código.
+:::
+::::
 
 ## Función `main`
 
@@ -102,57 +114,52 @@ val c: Int
 c = 3 // Asignación diferida
 ```
 
-Aunque `val` denota inmutabilidad, el objeto referenciado puede ser mutable.
+:::danger Inmutabilidad
+Aunque `val` denota inmutabilidad, el objeto referenciado puede ser mutable. Por ejemplo, si `val list = mutableListOf(1, 2, 3)`, la lista en sí es mutable, pero no puedes reasignar `list` a otro objeto.
+:::
 
 ## Declaración de constantes
 
 Las constantes se declaran con `const` y su valor se establece en tiempo de compilación:
 
 ```kotlin
-const val PI = 3.14159
+const val ZERO_KELVIN = -273.15
 ```
 
-Las constantes solo pueden ser de tipos primitivos y no pueden calcularse en tiempo de ejecución.
+Las constantes solo pueden ser de tipos que tenemos seguridad que no cambiaran en tiempo de ejecución
+y no necesitan ser instanciados como objetos. Ejemplos de tipos que no pueden ser modificados son los tipos primitivos como los valores numéricos y los Strings. Ejemplos que no pueden ser constantes son los tipos que son instancias de objetos como las listas, diccionarios, y clases.
 
-:::tip Ejercicio: Cálculo del Área de un Círculo
-<Tabs>
-    <TabItem value="Enunciado" label="Enunciado">
-        1. Declara la constante `PI` con el valor $3.14159$.
+:::tip ¿Por qué usar `const`?
+Las constantes son útiles debido a que, al calcularse en tiempo de compilación, reducen la cantidad de cómputos que deben hacerse en tiempo de ejecución, mejorando así el rendimiento.
+:::
 
-        2. Implementa una función `circleArea` que reciba el radio de un círculo y calcule su área utilizando la fórmula:
+<Exercise title={"Cálculo del Área de un Círculo"}>
+    Implementa una función `circleArea` que reciba el radio de un círculo y calcule su área utilizando la fórmula:
 
-        $$
-        A(r) = \pi r^2
-        $$
+    $$
+    A(r) = \pi r^2
+    $$
 
-        Donde:
-        - $A(r)$ es el área del círculo.
-        - $\pi$ es la constante PI.
-        - $r$ es el radio del círculo.
+    Donde:
+    - $A(r)$ es el área del círculo.
+    - $\pi$ es la constante PI. Considera $\pi = 3.14159$.
+    - $r$ es el radio del círculo.
 
-        ```kotlin
-        fun main() {
-            println("El área de un círculo de radio 5.0 es ${circleArea(5.0)}")
-        }
-        ```
-    </TabItem>
-
-    <TabItem value="Solución" label="Solución">
+    <Solution>
         ```kotlin
         const val PI = 3.14159
 
         fun circleArea(radius: Double): Double = PI * radius * radius
         ```
-    </TabItem>
-</Tabs>
-:::
+    </Solution>
+</Exercise>
 
 ## Expresión `if`
 
 El `if` en Kotlin puede usarse como una declaración de control o una expresión que devuelve un valor:
 
 ```kotlin
-fun maxOf(a: Int, b: Int): Int = if (a > b) a else b
+fun maxOf(a: Int, b: Int) = if (a > b) a else b
 ```
 
 ## Expresión `when`
@@ -169,14 +176,16 @@ fun describe(obj: Any): String = when (obj) {
 }
 ```
 
-:::tip Ejercicio: Reescribir usando `when`
-<Tabs>
-    <TabItem value="Enunciado" label="Enunciado">
-        Reescribe la función `login` utilizando una expresión `when`.
+:::warning Diferencia con pattern matching
+Aunque `when` en Kotlin es similar al **pattern matching** en otros lenguajes, no es tan poderoso. Por ejemplo, no puede descomponer objetos en partes más pequeñas como en Rust o Scala.
+:::
 
-        ```kotlin
-        fun login(username: String, password: String): Boolean {
-            if (loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+<Exercise title={"Reescribir usando when"}>
+    Reescribe la función `login` utilizando una expresión `when`.
+
+    ```kotlin
+    fun login(username: String, password: String): Boolean {
+        if (loginAttempts >= MAX_LOGIN_ATTEMPTS) {
             return false
         }
         if (isValidPassword(password)) {
@@ -186,10 +195,9 @@ fun describe(obj: Any): String = when (obj) {
         loginAttempts++
         return false
     }
-        ```
-    </TabItem>
+    ```
 
-    <TabItem value="Solución" label="Solución">
+    <Solution>
         ```kotlin
         fun login(username: String, password: String): Boolean = when {
             loginAttempts >= MAX_LOGIN_ATTEMPTS -> false
@@ -203,9 +211,8 @@ fun describe(obj: Any): String = when (obj) {
             }
         }
         ```
-    </TabItem>
-</Tabs>
-:::
+    </Solution>
+</Exercise>
 
 ## Rangos
 
@@ -213,22 +220,28 @@ Kotlin permite crear rangos para iterar sobre secuencias de números:
 
 ```kotlin
 for (i in 1..5) print(i) // Imprime: 12345
+for (i in 5 downTo 1) print(i) // Imprime: 54321
+for (i in 1..5 step 2) print(i) // Imprime: 135
+for (i in 1..<5) print(i) // Imprime: 1234
 ```
 
-:::tip Ejercicio: Suma de un rango
-<Tabs>
-    <TabItem value="Enunciado" label="Enunciado">
-        Implementa una función que calcule la suma de todos los números entre $a$ y $b$, incluyendo ambos extremos.
+<Exercise title="Suma de un rango">
+    Implementa una función que calcule la suma de todos los números entre $a$ y $b$, incluyendo ambos extremos.
+
+    ```kotlin
+    fun sumRange(a: Int, b: Int): Int {
+        // Implementación
+    }
+    ```
 
 
-        ```kotlin
-        fun sumRange(a: Int, b: Int): Int {
-            // Implementación
-        }
-        ```
-    </TabItem>
+    <Hint hints={[
+        <>
+            En el caso de que $a$ sea mayor que $b$, puedes usar el rango descendente <code>a downTo b</code>.
+        </>
+    ]} />
 
-    <TabItem value="Solución" label="Solución">
+    <Solution>
         ```kotlin
         fun sumRange(a: Int, b: Int): Int {
             var sum = 0
@@ -244,20 +257,28 @@ for (i in 1..5) print(i) // Imprime: 12345
             return sum
         }
         ```
-    </TabItem>
+    </Solution>
 
-    <TabItem value={"Solución (mejorada)"} label={"Solución (mejorada)"}>
+    <Solution title={"mejorada"}>
         ```kotlin
         fun sumRange(a: Int, b: Int): Int {
             val range = if (a <= b) a..b else a downTo b
             return range.sum()
         }
         ```
-        Este código define una función llamada `sumRange` que toma dos enteros `a` y `b` como parámetros y devuelve la suma de todos los números entre ellos, independientemente de si `a` es mayor o menor que `b`.
+    </Solution>
+</Exercise>
 
-        - Si `a` es menor o igual a `b`, se crea un rango ascendente (`a..b`).
-        - Si `a` es mayor que `b`, se crea un rango descendente (`a downTo b`).
-        - Luego, la función `sum()` se utiliza para sumar todos los números en el rango, y el resultado se devuelve.
-    </TabItem>
-</Tabs>
-:::
+## En resumen
+
+En esta lección, hemos cubierto los conceptos básicos del lenguaje Kotlin, desde la diferencia entre expresiones y declaraciones hasta el uso de rangos y funciones. También exploramos cómo declarar funciones, manejar variables con `val` y `var`, y vimos la importancia de la **inmutabilidad** y el uso de **constantes** con `const`. Además, aprendimos sobre el uso del `if` como expresión y la poderosa expresión `when` para manejar múltiples condiciones.
+
+### Puntos clave
+
+- **Expresiones vs. Declaraciones**: Las expresiones devuelven un valor, mientras que las declaraciones ejecutan acciones.
+- **Funciones**: Las funciones realizan tareas específicas y pueden devolver valores.
+- **Variables y Constantes**: Usa `val` para valores inmutables, `var` para valores mutables y `const` para constantes evaluadas en tiempo de compilación.
+- **Expresión `if` y `when`**: Ambas se pueden utilizar como expresiones que devuelven valores, lo que permite un código más conciso y legible.
+- **Rangos**: Utiliza rangos para iterar fácilmente sobre secuencias de números.
+
+Con estos fundamentos, puedes escribir código más limpio, conciso y eficiente en Kotlin.

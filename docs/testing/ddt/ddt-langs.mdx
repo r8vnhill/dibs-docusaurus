@@ -1,0 +1,137 @@
+---
+title: Data-Driven Testing en otros frameworks
+---
+
+## JVM: JUnit 5
+
+En **JUnit 5**, la técnica de **Data-Driven Testing (DDT)** también está disponible mediante la anotación `@ParameterizedTest`, combinada con las anotaciones `@ValueSource`, `@CsvSource`, o `@MethodSource` para proporcionar diferentes conjuntos de datos a las pruebas. Al igual que en **Kotest**, JUnit 5 permite ejecutar múltiples casos de prueba con diferentes parámetros sin necesidad de duplicar código, mejorando la reutilización y el mantenimiento de las pruebas.
+
+### Ejemplo en JUnit 5 con `@ValueSource`
+
+En este ejemplo, utilizamos `@ParameterizedTest` para probar diferentes valores de entrada en un solo test:
+
+```java
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+class BakemonTest {
+
+    @ParameterizedTest
+    @ValueSource(ints = {-100, -1, 101, 1000})
+    void testInvalidHealthPoints(int invalidHp) {
+        Bakemon bakemon = new Bakemon("Bigachu", 100);
+        assertThrows(IllegalArgumentException.class, () -> {
+            bakemon.setCurrentHealthPoints(invalidHp);
+        });
+    }
+}
+```
+
+### Similitudes entre Kotest y JUnit 5
+
+1. **Data-Driven Testing**: Ambos frameworks permiten ejecutar el mismo test con diferentes valores de entrada, utilizando técnicas de DDT.
+2. **Reutilización del código**: En ambos casos, la lógica del test no necesita cambiar; solo se modifican los datos de entrada.
+3. **Manejo de múltiples casos**: Tanto Kotest como JUnit 5 permiten probar una amplia gama de escenarios sin duplicar código, lo que mejora el mantenimiento y escalabilidad de las pruebas.
+
+### Diferencias entre Kotest y JUnit 5
+
+1. **Sintaxis**: Kotest usa la función `withData`, lo que proporciona una sintaxis más declarativa y fluida, mientras que JUnit 5 depende de anotaciones como `@ParameterizedTest` y `@ValueSource`, que pueden parecer más rígidas.
+2. **Control del flujo**: Kotest permite mayor flexibilidad en la forma de estructurar las pruebas gracias a sus diferentes estilos de especificación (e.g., `FreeSpec`, `DescribeSpec`), mientras que JUnit 5 sigue una estructura más tradicional basada en métodos de prueba.
+3. **Combinación de valores**: En Kotest, es fácil combinar diferentes conjuntos de datos usando `withData` de manera anidada, mientras que en JUnit 5, la combinación de múltiples fuentes de datos puede requerir anotaciones adicionales o el uso de `@CsvSource` o `@MethodSource`.
+
+### Ejemplo en JUnit 5 con `@CsvSource`
+
+Si necesitamos probar múltiples combinaciones de valores (por ejemplo, diferentes combinaciones de nombres y puntos de salud), podemos usar `@CsvSource` en JUnit 5:
+
+```java
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+class BakemonTest {
+
+    @ParameterizedTest
+    @CsvSource({
+        "Bigachu, -100",
+        "Psygoose, -1",
+        "Bigachu, 101",
+        "Psygoose, 1000"
+    })
+    void testInvalidHealthPoints(String name, int invalidHp) {
+        Bakemon bakemon = new Bakemon(name, 100);
+        assertThrows(IllegalArgumentException.class, () -> {
+            bakemon.setCurrentHealthPoints(invalidHp);
+        });
+    }
+}
+```
+
+### Comparación final
+
+| Aspecto                    | Kotest                                               | JUnit 5                                            |
+|----------------------------|------------------------------------------------------|----------------------------------------------------|
+| **Data-Driven Testing**    | `withData`                                           | `@ParameterizedTest` + `@ValueSource`              |
+| **Combinación de Valores** | Fácil con `withData`                                 | Requiere anotaciones adicionales como `@CsvSource` |
+| **Sintaxis**               | Declarativa y fluida                                 | Basada en anotaciones                              |
+| **Estilo de pruebas**      | Soporte para múltiples estilos (BDD, FreeSpec, etc.) | Tradicional, basado en métodos                     |
+
+## Python: PyTest
+
+En **PyTest**, el **Data-Driven Testing (DDT)** se implementa utilizando la función `@pytest.mark.parametrize`, que permite definir un conjunto de valores de entrada para ejecutar un test repetidamente. Al igual que en **Kotest**, esta técnica permite evitar la duplicación de código al probar múltiples entradas con la misma lógica de prueba.
+
+### Ejemplo en PyTest con `@pytest.mark.parametrize`
+
+En este ejemplo, utilizamos `@pytest.mark.parametrize` para probar diferentes valores de entrada:
+
+```python
+import pytest
+
+def test_invalid_health_points():
+    @pytest.mark.parametrize("invalid_hp", [-100, -1, 101, 1000])
+    def inner_test(invalid_hp):
+        bakemon = Bakemon("Bigachu", 100)
+        with pytest.raises(ValueError):
+            bakemon.set_current_health_points(invalid_hp)
+```
+
+### Similitudes entre Kotest y PyTest
+
+1. **Data-Driven Testing**: Ambos frameworks permiten pasar diferentes valores de entrada y ejecutar el mismo test con cada valor.
+2. **Reutilización del código**: En ambos frameworks, la lógica de prueba permanece constante, mientras que los datos de entrada cambian.
+3. **Manejo de múltiples casos**: Tanto Kotest como PyTest permiten probar múltiples escenarios de manera eficiente, mejorando el mantenimiento y la escalabilidad de las pruebas.
+
+### Diferencias entre Kotest y PyTest
+
+1. **Sintaxis**: Kotest utiliza la función `withData` para lograr una sintaxis fluida y declarativa, mientras que PyTest depende de la anotación `@pytest.mark.parametrize`, que sigue un enfoque más tradicional basado en decoradores.
+2. **Combinación de valores**: Kotest facilita la combinación de múltiples conjuntos de datos con `withData` anidado, mientras que en PyTest se pueden usar múltiples parámetros en `@pytest.mark.parametrize` para combinar entradas.
+
+### Ejemplo en PyTest con múltiples parámetros
+
+En PyTest, también podemos usar múltiples parámetros en `@pytest.mark.parametrize` para probar diferentes combinaciones de valores:
+
+```python
+import pytest
+
+@pytest.mark.parametrize("name, invalid_hp", [
+    ("Bigachu", -100),
+    ("Psygoose", -1),
+    ("Bigachu", 101),
+    ("Psygoose", 1000)
+])
+def test_invalid_health_points(name, invalid_hp):
+    bakemon = Bakemon(name, 100)
+    with pytest.raises(ValueError):
+        bakemon.set_current_health_points(invalid_hp)
+```
+
+### Comparación final
+
+| Aspecto                    | Kotest                                               | PyTest                                              |
+|----------------------------|------------------------------------------------------|-----------------------------------------------------|
+| **Data-Driven Testing**    | `withData`                                           | `@pytest.mark.parametrize`                          |
+| **Combinación de Valores** | Fácil con `withData`                                 | Soportado con múltiples parámetros en `parametrize` |
+| **Sintaxis**               | Declarativa y fluida                                 | Decoradores con anotaciones                         |
+| **Estilo de pruebas**      | Soporte para múltiples estilos (BDD, FreeSpec, etc.) | Enfoque tradicional de pruebas                      |

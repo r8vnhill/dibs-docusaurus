@@ -1,10 +1,9 @@
 ---
 title: Clases Selladas
 ---
-
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
 import ReadingTime from "../../../../src/components/ReadingTime"
+import Exercise from "../../../../src/components/exercise/Exercise";
+import Solution from "../../../../src/components/exercise/Solution";
 
 <ReadingTime/>
 
@@ -12,13 +11,13 @@ Las **clases e interfaces selladas** son clases abstractas que restringen la her
 
 ### Características Clave
 
-- **Clases e Interfaces Selladas**:
+- **Clases e interfaces selladas**:
     - **Propósito**: Controlar y restringir la jerarquía de tipos. Solo las subclases definidas en el mismo paquete y módulo pueden extenderlas.
     - **Restricciones**: Las subclases deben estar dentro del mismo paquete y módulo que la clase o interfaz sellada.
 
     - **Beneficios**:
-        - **Seguridad de Tipos**: Garantiza que todas las posibles subclases estén controladas y conocidas en tiempo de compilación.
-        - **Patrones Exhaustivos**: Facilita el uso de `when` exhaustivos, mejorando la legibilidad y evitando errores de estado no manejados.
+        - **Control de jerarquía**: Garantiza que todas las posibles subclases estén controladas y conocidas en tiempo de compilación.
+        - **Patrones exhaustivos**: Facilita el uso de `when` exhaustivos, mejorando la legibilidad y evitando errores de estado no manejados.
         - **Mantenimiento**: Simplifica el mantenimiento del código, ya que no se puede extender la clase fuera de su contexto definido.
 
 ### Ejemplo: Sistema de Pagos
@@ -107,54 +106,48 @@ Y luego puedes listar las subclases selladas:
 fun listOrderStates() = DeliveryState::class.sealedSubclasses
 ```
 
-:::tip Ejercicio: Sistema Multimedia
-<Tabs>
-    <TabItem value="Ejercicio" label="Ejercicio">
+<Exercise title={"Sistema multimedia"}>
+    Desarrolla un sistema que maneje distintos tipos de contenido multimedia. Define una interfaz sellada `Media` que represente diferentes tipos de contenido, como `Music` y `Video`. La interfaz debe incluir dos métodos: `play()` y `pause()`.
 
-        Desarrolla un sistema que maneje distintos tipos de contenido multimedia. Define una interfaz sellada `Media`
-        que represente diferentes tipos de contenido, como `Music` y `Video`. La interfaz debe incluir dos métodos:
-        `play()` y `pause()`.
+    Instrucciones:
 
-        Instrucciones:
+    1. **Interfaz `Media`**: Define una interfaz sellada `Media` con los métodos `play()` y `pause()`.
 
-        1. **Interfaz `Media`**:
-            - Define una interfaz sellada `Media` con los métodos `play()` y `pause()`.
+    2. **Clases `Music` y `Video`**: Implementa dos clases: `Music`, que tendrá un método adicional `skip()`, y `Video`, con un método `fastForward()`.
 
-        2. **Clases `Music` y `Video`**:
-            - Implementa dos clases: `Music`, que tendrá un método adicional `skip()`, y `Video`, con un método
-            `fastForward()`.
+    ### Ejemplo de Uso
 
-        ### Ejemplo de Uso
+    ```kotlin showLineNumbers
+    fun main() {
+        val mediaList: List<Media> = listOf(
+            Music("Ace of Spades", "Motörhead"),
+            Music("MANIAC", "Stray Kids"),
+            Video("Le Locataire", duration = 125)
+        )
 
-        ```kotlin
-        fun main() {
-            val mediaList: List<Media> = listOf(
-                Music("Ace of Spades", "Motörhead"),
-                Music("MANIAC", "Stray Kids"),
-                Video("Le Locataire", duration = 125)
-            )
+        mediaList.forEach { media ->
+            media.play()
+            media.pause()
 
-            mediaList.forEach {media ->
-                media.play()
-                media.pause()
-
-                when (media) {
-                    is Music -> media.skip()
-                    is Video -> media.fastForward()
-                }
+            when (media) {
+                is Music -> media.skip()
+                is Video -> media.fastForward()
             }
-
-            println("Media types: ${listMediaTypes()}")
         }
-        ```
-    </TabItem>
-    <TabItem value="Solución" label="Solución">
-        ```kotlin
+
+        println("Media types: ${listMediaTypes()}")
+    }
+    ```
+
+    <Solution>
+        ```kotlin showLineNumbers
         sealed interface Media {
             fun play()
             fun pause()
         }
+        ```
 
+        ```kotlin showLineNumbers
         data class Music(val title: String, val artist: String) : Media {
             override fun play() = println("Playing $title by $artist")
 
@@ -162,7 +155,9 @@ fun listOrderStates() = DeliveryState::class.sealedSubclasses
 
             fun skip() = println("Skipping $title by $artist")
         }
+        ```
 
+        ```kotlin showLineNumbers
         data class Video(val title: String, val duration: Int) : Media {
             override fun play() = println("Playing $title")
 
@@ -171,6 +166,9 @@ fun listOrderStates() = DeliveryState::class.sealedSubclasses
             fun fastForward() = println("Fast forwarding $title")
         }
         ```
-    </TabItem>
-</Tabs>
-:::
+    </Solution>
+</Exercise>
+
+## Conclusión
+
+Las **clases e interfaces selladas** en Kotlin ofrecen un poderoso mecanismo para controlar la herencia y definir jerarquías limitadas de tipos. Al garantizar que todas las subclases sean conocidas en tiempo de compilación, mejoran la seguridad y el mantenimiento del código, permitiendo el uso de patrones exhaustivos como `when`. Este enfoque es ideal para modelar estados finitos o escenarios donde las opciones están claramente definidas y no deben expandirse sin control. Al usarlas, puedes crear código más robusto, legible y fácil de mantener.
