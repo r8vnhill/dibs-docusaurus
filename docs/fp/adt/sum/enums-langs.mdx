@@ -1,83 +1,153 @@
 ---
 title: Enumeraciones en otros lenguajes
 ---
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
-import ReadingTime from '../../../../src/components/ReadingTime';
 
-<ReadingTime/>
+## C\#
 
-## Haskell
-
-En **Haskell**, las enumeraciones se definen utilizando **tipos de datos algebraicos**. Haskell permite crear tipos de datos con múltiples constructores, y puedes asociar funciones y métodos para operar con ellos. Al igual que en Kotlin, Haskell ofrece patrones de coincidencia exhaustivos, lo que significa que el compilador te advertirá si no has manejado todos los casos posibles.
+En **C#**, las enumeraciones (`enum`) son tipos de valor que representan un conjunto de constantes nombradas. A diferencia de Kotlin y otros lenguajes como Swift o Rust, las enumeraciones en C# son más limitadas y no pueden contener métodos ni propiedades adicionales, excepto en versiones más recientes del lenguaje que permiten ciertas extensiones.
 
 ### Definición de la Enumeración
 
-```haskell
-data DeliveryState = Pending | Paid | Shipped | Delivered | Cancelled
+```csharp
+public enum DeliveryState
+{
+    Pending,
+    Paid,
+    Shipped,
+    Delivered,
+    Cancelled
+}
 ```
 
-### Métodos en Enumeraciones
+### Uso de la Enumeración
 
-En Haskell, puedes definir funciones que operen sobre el tipo `DeliveryState`. Aunque no puedes asociar métodos directamente a los constructores como en Kotlin, puedes utilizar funciones y patrones para lograr un comportamiento similar.
+Puedes utilizar la enumeración `DeliveryState` para representar el estado de una entrega en tu aplicación:
 
-```haskell
-signal :: DeliveryState -> String
-signal Pending   = "Order is pending"
-signal Paid      = "Order is paid"
-signal Shipped   = "Order is shipped"
-signal Delivered = "Order is delivered"
-signal Cancelled = "Order is cancelled"
-
-isFinalState :: DeliveryState -> Bool
-isFinalState Delivered = True
-isFinalState Cancelled = True
-isFinalState _         = False
+```csharp
+public void HandleOrderState(DeliveryState state)
+{
+    switch (state)
+    {
+        case DeliveryState.Pending:
+            Console.WriteLine("Order is pending");
+            break;
+        case DeliveryState.Paid:
+            Console.WriteLine("Order is paid");
+            break;
+        case DeliveryState.Shipped:
+            Console.WriteLine("Order is shipped");
+            break;
+        case DeliveryState.Delivered:
+            Console.WriteLine("Order is delivered");
+            break;
+        case DeliveryState.Cancelled:
+            Console.WriteLine("Order is cancelled");
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(state), state, null);
+    }
+}
 ```
 
-### Uso de Pattern Matching Exhaustivo
+En este ejemplo:
 
-En Haskell, al utilizar `case` o definir funciones mediante patrones, el compilador verifica que todos los casos estén cubiertos, similar al `when` exhaustivo de Kotlin.
-
-```haskell
-handleOrderState :: DeliveryState -> IO ()
-handleOrderState state =
-  if isFinalState state
-    then putStrLn $ "Final state: " ++ signal state
-    else putStrLn $ "Non-final state: " ++ signal state
-```
-
-### Ejemplo de Uso
-
-```haskell
-main :: IO ()
-main = do
-  handleOrderState Pending
-  handleOrderState Paid
-```
+- Se utiliza un `switch` para manejar cada posible valor de la enumeración.
+- El `default` maneja cualquier valor fuera del rango esperado, aunque en este caso no debería ser necesario si todos los casos están cubiertos.
 
 ### Similitudes con Kotlin
 
-- **Pattern Matching Exhaustivo**: Haskell exige que se manejen todos los casos posibles en patrones, similar al `when` de Kotlin.
-- **Seguridad de Tipos**: Solo se pueden utilizar los valores definidos en `DeliveryState`, evitando estados inválidos.
-- **Funciones Asociadas**: Puedes definir funciones que operen sobre el tipo de datos, similar a los métodos en Kotlin.
+- **Definición de Valores Nombrados**: Tanto en C# como en Kotlin, las enumeraciones permiten definir un conjunto de constantes nombradas que representan estados o valores predefinidos.
+- **Uso en Estructuras de Control**: Ambos lenguajes permiten usar las enumeraciones en estructuras de control como `switch`/`when` para tomar decisiones basadas en el valor actual.
 
-### Diferencias y Limitaciones
+### Diferencias con Kotlin
 
-- **Sintaxis y Paradigma**: Haskell es un lenguaje puramente funcional, y la sintaxis y enfoque difieren significativamente de Kotlin.
-- **No Métodos en Constructores**: No puedes asociar métodos directamente a cada constructor como en Kotlin; en su lugar, utilizas funciones separadas.
-- **Inmutabilidad**: Todos los valores son inmutables, lo que puede afectar cómo se manejan los estados si vienes de un lenguaje orientado a objetos.
+- **Capacidad de Extensión**: En Kotlin, las enumeraciones pueden contener propiedades, métodos e incluso implementar interfaces. En C#, las enumeraciones tradicionales no pueden contener métodos ni propiedades. Sin embargo, desde C# 8.0 y versiones posteriores, es posible agregar métodos a enums utilizando métodos de extensión.
+- **Exhaustividad**: El `switch` en C# no es exhaustivo por defecto, esto introduce posibles errores si se agregan más valores a las enumeraciones. En Kotlin, el `when` puede ser exhaustivo, y el compilador fuerza que se manejen todos los casos.
+- **Valores Subyacentes**: En C#, cada miembro de una enumeración tiene un valor numérico subyacente (por defecto `int`), y es posible asignar valores específicos a cada miembro.
 
-### Ventajas de las Enumeraciones en Haskell
+### Agregando Funcionalidad con Métodos de Extensión
 
-1. **Patrones de Diseño Funcionales**: Haskell aprovecha al máximo los patrones funcionales, lo que puede llevar a código conciso y expresivo.
-2. **Verificación en Tiempo de Compilación**: El compilador ayuda a garantizar que todos los casos se manejan, reduciendo errores en tiempo de ejecución.
-3. **Simplicidad**: La definición de tipos de datos es sencilla y clara.
+Para agregar métodos a una enumeración en C#, puedes utilizar **métodos de extensión**:
 
-### Limitaciones
+```csharp
+public static class DeliveryStateExtensions
+{
+    public static bool IsFinalState(this DeliveryState state)
+    {
+        return state == DeliveryState.Delivered || state == DeliveryState.Cancelled;
+    }
 
-- **Curva de Aprendizaje**: Si no estás familiarizado con la programación funcional, puede llevar tiempo adaptarse.
-- **Falta de Métodos Asociados**: No puedes tener métodos dentro de los tipos de datos como en Kotlin; necesitas definir funciones por separado.
+    public static string Signal(this DeliveryState state)
+    {
+        return state switch
+        {
+            DeliveryState.Pending => "Order is pending",
+            DeliveryState.Paid => "Order is paid",
+            DeliveryState.Shipped => "Order is shipped",
+            DeliveryState.Delivered => "Order is delivered",
+            DeliveryState.Cancelled => "Order is cancelled",
+            _ => throw new ArgumentOutOfRangeException(nameof(state), state, null)
+        };
+    }
+}
+```
+
+Ahora puedes utilizar estos métodos como si fueran parte de la enumeración:
+
+```csharp
+public void HandleOrderState(DeliveryState state)
+{
+    if (state.IsFinalState())
+    {
+        Console.WriteLine("Final state: " + state.Signal());
+    }
+    else
+    {
+        Console.WriteLine("Non-final state: " + state.Signal());
+    }
+}
+```
+
+### Similitudes y Diferencias en este Contexto
+
+- **Similitud**: Al igual que en Kotlin, puedes asociar comportamiento a los valores de la enumeración mediante métodos (aunque en C# se logra con métodos de extensión).
+- **Diferencia**: En Kotlin, los métodos y propiedades pueden definirse directamente dentro de la enumeración, mientras que en C# necesitas utilizar métodos de extensión externos.
+
+### Limitaciones de las Enumeraciones en C#
+
+1. **No Pueden Contener Estado o Datos Asociados**: Las enumeraciones en C# no pueden tener propiedades o campos para almacenar datos adicionales por defecto.
+2. **No Soportan Herencia**: Las enumeraciones en C# no pueden heredar de otras enumeraciones o clases.
+3. **Valores Numéricos Subyacentes**: Cada miembro de una enumeración en C# tiene un valor numérico, lo que puede llevar a usos no intencionales si se manipulan como enteros.
+
+### Ventajas de las Enumeraciones en C#
+
+1. **Simplicidad**: Son sencillas de definir y utilizar para representar un conjunto fijo de constantes.
+2. **Interoperabilidad**: Los enums de C# son ampliamente soportados y se integran bien con otras partes del ecosistema .NET.
+3. **Bit Flags**: Puedes utilizar atributos como `[Flags]` para representar combinaciones de valores mediante operaciones bit a bit.
+
+### Ejemplo con el Atributo `[Flags]`
+
+```csharp
+[Flags]
+public enum FileAccess
+{
+    Read = 1,
+    Write = 2,
+    Execute = 4
+}
+
+// Uso:
+var access = FileAccess.Read | FileAccess.Write;
+if ((access & FileAccess.Read) == FileAccess.Read)
+{
+    Console.WriteLine("Read access granted.");
+}
+```
+
+### Comparación con Kotlin
+
+- **Operaciones Bit a Bit**: En C#, es común utilizar enums con el atributo `[Flags]` para manejar combinaciones de valores, lo cual no es directamente soportado en las enumeraciones de Kotlin.
+- **Capacidad de Extensión Limitada**: Aunque es posible agregar métodos de extensión, las enumeraciones en C# son menos flexibles que en Kotlin en cuanto a la capacidad de contener lógica y estado adicional.
 
 ## Rust
 
@@ -378,3 +448,4 @@ player.apply(event: .manaDrain(amount: 15))
 - **Exhaustividad**: Tanto Swift como Kotlin requieren que los `switch`/`when` sean exhaustivos, lo que mejora la seguridad del código al obligar a manejar todos los casos posibles.
 
 - **Valores Asociados vs. Data Classes**: En Kotlin, para asociar datos con un caso específico, a menudo se usan **data classes** dentro de una **clase sellada**. En Swift, los valores asociados en las enumeraciones permiten lograr esto de manera más directa.
+

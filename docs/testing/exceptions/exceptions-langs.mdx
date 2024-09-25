@@ -2,6 +2,85 @@
 title: "Testing de Excepciones en Otros Frameworks"
 ---
 
+## JavaScript/TypeScript: Mocha
+
+En el ecosistema de **JavaScript**/**TypeScript**, **Mocha** es uno de los frameworks de pruebas más utilizados. A continuación, veremos cómo se realiza el testing de excepciones en **Mocha** y compararemos las similitudes y diferencias con **Kotest** en Kotlin.
+
+### Testing de Excepciones en Mocha
+
+En **Mocha**, se utiliza la función `assert.throws` de la biblioteca de aserciones de **Node.js assert** o métodos de bibliotecas como **Chai** para verificar que se lance una excepción específica.
+
+#### Usando Node.js assert
+
+```typescript
+import * as assert from 'assert';
+
+function methodThatThrowsException(): void {
+  throw new Error('Expected error message');
+}
+
+describe('Exception Test', function() {
+  it('should throw an exception', function() {
+    assert.throws(
+      () => {
+        methodThatThrowsException();
+      },
+      Error,
+      'Expected error message'
+    );
+  });
+});
+```
+
+En este ejemplo:
+
+- **`assert.throws`**: Verifica que el bloque de código lanzado arroje una excepción del tipo especificado.
+- Se puede proporcionar un mensaje de error para verificar detalles adicionales.
+
+#### Usando Chai expect
+
+Con la biblioteca **Chai** y su estilo **expect**, el código es más expresivo:
+
+```typescript
+import { expect } from 'chai';
+
+function methodThatThrowsException(): void {
+  throw new Error('Expected error message');
+}
+
+describe('Exception Test', function() {
+  it('should throw an exception', function() {
+    expect(() => methodThatThrowsException()).to.throw(Error, 'Expected error message');
+  });
+});
+```
+
+En este ejemplo:
+
+- **`expect().to.throw()`**: Verifica que se lance una excepción del tipo y mensaje especificados.
+- La sintaxis de Chai es más cercana al lenguaje natural, lo que hace que las pruebas sean más legibles.
+
+### Similitudes con Kotest
+
+- **Verificación de Excepciones**: Ambos frameworks permiten verificar que un bloque de código específico lanza una excepción esperada.
+- **Captura y Aserciones**: Tanto en Mocha como en Kotest, es posible capturar la excepción y hacer aserciones adicionales, como verificar el mensaje de error.
+- **Expresividad**: Ambos frameworks ofrecen formas claras y expresivas de escribir pruebas de excepciones.
+
+### Diferencias con Kotest
+
+- **Estructura del Código**: Mocha utiliza funciones de callback (`describe`, `it`) para estructurar las pruebas, mientras que Kotest utiliza lambdas, integrándose más naturalmente con Kotlin.
+- **Funciones Disponibles**: Kotest ofrece múltiples funciones (`shouldThrow`, `shouldThrowExactly`, `shouldThrowAny`) para la verificación de excepciones, mientras que Mocha depende de bibliotecas de aserciones externas como **Chai** para un mayor control.
+- **Soporte para BDD**: Kotest tiene soporte nativo para estilos de pruebas BDD como `FreeSpec`, mientras que en Mocha el soporte para BDD proviene de su uso con `describe` e `it`.
+
+### Comparación General
+
+| Aspecto                         | Kotest (Kotlin)                              | Mocha (TypeScript)                       |
+|---------------------------------|----------------------------------------------|------------------------------------------|
+| **Verificación de Excepciones** | `shouldThrow`, `shouldThrowExactly`, etc.    | `assert.throws` o `expect().to.throw()`  |
+| **Estructura del Bloque**       | Uso de lambdas                               | Callbacks con `describe` e `it`          |
+| **Flexibilidad**                | Varias funciones para diferentes necesidades | Uso de bibliotecas de aserciones         |
+| **Estilo BDD**                  | Soporte nativo (e.g., `FreeSpec`)            | Soporte mediante funciones `describe`/`it` |
+
 ## JVM: JUnit
 
 En el ecosistema de Java, **JUnit** es uno de los frameworks de pruebas más populares. A continuación, exploraremos cómo se realiza el testing de excepciones en JUnit y compararemos las similitudes y diferencias con **Kotest** en Kotlin.
@@ -46,6 +125,15 @@ En este ejemplo:
 - **Funciones Especializadas**: Kotest ofrece funciones como `shouldThrowExactly` y `shouldThrowAny`, brindando mayor flexibilidad en la verificación de excepciones.
 - **Estilos de Prueba**: Kotest soporta estilos BDD (Behavior-Driven Development) como `FreeSpec` y `BehaviorSpec`, facilitando una estructura de pruebas más descriptiva y cercana al lenguaje natural. JUnit sigue un enfoque más tradicional basado en métodos.
 
+### Comparación general
+
+| Aspecto                         | Kotest (Kotlin)                              | JUnit (Java)                            |
+|---------------------------------|----------------------------------------------|-----------------------------------------|
+| **Verificación de Excepciones** | `shouldThrow`, `shouldThrowExactly`, etc.    | `assertThrows`                          |
+| **Sintaxis**                    | Uso de lambdas                               | Uso de interfaces funcionales           |
+| **Flexibilidad**                | Varias funciones para diferentes necesidades | Enfoque principal con `assertThrows`    |
+| **Estilo BDD**                  | Soporte nativo (e.g., `FreeSpec`)            | No soportado nativamente                |
+
 ## Python: PyTest
 
 En el mundo de Python, **PyTest** es uno de los frameworks de pruebas más utilizados. Veamos cómo se realiza el testing de excepciones en PyTest y cómo se compara con Kotest.
@@ -82,29 +170,14 @@ En este ejemplo:
 ### Diferencias con Kotest
 
 - **Estructura del Código**: PyTest utiliza un bloque `with` para manejar excepciones, mientras que Kotest utiliza lambdas, alineándose con el paradigma funcional de Kotlin.
-
-```kotlin
-shouldThrow<IllegalArgumentException> {
-    // Código que se espera que lance IllegalArgumentException
-    methodThatThrowsException()
-}.message shouldBe "Expected error message"
-  ```
-
 - **Funciones Disponibles**: Kotest ofrece múltiples funciones (`shouldThrow`, `shouldThrowExactly`, `shouldThrowAny`) para mayor flexibilidad, mientras que PyTest principalmente utiliza `pytest.raises()`.
 - **Soporte para BDD**: Kotest incluye soporte nativo para estilos BDD, permitiendo escribir pruebas más descriptivas y estructuradas. PyTest no ofrece soporte nativo para BDD, aunque puede lograrse mediante plugins externos.
 
 ### Comparación General
 
-| Aspecto                      | Kotest (Kotlin)                                 | PyTest (Python)                          |
-|------------------------------|-------------------------------------------------|------------------------------------------|
-| **Verificación de Excepciones** | `shouldThrow`, `shouldThrowExactly`, etc.       | `pytest.raises()`                        |
-| **Estructura del Bloque**    | Uso de lambdas                                  | Bloque `with`                            |
-| **Flexibilidad**             | Varias funciones para diferentes necesidades    | Enfoque principal con `pytest.raises()`  |
-| **Estilo BDD**               | Soporte nativo (e.g., `FreeSpec`)               | No soportado nativamente                 |
-
----
-
-## Conclusión
-
-Aunque Kotest, JUnit y PyTest operan en diferentes lenguajes, todos proporcionan mecanismos para el testing de excepciones. Kotest destaca por su sintaxis concisa y funcional, así como por su soporte nativo para estilos BDD, lo que facilita la escritura de pruebas más legibles y mantenibles. JUnit y PyTest, aunque poderosos, pueden requerir más código o configuraciones adicionales para alcanzar un nivel similar de expresividad y flexibilidad que Kotest ofrece de forma predeterminada.
-
+| Aspecto                         | Kotest (Kotlin)                              | PyTest (Python)                         |
+|---------------------------------|----------------------------------------------|-----------------------------------------|
+| **Verificación de Excepciones** | `shouldThrow`, `shouldThrowExactly`, etc.    | `pytest.raises()`                       |
+| **Estructura del Bloque**       | Uso de lambdas                               | Bloque `with`                           |
+| **Flexibilidad**                | Varias funciones para diferentes necesidades | Enfoque principal con `pytest.raises()` |
+| **Estilo BDD**                  | Soporte nativo (e.g., `FreeSpec`)            | No soportado nativamente                |

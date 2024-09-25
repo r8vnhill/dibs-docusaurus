@@ -6,6 +6,7 @@ import styles from './Solution.module.css';
  * children elements to the component, which are rendered within the expandable section.
  */
 interface SolutionProps {
+    title?: string;
     children: React.ReactNode;
 }
 
@@ -33,10 +34,12 @@ interface SolutionProps {
  *
  * @returns {React.ReactNode} The `Solution` component.
  */
-const Solution: React.FC<SolutionProps> = ({ children }: SolutionProps): React.ReactNode => {
+const Solution: React.FC<SolutionProps> = ({ title, children }: SolutionProps): React.ReactNode => {
     return (
         <details className={styles.solution}>
-            <summary className={styles.summary}>Solución</summary>
+            <summary className={styles.summary}>
+                {title ? <strong>{`Solución ${title}`}</strong> : <strong>Solución</strong>}
+            </summary>
             <div className={styles.content}>{children}</div>
         </details>
     );

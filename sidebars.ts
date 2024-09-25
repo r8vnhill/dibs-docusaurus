@@ -13,54 +13,63 @@ const sidebars: SidebarsConfig = {
                 'intro/introduction',
                 'intro/clean',
                 'intro/documentation',
-                'intro/Kotlin',
-                'intro/basics',
-                'intro/types',
                 {
+                    label: 'Introducción a Kotlin',
                     type: 'category',
-                    label: 'Introducción a la programación orientada a objetos',
                     link: {
                         type: 'doc',
-                        id: 'intro/oop/oop',
+                        id: 'intro/Kotlin',
                     },
                     items: [
-                        "intro/oop/oop-langs",
+                        'intro/basics',
+                        'intro/types',
+                        {
+                            type: 'category',
+                            label: 'Introducción a la programación orientada a objetos',
+                            link: {
+                                type: 'doc',
+                                id: 'intro/oop/oop',
+                            },
+                            items: [
+                                "intro/oop/oop-langs",
+                            ]
+                        },
+                        {
+                            label: 'Clases abiertas y cerradas',
+                            type: 'category',
+                            link: {
+                                type: 'doc',
+                                id: 'intro/open-closed/open-closed-kt',
+                            },
+                            items: [
+                                'intro/open-closed/open-closed-langs',
+                            ],
+                        },
+                        {
+                            type: 'category',
+                            label: 'Propiedades/Accessors',
+                            link: {
+                                type: 'doc',
+                                id: 'intro/properties/properties-kt',
+                            },
+                            items: [
+                                "intro/properties/properties-langs",
+                            ]
+                        },
+                        {
+                            type: 'category',
+                            label: 'Sobrecarga de operadores',
+                            link: {
+                                type: 'doc',
+                                id: 'intro/operator-overload/operator-overload-kt',
+                            },
+                            items: [
+                                "intro/operator-overload/operator-overload-langs",
+                            ]
+                        },
+                        'intro/void-safety',
                     ]
                 },
-                {
-                    label: 'Clases abiertas y cerradas',
-                    type: 'category',
-                    link: {
-                        type: 'doc',
-                        id: 'intro/open-closed/open-closed-kt',
-                    },
-                    items: [
-                        'intro/open-closed/open-closed-langs',
-                    ],
-                },
-                {
-                    type: 'category',
-                    label: 'Propiedades/Accessors',
-                    link: {
-                        type: 'doc',
-                        id: 'intro/properties/properties-kt',
-                    },
-                    items: [
-                        "intro/properties/properties-langs",
-                    ]
-                },
-                {
-                    type: 'category',
-                    label: 'Sobrecarga de operadores',
-                    link: {
-                        type: 'doc',
-                        id: 'intro/operator-overload/operator-overload-kt',
-                    },
-                    items: [
-                        "intro/operator-overload/operator-overload-langs",
-                    ]
-                },
-                'intro/void-safety',
                 // 'intro/input',
             ],
         },
@@ -127,7 +136,17 @@ const sidebars: SidebarsConfig = {
                                 'build-systems/tasks/custom/custom-langs',
                             ],
                         },
-                        'build-systems/tasks/classes',
+                        {
+                            label: "Tareas como clases",
+                            type: "category",
+                            link: {
+                                type: 'doc',
+                                id: 'build-systems/tasks/classes/classes-kt',
+                            },
+                            items: [
+                                'build-systems/tasks/classes/classes-langs',
+                            ],
+                        },
                     ],
                 },
                 {

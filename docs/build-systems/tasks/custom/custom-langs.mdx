@@ -193,3 +193,77 @@ Para configurar dependencias entre tareas en Maven, puedes usar el concepto de f
 ### Tareas Basadas en Otras Tareas en Maven
 
 En lugar de extender o crear nuevas tareas basadas en otras como en Gradle, en **Maven** puedes usar configuraciones dentro del mismo plugin para realizar múltiples acciones. Sin embargo, la flexibilidad es más limitada en comparación con Gradle, ya que no puedes crear tareas tan dinámicas o complejas sin recurrir a la creación de un plugin personalizado.
+
+## Python: Invoke
+
+En el ecosistema de **Python**, **Invoke** es una herramienta muy similar a **Gradle** o **Gulp**, diseñada para la automatización de tareas y scripts. Permite definir tareas personalizadas y sus dependencias utilizando **Python** como lenguaje de configuración.
+
+### Definición de Tareas en Invoke
+
+En **Invoke**, puedes definir tareas personalizadas de manera muy similar a Gradle, utilizando decoradores de funciones para marcar las tareas. A continuación, un ejemplo de cómo definir una tarea personalizada para imprimir un saludo, equivalente a la tarea `greet` de Gradle.
+
+```python
+from invoke import task
+
+@task
+def greet(c):
+    print("Hello, Invoke!")
+```
+
+### Ejecución de Tareas
+
+Para ejecutar esta tarea personalizada, solo necesitas correr el siguiente comando desde la terminal:
+
+```bash
+invoke greet
+```
+
+### Similitudes con Gradle
+
+- **Definición de Tareas**: Tanto Gradle como Invoke permiten definir tareas personalizadas para automatizar acciones específicas dentro de un proyecto.
+- **Dependencias entre Tareas**: Ambos frameworks permiten definir dependencias entre tareas para garantizar un orden de ejecución específico.
+- **Lenguaje de Configuración**: Al igual que Gradle utiliza Groovy o Kotlin, **Invoke** utiliza **Python**, lo que permite aprovechar todo el poder del lenguaje para crear scripts avanzados.
+
+### Acciones y Dependencias en Invoke
+
+De manera similar a las acciones `doFirst` y `doLast` en Gradle, **Invoke** permite definir dependencias entre tareas y ejecutar funciones en serie. Aquí tienes un ejemplo equivalente a las acciones y dependencias de Gradle utilizando Python:
+
+```python
+from invoke import task
+
+@task
+def message(c):
+    print("Calculating the Fibonacci sequence...")
+
+@task(pre=[message])
+def fib(c):
+    first, second = 0, 1
+    for _ in range(10):
+        print(first)
+        first, second = second, first + second
+    print(f"The 10th Fibonacci number is: {first}")
+```
+
+En este ejemplo, la tarea `message` se ejecuta antes de `fib`, de manera similar a cómo se gestionan las dependencias en Gradle con `dependsOn`.
+
+### Tareas Basadas en Otras Tareas
+
+En **Invoke**, no existe un concepto directo de "herencia" entre tareas como en Gradle. Sin embargo, es posible componer tareas utilizando la lista `pre` para establecer dependencias entre ellas, lo que permite un comportamiento similar. Si quisieras, por ejemplo, definir una tarea que copie archivos después de la compilación, podrías hacerlo así:
+
+```python
+from invoke import task
+import shutil
+
+@task
+def compile(c):
+    print("Compiling project...")
+
+@task(pre=[compile])
+def copy_compiled_files(c):
+    shutil.copytree('src', 'compiled')
+    print("Compiled files copied to 'compiled' directory.")
+```
+
+### Comparación Final
+
+**Invoke** es una herramienta liviana y flexible para automatización de tareas en **Python**, similar a **Gradle** en su enfoque, pero con la ventaja de usar un lenguaje interpretado. **Gradle**, en cambio, es más robusto para la gestión de proyectos y dependencias dentro de su ecosistema JVM, mientras que **Invoke** es más adecuado para tareas de automatización de scripts y proyectos ligeros en **Python**.
