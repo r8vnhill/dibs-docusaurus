@@ -411,6 +411,17 @@ const sidebars: SidebarsConfig = {
                         },
                     ]
                 },
+                {
+                    label: 'Property-Based Testing',
+                    type: 'category',
+                    link: {
+                        type: 'doc',
+                        id: 'testing/pbt/index',
+                    },
+                    items: [
+
+                    ],
+                },
             ],
         },
         {

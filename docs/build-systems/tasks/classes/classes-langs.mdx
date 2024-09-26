@@ -1,0 +1,155 @@
+---
+title: Tareas como clases en otros frameworks
+---
+
+## .NET: **MSBuild**
+
+**MSBuild** es el sistema de automatización de construcción utilizado principalmente en proyectos de .NET. Similar a Gradle, MSBuild permite definir tareas personalizadas a través de clases en C#. Aunque su estructura está basada en XML, MSBuild tiene una estrecha integración con el ecosistema de .NET, lo que lo hace especialmente útil en ese entorno.
+
+### Tareas personalizadas en MSBuild
+
+Para crear una tarea personalizada en MSBuild, se define una clase en C# que hereda de `Microsoft.Build.Utilities.Task`. Este enfoque es similar al de Gradle, donde las tareas extienden `DefaultTask`. La configuración de las tareas en MSBuild se realiza a través de archivos XML.
+
+#### Ejemplo en MSBuild:
+
+```csharp title="FibonacciTask.cs" showLineNumbers
+using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
+
+public class FibonacciTask : Task
+{
+    [Required]
+    public int Number { get; set; }
+
+    public override bool Execute()
+    {
+        if (Number < 0)
+        {
+            Log.LogError("The number must be non-negative.");
+            return false;
+        }
+
+        int first = 0, second = 1;
+        for (int i = 0; i < Number; i++)
+        {
+            Log.LogMessage(MessageImportance.High, $"{first} ");
+            int next = first + second;
+            first = second;
+            second = next;
+        }
+
+        return true;
+    }
+}
+```
+
+#### Uso de la tarea en MSBuild:
+
+En un archivo XML de MSBuild, se puede invocar la tarea personalizada de la siguiente manera:
+
+```xml title="build.proj" showLineNumbers
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <UsingTask TaskName="FibonacciTask" AssemblyFile="FibonacciTask.dll"/>
+
+  <Target Name="RunFibonacci">
+    <FibonacciTask Number="10"/>
+  </Target>
+</Project>
+```
+
+### Comparación con Gradle
+
+| Característica          | Gradle                                                            | MSBuild                                           |
+|-------------------------|-------------------------------------------------------------------|---------------------------------------------------|
+| Definición de tareas    | Clases de Kotlin, Java o Groovy que extienden `DefaultTask`       | Clases de C# que extienden `Task`                 |
+| Lenguaje para tareas    | Kotlin DSL o Groovy DSL                                           | XML + C#                                          |
+| Configuración de tareas | Declarada dentro de scripts `.gradle.kts` o `.gradle`             | Declarada dentro de archivos XML                  |
+| Encapsulación de lógica | Utiliza programación orientada a objetos en Kotlin, Java o Groovy | Utiliza clases C# y configuración XML             |
+| Flexibilidad            | Soporta OOP, manejo de dependencias, y plugins más avanzados      | Soporta OOP pero está limitado al ecosistema .NET |
+| Reusabilidad            | Las tareas se pueden registrar y reutilizar fácilmente            | Tareas deben registrarse en el archivo XML        |
+
+### Semejanzas
+
+1. **Definición de clases para tareas**: Tanto Gradle como MSBuild permiten definir tareas personalizadas utilizando clases en un lenguaje de programación (Kotlin, Java o Groovy en Gradle, y C# en MSBuild).
+2. **Manejo de errores**: Ambos sistemas permiten manejar errores dentro de las tareas personalizadas, utilizando clases específicas para capturar y manejar excepciones o condiciones de error.
+
+### Diferencias
+
+1. **Ecosistema**: Gradle es más flexible y admite una amplia gama de entornos, como JVM, Android, y otros lenguajes. MSBuild está más limitado al ecosistema de .NET y proyectos basados en C#.
+2. **Integración con herramientas**: MSBuild está profundamente integrado con herramientas como Visual Studio, mientras que Gradle es más flexible en términos de IDEs y herramientas de construcción.
+
+## Java: **Apache Ant**
+
+**Apache Ant** es otro sistema de automatización de tareas que también permite la definición de tareas personalizadas, pero utiliza una estructura XML en lugar de un DSL basado en un lenguaje de programación como Kotlin. Aunque Ant y Gradle son diferentes en su enfoque, ambos permiten encapsular lógica en tareas reutilizables.
+
+### Tareas personalizadas en Ant
+
+En Ant, para crear una tarea personalizada, se define una clase Java que extiende la clase `org.apache.tools.ant.Task`. Este enfoque es similar al de Gradle, donde las tareas extienden `DefaultTask`. Sin embargo, en Ant, todo el ciclo de vida y la configuración de las tareas está basado en XML.
+
+#### Ejemplo en Ant:
+
+```java title="FibonacciTask.java" showLineNumbers
+package tasks;
+
+import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.Task;
+
+public class FibonacciTask extends Task {
+    private int number;
+
+    public void setNumber(int number) {
+        this.number = number;
+    }
+
+    public void execute() throws BuildException {
+        if (number < 0) {
+            throw new BuildException("The number must be non-negative");
+        }
+        int first = 0, second = 1;
+        for (int i = 0; i < number; i++) {
+            System.out.print(first + " ");
+            int next = first + second;
+            first = second;
+            second = next;
+        }
+        System.out.println();
+    }
+}
+```
+
+#### Uso de la tarea en Ant:
+
+En el archivo de construcción XML de Ant, la tarea personalizada se invoca de la siguiente manera:
+
+```xml title="build.xml" showLineNumbers
+<project name="FibonacciExample" default="run">
+    <taskdef name="fibonacci" classname="tasks.FibonacciTask" classpath="build/classes"/>
+
+    <target name="run">
+        <fibonacci number="10"/>
+    </target>
+</project>
+```
+
+### Comparación con Gradle
+
+| Característica          | Gradle                                                            | Apache Ant                                 |
+|-------------------------|-------------------------------------------------------------------|--------------------------------------------|
+| Definición de tareas    | Clases de Kotlin, Java o Groovy que extienden `DefaultTask`       | Clases de Java que extienden `Task`        |
+| Lenguaje para tareas    | Kotlin DSL o Groovy DSL                                           | XML + Java                                 |
+| Configuración de tareas | Declarada dentro de scripts `.gradle.kts` o `.gradle`             | Declarada dentro de archivos XML           |
+| Encapsulación de lógica | Utiliza programación orientada a objetos en Kotlin, Java o Groovy | Utiliza clases Java y configuración XML    |
+| Flexibilidad            | Soporta OOP, manejo de dependencias, y plugins más avanzados      | Menos flexible, basado en XML              |
+| Reusabilidad            | Las tareas se pueden registrar y reutilizar fácilmente            | Tareas deben registrarse en el archivo XML |
+
+### Semejanzas
+
+1. **Definición de clases para tareas**: Tanto Gradle como Ant permiten definir tareas personalizadas como clases en un lenguaje de programación. En Gradle usamos Kotlin, Java o Groovy, mientras que en Ant las tareas se definen en Java.
+2. **Manejo de errores**: Ambos frameworks permiten manejar errores lanzando excepciones dentro de las clases de tareas, aunque en Gradle el uso de excepciones específicas como `StopExecutionException` es más común.
+3. **Extensibilidad**: Ambos sistemas permiten extender las funcionalidades básicas de las tareas al crear nuevas clases que encapsulan la lógica específica de cada tarea.
+
+### Diferencias
+
+1. **DSL vs XML**: Gradle utiliza un lenguaje de scripting basado en Kotlin o Groovy, lo que lo hace más flexible y expresivo, mientras que Ant depende de XML para definir las tareas y las configuraciones, lo que puede resultar más verboso y rígido.
+2. **Configuración declarativa**: En Gradle, las configuraciones de las tareas se pueden hacer de forma más declarativa y flexible, mientras que en Ant, las tareas deben configurarse explícitamente a través de XML.
+3. **Compatibilidad y complejidad**: Gradle permite una integración más directa con bibliotecas y plugins gracias a su ecosistema de plugins y su capacidad para usar código Kotlin o Groovy, mientras que Ant es más limitado en términos de la cantidad de extensiones disponibles.

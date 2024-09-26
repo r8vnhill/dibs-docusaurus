@@ -1,5 +1,6 @@
 import React from 'react';
 
+// Agregamos 'edition' como propiedad opcional en la interfaz Reference
 interface Reference {
     id?: string; // The ID can be optional
     title: string; // The title of the reference
@@ -14,6 +15,7 @@ interface Reference {
     publisher?: string; // Publisher of the book
     year?: string; // Year of publication
     author?: string; // Author of the book
+    edition?: string; // Edition of the book (new field)
 }
 
 interface ReferencesProps {
@@ -126,10 +128,13 @@ const renderReference = (reference: Reference) => {
         return (
             <li key={reference.id}>
                 {renderTypeEmoji(reference.type)}{' '}
-                {reference.author && <strong>{reference.author}.</strong>} "{reference.title}".{' '}
+                {reference.author && <strong>{reference.author}.</strong>}{' '}
+                "{reference.title}".{' '}
+                {/* Agregamos la edición si está presente */}
+                {reference.edition && `${reference.edition}. `}
                 {reference.bookTitle && (
                     <>
-                        En <em>{reference.bookTitle}</em>, {reference.pages}.{' '}
+                        En <em>{reference.bookTitle}</em>{reference.pages && `, ${reference.pages}`}.{' '}
                     </>
                 )}
                 {reference.location && reference.publisher && `${reference.location}: ${reference.publisher}, `}

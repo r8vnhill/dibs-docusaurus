@@ -10,7 +10,7 @@ import ReadingTime from '../../../src/components/ReadingTime';
 
 En Kotlin, los **singleton** son instancias únicas de clases que se definen con la palabra clave `object`. No necesitan ser instanciados varias veces y se comportan como **singletons**.
 
-```kotlin
+```kotlin showLineNumbers
 object MySingleton {
     val name = "Singleton"
     fun greet() = "Hello, $name"
@@ -21,7 +21,7 @@ object MySingleton {
 
 Una **clase** es un plano que define las propiedades y comportamientos de los objetos. Se puede instanciar múltiples veces.
 
-```kotlin
+```kotlin showLineNumbers
 class Person(val name: String) {
     fun greet() = "Hello, $name"
 }
@@ -33,7 +33,7 @@ val person = Person("Alice")
 
 Las **interfaces** definen contratos de comportamiento. Solo declaran funciones o propiedades sin implementar lógica. Las clases que implementan una interfaz deben proporcionar las implementaciones.
 
-```kotlin
+```kotlin showLineNumbers
 interface Greeter {
     fun greet(): String
 }
@@ -43,11 +43,21 @@ class Person(val name: String) : Greeter {
 }
 ```
 
+<details>
+    <summary>Interfaces con implementaciones predeterminadas</summary>
+
+    En Kotlin, las interfaces pueden incluir implementaciones predeterminadas para algunos de sus métodos, lo que permite que las clases que las implementan no tengan que sobrescribir todos los métodos. Esto es útil para proporcionar comportamientos comunes sin obligar a todas las clases a implementarlos manualmente.
+
+    Sin embargo, el uso de implementaciones predeterminadas introduce cierta complejidad en la jerarquía de clases. Un ejemplo común es el **problema del diamante**, que ocurre cuando una clase implementa dos interfaces que contienen métodos con la misma firma pero con implementaciones distintas. Kotlin resuelve este conflicto exigiendo al desarrollador que sobrescriba el método conflictivo y defina explícitamente cuál de las implementaciones debe usarse.
+
+    A lo largo del curso, profundizaremos en estos conceptos. Por ahora, nos enfocaremos en interfaces con métodos abstractos para simplificar la comprensión.
+</details>
+
 ## Clases Abstractas
 
 Las **clases abstractas** pueden tener funciones implementadas o no, y no pueden ser instanciadas directamente. Sirven como base para otras clases que deben implementar sus miembros abstractos.
 
-```kotlin
+```kotlin showLineNumbers
 abstract class AbstractAnimal {
     abstract fun sound(): String
     fun walk() = "Walking..."
@@ -60,18 +70,24 @@ class Dog : AbstractAnimal() {
 
 Recordemos que es una buena práctica utilizar el prefijo ``Abstract`` para las clases abstractas.
 
+:::note Herencia
+En Kotlin, una clase solo puede heredar de una única clase, pero puede implementar múltiples interfaces.
+:::
+
 ## Encapsulación
 
 La **encapsulación** es el principio que protege los datos internos de una clase, restringiendo su acceso desde fuera. Esto se logra controlando la visibilidad de los atributos y métodos de una clase, permitiendo que solo ciertos elementos sean accesibles. En Kotlin, la encapsulación se implementa usando **modificadores de acceso**.
 
 ### Modificadores de Acceso en Kotlin
 
-1. **`public`** (por defecto): Accesible desde cualquier parte del código. Si no se especifica un modificador, se considera `public`.
+1. **`public`** (por defecto): Accesible desde cualquier parte del código. Si no se especifica un modificador, se considera `public`. En el caso de bibliotecas de software esto significa que es accesible desde cualquier parte del código de la biblioteca y desde cualquier código que use la biblioteca.
 2. **`private`**: Solo accesible dentro de la clase donde se define.
 3. **`protected`**: Accesible dentro de la clase y sus subclases.
-4. **`internal`**: Accesible dentro del mismo módulo.
+4. **`internal`**: Accesible dentro del mismo módulo. Veremos más sobre módulos en las unidades futuras.
 
-Notemos que en Kotlin no existe el concepto de **package-private** como en Java o Scala.
+:::warning Package-Private
+En Kotlin no existe el concepto de **package-private** como en Java o Scala. Esta decisión de diseño se tomó porque la privacidad a nivel de paquete puede ser riesgosa, ya que cualquier usuarix de nuestras bibliotecas puede acceder a los miembros marcados como **package-private** si define un paquete con el mismo nombre, haciéndolas "equivalentes" a `public`.
+:::
 
 ## Constructores Primarios y Secundarios en Kotlin
 
@@ -80,25 +96,30 @@ Kotlin permite definir **constructores primarios** y **constructores secundarios
 ### Constructor Primario
 El **constructor primario** se define en la cabecera de la clase y puede inicializar propiedades directamente.
 
-```kotlin
+```kotlin showLineNumbers
 class Person(val name: String, var age: Int)
 ```
 
 - Se define dentro de la cabecera de la clase.
 - No contiene lógica adicional, pero puede usar bloques de inicialización (`init`) si se necesita.
 
-```kotlin
+```kotlin showLineNumbers
 class Person(val name: String, var age: Int) {
     init {
-        println("Person initialized with name: $name")
+        require(age >= 0) { "Age must be non-negative" }
     }
 }
 ```
 
+:::info ``require``
+La función `require` verifica una condición y lanza una excepción de tipo `IllegalArgumentException` si no se cumple. Es útil para validar argumentos de funciones y constructores. Notemos que la sintaxis es ``require(condition) { "message" }``.
+:::
+
 ### Constructor Secundario
+
 Un **constructor secundario** se define dentro del cuerpo de la clase, permitiendo lógica adicional. Se llama al constructor primario usando `this`.
 
-```kotlin
+```kotlin showLineNumbers
 class Person(val name: String) {
     var age: Int = 0
 
@@ -108,7 +129,17 @@ class Person(val name: String) {
 }
 ```
 
-- Los constructores secundarios son útiles cuando necesitas diferentes formas de inicializar una clase.
+Los constructores secundarios son útiles cuando necesitas diferentes formas de inicializar una clase.
+
+:::info Parámetros por defecto
+En gran parte de los casos, los constructores secundarios no son necesarios gracias a los **parámetros por defecto** en Kotlin. Los parámetros por defecto permiten definir valores predeterminados para los parámetros de un constructor, evitando la necesidad de múltiples constructores.
+
+De esta forma, el ejemplo anterior se puede simplificar a:
+
+```kotlin showLineNumbers
+class Person(val name: String, var age: Int = 0)
+```
+:::
 
 <References references={[
     {
