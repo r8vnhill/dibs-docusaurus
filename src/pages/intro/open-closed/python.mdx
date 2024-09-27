@@ -1,0 +1,70 @@
+
+
+## Python
+
+En **Python**, el paradigma de herencia es más flexible que en Kotlin. No existen las palabras clave `open` o `final` para controlar explícitamente si una clase o método puede ser heredado o sobrescrito. Esto puede facilitar la extensión, pero también puede llevar al **Problema de la Base Frágil** si no se tiene cuidado al diseñar las clases base.
+
+### Clases en Python
+
+En Python, todas las clases son *abiertas* por defecto, lo que significa que pueden ser heredadas sin necesidad de una palabra clave especial. Sin embargo, hay maneras de restringir la herencia utilizando ciertas técnicas.
+
+### Métodos y Herencia en Python
+
+Los métodos en Python también son abiertos por defecto y pueden ser sobrescritos en las subclases sin restricciones. A diferencia de Kotlin, no hay una palabra clave explícita para controlar este comportamiento, pero es posible usar decoradores o convenciones para influir en cómo se debe extender una clase.
+
+#### Métodos "finales"
+
+Aunque no existen métodos "finales" en Python, se puede usar el decorador `@final` introducido en la biblioteca `typing` para sugerir que un método no debe ser sobrescrito. Este decorador es solo una indicación y no impide físicamente que el método sea sobrescrito, pero las herramientas de análisis estático pueden generar advertencias si se viola esta convención.
+
+```python showLineNumbers
+from typing import final
+
+class UniversityStudent:
+    def study(self):
+        print("Studying at the university")
+
+    @final
+    def party(self):
+        print("Partying at the university")
+
+class PhDStudent(UniversityStudent):
+    def study(self):
+        print("I'm studying a lot!")
+
+    # Esto lanzará una advertencia en análisis estático, pero no impedirá la sobrescritura.
+    def party(self):
+        print("I'm too busy to party!")
+```
+
+En este ejemplo:
+- (4-5, 12-13) **`study`** es sobrescrito en la subclase `PhDStudent`, tal como se haría en Kotlin con un método `open`.
+- (7-9, 15-17) **`party`** tiene el decorador `@final`, lo que indica que no debe ser sobrescrito, aunque Python no lo impide de forma estricta.
+
+### Simulación de Clases Cerradas en Python
+
+Si se desea prohibir que una clase sea heredada, se puede recurrir a técnicas como el uso de metaclases o lanzar excepciones en el constructor si se detecta que la clase está siendo heredada. No obstante, estas técnicas son inusuales y no forman parte de las prácticas comunes en Python, donde la flexibilidad es más valorada que la restricción.
+
+```python showLineNumbers
+class FinalMeta(type):
+    def __new__(cls, name, bases, namespace, **kwargs):
+        if any(isinstance(base, FinalMeta) for base in bases):
+            raise TypeError(f"Cannot inherit from final class {bases}")
+        return super().__new__(cls, name, bases, namespace)
+
+class FinalClass(metaclass=FinalMeta):
+    pass
+
+# Intentar heredar de `FinalClass` lanzará una excepción
+class AttemptedSubclass(FinalClass):
+    pass  # Raises TypeError: Cannot inherit from final class <class '__main__.FinalClass'>
+```
+
+### Comparación entre Python y Kotlin
+
+| **Aspecto**                   | **Kotlin**                                       | **Python**                                       |
+|-------------------------------|-------------------------------------------------|-------------------------------------------------|
+| **Clases Abiertas**            | Clases son cerradas por defecto, se abren con `open` | Clases abiertas por defecto, no se necesita palabra clave |
+| **Clases Cerradas**            | Clases son cerradas por defecto (`final`)       | No hay clases cerradas por defecto, se puede simular con metaclases |
+| **Métodos Abiertos**           | Deben ser marcados explícitamente con `open`    | Todos los métodos son abiertos por defecto, sin necesidad de palabra clave |
+| **Métodos Cerrados**           | Métodos no pueden sobrescribirse sin `open`     | Se puede usar el decorador `@final` para sugerir que un método no debe sobrescribirse, pero no es obligatorio |
+| **Control de Herencia**        | Herencia controlada explícitamente con `open` y `final` | Flexibilidad total, pero se puede restringir con decoradores o metaclases |

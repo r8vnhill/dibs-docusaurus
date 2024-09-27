@@ -1,0 +1,107 @@
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+
+## JavaScript/TypeScript: Mocha + Chai
+
+En el ecosistema de **JavaScript**/**TypeScript**, **Mocha** es uno de los frameworks de pruebas más utilizados. A continuación, veremos cómo se realiza el testing de excepciones en **Mocha** y compararemos las similitudes y diferencias con **Kotest** en Kotlin.
+
+### Testing de Excepciones en Mocha
+
+En **Mocha**, se utiliza la función `assert.throws` de la biblioteca de aserciones de **Node.js assert** o métodos de bibliotecas como **Chai** para verificar que se lance una excepción específica.
+
+#### Usando Node.js assert
+
+<Tabs groupId={"js"}>
+    <TabItem value="TypeScript" label="TypeScript">
+        ```typescript showLineNumbers title="test/exception.test.ts"
+        import * as assert from 'assert';
+
+        function methodThatThrowsException(): void {
+          throw new Error('Expected error message');
+        }
+
+        describe('Exception Test', function() {
+          it('should throw an exception', function() {
+            assert.throws(
+              () => {
+                methodThatThrowsException();
+              },
+              Error,
+              'Expected error message'
+            );
+          });
+        });
+        ```
+    </TabItem>
+    <TabItem value="JavaScript" label="JavaScript">
+        ```javascript showLineNumbers title="test/exception.test.js"
+        const assert = require('assert');
+
+        function methodThatThrowsException() {
+            throw new Error('Expected error message');
+        }
+
+        describe('Exception Test', function() {
+            it('should throw an exception', function() {
+                assert.throws(
+                    () => {
+                        methodThatThrowsException();
+                    },
+                    Error,
+                    'Expected error message'
+                );
+            });
+        });
+        ```
+    </TabItem>
+</Tabs>
+
+En este ejemplo:
+
+- **`assert.throws`**: Verifica que el bloque de código lanzado arroje una excepción del tipo especificado.
+- Se puede proporcionar un mensaje de error para verificar detalles adicionales.
+
+#### Usando Chai expect
+
+Con la biblioteca **Chai** y su estilo **expect**, el código es más expresivo:
+
+```typescript showLineNumbers title="test/exception.test.ts"
+import { expect } from 'chai';
+
+function methodThatThrowsException(): void {
+  throw new Error('Expected error message');
+}
+
+describe('Exception Test', function() {
+  it('should throw an exception', function() {
+    expect(() => methodThatThrowsException()).to.throw(Error, 'Expected error message');
+  });
+});
+```
+
+En este ejemplo:
+
+- **`expect().to.throw()`**: Verifica que se lance una excepción del tipo y mensaje especificados.
+- La sintaxis de Chai es más cercana al lenguaje natural, lo que hace que las pruebas sean más legibles.
+
+### Similitudes con Kotest
+
+- **Verificación de Excepciones**: Ambos frameworks permiten verificar que un bloque de código específico lanza una excepción esperada.
+- **Captura y Aserciones**: Tanto en Mocha como en Kotest, es posible capturar la excepción y hacer aserciones adicionales, como verificar el mensaje de error.
+- **Expresividad**: Ambos frameworks ofrecen formas claras y expresivas de escribir pruebas de excepciones.
+
+### Diferencias con Kotest
+
+- **Estructura del Código**: Mocha utiliza funciones de callback (`describe`, `it`) para estructurar las pruebas, mientras que Kotest utiliza lambdas, integrándose más naturalmente con Kotlin.
+- **Funciones Disponibles**: Kotest ofrece múltiples funciones (`shouldThrow`, `shouldThrowExactly`, `shouldThrowAny`) para la verificación de excepciones, mientras que Mocha depende de bibliotecas de aserciones externas como **Chai** para un mayor control.
+- **Soporte para BDD**: Kotest tiene soporte nativo para estilos de pruebas BDD como `FreeSpec`, mientras que en Mocha el soporte para BDD proviene de su uso con `describe` e `it`.
+
+### Comparación General
+
+| Aspecto                         | Kotest (Kotlin)                              | Mocha (TypeScript)                         |
+|---------------------------------|----------------------------------------------|--------------------------------------------|
+| **Verificación de Excepciones** | `shouldThrow`, `shouldThrowExactly`, etc.    | `assert.throws` o `expect().to.throw()`    |
+| **Estructura del Bloque**       | Uso de lambdas                               | Callbacks con `describe` e `it`            |
+| **Flexibilidad**                | Varias funciones para diferentes necesidades | Uso de bibliotecas de aserciones           |
+| **Estilo BDD**                  | Soporte nativo (e.g., `FreeSpec`)            | Soporte mediante funciones `describe`/`it` |
