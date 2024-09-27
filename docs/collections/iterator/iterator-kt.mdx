@@ -1,14 +1,16 @@
 ---
 title: Iterator pattern
 ---
+import TabItem from "@theme/TabItem";
+import Tabs from "@theme/Tabs";
 import Hint from "../../../src/components/exercise/Hint";
 import Solution from "../../../src/components/exercise/Solution";
 import Exercise from "../../../src/components/exercise/Exercise";
 import References from "../../../src/components/ReferencesComponent";
 import ReadingTime from "../../../src/components/ReadingTime";
+import CodeBlock from '@theme/CodeBlock';
 
 <ReadingTime/>
-
 
 El **Iterator pattern** es un patrón de diseño de comportamiento que permite recorrer los elementos de una colección de manera secuencial, sin exponer su representación interna (por ejemplo, si es una lista, conjunto o árbol). Este patrón proporciona una interfaz común para acceder a los elementos, lo que facilita recorrer estructuras de datos de manera consistente y uniforme.
 
@@ -33,11 +35,38 @@ El **Patrón Iterador** involucra los siguientes componentes principales:
 
 Supongamos que tenemos una clase `Book` y queremos crear una biblioteca que pueda almacenar varios libros y recorrerlos utilizando el patrón iterador.
 
+#### 0. Crear el módulo
+
+Para comenzar, crea un directorio `iterator` y un archivo `build.gradle.kts` en blanco en el directorio raíz del proyecto:
+
+<Tabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell showLineNumbers
+        New-Item -Path "iterator\src\main\kotlin" -ItemType Directory
+        Set-Content -Path "iterator\build.gradle.kts" -Value "// Intentionally left blank"
+        ```
+    </TabItem>
+    <TabItem value="Windows (corto)" label="Windows (corto)">
+        ```powershell showLineNumbers
+        mkdir iterator\src\main\kotlin
+        "Intentionally left blank" > iterator\build.gradle.kts
+        ```
+    </TabItem>
+    <TabItem value="Linux/Mac" label="Linux/Mac">
+        ```bash showLineNumbers
+        mkdir -p iterator/src/main/kotlin
+        echo "// Intentionally left blank" > iterator/build.gradle.kts
+        ```
+    </TabItem>
+</Tabs>
+
 #### 1. Definir el Iterador
 
-Primero, creamos una interfaz `Iterator` que defina los métodos básicos de un iterador.
+Luego, definimos la interfaz `Iterator` con los métodos `hasNext()` y `next()`.
 
-```kotlin
+```kotlin showLineNumbers title="src/main/kotlin/cl/ravenhill/iterator/Iterator.kt"
+package cl.ravenhill.iterator
+
 interface Iterator<T> {
     fun hasNext(): Boolean
     fun next(): T
@@ -48,7 +77,9 @@ interface Iterator<T> {
 
 Ahora definimos la interfaz `Iterable`, que tiene un método para obtener un iterador.
 
-```kotlin
+```kotlin showLineNumbers title="src/main/kotlin/cl/ravenhill/iterator/Iterable.kt"
+package cl.ravenhill.iterator
+
 interface Iterable<T> {
     fun iterator(): Iterator<T>
 }
@@ -58,8 +89,14 @@ interface Iterable<T> {
 
 Definimos una clase `Book` y una colección `Library` que implementa la interfaz `Iterable`.
 
-```kotlin
+```kotlin showLineNumbers title="src/main/kotlin/cl/ravenhill/library/Book.kt"
+package cl.ravenhill.library
+
 data class Book(val title: String, val author: String)
+```
+
+```kotlin showLineNumbers title="src/main/kotlin/cl/ravenhill/library/Library.kt"
+package cl.ravenhill.library
 
 class Library(vararg books: Book) : Iterable<Book> {
     private val books = books.toList()
@@ -71,7 +108,9 @@ class Library(vararg books: Book) : Iterable<Book> {
 
 Ahora implementamos la clase `BookIterator` que recorre los libros dentro de la biblioteca.
 
-```kotlin
+```kotlin showLineNumbers title="src/main/kotlin/cl/ravenhill/library/BookIterator.kt"
+package cl.ravenhill.library
+
 class BookIterator(private val books: List<Book>) : Iterator<Book> {
     private var position = 0
 
@@ -84,11 +123,16 @@ class BookIterator(private val books: List<Book>) : Iterator<Book> {
 }
 ```
 
+
+:::info **`++i` vs `i++`**
+En Kotlin, `i++` devuelve el valor de `i` antes de incrementarlo, mientras que `++i` primero incrementa `i` y luego devuelve el valor actualizado. En el caso de `position++`, se devuelve el valor actual de `position` y después se incrementa. Esto es útil cuando deseas realizar una acción con el valor actual antes de modificarlo.
+:::
+
 ### Uso del Patrón Iterador
 
 Ahora que tenemos la implementación completa, podemos recorrer la biblioteca usando el iterador:
 
-```kotlin
+```kotlin showLineNumbers
 fun main() {
     val library = Library(
         Book("Red Drragon", "Thomas Harris"),
@@ -127,7 +171,7 @@ fun main() {
 
     El recorrido en orden debería devolver `[1, 2, 3, 4, 5]`.
 
-    ```kotlin
+    ```kotlin showLineNumbers
     data class BinaryTree(
         val value: Int,
         val left: BinaryTree? = null,
@@ -141,15 +185,30 @@ fun main() {
         <>
             Puedes utilizar una cola (<code>Queue</code>) para almacenar los nodos del árbol que aún no han sido visitados. Los métodos siguientes métodos pueden serte útiles:
             <ul>
-                <li><code>add: (E) → Boolean</code>: Añade un elemento a la cola.</li>
-                <li><code>poll: () → E?</code>: Extrae y elimina el primer elemento de la cola.</li>
-                <li><code>isEmpty: () → Boolean</code> e <code>isNotEmpty: () → Boolean</code>: Verifican si la cola está vacía o no.</li>
+                <li><code>add: Queue&lt;E&gt;.(E) → Boolean</code>: Añade un elemento a la cola.</li>
+                <li><code>poll: Queue&lt;E&gt;.() → E?</code>: Extrae y elimina el primer elemento de la cola.</li>
+                <li><code>isEmpty: Queue&lt;E&gt;.() → Boolean</code> e <code>Queue&lt;E&gt;.isNotEmpty: Queue&lt;E&gt;.() → Boolean</code>: Verifican si la cola está vacía o no.</li>
             </ul>
+        </>,
+        <>
+            Un ejemplo de implementación de <code>Queue</code> en Kotlin es utilizar una lista enlazada (<code>LinkedList</code>):
+            <CodeBlock language={"kotlin"} showLineNumbers>
+                {`import java.util.LinkedList
+import java.util.Queue
+
+val queue: Queue<Int> = LinkedList()
+queue.add(1)
+queue.add(2)
+queue.add(3)
+queue.poll() // Devuelve 1
+queue.poll() // Devuelve 2
+queue.poll() // Devuelve 3`}
+            </CodeBlock>
         </>
     ]} />
 
     <Solution>
-        ```kotlin
+        ```kotlin showLineNumbers
         import java.util.LinkedList
         import java.util.Queue
 
@@ -189,7 +248,7 @@ Kotlin incluye el **patrón Iterator** de forma nativa en su biblioteca estánda
 
 La interfaz `Iterable` en Kotlin se define de la siguiente manera:
 
-```kotlin
+```kotlin showLineNumbers
 public interface Iterable<out T> {
     public operator fun iterator(): Iterator<T>
 }
@@ -199,7 +258,7 @@ El método `iterator` es un **operador** que facilita el uso de la sintaxis del 
 
 ### Ejemplo de uso:
 
-```kotlin
+```kotlin showLineNumbers
 fun main() {
     val library: Library = TODO()
     for (book in library) {

@@ -63,6 +63,64 @@ El resultado será `MyValue 6`. Aquí, hemos aplicado una serie de transformacio
 | **Sintaxis**              | Notación con `flatMap`  | Operador `>>=` y notación `do`        |
 | **Manejo de Contexto**    | Mónadas como `Monad<T>` | Typeclass `Monad` y su implementación |
 
+
+## JavaScript/TypeScript
+
+En **TypeScript**, aunque no existen mónadas nativas como en Kotlin o Haskell, podemos simular el comportamiento monádico mediante el uso de **Promises** y estructuras personalizadas. Similar a las Promesas en JavaScript, podemos encapsular un valor en un contexto y realizar transformaciones encadenadas utilizando funciones como `then`, que imita a `flatMap`.
+
+### Mónadas en JS/TS: Promesas
+
+Las **Promises** en TypeScript son equivalentes conceptualmente a las mónadas, ya que encapsulan un valor y permiten realizar operaciones sobre él mediante `then`, similar a cómo las mónadas operan en Kotlin con `flatMap`.
+
+### Componentes en JS/TS
+
+#### `pure` (o `unit`)
+En TypeScript, podemos crear una función `pure` que envuelve un valor en una Promesa resuelta, de la misma manera que `pure` en Kotlin envuelve un valor en una mónada.
+
+**Ejemplo en TypeScript:**
+
+```typescript showLineNumbers
+const pure = <T>(value: T): Promise<T> => Promise.resolve(value);
+```
+
+Esto crea una Promesa resuelta con el valor proporcionado, equivalente a `pure` en Kotlin.
+
+#### `flatMap` (o `then`)
+
+El método `then` en TypeScript se puede considerar equivalente a `flatMap` en Kotlin. Permite encadenar transformaciones sobre el valor encapsulado en la Promesa.
+
+**Ejemplo en TypeScript:**
+
+```typescript showLineNumbers
+const flatMap = <A, B>(promise: Promise<A>, f: (value: A) => Promise<B>): Promise<B> =>
+  promise.then(f);
+```
+
+Este `flatMap` toma una Promesa y una función `f` que transforma el valor de la Promesa, devolviendo una nueva Promesa.
+
+### Ejemplo Completo en TypeScript
+
+```typescript showLineNumbers
+const pure = <T>(value: T): Promise<T> => Promise.resolve(value);
+
+pure(5)
+  .then((x) => pure(x * 2))
+  .then((x) => pure(x + 1))
+  .then((x) => pure(x / 2))
+  .then((x) => pure(x + 1))
+  .then(console.log); // Output: 6
+```
+
+Este ejemplo muestra cómo utilizar `Promise.resolve` y `then` como equivalentes a `pure` y `flatMap` en Kotlin para encadenar transformaciones de valores encapsulados.
+
+### Tabla Comparativa
+
+| **Característica**     | **Kotlin**                                               | **TypeScript (Promises)**                              |
+|------------------------|----------------------------------------------------------|--------------------------------------------------------|
+| **`pure`/`unit`**      | `pure` envuelve un valor en una mónada                   | `Promise.resolve` envuelve un valor en una Promesa     |
+| **`flatMap`/`then`**   | `flatMap` aplica una función y devuelve una nueva mónada | `then` aplica una función y devuelve una nueva Promesa |
+| **Manejo de Contexto** | Mónadas como `Monad<T>`                                  | Promesas como `Promise<T>`                             |
+
 ## Scala
 
 En **Scala**, las mónadas se implementan utilizando la combinación de **traits** y métodos como `flatMap`, `map` y `pure`. Las mónadas en Scala se utilizan ampliamente en programación funcional, permitiendo manejar flujos de datos con efectos secundarios o contextos computacionales de manera limpia y eficiente.

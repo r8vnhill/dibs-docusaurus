@@ -67,7 +67,39 @@ const sidebars: SidebarsConfig = {
                                 "intro/operator-overload/operator-overload-langs",
                             ]
                         },
-                        'intro/void-safety',
+                        {
+                            label: 'Excepciones',
+                            type: 'category',
+                            link: {
+                                type: 'doc',
+                                id: 'intro/exceptions/exceptions-kt',
+                            },
+                            items: [
+                                "intro/exceptions/exceptions-langs",
+                            ]
+                        },
+                        {
+                            label: 'Polimorfismo paramétrico',
+                            type: 'category',
+                            link: {
+                                type: 'doc',
+                                id: 'intro/generics-kt',
+                            },
+                            items: [
+                                "intro/generics-langs",
+                            ]
+                        },
+                        {
+                            type: 'category',
+                            label: 'Void safety',
+                            link: {
+                                type: 'doc',
+                                id: 'intro/void/void-safety',
+                            },
+                            items: [
+                                "intro/void/void-safety-langs",
+                            ]
+                        },
                     ]
                 },
                 // 'intro/input',

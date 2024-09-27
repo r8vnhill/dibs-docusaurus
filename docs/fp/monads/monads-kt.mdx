@@ -10,7 +10,6 @@ import Tabs from "@theme/Tabs";
 <ReadingTime/>
 <GitHubRepoLink repo={"functional-programming-kt"} user={"r8vnhill"}/>
 
-<br/>
 Para comenzar creemos un nuevo módulo para las mónadas llamado ``monads``.
 
 <Tabs groupId={"os"}>
@@ -42,8 +41,12 @@ Una **mónada** es un patrón de diseño en programación funcional que permite 
 
 ### Componentes Principales
 
-- **`pure`**: Una función que toma un valor y lo coloca dentro de una mónada, encapsulándolo en su contexto.
-- **`flatMap`**: Una función que permite aplicar una función que devuelve una mónada a un valor ya encapsulado en otra mónada. "Desempaqueta" el valor, aplica la función, y vuelve a encapsular el resultado.
+Una mónada se define utilizando un **constructor de tipo** `M` y dos operaciones clave:
+
+- **`pure: (A) -> M<A>`**: También conocida como `unit` o `return` en algunos lenguajes, esta función toma un valor de tipo `A` y lo envuelve en una mónada `M<A>`. Su objetivo es crear una mónada a partir de un valor puro, sin introducir efectos secundarios.
+- **`flatMap: M<A>.((A) -> M<B>) -> M<B>`**: También llamada `bind` o `chain` (a menudo representada como `>>=`), esta operación toma un valor monádico `M<A>` y una función que convierte ese valor de tipo `A` en una nueva mónada `M<B>`. `flatMap` permite encadenar operaciones monádicas de manera segura, gestionando la propagación de los efectos que puedan ocurrir durante las transformaciones.
+
+> Podemos imaginar una mónada como una caja que encapsula un valor. Con la función `pure`, colocamos un valor dentro de la caja, y con `flatMap`, podemos tomar el valor de la caja, transformarlo, y volver a encapsularlo en otra caja.
 
 ## Motivación
 
@@ -60,7 +63,7 @@ Las mónadas deben cumplir con tres leyes fundamentales para garantizar un compo
 
 ### 1. Ley de Identidad Izquierda
 
-```kotlin
+```kotlin showLineNumbers
 Monad.pure(a).flatMap(f) == f(a)
 ```
 
@@ -68,7 +71,7 @@ Encapsular un valor en una mónada con `pure` y luego aplicarle una función con
 
 ### 2. Ley de Identidad Derecha
 
-```kotlin
+```kotlin showLineNumbers
 m.flatMap(Monad.Companion::pure) == m
 ```
 
@@ -76,8 +79,8 @@ Aplicar la función `pure` a un valor ya encapsulado en una mónada no debe alte
 
 ### 3. Ley de Asociatividad
 
-```kotlin
-m.flatMap(f).flatMap(g) == m.flatMap { x -> f(x).flatMap(g) }
+```kotlin showLineNumbers
+m.flatMap(f).flatMap(g) == m.flatMap { f(it).flatMap(g) }
 ```
 
 El orden en el que se agrupan las operaciones con `flatMap` no debe cambiar el resultado. Es decir, la composición de funciones debe ser asociativa.
@@ -86,8 +89,8 @@ El orden en el que se agrupan las operaciones con `flatMap` no debe cambiar el r
 
 Una implementación básica de una mónada en Kotlin podría verse de la siguiente manera:
 
-```kotlin
-data class Monad<T>(private val value: T) {
+```kotlin showLineNumbers
+data class Monad<T>(val value: T) {
     inline fun <R> flatMap(f: (T) -> Monad<R>): Monad<R> = f(value)
     companion object {
         fun <T> pure(value: T): Monad<T> = Monad(value)
@@ -97,9 +100,8 @@ data class Monad<T>(private val value: T) {
 
 En este código, estamos implementando una clase `Monad` genérica que sigue las leyes de las mónadas.
 
-1. **`pure`**:
-   - El método `pure` es una función de fábrica que toma un valor de tipo `T` y lo encapsula dentro de una instancia de `Monad`. Este método es responsable de envolver un valor en la mónada, creando el contexto necesario.
-2. **`flatMap`**:
+1. (4) **`pure`**: El método `pure` es una función de fábrica que toma un valor de tipo `T` y lo encapsula dentro de una instancia de `Monad`. Este método es responsable de envolver un valor en la mónada, creando el contexto necesario.
+2. (2) **`flatMap`**:
    - El método `flatMap` toma una función `f` como argumento, la cual acepta un valor de tipo `T` y devuelve una nueva mónada `Monad<R>`. La función extrae el valor encapsulado, aplica la función `f`, y devuelve una nueva mónada con el resultado.
    - Este método es el núcleo de la composición monádica, ya que permite encadenar transformaciones monádicas manteniendo el contexto monádico.
 
@@ -114,7 +116,7 @@ En este código, estamos implementando una clase `Monad` genérica que sigue las
 
     En Kotlin (y en muchos lenguajes que corren sobre la JVM), los **tipos genéricos** sufren de **borrado de tipos** (*type erasure*). Esto significa que, en tiempo de ejecución, la información sobre los tipos genéricos se pierde. Por ejemplo, si tienes una función genérica con un parámetro `T`, el compilador no retiene la información sobre el tipo exacto de `T` en el bytecode generado.
 
-    ```kotlin
+    ```kotlin showLineNumbers
     fun <T> genericFunction(value: T) {
         // En tiempo de compilación, sabemos que T es un tipo genérico.
         // En tiempo de ejecución, T desaparece debido al type erasure.
@@ -125,7 +127,7 @@ En este código, estamos implementando una clase `Monad` genérica que sigue las
 
     Sin embargo, cuando una función es **inlined**, su código se "copia" en cada sitio donde es llamada. Esto significa que la función deja de ser un bloque de código separado y se inserta en el contexto de la llamada. Al hacer esto, el compilador puede **preservar la información de los tipos concretos** cuando inserta el código en cada llamada, lo que permite usar tipos reificados.
 
-    ```kotlin
+    ```kotlin showLineNumbers
     inline fun <reified T> printClassName() {
         println(T::class)  // Esto es posible porque la función es inline
     }
@@ -149,7 +151,7 @@ En este código, estamos implementando una clase `Monad` genérica que sigue las
 
 ### Ejemplo de uso
 
-```kotlin
+```kotlin showLineNumbers
 Monad.pure(5)
     .flatMap { Monad.pure(it * 2) }
     .flatMap { Monad.pure(it + 1) }

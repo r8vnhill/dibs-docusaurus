@@ -2,6 +2,67 @@
 title: Creación de aplicaciones en otros frameworks
 ---
 
+## Herramienta Multilenguaje: **Buck**
+
+**Buck** es una herramienta de construcción de código abierta desarrollada por Facebook, diseñada para proyectos grandes y escalables, soportando múltiples lenguajes, incluyendo **C++**, **Java**, **Python**, **Go**, **Rust**, y más. Al igual que **Gradle**, **Buck** permite compilar, empaquetar y ejecutar aplicaciones, pero con un enfoque en la velocidad y la eficiencia de construcciones incrementales.
+
+### Ejemplo de Aplicación Kotlin con Buck
+
+En **Buck**, los pasos son ligeramente diferentes. Al ser una herramienta más orientada a la optimización de grandes proyectos, **Buck** no tiene una equivalencia directa a los comandos `run` y `installDist` de **Gradle**, pero sigue permitiendo construir y ejecutar aplicaciones de forma eficiente.
+
+1. **Configuración de Buck para Kotlin**
+    **Buck** utiliza archivos `BUCK` para definir cómo se construyen los proyectos. Aquí tienes un ejemplo básico de cómo configurar un proyecto **Kotlin** en **Buck**.
+
+    ```python title="BUCK" showLineNumbers
+    kotlin_library(
+        name = "echo_lib",
+        srcs = glob(["*.kt"]),
+        deps = [
+            "//third_party:kotlinx-datetime",
+        ],
+    )
+
+    kotlin_binary(
+        name = "echo_app",
+        srcs = ["EchoApp.kt"],
+        deps = [":echo_lib"],
+        main_class = "cl.ravenhill.echo.EchoAppKt",
+    )
+    ```
+
+    - **kotlin_library**: Define una biblioteca Kotlin.
+    - **kotlin_binary**: Define un binario ejecutable, similar a `installDist` en Gradle.
+
+2. **Construir la aplicación**:
+    A diferencia de Gradle, **Buck** no tiene un comando directo para ejecutar la aplicación sin antes construirla. Para construir la aplicación, utilizamos el siguiente comando:
+
+    ```bash
+    buck build //:echo_app
+   ```
+
+    Esto generará un archivo binario en el directorio `buck-out/gen/`.
+
+3. **Ejecutar la aplicación**:
+
+    Una vez construida, podemos ejecutar la aplicación con el comando `buck run`, similar al `gradle run` de Gradle:
+
+    ```bash
+    buck run //:echo_app -- "Hello, world!"
+   ```
+
+    Al igual que en Gradle, se pueden pasar argumentos directamente al ejecutable utilizando `--` seguido de los argumentos.
+
+### Comparación Entre Gradle y Buck
+
+| Característica                               | Gradle                                     | Buck                                                                         |
+|----------------------------------------------|--------------------------------------------|------------------------------------------------------------------------------|
+| **Ejecutar aplicación directamente**         | `gradle run`                               | `buck run`                                                                   |
+| **Generar archivo ejecutable independiente** | `gradle installDist`                       | `buck build` (genera el binario, pero sin empaquetado detallado como Gradle) |
+| **Lenguajes soportados**                     | Principalmente JVM (Kotlin, Java)          | Multilenguaje (C++, Python, Go, Rust, Kotlin, etc.)                          |
+| **Soporte para dependencias**                | Repositorios como MavenCentral, JCenter    | Archivos externos o integraciones personalizadas                             |
+| **Caché**                                    | Local y remoto, con configuración opcional | Caché avanzado distribuido por defecto                                       |
+| **Curva de aprendizaje**                     | Más amigable para proyectos JVM            | Mayor curva de aprendizaje, pero escalable para proyectos grandes            |
+
 ## C/C++: CMake
 
 **CMake** es una herramienta de automatización de la construcción de software que genera archivos de proyecto para compiladores como **Make** o **Ninja**. Aunque no es un sistema de construcción en sí mismo, su flexibilidad y compatibilidad con múltiples lenguajes lo hacen una opción popular en proyectos C, C++ y más.

@@ -1,0 +1,147 @@
+---
+title: Result en otros lenguajes
+---
+
+## Rust
+
+En **Rust**, el tipo `Result` es nativo del lenguaje y se utiliza ampliamente para el manejo seguro de errores. Similar a `Result` en Kotlin, encapsula el éxito o el fallo de una operación de manera explícita y requiere que se manejen ambos casos. Rust también tiene el tipo `Option`, pero `Result` es la opción preferida cuando se debe manejar un posible error.
+
+### Componentes de `Result` en Rust
+
+- **Ok**: Representa un resultado exitoso.
+- **Err**: Representa un error que ocurrió durante la operación.
+
+### Ejemplo en Rust
+
+La implementación de `Result` en Rust se ve de la siguiente manera:
+
+```rust
+enum Result<T, E> {
+    Ok(T),
+    Err(E),
+}
+```
+
+### Uso de `Result` en Rust
+
+Rust ofrece varias maneras de trabajar con `Result`, incluyendo el operador `?`, que permite propagar errores de manera concisa.
+
+```rust
+fn divide(a: i32, b: i32) -> Result<i32, String> {
+    if b == 0 {
+        Err(String::from("Cannot divide by zero"))
+    } else {
+        Ok(a / b)
+    }
+}
+
+fn multiply_by_two(x: i32) -> Result<i32, String> {
+    Ok(x * 2)
+}
+
+fn process() -> Result<i32, String> {
+    let result = divide(10, 2)?;
+    let result = multiply_by_two(result)?;
+    Ok(result)
+}
+
+fn main() {
+    match process() {
+        Ok(value) => println!("Success: {}", value),
+        Err(err) => println!("Error: {}", err),
+    }
+}
+```
+
+En este ejemplo:
+
+- **`divide`** devuelve un `Result`, utilizando `Ok` para el éxito y `Err` para el error.
+- **`?`** se usa para propagar errores, simplificando el flujo del código.
+- **`match`** se utiliza para manejar el resultado final, obligando a lx desarrolladorx a tratar tanto los casos de éxito como de error.
+
+### Comparación con Kotlin
+
+| Aspecto                                        | Kotlin                                                 | Rust                                                |
+|------------------------------------------------|--------------------------------------------------------|-----------------------------------------------------|
+| **Soporte nativo de `Result`**                 | Sí, en la biblioteca estándar                          | Sí, tipo nativo del lenguaje                        |
+| **Manejo de errores**                          | `Result` encapsula `Success` y `Failure`               | `Result` encapsula `Ok` y `Err`                     |
+| **Propagación de errores**                     | `runCatching`, `fold`, `flatMap`                       | Operador `?` para propagar errores                  |
+| **Sistema de tipos**                           | Fuerte y estático                                      | Fuerte y estático                                   |
+| **Manejo de errores en tiempo de compilación** | Errores se pueden manejar con `Result` o ``try-catch`` | Rust fuerza el manejo de errores con `Result` o `?` |
+
+### Diferencias clave
+
+- **Propagación de errores**: En Kotlin, la propagación de errores se realiza manualmente usando funciones como `flatMap` o `runCatching`, mientras que en Rust, el operador `?` simplifica esta propagación de manera concisa.
+- **Manejo estricto**: Rust garantiza que todos los errores sean manejados de manera explícita en tiempo de compilación, mientras que en Kotlin, el manejo de errores es explícito pero menos estricto comparado con Rust.
+
+## Swift
+
+En **Swift**, el tipo `Result` se introdujo oficialmente en **Swift 5** para manejar errores de manera explícita y segura. Similar a Kotlin y Rust, encapsula el éxito o el fallo de una operación. Antes de `Result`, Swift usaba ampliamente el manejo de errores con `throw` y `try`, que siguen siendo válidos, pero `Result` proporciona una forma más funcional de manejar fallos.
+
+### Componentes de `Result` en Swift
+
+- **Success**: Representa el resultado exitoso de una operación.
+- **Failure**: Representa un error que ocurrió durante la operación.
+
+### Ejemplo en Swift
+
+La implementación de `Result` en Swift utiliza genéricos para definir los tipos de éxito y error.
+
+```swift
+enum Result<Success, Failure: Error> {
+    case success(Success)
+    case failure(Failure)
+}
+```
+
+### Uso de `Result` en Swift
+
+Al igual que Kotlin y Rust, Swift proporciona formas funcionales de trabajar con `Result`, incluyendo métodos como `map` y `flatMap` para encadenar operaciones de manera segura.
+
+```swift
+func divide(_ a: Int, _ b: Int) -> Result<Int, Error> {
+    if b == 0 {
+        return .failure(NSError(domain: "DivideError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot divide by zero"]))
+    } else {
+        return .success(a / b)
+    }
+}
+
+func multiplyByTwo(_ value: Int) -> Result<Int, Error> {
+    return .success(value * 2)
+}
+
+func process() -> Result<Int, Error> {
+    return divide(10, 2).flatMap { value in
+        multiplyByTwo(value)
+    }
+}
+
+switch process() {
+case .success(let value):
+    print("Success: \(value)")
+case .failure(let error):
+    print("Error: \(error.localizedDescription)")
+}
+```
+
+En este ejemplo:
+
+- **`divide`** devuelve un `Result`, utilizando `success` para el éxito y `failure` para el error.
+- **`flatMap`** se usa para encadenar operaciones y propagar errores.
+- **`switch`** se utiliza para manejar los resultados de manera explícita.
+
+### Comparación con Kotlin
+
+| Aspecto                                        | Kotlin                                          | Swift                                                      |
+|------------------------------------------------|-------------------------------------------------|------------------------------------------------------------|
+| **Soporte nativo de `Result`**                 | Sí, en la biblioteca estándar                   | Sí, introducido en Swift 5                                 |
+| **Manejo de errores**                          | `Result` encapsula `Success` y `Failure`        | `Result` encapsula `Success` y `Failure`                   |
+| **Propagación de errores**                     | `runCatching`, `fold`, `flatMap`                | `flatMap`, `map`                                           |
+| **Sistema de tipos**                           | Fuerte y estático                               | Fuerte y estático                                          |
+| **Manejo de errores en tiempo de compilación** | Kotlin ofrece manejo con `Result` o `try-catch` | Swift usa `Result` o manejo tradicional de `try` y `throw` |
+
+### Diferencias clave
+
+- **Propagación de errores**: Tanto Kotlin como Swift permiten la propagación de errores utilizando funciones como `flatMap`, pero Swift también mantiene su tradicional manejo de errores basado en `try` y `throw`.
+- **Manejo de errores tradicional**: En Swift, el manejo de errores tradicional con `throw` sigue siendo un enfoque común, mientras que en Kotlin, `Result` y `try-catch` se utilizan con mayor flexibilidad en la captura de errores.

@@ -269,3 +269,72 @@ def handleOrderState(state: DeliveryState): Unit = state match {
 - **Exhaustividad en Scala**: En Scala, si un `match` no cubre todas las posibilidades de una clase sellada, se genera una **advertencia** de compilación. Aunque esto advierte al desarrollador, el código sigue compilando.
 
 Este comportamiento más estricto de Kotlin proporciona mayor seguridad al garantizar que los estados no manejados se identifiquen antes de la compilación, mientras que Scala otorga algo más de flexibilidad, pero con menos garantías en cuanto a exhaustividad.
+
+## Swift
+
+En **Swift**, el equivalente a las **clases selladas** en Kotlin es el uso de **enumerations** (enums) y **indirect enums**. Las enums en Swift no solo pueden definir valores estáticos, sino que también permiten asociar datos a cada caso, lo que las hace poderosas para representar estados o tipos finitos similares a las **clases selladas** en Kotlin. Además, Swift utiliza **pattern matching** para manejar los distintos casos de las enums.
+
+### Definición de Enums en Swift
+
+Swift permite definir enums con asociados de datos y asegurar la exhaustividad mediante el uso de la estructura `switch`. Aquí hay un ejemplo que modela los estados de un pedido:
+
+```swift
+enum DeliveryState {
+    case pending
+    case paid
+    case shipped(trackingNumber: String)
+    case delivered
+    case cancelled(reason: String)
+}
+```
+
+En este ejemplo, `DeliveryState` puede ser uno de los siguientes valores:
+
+- `pending`: No contiene ningún dato adicional.
+- `paid`: Igual que `pending`, no tiene datos asociados.
+- `shipped(trackingNumber: String)`: Tiene un número de seguimiento asociado.
+- `delivered`: No contiene datos adicionales.
+- `cancelled(reason: String)`: Tiene una razón asociada.
+
+### Uso con Pattern Matching
+
+Swift utiliza el patrón de coincidencia (`switch`) para manejar las diferentes variantes de un enum. Swift garantiza que todos los casos de una enum se manejen exhaustivamente.
+
+```swift
+func handleOrderState(state: DeliveryState) -> String {
+    switch state {
+    case .pending:
+        return "Order is pending"
+    case .paid:
+        return "Order is paid"
+    case .shipped(let trackingNumber):
+        return "Order is shipped with tracking number \(trackingNumber)"
+    case .delivered:
+        return "Order is delivered"
+    case .cancelled(let reason):
+        return "Order is cancelled because \(reason)"
+    }
+}
+```
+
+Si olvidamos manejar alguno de los casos en el `switch`, Swift generará un error de compilación, lo que asegura que los desarrolladores siempre gestionen todos los casos posibles.
+
+### Ventajas de las Enums en Swift
+
+1. **Exhaustividad garantizada**: Swift exige que los `switch` sean exhaustivos. Si falta algún caso, el compilador generará un error.
+2. **Enums con valores asociados**: Las enums en Swift pueden contener datos asociados, similar a las **sealed classes** en Kotlin.
+3. **Inmutabilidad**: Al igual que Kotlin, Swift es un lenguaje con enfoque en la seguridad y la inmutabilidad, lo que previene errores relacionados con el manejo de estados.
+
+### Comparación entre Kotlin y Swift
+
+| Aspecto                           | Kotlin                                   | Swift                                  |
+|-----------------------------------|------------------------------------------|----------------------------------------|
+| **Definición de Tipos Suma**      | `sealed class` o `enum class`            | `enum` con valores asociados           |
+| **Exhaustividad**                 | `when` exhaustivo                        | `switch` exhaustivo                    |
+| **Restricción de Subtipos**       | Subclases en el mismo módulo y paquete   | Todos los casos deben estar en el enum |
+| **Inmutabilidad**                 | Opcional con `val`                       | Datos asociados inmutables             |
+
+### Diferencias Clave
+
+- **Restricción de Subtipos**: En Kotlin, las subclases de una clase sellada pueden estar en el mismo módulo y paquete, mientras que en Swift, los casos deben estar dentro de la definición de la `enum`. Esto garantiza que las variantes de un tipo estén completamente definidas en un solo lugar.
+- **Datos asociados**: Mientras que Kotlin utiliza **sealed classes** o **data classes** para permitir estados con datos asociados, Swift maneja esto directamente dentro de sus `enum` con valores asociados.

@@ -2,81 +2,131 @@
 title: Data-Driven Testing en otros frameworks
 ---
 
-## JVM: JUnit 5
+import TabItem from "@theme/TabItem";
+import Tabs from "@theme/Tabs";
+import DdtJunit from "./ddt-junit.mdx"
 
-En **JUnit 5**, la técnica de **Data-Driven Testing (DDT)** también está disponible mediante la anotación `@ParameterizedTest`, combinada con las anotaciones `@ValueSource`, `@CsvSource`, o `@MethodSource` para proporcionar diferentes conjuntos de datos a las pruebas. Al igual que en **Kotest**, JUnit 5 permite ejecutar múltiples casos de prueba con diferentes parámetros sin necesidad de duplicar código, mejorando la reutilización y el mantenimiento de las pruebas.
+## .NET: NUnit
 
-### Ejemplo en JUnit 5 con `@ValueSource`
+En **C#**, el framework de pruebas **NUnit** proporciona soporte robusto para **Data-Driven Testing (DDT)** mediante el uso de atributos como `[TestCase]` y `[TestCaseSource]`. Al igual que en **Kotest** y **JUnit 5**, NUnit permite ejecutar múltiples casos de prueba con diferentes conjuntos de datos sin duplicar código, mejorando la reutilización y el mantenimiento de las pruebas.
 
-En este ejemplo, utilizamos `@ParameterizedTest` para probar diferentes valores de entrada en un solo test:
+### Ejemplo en NUnit con `[TestCase]`
 
-```java
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+En este ejemplo, utilizamos el atributo `[TestCase]` para probar diferentes valores de entrada en un solo método de prueba:
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+```csharp
+using NUnit.Framework;
+using System;
 
-class BakemonTest {
-
-    @ParameterizedTest
-    @ValueSource(ints = {-100, -1, 101, 1000})
-    void testInvalidHealthPoints(int invalidHp) {
-        Bakemon bakemon = new Bakemon("Bigachu", 100);
-        assertThrows(IllegalArgumentException.class, () -> {
-            bakemon.setCurrentHealthPoints(invalidHp);
-        });
-    }
-}
-```
-
-### Similitudes entre Kotest y JUnit 5
-
-1. **Data-Driven Testing**: Ambos frameworks permiten ejecutar el mismo test con diferentes valores de entrada, utilizando técnicas de DDT.
-2. **Reutilización del código**: En ambos casos, la lógica del test no necesita cambiar; solo se modifican los datos de entrada.
-3. **Manejo de múltiples casos**: Tanto Kotest como JUnit 5 permiten probar una amplia gama de escenarios sin duplicar código, lo que mejora el mantenimiento y escalabilidad de las pruebas.
-
-### Diferencias entre Kotest y JUnit 5
-
-1. **Sintaxis**: Kotest usa la función `withData`, lo que proporciona una sintaxis más declarativa y fluida, mientras que JUnit 5 depende de anotaciones como `@ParameterizedTest` y `@ValueSource`, que pueden parecer más rígidas.
-2. **Control del flujo**: Kotest permite mayor flexibilidad en la forma de estructurar las pruebas gracias a sus diferentes estilos de especificación (e.g., `FreeSpec`, `DescribeSpec`), mientras que JUnit 5 sigue una estructura más tradicional basada en métodos de prueba.
-3. **Combinación de valores**: En Kotest, es fácil combinar diferentes conjuntos de datos usando `withData` de manera anidada, mientras que en JUnit 5, la combinación de múltiples fuentes de datos puede requerir anotaciones adicionales o el uso de `@CsvSource` o `@MethodSource`.
-
-### Ejemplo en JUnit 5 con `@CsvSource`
-
-Si necesitamos probar múltiples combinaciones de valores (por ejemplo, diferentes combinaciones de nombres y puntos de salud), podemos usar `@CsvSource` en JUnit 5:
-
-```java
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-class BakemonTest {
-
-    @ParameterizedTest
-    @CsvSource({
-        "Bigachu, -100",
-        "Psygoose, -1",
-        "Bigachu, 101",
-        "Psygoose, 1000"
-    })
-    void testInvalidHealthPoints(String name, int invalidHp) {
+[TestFixture]
+public class BakemonTest
+{
+    [TestCase("Bigachu", -100)]
+    [TestCase("Psygoose", -1)]
+    [TestCase("Bigachu", 101)]
+    [TestCase("Psygoose", 1000)]
+    public void TestInvalidHealthPoints(string name, int invalidHp)
+    {
         Bakemon bakemon = new Bakemon(name, 100);
-        assertThrows(IllegalArgumentException.class, () -> {
-            bakemon.setCurrentHealthPoints(invalidHp);
-        });
+        Assert.Throws<ArgumentException>(() => bakemon.SetCurrentHealthPoints(invalidHp));
     }
 }
 ```
 
-### Comparación final
+### Ejemplo en NUnit con `[TestCaseSource]`
 
-| Aspecto                    | Kotest                                               | JUnit 5                                            |
-|----------------------------|------------------------------------------------------|----------------------------------------------------|
-| **Data-Driven Testing**    | `withData`                                           | `@ParameterizedTest` + `@ValueSource`              |
-| **Combinación de Valores** | Fácil con `withData`                                 | Requiere anotaciones adicionales como `@CsvSource` |
-| **Sintaxis**               | Declarativa y fluida                                 | Basada en anotaciones                              |
-| **Estilo de pruebas**      | Soporte para múltiples estilos (BDD, FreeSpec, etc.) | Tradicional, basado en métodos                     |
+Para casos más complejos o cuando los datos de prueba se obtienen dinámicamente, se puede utilizar `[TestCaseSource]`:
+
+```csharp
+using NUnit.Framework;
+using System;
+using System.Collections;
+
+[TestFixture]
+public class BakemonTest
+{
+    static IEnumerable TestCases
+    {
+        get
+        {
+            yield return new TestCaseData("Bigachu", -100);
+            yield return new TestCaseData("Psygoose", -1);
+            yield return new TestCaseData("Bigachu", 101);
+            yield return new TestCaseData("Psygoose", 1000);
+        }
+    }
+
+    [Test, TestCaseSource(nameof(TestCases))]
+    public void TestInvalidHealthPoints(string name, int invalidHp)
+    {
+        Bakemon bakemon = new Bakemon(name, 100);
+        Assert.Throws<ArgumentException>(() => bakemon.SetCurrentHealthPoints(invalidHp));
+    }
+}
+```
+
+### Similitudes entre Kotest y NUnit
+
+1. **Data-Driven Testing**: Ambos frameworks permiten ejecutar el mismo test con diferentes conjuntos de datos, utilizando técnicas de DDT.
+2. **Reutilización del Código**: La lógica del test permanece constante, mientras que los datos de entrada varían, evitando la duplicación de código.
+3. **Manejo de Múltiples Casos**: Permiten probar una amplia gama de escenarios de manera eficiente, mejorando el mantenimiento y la escalabilidad de las pruebas.
+
+### Diferencias entre Kotest y NUnit
+
+1. **Sintaxis**:
+ - **Kotest**: Utiliza funciones como `withData` para una sintaxis más declarativa y fluida.
+ - **NUnit**: Utiliza atributos como `[TestCase]` y `[TestCaseSource]`, lo que puede parecer más estructurado y menos flexible en comparación con Kotest.
+2. **Flexibilidad en la Fuente de Datos**:
+ - **Kotest**: Permite una mayor flexibilidad al combinar diferentes conjuntos de datos de manera anidada.
+ - **NUnit**: Requiere el uso de múltiples atributos o métodos fuente (`TestCaseSource`) para combinar datos complejos.
+3. **Estilo de Pruebas**:
+ - **Kotest**: Ofrece múltiples estilos de especificación (BDD, FreeSpec, etc.), permitiendo una mayor personalización en la estructura de las pruebas.
+ - **NUnit**: Sigue una estructura más tradicional basada en métodos de prueba dentro de clases de prueba.
+
+### Ejemplo en NUnit con múltiples parámetros usando `[TestCaseSource]`
+
+```csharp
+using NUnit.Framework;
+using System;
+using System.Collections;
+
+[TestFixture]
+public class BakemonTest
+{
+    static IEnumerable TestCases
+    {
+        get
+        {
+            yield return new TestCaseData("Bigachu", -100);
+            yield return new TestCaseData("Psygoose", -1);
+            yield return new TestCaseData("Bigachu", 101);
+            yield return new TestCaseData("Psygoose", 1000);
+        }
+    }
+
+    [Test, TestCaseSource(nameof(TestCases))]
+    public void TestInvalidHealthPoints(string name, int invalidHp)
+    {
+        Bakemon bakemon = new Bakemon(name, 100);
+        Assert.Throws<ArgumentException>(() => bakemon.SetCurrentHealthPoints(invalidHp));
+    }
+}
+```
+
+### Comparación Final
+
+| **Aspecto**                | **Kotest**                                           | **NUnit**                                                |
+|----------------------------|------------------------------------------------------|----------------------------------------------------------|
+| **Data-Driven Testing**    | `withData`                                           | `[ParameterizedTest]` + `[TestCase]`, `[TestCaseSource]` |
+| **Combinación de Valores** | Fácil con `withData`                                 | Requiere múltiples atributos o `TestCaseSource`          |
+| **Sintaxis**               | Declarativa y fluida                                 | Basada en atributos y métodos                            |
+| **Estilo de Pruebas**      | Soporte para múltiples estilos (BDD, FreeSpec, etc.) | Tradicional, basado en métodos de prueba                 |
+
+---
+
+<DdtJunit />
+
+---
 
 ## Python: PyTest
 

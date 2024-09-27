@@ -1,13 +1,12 @@
 ---
 title: Void-Safety
 ---
-import References from "../../src/components/ReferencesComponent";
-import ReadingTime from '../../src/components/ReadingTime';
-
-<ReadingTime />
-
+import References from "../../../src/components/ReferencesComponent";
+import ReadingTime from '../../../src/components/ReadingTime';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+
+<ReadingTime />
 
 ## El Problema de los Punteros Nulos
 
@@ -24,6 +23,88 @@ El manejo inadecuado de valores nulos es una causa importante de errores difíci
 - **C#**: En C#, los tipos de referencia son no anulables por defecto, pero se pueden declarar como anulables utilizando `?`. Esto obliga a lxs desarrolladorxs a tener más cuidado con los valores nulos y mejora la seguridad del código.
 
 - **Scala**: Scala introduce el tipo `Option`, el cual obliga a lxs desarrolladorxs a manejar explícitamente la posibilidad de que no haya un valor (`None`). Sin embargo, no elimina por completo el riesgo de `NullPointerException`, ya que `Option` puede contener un valor nulo si no se maneja correctamente.
+
+<details>
+    <summary>
+        Un poco de historia: Self programming language
+    </summary>
+
+    **Self**, un lenguaje de programación basado en prototipos, fue uno de los primeros lenguajes en abordar el problema de **void safety** (seguridad respecto a valores nulos). Sin embargo, no enfrentaba este problema con un enfoque rígido como en lenguajes posteriores (por ejemplo, con tipos anulables como en Kotlin o el sistema de contratos en Eiffel). En cambio, **Self** aplicaba una solución basada en el **envío de mensajes** y el comportamiento de los objetos.
+
+    #### ¿Cómo enfrentaba Self el problema de *void safety*?
+
+    1. **Todo es un objeto**: En **Self**, todo es un objeto, incluidos los valores que en otros lenguajes podrían ser nulos. Esto significa que no hay un concepto de "valor vacío" o "puntero nulo" directamente en el lenguaje, lo que evita muchos de los problemas asociados con los null pointers.
+    2. **Mensajes a objetos faltantes**: En lugar de causar un error o lanzar una excepción si un objeto esperado no está presente (como un null pointer), **Self** simplemente envía un **mensaje a un objeto faltante**. Este comportamiento es gestionado por el sistema dinámico de mensajes. Si un objeto no responde a un mensaje (método) porque no lo tiene, se puede definir un comportamiento predeterminado que el lenguaje maneja de manera dinámica.
+        - **Delegación dinámica**: Si un objeto no tiene un método específico, se podría delegar ese mensaje a otro objeto que lo maneje. Esto se parece a la forma en que en lenguajes modernos se utilizan estructuras como `Option` o `Result`, donde se delega la lógica dependiendo de la existencia o ausencia de un valor.
+    3. **El enfoque dinámico y flexible**: En lugar de tener que comprobar constantemente si un valor es nulo, el propio sistema de mensajes de Self se encargaba de "llenar el vacío". La ausencia de un objeto no se trataba como un error fatal que requería manejo explícito, sino que el lenguaje respondía de manera flexible y dinámica.
+
+    #### Ejemplo de comparación
+
+    - En lenguajes como Java, la ausencia de un valor (nulo) resultaría en un **NullPointerException**.
+    - En **Self**, el sistema envía un mensaje de manera transparente y maneja la ausencia sin necesidad de comprobaciones explícitas por parte del programador.
+
+    Este enfoque dinámico basado en el envío de mensajes fue una manera temprana de evitar muchos de los errores comunes asociados con valores nulos, aunque no ofrecía una solución tan estructurada o estricta como los sistemas de tipos modernos que garantizan *void safety* mediante la verificación en tiempo de compilación.
+
+    Aquí tienes un ejemplo de cómo **Self** manejaba el problema de **void safety** mediante el envío de mensajes y la delegación dinámica:
+
+    ```self showLineNumbers
+    (|
+        "Definimos un objeto llamado 'persona'"
+        persona = (|
+            nombre = 'Alice'.
+
+            "Este método imprime el nombre de la persona"
+            saludar = (|
+                'Hola, ', nombre print.
+            |).
+        |).
+
+        "Definimos otro objeto llamado 'sinNombre' que no tiene un nombre, pero responde a los mismos mensajes"
+        sinNombre = (|
+            "Si intentamos acceder al nombre, este objeto responderá de forma predeterminada"
+            nombre = 'Nombre desconocido'.
+        |).
+
+        "Definimos un objeto 'handler' que delega los mensajes"
+        handler = (|
+            personaOMetodo = nil.
+
+            "Este método envía el mensaje 'saludar' al objeto correcto"
+            manejarSaludo = (|
+                (personaOMetodo saludar) ifError: [ 'El objeto no respondió al mensaje.' print ].
+            |).
+        |).
+    |)
+
+    "Configuramos el handler para usar la persona"
+    handler personaOMetodo: persona.
+    handler manejarSaludo.  "Resultado: 'Hola, Alice'"
+
+    "Ahora configuramos el handler para usar el objeto sin nombre"
+    handler personaOMetodo: sinNombre.
+    handler manejarSaludo.  "Resultado: 'Hola, Nombre desconocido'"
+
+    "Si no se asigna un objeto, el sistema maneja el error dinámicamente"
+    handler personaOMetodo: nil.
+    handler manejarSaludo.  "Resultado: 'El objeto no respondió al mensaje.'"
+    ```
+
+    #### Explicación
+
+    1. (3-16) **Definimos dos objetos**:
+        - `persona`, que tiene un atributo `nombre` y un método `saludar` que imprime un saludo.
+        - `sinNombre`, que no tiene un nombre definido explícitamente, pero tiene una respuesta predeterminada para el mensaje `nombre`.
+
+    2. **Envío de mensajes**: Cuando enviamos el mensaje `saludar` al objeto `persona` o `sinNombre`, Self se encarga de buscar el método correspondiente y ejecutarlo, sin que sea necesario preocuparse por valores nulos.
+
+    3. **Delegación dinámica**: Si `personaOMetodo` no está definido o es `nil`, Self no fallará con un "null pointer" error. En su lugar, podemos manejar ese error usando el mensaje `ifError:`, que es una forma de interceptar errores en el envío de mensajes.
+
+    4. **Error manejado dinámicamente**: Si intentamos enviar un mensaje a un objeto no existente o no definido (por ejemplo, `nil`), el sistema no falla, sino que nos permite manejar ese escenario de manera flexible, como en el caso final.
+
+    #### Comparación
+
+    En lenguajes como Java o Kotlin, tendrías que comprobar explícitamente si un objeto es nulo antes de enviar un mensaje o llamar a un método. En **Self**, el sistema de mensajes se encarga de eso dinámicamente, y podemos definir comportamientos predeterminados para manejar casos donde un objeto o método no está disponible.
+</details>
 
 ## Solución en Kotlin: Seguridad de Tipos frente a Nulos
 
@@ -134,117 +215,6 @@ Este operador es muy útil para evitar valores nulos en el flujo de datos sin ag
     </TabItem>
 </Tabs>
 :::
-
-<details>
-    <summary>Ejemplos en otros lenguajes</summary>
-    ## Ejemplos en Otros Lenguajes
-
-    ### Scala
-
-    Utiliza `Option`, `map`, y `foreach` para trabajar con valores opcionales de forma funcional, similar a cómo Kotlin usa `?.let`.
-
-    ```scala
-    val cadenas = List(Some("Hola"), None, Some("Scala"), None, Some("Mundo"))
-
-    cadenas.foreach { cadena =>
-        val longitud = cadena.map(_.length).getOrElse("Cadena no disponible")
-        println(s"Longitud: $longitud")
-
-        cadena.map(_.toUpperCase).foreach { texto =>
-            println(s"Texto en mayúsculas: $texto")
-        }
-    }
-    ```
-
-    Aquí, `map` se utiliza para transformar los valores opcionales y `getOrElse` para proporcionar un valor predeterminado en caso de `None`. `foreach` se usa para imprimir el resultado cuando el valor está presente.
-
-    ### Rust
-
-    En **Rust**, puedes usar `map` y `and_then` (equivalente a `flatMap`) para trabajar con valores de tipo `Option`.
-
-    ```rust
-    let cadenas: Vec<Option<&str>> = vec![
-        Some("Hola"),
-        None,
-        Some("Rust"),
-        None,
-        Some("Mundo"),
-    ];
-
-    for cadena in cadenas {
-        let longitud = cadena.map(|texto| texto.len()).unwrap_or_else(|| {
-            println!("Longitud: Cadena no disponible");
-            return 0;
-        });
-
-        if longitud > 0 {
-            println!("Longitud: {}", longitud);
-        }
-
-        cadena.map(|texto| texto.to_uppercase())
-            .map(|texto| println!("Texto en mayúsculas: {}", texto))
-            .unwrap_or_else(|| println!("Texto en mayúsculas no disponible"));
-    }
-    ```
-
-    En este ejemplo, `map` transforma los valores cuando están presentes, y `unwrap_or_else` proporciona un valor predeterminado o ejecuta un bloque en caso de `None`. `and_then` (alias `flatMap`) no es necesario en este caso, ya que `map` es suficiente para las transformaciones simples.
-
-    ### TypeScript
-
-    Aunque **TypeScript** no tiene un manejo explícito de `null` como Kotlin o Scala, puedes usar validaciones similares con `?.` y el operador `??`.
-
-    ```typescript
-    const cadenas: (string | null)[] = ["Hola", null, "TypeScript", null, "Mundo"];
-
-    cadenas.forEach(cadena => {
-        const longitud = cadena?.length ?? "Cadena no disponible";
-        console.log(`Longitud: ${longitud}`);
-
-        cadena?.toUpperCase
-            ? console.log(`Texto en mayúsculas: ${cadena.toUpperCase()}`)
-            : console.log("Texto en mayúsculas no disponible");
-    });
-    ```
-    ### Swift
-
-    En **Swift**, puedes usar `Optional` y `map` para trabajar con valores opcionales de manera segura, similar a `let` en Kotlin.
-
-    ```swift
-    let cadenas: [String?] = ["Hola", nil, "Swift", nil, "Mundo"]
-
-    for cadena in cadenas {
-        let longitud = cadena?.count ?? "Cadena no disponible"
-        print("Longitud: \(longitud)")
-
-        cadena.map { texto in
-            print("Texto en mayúsculas: \(texto.uppercased())")
-        } ?? print("Texto en mayúsculas no disponible")
-    }
-    ```
-
-    ### Elixir
-
-    En **Elixir**, se puede usar `case` y `with` para manejar valores que podrían ser nulos o `nil`.
-
-    ```elixir
-    cadenas = ["Hola", nil, "Elixir", nil, "Mundo"]
-
-    for cadena <- cadenas do
-        longitud =
-            case cadena do
-                nil -> "Cadena no disponible"
-                _ -> String.length(cadena)
-            end
-
-        IO.puts("Longitud: #{longitud}")
-
-        case cadena do
-            nil -> IO.puts("Texto en mayúsculas no disponible")
-            _ -> IO.puts("Texto en mayúsculas: #{String.upcase(cadena)}")
-        end
-    end
-    ```
-</details>
 
 ## En resumen
 
