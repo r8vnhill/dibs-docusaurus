@@ -45,17 +45,7 @@ const sidebars: SidebarsConfig = {
                                 'intro/open-closed/open-closed-langs',
                             ],
                         },
-                        {
-                            type: 'category',
-                            label: 'Propiedades/Accessors',
-                            link: {
-                                type: 'doc',
-                                id: 'intro/properties/properties-kt',
-                            },
-                            items: [
-                                "intro/properties/properties-langs",
-                            ]
-                        },
+                        'intro/properties/properties-kt',
                         {
                             type: 'category',
                             label: 'Sobrecarga de operadores',
