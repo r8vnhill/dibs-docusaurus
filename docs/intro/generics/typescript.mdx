@@ -1,0 +1,193 @@
+---
+title: Polimorfismo Paramétrico en TypeScript
+---
+import References from "@site/src/components/ReferencesComponent";
+import ReadingTime from '@site/src/components/ReadingTime';
+
+<ReadingTime/>
+
+## Upper Bounds (Cotas Superiores)
+
+En TypeScript, las **upper bounds** se implementan mediante la cláusula `extends` en la declaración de genéricos. Esto restringe los tipos que pueden ser pasados como argumentos, asegurando que cumplan con una interfaz o clase específica.
+
+```typescript
+function add<T extends number>(a: T, b: T): number {
+    return a + b;
+}
+```
+
+## Lower Bounds (Cotas Inferiores)
+
+TypeScript no soporta directamente **lower bounds** en la misma medida que Kotlin. Sin embargo, se puede lograr un comportamiento similar utilizando **tipos genéricos contravariantes** a través de funciones que aceptan parámetros genéricos con restricciones.
+
+```typescript
+function addStrings<T extends string>(list: Array<T>): void {
+    list.push("Hello");
+    list.push("World");
+}
+```
+
+Aunque no es una implementación directa de lower bounds, permite restringir los tipos que se pueden pasar a la función.
+
+## Varianza en el Sitio de Declaración
+
+TypeScript no soporta **varianza** de manera explícita en la declaración de genéricos. Sin embargo, la **inferencia de tipos** y el **sistema estructural de tipos** permiten cierto grado de flexibilidad similar a la covarianza y contravarianza.
+
+- **Covarianza Implícita**: TypeScript permite que tipos más específicos sean asignados a tipos más generales sin necesidad de anotaciones explícitas.
+
+  ```typescript
+  interface Producer<T> {
+      produce(): T;
+  }
+
+  let stringProducer: Producer<string> = {
+      produce: () => "Hello, TypeScript!"
+  };
+
+  let anyProducer: Producer<any> = stringProducer; // Covarianza implícita
+    ```
+
+- **Contravarianza Implícita**: A través de tipos de parámetros de función, TypeScript permite que funciones con parámetros más generales sean asignadas a tipos más específicos.
+
+  ```typescript
+  interface Consumer<T> {
+      consume(item: T): void;
+  }
+
+  let anyConsumer: Consumer<any> = {
+      consume: (item: any) => console.log(item)
+  };
+
+  let stringConsumer: Consumer<string> = anyConsumer; // Contravarianza implícita
+    ```
+
+## Varianza en el Sitio de Uso
+
+TypeScript maneja la **varianza en el sitio de uso** de manera implícita a través de su sistema de tipos. Las asignaciones y las inferencias de tipos permiten que los tipos genéricos se comporten de manera covariante o contravariante según el contexto sin necesidad de anotaciones explícitas.
+
+- **Uso de Tipos Covariantes**:
+
+  ```typescript
+  interface Producer<T> {
+      produce(): T;
+  }
+
+  function printAll(producer: Producer<any>) {
+      console.log(producer.produce());
+  }
+
+  let stringProducer: Producer<string> = {
+      produce: () => "Hello, TypeScript!"
+  };
+
+  printAll(stringProducer); // Covarianza implícita
+    ```
+
+- **Uso de Tipos Contravariantes**:
+
+  ```typescript
+  interface Consumer<T> {
+      consume(item: T): void;
+  }
+
+  function addItem(consumer: Consumer<any>) {
+      consumer.consume("Hello, TypeScript!");
+  }
+
+  let stringConsumer: Consumer<string> = {
+      consume: (item: string) => console.log(item)
+  };
+
+  addItem(stringConsumer); // Contravarianza implícita
+    ```
+
+## Resumen Comparativo
+
+| **Característica**           | **Kotlin** (`List`, `Set`, `Map`, etc.)           | **TypeScript** (`Array`, `Set`, `Map`, etc.)        |
+|------------------------------|---------------------------------------------------|-----------------------------------------------------|
+| **Upper Bounds**             | Usando `:` en la declaración de genéricos         | Usando `extends` en la declaración de genéricos     |
+| **Lower Bounds**             | Usando `in` para contravarianza                   | No soportado directamente, uso de restricciones     |
+| **Varianza en Declaración**  | `out` para covarianza, `in` para contravarianza   | Varianza implícita mediante inferencia de tipos     |
+| **Varianza en Uso**          | Proyecciones `out` y `in`                         | Varianza implícita a través de asignaciones         |
+| **Flexibilidad**             | Alta, con control explícito sobre la varianza     | Alta, pero sin control explícito                    |
+| **Seguridad de Tipos**       | Fuerte, con verificación en tiempo de compilación | Fuerte, pero basado en un sistema estructural       |
+
+## Conclusión
+
+Tanto **Kotlin** como **TypeScript** ofrecen potentes mecanismos para implementar el polimorfismo paramétrico, permitiendo la creación de componentes genéricos y reutilizables. Sin embargo, **Kotlin** proporciona un control más explícito sobre la varianza y las cotas de los tipos genéricos mediante las palabras clave `out` y `in`, así como las proyecciones en el sitio de uso. **TypeScript**, por otro lado, se basa en su sistema de inferencia de tipos y estructura de tipos para manejar la varianza de manera implícita, lo que simplifica la sintaxis pero ofrece menos control explícito.
+
+Elegir entre Kotlin y TypeScript para trabajar con polimorfismo paramétrico dependerá de las necesidades específicas del proyecto y del lenguaje en el que se esté desarrollando. **Kotlin** es ideal para entornos donde se requiere un control fino sobre la varianza y una seguridad de tipos más estricta, mientras que **TypeScript** es excelente para proyectos que buscan una integración fluida con JavaScript y una sintaxis más flexible.
+
+## Referencias
+
+<References references={[
+    {
+        accessedDate: '28 de septiembre de 2024',
+        siteOrAuthor: 'TypeScript Documentation',
+        title: 'Generics in TypeScript',
+        type: 'web',
+        url: 'https://www.typescriptlang.org/docs/handbook/generics.html',
+    },
+    {
+        accessedDate: '28 de septiembre de 2024',
+        siteOrAuthor: 'Effective TypeScript',
+        title: 'Effective TypeScript: 62 Specific Ways to Improve Your TypeScript',
+        type: 'book',
+        url: 'https://www.oreilly.com/library/view/effective-typescript/9781492053736/',
+        author: 'Dan Vanderkam',
+        publisher: 'O\'Reilly Media',
+        year: '2019',
+    },
+]}/>
+
+[//]: # (<References references={[)
+
+[//]: # (    {)
+
+[//]: # (        title: "",)
+
+[//]: # (        url: "",)
+
+[//]: # (        type: "article",)
+
+[//]: # (        author: "",)
+
+[//]: # (        publishedDate: "",)
+
+[//]: # (    },)
+
+[//]: # (    {)
+
+[//]: # (        accessedDate: '',)
+
+[//]: # (        siteOrAuthor: '',)
+
+[//]: # (        title: '',)
+
+[//]: # (        type: 'web',)
+
+[//]: # (        url: '',)
+
+[//]: # (    },)
+
+[//]: # (    {)
+
+[//]: # (        title: "",)
+
+[//]: # (        bookTitle: "",)
+
+[//]: # (        pages: "",)
+
+[//]: # (        location: "",)
+
+[//]: # (        publisher: "",)
+
+[//]: # (        year: "",)
+
+[//]: # (        type: "book",)
+
+[//]: # (        author: '')
+
+[//]: # (    },)
+
+[//]: # (]}/>)

@@ -78,17 +78,7 @@ const sidebars: SidebarsConfig = {
                                 "intro/exceptions/exceptions-langs",
                             ]
                         },
-                        {
-                            label: 'Polimorfismo paramétrico',
-                            type: 'category',
-                            link: {
-                                type: 'doc',
-                                id: 'intro/generics-kt',
-                            },
-                            items: [
-                                "intro/generics-langs",
-                            ]
-                        },
+                        'intro/generics/generics-kt',
                         {
                             type: 'category',
                             label: 'Void safety',
@@ -390,17 +380,7 @@ const sidebars: SidebarsConfig = {
                                 "testing/matchers/custom-langs",
                             ]
                         },
-                        {
-                            type: 'category',
-                            label: 'Matchers compuestos',
-                            link: {
-                                type: 'doc',
-                                id: 'testing/matchers/composed/composition',
-                            },
-                            items: [
-                                "testing/matchers/composed/composition-langs",
-                            ]
-                        },
+                        'testing/matchers/composed/composition',
                     ]
                 },
                 {

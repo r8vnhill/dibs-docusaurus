@@ -1,0 +1,94 @@
+---
+title: Matchers Personalizados en RSpec
+---
+import References from "@site/src/components/ReferencesComponent";
+import ReadingTime from '@site/src/components/ReadingTime';
+
+<ReadingTime/>
+
+**RSpec** es uno de los frameworks más populares para pruebas en Ruby. Aunque se centra principalmente en pruebas de comportamiento, RSpec también permite la creación de **matchers personalizados**, similar a cómo se pueden componer matchers en Kotest.
+
+## Matchers Personalizados en RSpec
+
+En **RSpec**, los matchers se definen utilizando el método `define` para crear un matcher que pueda ser reutilizado en diferentes pruebas. Los matchers también se pueden combinar para crear composiciones más complejas. A continuación, se muestra cómo se podría crear un matcher que valide contraseñas siguiendo reglas similares a las de Kotlin:
+
+```ruby title="spec/matchers/be_strong_password.rb" showLineNumbers
+RSpec::Matchers.define :be_strong_password do
+  match do |password|
+    password.length >= 16 &&
+    password.match?(/\d/) &&
+    password.match?(/[A-Z]/) &&
+    password.match?(/[a-z]/)
+  end
+
+  failure_message do |password|
+    "expected #{password} to be a strong password"
+  end
+end
+```
+
+En este ejemplo:
+
+- **`define`**: Crea un matcher personalizado llamado `be_strong_password`.
+- **`match`**: Contiene la lógica que verifica si la contraseña cumple con los requisitos.
+- **`failure_message`**: Proporciona un mensaje de error personalizado cuando el matcher falla.
+
+## Uso en Pruebas
+
+Una vez definido el matcher, podemos utilizarlo en nuestras pruebas de RSpec de manera similar a cómo se haría en Kotest con un matcher compuesto:
+
+```ruby title="spec/matchers/be_strong_password_spec.rb" showLineNumbers
+require 'matchers/be_strong_password'
+
+RSpec.describe 'Strong Password' do
+  it 'is valid with at least 16 characters, one digit, one uppercase, and one lowercase letter' do
+    expect('Password1AaBbCcDdEeFf').to be_strong_password
+  end
+end
+```
+
+## Comparación con Kotest
+
+| Característica          | Kotest                                   | RSpec                                                                    |
+|-------------------------|------------------------------------------|--------------------------------------------------------------------------|
+| Definición de Matchers  | Utiliza funciones o clases en Kotlin     | Define matchers personalizados usando bloques `define` en Ruby           |
+| Composición de Matchers | Se puede realizar mediante `and` y `or`  | También se pueden combinar matchers utilizando lógica dentro del matcher |
+| Uso en Pruebas          | Se usa `should` con el matcher compuesto | Se usa `expect` con el matcher personalizado                             |
+
+## Similitudes
+
+1. **Matchers Compuestos**: Ambos frameworks permiten crear matchers compuestos para realizar validaciones más complejas.
+2. **Reutilización**: Los matchers personalizados se pueden reutilizar en múltiples pruebas, proporcionando flexibilidad y claridad en las validaciones.
+3. **Mensajes de Error Personalizados**: Tanto en Kotest como en RSpec, es posible definir mensajes de error personalizados cuando una validación falla.
+
+## Diferencias
+
+1. **Sintaxis**: Kotest sigue la sintaxis de Kotlin, que es más concisa y estática, mientras que RSpec utiliza la flexibilidad de Ruby y su enfoque basado en bloques para definir matchers personalizados.
+2. **DSL**: RSpec se basa en un DSL altamente dinámico propio de Ruby, lo que permite una mayor flexibilidad en la creación de matchers, mientras que Kotest aprovecha las ventajas de un lenguaje tipado como Kotlin para garantizar mayor seguridad en tiempo de compilación.
+
+<References references={[
+    {
+        title: "",
+        url: "",
+        type: "article",
+        author: "",
+        publishedDate: "",
+    },
+    {
+        accessedDate: '',
+        siteOrAuthor: '',
+        title: '',
+        type: 'web',
+        url: '',
+    },
+    {
+        title: "",
+        bookTitle: "",
+        pages: "",
+        location: "",
+        publisher: "",
+        year: "",
+        type: "book",
+        author: ''
+    },
+]}/>
