@@ -1,0 +1,256 @@
+---
+title: Colecciones perezosas
+---
+import Hint from "../../../src/components/exercise/Hint";
+import Solution from "../../../src/components/exercise/Solution";
+import Exercise from "../../../src/components/exercise/Exercise";
+import Definition from "../../../src/components/Definition";
+import TabItem from "@theme/TabItem";
+import Tabs from "@theme/Tabs";
+import GitHubRepoLink from "../../../src/components/GithubRepoLink";
+import References from "@site/src/components/ReferencesComponent";
+import ReadingTime from '@site/src/components/ReadingTime';
+import FibonacciSequence from '../../../src/mdx/collections/types/lazy/fibonacci_sequence.mdx'
+
+<ReadingTime />
+<GitHubRepoLink repo={"collections-kt"} user={"r8vnhill"} />
+
+Una **colección perezosa** es una estructura de datos donde los elementos no se calculan o procesan inmediatamente, sino que se generan bajo demanda. Este enfoque permite que las operaciones de transformación se ejecuten solo cuando sea necesario, y pueden ser especialmente útiles en flujos infinitos o en procesos que involucran muchas operaciones encadenadas, evitando la creación de colecciones temporales.
+
+<Definition title="Evaluación temprana">
+    La **evaluación temprana** es una estrategia de ejecución en la cual las expresiones son evaluadas inmediatamente en el momento en que son encontradas en el código. Esto significa que, tan pronto como el programa alcanza una expresión, ésta se calcula y su resultado se almacena. Este enfoque garantiza que todos los valores necesarios están disponibles cuando se necesitan, pero puede llevar a una ejecución menos eficiente si se realizan cálculos innecesarios o si se procesan grandes cantidades de datos que no siempre son requeridos.
+</Definition>
+
+<Definition title="Evaluación perezosa">
+    La **evaluación perezosa** es una estrategia de ejecución en la cual las expresiones son evaluadas solo cuando su valor es requerido. En lugar de calcular todas las expresiones de antemano, se difiere la evaluación hasta el último momento posible, optimizando así el uso de recursos y mejorando el rendimiento del programa. Este enfoque es especialmente útil para manejar grandes conjuntos de datos, flujos de trabajo complejos o estructuras de datos infinitas, ya que evita cálculos innecesarios y reduce el consumo de memoria.
+</Definition>
+
+
+## Implementación de una Colección Perezosa Personalizada
+
+<details>
+    <summary>Comencemos por crear un módulo que contenga la implementación de la colección perezosa.</summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "lazy\src\main\kotlin" -ItemType Directory
+            Set-Content -Path "lazy\build.gradle.kts" -Value "// Intentionally left blank"
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            mkdir lazy\src\main\kotlin
+            "// Intentionally left blank" > lazy\build.gradle.kts
+            ```
+        </TabItem>
+        <TabItem value="Unix" label="Unix">
+            ```bash
+            mkdir -p lazy/src/main/kotlin
+            echo "// Intentionally left blank" > lazy/build.gradle.kts
+            ```
+        </TabItem>
+    </Tabs>
+
+    Recuerda añadir el nuevo módulo al archivo `settings.gradle.kts`.
+</details>
+
+Para implementar una **colección perezosa** en Kotlin, podemos utilizar el **patrón Iterator**, definiendo nuestras propias clases que implementan las interfaces `Iterable` e `Iterator`. A continuación, se presenta una implementación que genera una secuencia infinita de números pares de manera perezosa.
+
+### Paso 1: Definir la Clase `EvenNumbers`
+
+Esta clase implementa la interfaz `Iterable<Int>`, lo que permite que se pueda iterar sobre sus elementos. Internamente, utiliza un iterador personalizado para generar los números pares de forma perezosa.
+
+```kotlin title="lazy/src/main/kotlin/com/github/tu_usuario/parity/EvenNumbers.kt" showLineNumbers
+package com.github.tu_usuario.parity // No se recomienda usar _ en los nombres de paquetes, aquí se hace sólo para facilitar un poco la lectura
+
+class EvenNumbers : Iterable<Int> {
+    override fun iterator(): Iterator<Int> = EvenNumberIterator()
+}
+```
+
+### Paso 2: Definir la Clase `EvenNumberIterator`
+
+Esta clase implementa la interfaz `Iterator<Int>` y es responsable de generar los números pares uno a uno cuando se solicitan.
+
+```kotlin title="lazy/src/main/kotlin/com/github/tu_usuario/parity/EvenNumberIterator.kt" showLineNumbers
+package com.github.tu_usuario.parity // No se recomienda usar _ en los nombres de paquetes, aquí se hace sólo para facilitar un poco la lectura
+
+// Iterador personalizado para generar números pares
+class EvenNumberIterator : Iterator<Int> {
+    private var current = 0  // Estado interno para rastrear el número actual
+
+    override fun hasNext(): Boolean = true  // Secuencia infinita
+
+    override fun next() = if (current >= Int.MAX_VALUE - 1) {
+        throw NoSuchElementException()  // Evitar desbordamiento
+    } else {
+        val nextValue = current
+        current += 2  // Incrementar en 2 para obtener el siguiente número par
+        nextValue
+    }
+}
+```
+
+### Paso 3: Uso de la Colección Perezosa `EvenNumbers`
+
+A continuación, se muestra cómo utilizar la colección perezosa para obtener los primeros `n` números pares.
+
+```kotlin title="lazy/src/main/kotlin/com/github/tu_usuario/parity/Main.kt" showLineNumbers
+package com.github.tu_usuario.parity // No se recomienda usar _ en los nombres de paquetes, aquí se hace sólo para facilitar un poco la lectura
+
+const val SIZE = 10
+
+fun computeEvenNumbersWithIterator() {
+    val evenNumbers = EvenNumbers()  // Crear una instancia de la colección perezosa
+    val iterator = evenNumbers.iterator()  // Obtener un iterador de la colección
+
+    val firstTenEvens = mutableListOf<Int>()  // Crear una lista mutable para almacenar los primeros 10 números pares
+    while (iterator.hasNext() && firstTenEvens.size < SIZE) {
+        firstTenEvens.add(iterator.next())  // Agregar el siguiente número par a la lista
+    }
+
+    println(firstTenEvens)  // Resultado: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
+}
+
+fun main() {
+    println("Computing the first $SIZE even numbers using an iterator:")
+    computeEvenNumbersWithIterator()
+}
+
+```
+
+
+:::info ``List(10) { iterator.next() }``
+
+La función de extensión `List: (n: Int, transform: (Int) -> T) -> List<T>` crea una lista de tamaño `n` donde cada elemento se obtiene aplicando la función `transform` al índice del elemento. En este caso, `iterator.next()` se utiliza para obtener el siguiente número par.
+
+:::
+
+### Explicación del Ejemplo
+
+1. **Clase `EvenNumbers`**: Implementa la interfaz `Iterable<Int>`, permitiendo que se pueda iterar sobre la colección de números pares.
+2. **Clase `EvenNumberIterator`**: Implementa la interfaz `Iterator<Int>`, generando números pares de manera perezosa. El método `hasNext()` siempre retorna `true` ya que la secuencia es infinita, y `next()` retorna el siguiente número par incrementando el estado interno `current` en 2.
+3. **Función `main()`**:
+    - Crea una instancia de `EvenNumbers`.
+    - Obtiene un iterador de la colección perezosa.
+    - Utiliza una función `List(10) { iterator.next() }` para tomar los primeros 10 números pares.
+    - Imprime la lista resultante.
+
+### Beneficios de las Colecciones Perezosas
+
+1. **Eficiencia de Memoria**: Al no almacenar todos los elementos en memoria, se reduce el consumo de recursos, especialmente útil para secuencias grandes o infinitas.
+2. **Mejor Rendimiento**: Evita el procesamiento innecesario de elementos que no serán utilizados, optimizando el tiempo de ejecución.
+3. **Soporte para Flujos Infinitos**: Permite trabajar con secuencias que no tienen un final definido, como generadores de números o eventos continuos.
+4. **Código más Limpio y Legible**: Facilita la definición de operaciones complejas de manera concisa y estructurada.
+
+### Consideraciones al Usar Colecciones Perezosas
+
+- **Control del Flujo**: Es crucial limitar el número de elementos que se consumen de una secuencia infinita para evitar bucles infinitos y desbordamientos de memoria.
+- **Inmutabilidad**: Las colecciones perezosas suelen ser inmutables, promoviendo un estilo de programación funcional y evitando efectos secundarios.
+- **Comprensión de la Evaluación Perezosa**: Es importante entender cómo y cuándo se evalúan las operaciones para evitar comportamientos inesperados.
+
+### Comparación entre Colecciones Tempranas, Tempranas Mutables y Perezosas en Kotlin
+
+| **Característica**                  | **Colecciones Temprana (Inmutables)** (`List`, `Set`, `Map`)     | **Colecciones Temprana Mutables** (`MutableList`, `MutableSet`, `MutableMap`) | **Colecciones Perezosas**                                      |
+|-------------------------------------|------------------------------------------------------------------|-------------------------------------------------------------------------------|----------------------------------------------------------------|
+| **Evaluación**                      | Inmediata                                                        | Inmediata                                                                     | Diferida                                                       |
+| **Mutabilidad**                     | Inmutables: No permiten modificaciones después de su creación    | Mutables: Permiten agregar, eliminar y modificar elementos                    | Inmutables por defecto                                         |
+| **Uso de Memoria**                  | Mayor, genera colecciones intermedias en operaciones encadenadas | Similar a las colecciones inmutables pero con capacidad de modificación       | Menor, evita colecciones intermedias                           |
+| **Procesamiento**                   | Procesa todos los elementos de inmediato                         | Procesa y permite modificaciones en tiempo de ejecución                       | Procesa solo los elementos necesarios                          |
+| **Flujos Infinitos**                | No soportado                                                     | No soportado                                                                  | Soportado                                                      |
+| **Encadenamiento de Operaciones**   | Puede ser costoso en términos de memoria y rendimiento           | Similar a las colecciones inmutables, pero con posibilidad de modificaciones  | Más eficiente gracias a la evaluación perezosa                 |
+| **Flexibilidad**                    | Fácil de usar y entender                                         | Mayor flexibilidad al permitir modificaciones                                 | Requiere un diseño cuidadoso                                   |
+| **Ejemplo de Uso**                  | Almacenar datos constantes que no necesitan cambios              | Manipular listas dinámicas donde se agregan o eliminan elementos              | Generar y procesar grandes flujos de datos de manera eficiente |
+| **Mutaciones durante la Iteración** | No permitido                                                     | Permitido mediante `MutableIterator`                                          | No aplica directamente                                         |
+
+## Colecciones perezosas en Kotlin: Secuencias
+
+En Kotlin, una **secuencia** (`Sequence`) es una interfaz que representa una colección perezosa. Las secuencias permiten encadenar múltiples operaciones intermedias (como `map`, `filter`, etc.) sin generar colecciones intermedias en cada paso. Solo cuando se invoca una operación terminal (como `toList()`, `first()`, `forEach()`, etc.), las transformaciones se ejecutan y se generan los resultados necesarios.
+
+### Ejemplo de Uso de Secuencias en Kotlin
+
+A continuación, se muestra un ejemplo de cómo utilizar secuencias en Kotlin para generar una secuencia infinita de números pares y tomar los primeros 10 elementos de manera eficiente:
+
+<Tabs>
+    <TabItem label={"Implementación"} value={"Implementación"}>
+        ```kotlin showLineNumbers title="lazy/src/main/kotlin/com/github/tu_usuario/parity/Main.kt"
+        // ...
+        fun computeEvenNumbersWithSequence() {
+            val evenNumbers = sequence {  // Crear una secuencia perezosa usando el constructor `sequence`
+                var number = 0
+                while (true) {               // Secuencia infinita
+                    yield(number)            // Emitir el número actual
+                    number += 2              // Incrementar en 2 para obtener el siguiente número par
+                }
+            }
+            // Tomar los primeros 10 elementos y convertirlos a una lista
+            val firstTenEvens = evenNumbers
+                .take(SIZE)
+                .toList()
+
+            println(firstTenEvens)  // Resultado: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
+        }
+
+        fun main() {
+            // ...
+            println("\nComputing the first $SIZE even numbers using a sequence:")
+            computeEvenNumbersWithSequence()
+        }
+        ```
+
+        #### Explicación:
+
+        - **Creación de la Secuencia con `sequence {}`**:
+            - (3) Utilizamos la función `sequence {}` para crear una **secuencia perezosa**.
+            - (3-9) Dentro del bloque `sequence {}`, inicializamos una variable `number`, que comienza en 0. Esta variable representa el número par actual.
+        - **Generación de la Secuencia:**
+            - (5-9) Utilizamos un bucle `while (true)` para generar una **secuencia infinita** de números pares. El bucle continúa indefinidamente, generando números pares sin detenerse.
+            - (6) **`yield(number)`**: Esta función emite el valor actual de `number` como el siguiente elemento de la secuencia. Cada vez que Kotlin "solicita" un nuevo valor de la secuencia, `yield` lo proporciona.
+            - (7) **`number += 2`**: Después de emitir el valor actual, incrementamos `number` en 2 para que el siguiente valor emitido por la secuencia sea el próximo número par.
+        - **Consumo de la Secuencia:**
+            - (12) **`take(SIZE)`**: Este método selecciona los primeros 10 elementos generados por la secuencia. Aunque la secuencia es infinita, este método limita el número de elementos que realmente se consumen.
+            - (13) **`toList()`**: Convierte los 10 elementos seleccionados en una lista. Esto facilita su manipulación posterior, ya que las listas en Kotlin proporcionan más operaciones y facilitan el acceso a sus elementos.
+    </TabItem>
+    <TabItem label={"Implementación (mejorada)"} value={"Implementación (mejorada)"}>
+        ```kotlin showLineNumbers title="lazy/src/main/kotlin/com/github/tu_usuario/parity/Main.kt"
+        // ...
+        fun computeEvenNumbersWithSequence() {
+            val evenNumbers = generateSequence(0) { it + 2 }  // Crear una secuencia perezosa de números pares
+            val firstTenEvens = evenNumbers.take(SIZE).toList()  // Tomar los primeros 10 elementos y convertirlos a una lista
+
+            println(firstTenEvens)  // Resultado: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
+        }
+
+        fun main() {
+            // ...
+            println("\nComputing the first $SIZE even numbers using a sequence:")
+            computeEvenNumbersWithSequence()
+        }
+        ```
+
+        #### Explicación:
+
+        - **Creación de la Secuencia con `generateSequence()`**:
+            - (3) Utilizamos la función `generateSequence(0) { it + 2 }` para crear una secuencia perezosa de números pares.
+            - (3) El primer argumento de `generateSequence()` es el valor inicial (`0`), y el segundo argumento es una función lambda que define cómo se generan los siguientes elementos de la secuencia (`it + 2`).
+    </TabItem>
+</Tabs>
+
+Este enfoque aprovecha las secuencias perezosas de Kotlin para manejar colecciones infinitas de manera eficiente, calculando solo los elementos necesarios cuando se solicitan, sin generar la colección completa en memoria.
+
+<FibonacciSequence />
+
+## ¿Qué hemos visto?
+
+En esta sección, hemos explorado las **colecciones perezosas** en Kotlin, con un enfoque particular en las **secuencias**. Las secuencias permiten la creación de colecciones infinitas de forma eficiente, generando y procesando solo los elementos necesarios cuando se solicitan. También hemos aprendido a implementar secuencias personalizadas utilizando `sequence {}` y `generateSequence()`, lo que nos permite manejar grandes flujos de datos o secuencias infinitas con facilidad.
+
+<References references={[
+    {
+        accessedDate: '28 de septiembre de 2024',
+        siteOrAuthor: 'Kotlin Help',
+        title: 'Sequences | Kotlin',
+        type: 'web',
+        url: 'https://kotlinlang.org/docs/sequences.html',
+    },
+]}/>

@@ -439,8 +439,9 @@ const sidebars: SidebarsConfig = {
             },
             items: [
                 'collections/iterator-kt',
+                'collections/types/immutable-kt',
                 'collections/types/mutable-kt',
-                'collections/types/mutable-kt',
+                'collections/types/lazy-kt',
             ],
         },
     ],
