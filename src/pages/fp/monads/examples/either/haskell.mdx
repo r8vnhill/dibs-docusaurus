@@ -1,0 +1,51 @@
+
+
+# Haskell
+
+En **Haskell**, el manejo de errores se realiza comúnmente utilizando el tipo de datos `Either`, que es muy similar al que hemos implementado en Kotlin. En Haskell, `Either` se define de la siguiente manera:
+
+```haskell
+data Either a b = Left a | Right b
+```
+
+Este tipo es una definición estándar en Haskell y se utiliza para representar valores que pueden ser de un tipo u otro.
+
+## Uso de `Either` en Haskell
+
+A continuación, veamos cómo se podría utilizar `Either` en Haskell para manejar errores al leer un archivo:
+
+```haskell
+import System.IO.Error (tryIOError, IOError)
+
+readFileEither :: FilePath -> IO (Either IOError String)
+readFileEither path = tryIOError (readFile path)
+
+processFile :: FilePath -> IO ()
+processFile path = do
+    result <- readFileEither path
+    case result of
+        Left err -> putStrLn $ "Error: " ++ show err
+        Right content -> putStrLn content
+```
+
+En este ejemplo:
+
+- **`tryIOError`** es una función que intenta ejecutar una acción de E/S y captura cualquier `IOError`, devolviendo un `Either IOError a`.
+- La función `readFileEither` intenta leer un archivo y devuelve un `Either` que contiene un `IOError` en caso de fallo o el contenido del archivo en caso de éxito.
+- En `processFile`, usamos una expresión `case` para manejar ambos casos de manera explícita.
+
+## Comparación con Kotlin
+
+- **Sintaxis y Tipado**: Mientras que en Kotlin necesitamos definir nuestro propio tipo `Either` o utilizar una biblioteca externa, en Haskell `Either` es parte de la biblioteca estándar. Además, Haskell, al ser un lenguaje puramente funcional con un sistema de tipos avanzado, facilita el manejo y composición de estos tipos.
+- **Manejo de Errores**: Ambos lenguajes fomentan el manejo explícito de errores utilizando `Either`, evitando las excepciones y haciendo que los errores sean parte del tipo de retorno de las funciones.
+- **Composición**: Haskell ofrece funciones integradas y operadores para trabajar con `Either`, permitiendo una composición más fluida de funciones que pueden fallar.
+
+## Ventajas de `Either` en Haskell
+
+1. **Soporte Nativo**: `Either` es un tipo de datos estándar en Haskell, lo que significa que no es necesario definirlo o importarlo de una biblioteca externa.
+2. **Funciones Utilitarias**: Haskell proporciona numerosas funciones utilitarias para trabajar con `Either`, como `either`, `lefts`, `rights`, y patrones de uso con `Monad` y `Functor`.
+3. **Integración con el Sistema de Tipos**: El sistema de tipos de Haskell permite aprovechar al máximo `Either` para manejar errores de forma segura y expresiva.
+
+## Equivalencia con Kotlin
+
+Aunque Kotlin no es un lenguaje puramente funcional, podemos aplicar los mismos principios utilizando `Either`. Sin embargo, debemos implementar algunas funcionalidades adicionales o utilizar bibliotecas como [**Arrow**](https://arrow-kt.io) para obtener soporte completo para operaciones funcionales con `Either`.

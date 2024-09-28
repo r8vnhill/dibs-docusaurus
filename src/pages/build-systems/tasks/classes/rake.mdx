@@ -1,0 +1,72 @@
+# Tareas como clases en Rake
+
+**Rake** es una herramienta de automatización de tareas escrita en **Ruby**, similar a **Gradle**, que también permite definir tareas utilizando clases. **Rake** se utiliza para construir, empaquetar y ejecutar proyectos, y es comúnmente empleado en el desarrollo de aplicaciones **Ruby**. La principal diferencia entre **Rake** y **Gradle** es que **Rake** utiliza **Ruby** como su lenguaje de scripting, mientras que **Gradle** permite el uso de **Kotlin** y **Groovy**.
+
+En **Rake**, las tareas pueden ser definidas como clases al igual que en **Gradle**. Esto facilita la encapsulación de la lógica de las tareas y su reutilización en diferentes contextos.
+
+## Ejemplo: Definir una Tarea como Clase en Rake
+
+En **Rake**, podemos definir una tarea como una clase utilizando el siguiente enfoque. A continuación, se muestra un ejemplo en el que se define una tarea que imprime la secuencia de **Fibonacci**:
+
+```ruby showLineNumbers title="fib_task.rb"
+class FibonacciTask
+  def initialize(n)
+    @n = n
+  end
+
+  def execute
+    first, second = 0, 1
+    @n.times do
+      print "#{first}\n"
+      first, second = second, first + second
+    end
+    puts "\nThe #{@n}-th Fibonacci number is: #{first}"
+  end
+end
+```
+
+En este ejemplo:
+
+- **`FibonacciTask`**: Es una clase que encapsula la lógica de cálculo de la secuencia de **Fibonacci**.
+- **`initialize`**: Constructor que recibe el número `n` como parámetro.
+- **`execute`**: Método que implementa la lógica de la tarea para calcular la secuencia de **Fibonacci**.
+
+## Registro de la Tarea en Rake
+
+Para registrar la tarea en un archivo **Rakefile**, seguimos un enfoque similar al de **Gradle**:
+
+```ruby showLineNumbers title="Rakefile"
+require_relative 'fib_task'
+
+desc "Calculates the nth Fibonacci number"
+task :fib, [:n] do |t, args|
+  FibonacciTask.new(args[:n].to_i).execute
+end
+```
+
+En este ejemplo:
+
+- **`desc`**: Proporciona una descripción de la tarea.
+- **`task`**: Define una tarea llamada `fib` que recibe un argumento `n`. Luego crea una nueva instancia de `FibonacciTask` y ejecuta la lógica de la tarea.
+
+## Ejecución de la Tarea en Rake
+
+Podemos ejecutar la tarea desde la línea de comandos de **Rake** utilizando el siguiente comando:
+
+```bash
+rake fib[10]
+```
+
+Esto imprimirá los primeros 10 números de la secuencia de **Fibonacci**, al igual que en el ejemplo de **Gradle**.
+
+## Comparación entre Gradle y Rake
+
+| Característica                       | Gradle (Kotlin DSL)                                                     | Rake (Ruby)                                            |
+|--------------------------------------|-------------------------------------------------------------------------|--------------------------------------------------------|
+| **Definición de Tareas como Clases** | Tareas se definen como clases utilizando `DefaultTask`.                 | Tareas se definen como clases en **Ruby**.             |
+| **Registro de Tareas**               | Se registran en archivos `build.gradle.kts` o `.gradle`.                | Se registran en un archivo `Rakefile`.                 |
+| **Ejecución de Tareas**              | Se ejecutan utilizando el comando `gradlew`.                            | Se ejecutan con el comando `rake`.                     |
+| **Soporte para Inputs y Outputs**    | Utiliza anotaciones como `@Input` y `@OutputFile`.                      | Inputs se pasan como argumentos.                       |
+| **Funcionalidad Adicional**          | Ofrece herramientas avanzadas de compilación y gestión de dependencias. | Orientado principalmente a scripts y tareas sencillas. |
+
+Ambos frameworks permiten definir tareas como clases para encapsular lógica compleja y reutilizable. Sin embargo, **Gradle** está más orientado a proyectos grandes con necesidades de construcción, mientras que **Rake** es ideal para tareas de automatización más ligeras en proyectos **Ruby**.

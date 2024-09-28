@@ -1,0 +1,22 @@
+En esta implementación, el tipo genérico `L` (que representa el valor de `Left`) es **invariante**, es decir, no se
+declara ni como `in` (contravariante) ni como `out` (covariante). Esto se debe a cómo `L` se utiliza en los miembros
+de la clase `Either`.
+
+Si intentamos declarar `L` como **contravariante** usando `in L`, el compilador de Kotlin generará el siguiente
+error en la definición de `flatMap`:
+
+```
+Type parameter L is declared as 'in' but occurs in 'out' position in type (R) -> Either<L, T>
+```
+
+Esto ocurre porque en la firma de `flatMap`, `L` aparece en una **posición de salida** (out position) en el tipo de
+retorno `Either<L, T>`.
+
+Por otro lado, si intentamos declarar `L` como **covariante** usando `out L`, el compilador nos dará este error:
+
+```
+Type parameter L is declared as 'out' but occurs in 'in' position in type (R) -> Either<L, T>
+```
+
+Esto se debe a que `L` aparece en una **posición de entrada** (in position) en el tipo de la función `f: (R) ->
+Either<L, T>`.

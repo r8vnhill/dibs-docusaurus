@@ -1,77 +1,56 @@
 ---
 title: Either
 ---
+import LanguageCard from "../../../../src/components/cards/LanguageCard";
 import Exercise from "../../../../src/components/exercise/Exercise";
 import GitHubRepoLink from "../../../../src/components/GithubRepoLink";
 import ReadingTime from "../../../../src/components/ReadingTime";
 import References from "../../../../src/components/ReferencesComponent";
 import Solution from "../../../../src/components/exercise/Solution";
+import CheckedExceptions from "../../../../src/pages/fp/monads/examples/checked-exceptions.mdx";
+import LInvariance from "../../../../src/pages/fp/monads/examples/l-invariance.mdx";
+import Tooltip from "../../../../src/components/Tooltip";
 
 <ReadingTime/>
 <GitHubRepoLink repo={"functional-programming-kt"} user={"r8vnhill"}/>
 
-<br/>
 Como vimos en la lección sobre [tipos suma](docs/fp/adt/sum/index.mdx), **Either** es un tipo de dato que se utiliza para representar uno de dos posibles valores: `Left` o `Right`. Es comúnmente empleado para manejar operaciones que pueden tener dos resultados: un valor esperado (`Right`) o un error o situación inesperada (`Left`).
 
 :::tip Nemotécnica
 "``Right`` is right, ``Left`` is what's left."
 :::
 
+## El problema con las excepciones
+
+> "But why do we consider throwing exceptions bad? Why is it not the desired effect? The answer has much to do with a loss of control."
+> — *Vermeulen, et al. (2021)*
+
+El <Tooltip text={"Al menos desde una perspectiva de programación funcional."} highlight={true}>problema con las excepciones</Tooltip> radica en que no son **referencialmente transparentes**. Esto significa que no se pueden reemplazar por su valor sin alterar el comportamiento del programa. Veamos un ejemplo:
+
+```kotlin showLineNumbers
+fun failingFn(i: Int): Int {
+    val y: Int = throw Exception("boom")
+    return try {
+        val x = 420
+        x + y
+    } catch (e: Exception) {
+        0
+    }
+}
+```
+
+En este caso, `y` no es referencialmente transparente, porque no podemos sustituir su valor por `throw Exception("boom")` dentro de la expresión `x + y` sin modificar el resultado del programa. Si lo hacemos, la excepción se lanzará inmediatamente dentro del bloque `try-catch`, cambiando el flujo de ejecución y, por ende, el comportamiento del código.
+
 ## Beneficios de `Either`
 
-- **Manejo explícito de errores**: `Either` proporciona un enfoque más seguro y estructurado para el manejo de errores que las excepciones tipadas. Al incluir explícitamente el caso de éxito o error en el tipo, se fuerza a los desarrolladores a manejar ambos casos, evitando que los errores se "pierdan" o sean ignorados accidentalmente.
+- **Manejo explícito de errores**: `Either` proporciona un enfoque más seguro y estructurado para el manejo de errores que las excepciones tipadas. Al incluir explícitamente el caso de éxito o error en el tipo, se fuerza a lxs desarrolladorxs a manejar ambos casos, evitando que los errores se "pierdan" o sean ignorados accidentalmente.
 - **Facilidad de composición**: `Either` permite componer funciones que pueden fallar sin necesidad de capturar excepciones. En lugar de lanzar una excepción, las funciones pueden devolver un valor de tipo `Either`, lo que facilita el encadenamiento de operaciones sin necesidad de un manejo de errores explícito en cada paso.
 - **Código más claro**: Utilizar `Either` hace que el flujo de datos sea más legible y el manejo de errores más evidente, en comparación con las excepciones, donde el flujo de errores puede ser implícito y difícil de seguir.
 
 <details>
     <summary>Comparación con checked exceptions en Java</summary>
 
-En **Java**, las checked exceptions requieren que cualquier código que llame a una función con una checked exception debe manejarla explícitamente usando `try-catch` o declararla en la firma del método con `throws`. A continuación, se presenta un ejemplo de manejo de checked exceptions en Java:
-
-```java
-public String readFile(String path) throws IOException {
-    // Puede lanzar una excepción checked IOException
-    if (path == null) {
-        throw new IOException("Invalid file path");
-    }
-    return "File content";
-}
-
-public void processFile(String path) {
-    try {
-        FileReader reader = new FileReader();
-        String content = reader.readFile(path);
-        System.out.println(content);
-    } catch (IOException e) {
-        System.out.println("Error: " + e.getMessage());
-    }
-}
-```
-
-En este ejemplo, el método `readFile` lanza una checked exception (`IOException`), que debe ser manejada explícitamente en cada lugar donde se llame a `readFile`. Esto genera la necesidad de un bloque `try-catch` en cada uso.
-
-En **Kotlin**, en lugar de lanzar excepciones, podemos usar `Either` para devolver el resultado o un error, haciendo que ambos casos (éxito y fallo) estén presentes de manera explícita en el tipo de retorno. Aquí tienes el equivalente del ejemplo anterior usando `Either`:
-
-```kotlin
-fun readFile(path: String?): Either<IOException, String> = if (path == null) {
-    Left(IOException("Invalid file path"))  // Error representado por Left
-} else {
-    Right("File content")  // Valor exitoso representado por Right
-}
-
-fun processFile(path: String?) {
-    when (val result = readFile(path)) {
-        is Left -> println("Error: ${result.value}")
-        is Right -> println(result.value)
-    }
-}
-```
-
-#### Ventajas de `Either` sobre Excepciones Checked
-
-1. **Explícito**: `Either` hace que el manejo de errores sea más explícito, forzando a los desarrolladores a manejar todos los casos posibles.
-2. **Composición**: `Either` permite encadenar funciones de manera limpia, sin necesidad de `try-catch`.
-3. **Evita el flujo implícito de errores**: A diferencia de las checked exceptions, que pueden propagarse sin ser manejadas correctamente, `Either` asegura que todos los errores sean tratados adecuadamente.
+    <CheckedExceptions/>
 </details>
 
 ## Implementación
@@ -94,45 +73,10 @@ sealed class Either<L, out R> {
 <details>
     <summary>¿Por qué `L` es invariante?</summary>
 
-    En esta implementación, el tipo genérico `L` (que representa el valor de `Left`) es **invariante**, es decir, no se
-    declara ni como `in` (contravariante) ni como `out` (covariante). Esto se debe a cómo `L` se utiliza en los miembros
-    de la clase `Either`.
-
-    Si intentamos declarar `L` como **contravariante** usando `in L`, el compilador de Kotlin generará el siguiente
-    error en la definición de `flatMap`:
-
-    ```
-    Type parameter L is declared as 'in' but occurs in 'out' position in type (R) -> Either<L, T>
-    ```
-
-    Esto ocurre porque en la firma de `flatMap`, `L` aparece en una **posición de salida** (out position) en el tipo de
-    retorno `Either<L, T>`. En Kotlin, un tipo genérico declarado como `in` (contravariante) solo puede usarse en
-    **posiciones de entrada** (in positions), como parámetros de función, y no puede aparecer en posiciones de salida.
-
-    Por otro lado, si intentamos declarar `L` como **covariante** usando `out L`, el compilador nos dará este error:
-
-    ```
-    Type parameter L is declared as 'out' but occurs in 'in' position in type (R) -> Either<L, T>
-    ```
-
-    Esto se debe a que `L` aparece en una **posición de entrada** (in position) en el tipo de la función `f: (R) ->
-    Either<L, T>`. En Kotlin, un tipo genérico declarado como `out` (covariante) solo puede usarse en **posiciones de
-    salida**, como tipos de retorno de funciones, y no puede aparecer en posiciones de entrada.
-
-    ### ¿Por Qué `L` Debe Ser Invariante?
-
-    - **Uso en Posiciones de Entrada y Salida**: En la clase `Either`, el tipo `L` aparece tanto en posiciones de
-    entrada como de salida. Esto ocurre porque:
-        - En `flatMap`, `L` está en el tipo de retorno `Either<L, T>`, una posición de salida.
-        - En la función pasada a `flatMap`, `f: (R) -> Either<L, T>`, `L` aparece en el tipo de parámetro de entrada de `f`,
-        lo que hace que `L` esté en una posición de entrada en el contexto de `flatMap`.
-
-    - **Restricciones de Variancia en Kotlin**:
-        - **Covarianza (`out`)**: Un tipo genérico declarado como covariante solo puede usarse en posiciones de salida. Si `L` se declara como `out L`, no podríamos usarlo en posiciones de entrada, como en los parámetros de funciones.
-        - **Contravarianza (`in`)**: Un tipo genérico declarado como contravariante solo puede usarse en posiciones de entrada. Si `L` se declara como `in L`, no podríamos usarlo en posiciones de salida, como en los tipos de retorno.
+    <LInvariance/>
 </details>
 
-## Clases `Left` y `Right`
+### Clases `Left` y `Right`
 
 - **Left**: Representa el caso fallido o un error. Contiene un valor de tipo`L`.
     ```kotlin
@@ -157,19 +101,31 @@ sealed class Either<L, out R> {
 Supongamos que estamos trabajando con una operación que puede fallar. Queremos encapsular el éxito con `Right` y el error con `Left`:
 
 ```kotlin
-fun divide(a: Int, b: Int) = if (b == 0) {
-    Left("Cannot divide by zero")
-} else {
-    Right(a / b)
+fun readFileEither(path: String?): Either<Exception, String> = path?.let {
+    Right("File content") // Simulando el contenido del archivo
+} ?: Left(Exception("Invalid file path"))
+
+fun processFile(path: String?) {
+    val result = readFileEither(path)
+
+    when (result) {
+        is Left -> println("Error: ${result.value.message}")
+        is Right -> println(result.value)
+    }
 }
 
-val result = divide(10, 2)
-result.flatMap { Right(it * 2) } // Operación exitosa, devuelve Right(10)
+// Uso
+processFile(null) // Error: Invalid file path
+processFile("validPath.txt") // File content
 ```
 
 En este ejemplo:
-- Si `b` es cero, la función devolverá un `Left` con el mensaje de error.
-- Si no, la función devolverá un `Right` con el resultado de la división.
+- Si el `path` es `null`, `readFileEither` devuelve un `Left` con un mensaje de error.
+- Si el `path` no es `null`, `readFileEither` devuelve un `Right` con el contenido del archivo.
+
+:::note Uso de ``Exception``
+En este caso, estamos utilizando `Exception` como tipo de error. En un escenario real, se recomienda definir un tipo de error más específico que proporcione más contexto sobre el fallo.
+:::
 
 ## Comparación con `Option`
 
@@ -185,11 +141,11 @@ En este ejemplo:
         ```kotlin
         fun <L, R> fold(
             either: Either<L, R>,
-            left: (L) -> Unit,
-            right: (R) -> Unit
+            ifLeft: (L) -> Unit,
+            ifRight: (R) -> Unit
         ) = when (either) {
-            is Left -> left(either.value)
-            is Right -> right(either.value)
+            is Left -> ifLeft(either.value)
+            is Right -> ifRight(either.value)
         }
         ```
 
@@ -214,6 +170,29 @@ En esta lección hemos explorado el uso de **Either** como una poderosa alternat
 - También hemos discutido cómo **Either** se diferencia de **Option**, siendo más adecuado cuando se necesita proporcionar contexto adicional en caso de error.
 
 Con estas ideas, ahora puedes aplicar **Either** en escenarios que requieran un manejo explícito de errores y evitar la propagación oculta de fallos en tu código.
+
+<div className="language-card-container">
+    <LanguageCard
+        logoSrc="https://upload.wikimedia.org/wikipedia/commons/6/66/F_Sharp_logo.svg"
+        language="F#"
+        link="/fp/monads/examples/either/fsharp"
+    />
+    <LanguageCard
+        logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Haskell-Logo.svg/1200px-Haskell-Logo.svg.png"
+        language="Haskell"
+        link="/fp/monads/examples/either/haskell"
+    />
+    <LanguageCard
+        logoSrc="https://www.svgrepo.com/show/354313/scala.svg"
+        language="Scala"
+        link="/fp/monads/examples/either/scala"
+    />
+    <LanguageCard
+        logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Typescript_logo_2020.svg/2048px-Typescript_logo_2020.svg.png"
+        language="TypeScript"
+        link="/fp/monads/examples/either/typescript"
+    />
+</div>
 
 <References references={[
     {

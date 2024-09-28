@@ -1,0 +1,194 @@
+---
+title: Colecciones Mutables
+---
+import LanguageCard from "../../../src/components/cards/LanguageCard";
+import GitHubRepoLink from "../../../src/components/GithubRepoLink";
+import References from "../../../src/components/ReferencesComponent";
+import ReadingTime from '../../../src/components/ReadingTime';
+
+<ReadingTime />
+<GitHubRepoLink repo={"collections-kt"} user={"r8vnhill"} />
+
+En Kotlin, las **colecciones mutables** son estructuras de datos que permiten la modificación de sus elementos después de ser creadas. Estas colecciones son útiles cuando se necesita agregar, eliminar o cambiar elementos durante la ejecución del programa. Kotlin ofrece versiones mutables para todas las colecciones estándar: listas, sets, y mapas.
+
+:::note Diferencia entre Colecciones Mutables e Inmutables
+En Kotlin, las colecciones mutables y las inmutables comparten interfaces similares, pero las mutables ofrecen métodos adicionales para modificar su contenido.
+:::
+
+## ``MutableIterator`` y ``MutableIterable``
+
+Un **MutableIterator** es una interfaz que permite recorrer y modificar elementos en una colección mutable. A diferencia de un iterador estándar, un `MutableIterator` permite agregar y eliminar elementos durante la iteración.
+
+```kotlin showLineNumbers
+interface MutableIterator<out T> : Iterator<T> {
+
+    fun remove(): Unit
+}
+```
+
+Un **MutableIterable** es una interfaz que extiende `Iterable` y permite obtener un iterador mutable para recorrer y modificar los elementos de la colección.
+
+```kotlin showLineNumbers
+interface MutableIterable<out T> : Iterable<T> {
+
+    fun iterator(): MutableIterator<T>
+}
+```
+
+### Ejemplo
+
+```kotlin showLineNumbers
+val numbers: MutableIterable<Int> = TODO()
+val iterator = numbers.iterator()
+while (iterator.hasNext()) {
+    val num = iterator.next()
+    if (num % 2 == 0) {
+        iterator.remove() // Eliminar elementos pares
+    }
+}
+```
+
+## `MutableCollection`
+
+Una **MutableCollection** es una colección iterable que permite modificar su contenido. Además de las propiedades estándar de una colección, como `size` y `contains`, las colecciones mutables incluyen métodos para agregar y eliminar elementos.
+
+```kotlin showLineNumbers title="MutableCollection.kt simplificado"
+interface MutableCollection<E> : Collection<E>, MutableIterable<E> {
+    fun add(element: E): Boolean
+    fun remove(element: E): Boolean
+    fun addAll(elements: Collection<E>): Boolean
+    fun removeAll(elements: Collection<E>): Boolean
+    fun retainAll(elements: Collection<E>): Boolean
+    fun clear(): Unit
+}
+```
+
+### Ejemplo
+
+```kotlin showLineNumbers
+val mutableStrings: MutableCollection<String> = mutableListOf("Kotlin", "Java")
+mutableStrings.add("Scala")
+println(mutableStrings)  // Output: [Kotlin, Java, Scala]
+```
+
+### `MutableList`
+
+Una **MutableList** es una lista ordenada que permite modificar los elementos en una posición específica, agregar o eliminar elementos. Es útil cuando se necesita acceso directo mediante índices y operaciones de manipulación de datos.
+
+```kotlin showLineNumbers title="MutableList.kt simplificado"
+interface MutableList<E> : List<E>, MutableCollection<E> {
+    fun addAll(index: Int, elements: Collection<E>): Boolean
+    operator fun set(index: Int, element: E): E
+    fun add(index: Int, element: E): Unit
+    fun removeAt(index: Int): E
+    override fun listIterator(): MutableListIterator<E>
+    override fun listIterator(index: Int): MutableListIterator<E>
+    override fun subList(fromIndex: Int, toIndex: Int): MutableList<E>
+}
+```
+
+### Ejemplo
+
+```kotlin showLineNumbers
+val mutableList: MutableList<String> = mutableListOf("Kotlin", "Java")
+mutableList.add("Scala")
+mutableList[1] = "Groovy"
+println(mutableList)  // Output: [Kotlin, Groovy, Scala]
+```
+
+### `MutableSet`
+
+Un **MutableSet** es una colección que no permite elementos duplicados, pero permite modificar su contenido agregando o eliminando elementos. Los sets no garantizan un orden específico de los elementos.
+
+```kotlin showLineNumbers title="MutableSet.kt simplificado"
+interface MutableSet<E> : Set<E>, MutableCollection<E>
+```
+
+### Ejemplo
+
+```kotlin showLineNumbers
+val mutableSet: MutableSet<String> = mutableSetOf("Kotlin", "Java")
+mutableSet.add("Scala")
+mutableSet.remove("Java")
+println(mutableSet)  // Output: [Kotlin, Scala]
+```
+
+## `MutableMap`
+
+Un **MutableMap** es una colección que asocia claves (*keys*) con valores (*values*), permitiendo modificar los pares clave-valor. Cada clave puede estar asociada a un solo valor, pero se pueden agregar, eliminar o modificar entradas en el mapa.
+
+```kotlin showLineNumbers title="Se omiten
+interface MutableMap<K, V> : Map<K, V> {
+    fun put(key: K, value: V): V?
+    fun remove(key: K): V?
+    fun remove(key: K, value: V): Boolean
+    fun putAll(from: Map<out K, V>): Unit
+    fun clear(): Unit
+    interface MutableEntry<K, V> : Map.Entry<K, V> {
+        fun setValue(newValue: V): V
+    }
+}
+```
+
+### Ejemplo
+
+```kotlin showLineNumbers
+val mutableMap: MutableMap<String, Int> = mutableMapOf("Kotlin" to 1, "Java" to 2)
+mutableMap["Scala"] = 3
+mutableMap.remove("Java")
+println(mutableMap)  // Output: {Kotlin=1, Scala=3}
+```
+
+## Beneficios de las Colecciones Mutables
+
+1. **Flexibilidad**: Permiten modificar su contenido durante la ejecución del programa, lo que es útil en aplicaciones que requieren manipulación dinámica de datos.
+2. **Eficiencia**: Al permitir modificaciones en lugar de crear nuevas colecciones, se optimiza el uso de memoria y el rendimiento.
+3. **Compatibilidad**: Las colecciones mutables son fácilmente interoperables con las inmutables, lo que facilita el intercambio de datos en diferentes contextos.
+
+
+## Resumen
+
+En Kotlin, las **colecciones mutables** permiten agregar, eliminar o modificar elementos durante la ejecución del programa. Son versiones modificables de las colecciones estándar como listas, sets, y mapas. Además de las operaciones básicas de lectura, las colecciones mutables ofrecen métodos adicionales para la manipulación de sus elementos.
+
+### Clases y Interfaces Principales
+
+1. **`MutableIterable` y `MutableIterator`**: Permiten iterar y modificar la colección mientras se recorre.
+2. **`MutableCollection`**: Extiende `Collection` y añade métodos para la modificación de elementos como `add` y `remove`.
+3. **`MutableList`**: Colección ordenada que permite el acceso por índice y operaciones como agregar, modificar, o eliminar elementos.
+4. **`MutableSet`**: Colección que no permite duplicados y permite modificar su contenido.
+5. **`MutableMap`**: Asocia claves a valores, permitiendo agregar, eliminar o modificar las entradas.
+
+### Beneficios
+
+- **Flexibilidad**: Soportan modificaciones durante la ejecución, adaptándose a cambios dinámicos.
+- **Eficiencia**: Optimizan memoria y rendimiento al modificar colecciones en lugar de crear nuevas.
+- **Compatibilidad**: Pueden interoperar fácilmente con colecciones inmutables.
+
+Las colecciones mutables son esenciales en aplicaciones donde la manipulación de datos es frecuente y necesaria.
+
+<div className="language-card-container">
+    <LanguageCard
+        logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Logo_C_sharp.svg/1200px-Logo_C_sharp.svg.png"
+        language="C#"
+        link="/collections/types/mutable/csharp"
+    />
+    <LanguageCard
+        logoSrc="https://cdn-icons-png.flaticon.com/512/3984/3984314.png"
+        language="Swift"
+        link="/collections/types/mutable/swift"
+    />
+</div>
+
+<References references={[
+    {
+        title: "Chapter 9. Collections: Get Organized",
+        bookTitle: "Head First Kotlin",
+        pages: "439-502",
+        location: "Beijing Boston Farnham Sebastopol Tokyo",
+        publisher: "O’Reilly",
+        year: "2019",
+        type: "book",
+        author: 'Dawn Griffiths & David Griffiths'
+    },
+]}/>
+

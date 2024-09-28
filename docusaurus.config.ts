@@ -104,6 +104,7 @@ const config: Config = {
                 'eiffel',
                 'elixir',
                 'erlang',
+                'fsharp',
                 'groovy',
                 'haskell',
                 'java',

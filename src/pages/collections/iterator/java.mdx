@@ -1,0 +1,145 @@
+
+# Java
+
+En **Java**, el patrón **Iterator** está formalmente implementado a través de las interfaces `Iterator` y `Iterable`, que son parte de la **Java Collections Framework**. Al igual que en Kotlin, Java permite iterar sobre colecciones mediante el uso de un iterador, pero para iterar directamente sobre un `Iterator`, necesitas utilizar un bucle `while` con `hasNext()` o un bucle `for` tradicional que controla el iterador.
+
+## Implementación del Patrón Iterator en Java
+
+La interfaz `Iterator` de Java define los métodos `hasNext()` y `next()`, mientras que la interfaz `Iterable` proporciona el método `iterator()` que devuelve un iterador.
+
+## Ejemplo de Implementación
+
+Veamos un ejemplo similar al de Kotlin, en el que implementamos una colección de libros y un iterador para recorrerla en Java.
+
+### 1. Clase `Book` y la Colección `Library`
+
+Primero, creamos una clase `Book` y una clase `Library` que será iterable:
+
+```java
+import java.util.Iterator;
+import java.util.List;
+import java.util.ArrayList;
+
+class Book {
+    String title;
+    String author;
+
+    Book(String title, String author) {
+        this.title = title;
+        this.author = author;
+    }
+
+    @Override
+    public String toString() {
+        return title + " by " + author;
+    }
+}
+
+class Library implements Iterable<Book> {
+    private List<Book> books;
+
+    public Library(Book... books) {
+        this.books = new ArrayList<>(List.of(books));
+    }
+
+    @Override
+    public Iterator<Book> iterator() {
+        return new BookIterator(books);
+    }
+}
+```
+
+### 2. Implementación del Iterador
+
+Ahora implementamos la clase `BookIterator` que sigue la interfaz `Iterator` de Java.
+
+```java
+class BookIterator implements Iterator<Book> {
+    private List<Book> books;
+    private int position = 0;
+
+    public BookIterator(List<Book> books) {
+        this.books = books;
+    }
+
+    @Override
+    public boolean hasNext() {
+        return position < books.size();
+    }
+
+    @Override
+    public Book next() {
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+        return books.get(position++);
+    }
+}
+```
+
+:::note Unchecked exceptions
+En Java, `NoSuchElementException` es una excepción no comprobada que se lanza cuando se intenta acceder a un elemento que no existe. A diferencia de las excepciones comprobadas, no es necesario declarar o manejar explícitamente las excepciones no comprobadas.
+:::
+
+### 3. Uso del Iterador
+
+Para usar el iterador, debes utilizar `hasNext()` y `next()` explícitamente o usar el iterador dentro de un bucle `for` tradicional que maneje el control del iterador.
+
+```java
+void main(String[] args) {
+    Library library = new Library(
+        new Book("Red Dragon", "Thomas Harris"),
+        new Book("At the Mountains of Madness", "H.P. Lovecraft"),
+        new Book("The Fellowship of the Ring", "J.R.R. Tolkien")
+    );
+
+    // Usar el iterador directamente
+    Iterator<Book> iterator = library.iterator();
+    while (iterator.hasNext()) {
+        Book book = iterator.next();
+        System.out.println(book);
+    }
+
+    // O usando el iterador en un bucle for tradicional
+    for (Iterator<Book> it = library.iterator(); it.hasNext(); ) {
+        System.out.println(it.next());
+    }
+}
+```
+
+<details>
+    <summary>Unnamed classes</summary>
+
+    **Unnamed Classes** es una nueva característica introducida en **Java 21** que permite escribir programas simples sin necesidad de declarar explícitamente una clase con nombre. Esto es útil para reducir el boilerplate en aplicaciones pequeñas o scripts que solo necesitan un método `main` para ejecutarse.
+
+    ### Características de las Unnamed Classes:
+    - **Menos código ceremonial**: Ya no necesitas definir una clase solo para contener el método `main`.
+    - **Ideal para scripts o programas cortos**: Al eliminar la declaración de la clase, Java se vuelve más accesible para escribir programas rápidos o ejemplos educativos.
+
+    ## Ejemplo:
+    En lugar de escribir una clase completa con un método `main` tradicional:
+
+    ```java
+    class Main {
+    public static void main(String[] args) {
+    System.out.println("Hello, World!");
+}
+}
+    ```
+
+    Con **Unnamed Classes** en Java 21, puedes escribirlo de forma más concisa:
+
+    ```java
+    void main(String[] args) {
+    System.out.println("Hello, World!");
+}
+    ```
+
+    Este enfoque es especialmente útil para pequeñas aplicaciones, scripts y pruebas, donde la simplicidad es clave.
+</details>
+
+## Similitudes entre Kotlin, Python y Java
+
+1. **Iteración Uniforme**: Los tres lenguajes permiten recorrer colecciones de manera uniforme sin exponer la estructura interna, gracias a sus respectivas implementaciones del patrón **Iterator**.
+2. **Abstracción del Recorrido**: En ambos lenguajes, la colección está separada de la lógica de recorrido, lo que permite implementar diferentes tipos de estructuras de datos sin cambiar la forma de iterar.
+3. **Protocolo Nativo**: Los tres lenguajes implementan el patrón iterador de forma nativa: Kotlin y Java usan interfaces (`Iterable` e `Iterator`), mientras que Python utiliza un protocolo basado en `__iter__()` y `__next__()`.

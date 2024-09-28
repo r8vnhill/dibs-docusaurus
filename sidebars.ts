@@ -102,7 +102,6 @@ const sidebars: SidebarsConfig = {
                         },
                     ]
                 },
-                // 'intro/input',
             ],
         },
         {
@@ -114,17 +113,6 @@ const sidebars: SidebarsConfig = {
             },
             items: [
                 'build-systems/gradle-init',
-                {
-                    type: 'category',
-                    label: 'Mi primera aplicación',
-                    link: {
-                        type: 'doc',
-                        id: 'build-systems/my-app',
-                    },
-                    items: [
-                        'build-systems/my-app-langs'
-                    ],
-                },
                 'build-systems/convention-plugins',
                 'build-systems/global',
                 {
@@ -136,6 +124,17 @@ const sidebars: SidebarsConfig = {
                     },
                     items: [
                         'build-systems/basic-config/basic-config-langs',
+                    ],
+                },
+                {
+                    type: 'category',
+                    label: 'Mi primera aplicación',
+                    link: {
+                        type: 'doc',
+                        id: 'build-systems/my-app',
+                    },
+                    items: [
+                        'build-systems/my-app-langs'
                     ],
                 },
                 {
@@ -168,19 +167,10 @@ const sidebars: SidebarsConfig = {
                                 'build-systems/tasks/custom/custom-langs',
                             ],
                         },
-                        {
-                            label: "Tareas como clases",
-                            type: "category",
-                            link: {
-                                type: 'doc',
-                                id: 'build-systems/tasks/classes/classes-kt',
-                            },
-                            items: [
-                                'build-systems/tasks/classes/classes-langs',
-                            ],
-                        },
+                        'build-systems/tasks/classes-kt'
                     ],
                 },
+
                 {
                     type: 'category',
                     label: 'Plugins',
@@ -239,17 +229,7 @@ const sidebars: SidebarsConfig = {
                         id: 'fp/adt/index',
                     },
                     items: [
-                        {
-                            type: 'category',
-                            label: 'Tipos producto',
-                            link: {
-                                type: 'doc',
-                                id: 'fp/adt/product'
-                            },
-                            items: [
-                                "fp/adt/product-langs",
-                            ]
-                        },
+                        'fp/adt/product',
                         {
                             type: 'category',
                             label: 'Tipos suma',
@@ -340,17 +320,7 @@ const sidebars: SidebarsConfig = {
                                         'fp/monads/examples/option-langs',
                                     ],
                                 },
-                                {
-                                    label: 'Either',
-                                    type: 'category',
-                                    link: {
-                                        type: 'doc',
-                                        id: 'fp/monads/examples/either-kt',
-                                    },
-                                    items: [
-                                        'fp/monads/examples/either-langs',
-                                    ],
-                                },
+                                'fp/monads/examples/either-kt',
                                 {
                                     label: 'Result',
                                     type: 'category',
@@ -377,17 +347,7 @@ const sidebars: SidebarsConfig = {
             },
             items: [
                 "testing/tdd",
-                {
-                    label: 'Testing de excepciones',
-                    type: 'category',
-                    link: {
-                        type: 'doc',
-                        id: 'testing/exceptions/exceptions-kt',
-                    },
-                    items: [
-                        'testing/exceptions/exceptions-langs',
-                    ],
-                },
+                'testing/exceptions-kt',
                 {
                     label: 'Data-Driven Testing',
                     type: 'category',
@@ -457,29 +417,8 @@ const sidebars: SidebarsConfig = {
             ],
         },
         {
-            label: 'Unidad 5: Colecciones',
             type: 'category',
-            link: {
-                type: 'doc',
-                id: 'collections/index',
-            },
-            items: [
-                {
-                    label: 'Iterator pattern',
-                    type: 'category',
-                    link: {
-                        type: 'doc',
-                        id: 'collections/iterator/iterator-kt',
-                    },
-                    items: [
-                        'collections/iterator/iterator-langs',
-                    ],
-                },
-            ],
-        },
-        {
-            type: 'category',
-            label: 'Unidad 6: APIs Orientadas a Objetos',
+            label: 'Unidad 5: APIs Orientadas a Objetos',
             link: {
                 type: 'doc',
                 id: 'oop/index',
@@ -489,6 +428,19 @@ const sidebars: SidebarsConfig = {
                 'oop/infix',
                 'oop/companion',
                 'oop/inheritance-2',
+            ],
+        },
+        {
+            label: 'Unidad 6: Colecciones',
+            type: 'category',
+            link: {
+                type: 'doc',
+                id: 'collections/index',
+            },
+            items: [
+                'collections/iterator-kt',
+                'collections/types/mutable-kt',
+                'collections/types/mutable-kt',
             ],
         },
     ],
@@ -505,7 +457,7 @@ const sidebars: SidebarsConfig = {
                 'assignments/assignment-5',
             ],
         }
-    ]
+    ],
 };
 
 // noinspection JSUnusedGlobalSymbols

@@ -1,0 +1,50 @@
+# F#
+
+En **F#**, similar a **Kotlin**, el tipo `Either` puede ser modelado mediante la unión de tipos utilizando **Discriminated Unions**. En **F#**, las **Discriminated Unions** permiten definir un tipo que puede tener múltiples formas, lo que es perfecto para representar la dualidad de `Either`, con un caso exitoso (`Right`) y un caso de error o fallido (`Left`).
+
+```fsharp showLineNumbers
+type Either<'L, 'R> =
+    | Left of 'L
+    | Right of 'R
+```
+
+- **`Left`**: Representa el caso de error o falla.
+- **`Right`**: Representa el caso exitoso con un valor.
+
+### Implementación
+
+A continuación, implementamos el patrón de `Either` para manejar el resultado de una operación que puede fallar, como la lectura de un archivo.
+
+```fsharp showLineNumbers
+let readFileEither (path: string option) : Either<Exception, string> =
+    match path with
+    | None -> Left (new System.Exception("Invalid file path"))
+    | Some p -> Right "File content"  // Simulando el contenido del archivo
+
+let processFile (path: string option) =
+    let result = readFileEither path
+    match result with
+    | Left err -> printfn "Error: %s" err.Message
+    | Right content -> printfn "%s" content
+```
+
+### Explicación
+
+1. (1-4) **``readFileEither``**: Esta función toma un `string option` (que puede ser `Some` o `None`) y devuelve un `Either<Exception, string>`. Si el archivo es `None`, devuelve `Left` con una excepción. Si es `Some path`, devuelve `Right` con el contenido simulado del archivo.
+2. (6-10) **``processFile``**: Toma la ruta del archivo como entrada y procesa el resultado utilizando `match`. Si el resultado es `Left`, imprime el mensaje de error; si es `Right`, imprime el contenido del archivo.
+
+### Uso
+
+```fsharp showLineNumbers
+processFile None          // Output: Error: Invalid file path
+processFile (Some "path") // Output: File content
+```
+
+## Comparación entre F# y Kotlin
+
+| Aspecto                          | **F# (Discriminated Union)**                                         | **Kotlin (Sealed Class)**                                                               |
+|----------------------------------|----------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
+| **Definición del tipo `Either`** | Se define mediante una **Discriminated Union** con `Left` y `Right`. | Se usa una **clase sellada** con subtipos `Left` y `Right`.                             |
+| **Manejo de valores**            | Uso de `match` para evaluar `Either` en dos ramas.                   | Uso de `when` para manejar los casos `Left` y `Right`.                                  |
+| **Modelado del Error**           | `Left` se utiliza para manejar errores o casos fallidos.             | Similarmente, `Left` se usa para modelar fallos o excepciones.                          |
+| **Composición**                  | Se pueden componer funciones que devuelvan `Either`.                 | Composición funcional con `flatMap`.                                                    |

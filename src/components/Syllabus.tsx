@@ -55,16 +55,7 @@ const sections: CourseSection[] = [
         ],
     },
     {
-        title: "Colecciones",   // 1 semana    total: 11.5/15 semanas
-        contents: [
-            "Iterator pattern",
-            "Colecciones inmutables",
-            "Colecciones mutables",
-            "Operaciones de colecciones",
-        ]
-    },
-    {
-        title: "APIs orientadas a objetos",  // 2 semanas    total: 13.5/15 semanas
+        title: "Programación orientada a objetos",  // 2 semanas    total: 12.5/15 semanas
         contents: [
             "Clases abiertas y cerradas/finales",
             "Métodos de extensión",
@@ -72,6 +63,15 @@ const sections: CourseSection[] = [
             "Soluciones al problema del diamante",
             "Tipos anónimos",
         ],
+    },
+    {
+        title: "Colecciones",   // 1 semana    total: 13.5/15 semanas
+        contents: [
+            "Iterator pattern",
+            "Colecciones inmutables",
+            "Colecciones mutables",
+            "Operaciones de colecciones",
+        ]
     },
 ];
 

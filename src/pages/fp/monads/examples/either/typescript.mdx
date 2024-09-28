@@ -1,0 +1,70 @@
+
+## TypeScript
+
+En **TypeScript**, aunque no existe un tipo `Either` nativo como en Haskell, podemos modelar un comportamiento similar utilizando **Unión de Tipos** y **objetos discriminados**. TypeScript permite definir tipos que pueden ser uno de varios valores, lo que nos permite imitar la semántica de `Either`.
+
+### Implementación de `Either` en TypeScript
+
+Podemos crear una implementación de `Either` en TypeScript utilizando una unión de tipos para representar `Left` y `Right`.
+
+```typescript
+type Either<L, R> =
+  | { type: 'Left'; value: L }
+  | { type: 'Right'; value: R };
+
+function left<L, R>(value: L): Either<L, R> {
+  return { type: 'Left', value };
+}
+
+function right<L, R>(value: R): Either<L, R> {
+  return { type: 'Right', value };
+}
+```
+
+### Ejemplo de Uso
+
+Supongamos que queremos leer el contenido de un archivo y manejar posibles errores utilizando `Either`:
+
+```typescript
+function readFileEither(path: string | null): Either<Error, string> {
+  if (!path) {
+    return left(new Error("Invalid file path"));
+  } else {
+    return right("File content"); // Simulating file content
+  }
+}
+
+function processFile(path: string | null) {
+  const result = readFileEither(path);
+
+  if (result.type === 'Left') {
+    console.log(`Error: ${result.value.message}`);
+  } else {
+    console.log(result.value);
+  }
+}
+
+// Usage
+processFile(null); // Error: Invalid file path
+processFile("validPath.txt"); // File content
+```
+
+### Comparación con Kotlin
+
+- **Tipado Unificado vs Clases Selladas**: En Kotlin, `Either` se define como una clase sellada con los tipos `Left` y `Right`. En TypeScript, podemos lograr una representación similar utilizando **uniones de tipos** y **discriminadores** (con la propiedad `type`). Aunque el enfoque es diferente, ambos lenguajes permiten representar la idea de un valor que puede ser de uno de dos tipos.
+
+- **Patrones de Manejo de Errores**: En TypeScript, es necesario usar comprobaciones condicionales (`if` o `switch`) para manejar `Left` y `Right`, mientras que en Kotlin, se puede utilizar `when` de forma más idiomática para patrones de coincidencia más expresivos.
+
+- **Composición**: Aunque es posible componer funciones que devuelven `Either` en TypeScript, el lenguaje no ofrece funciones utilitarias como `flatMap` o `map` por defecto. En Kotlin, podemos implementar fácilmente estas funciones como métodos en `Either`, o utilizar bibliotecas como **Arrow** que ya proporcionan estas utilidades.
+
+
+### Comparación final
+
+| **Aspecto**                          | **TypeScript**                                                                     | **Kotlin**                                                                  |
+|--------------------------------------|------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| **Definición**                       | Unión de tipos con discriminadores `{ type: 'Left' }` y `{ type: 'Right' }`        | Clase sellada con subclases `Left` y `Right`                                |
+| **Tipado**                           | Usa uniones de tipos y discriminadores                                             | Usa `sealed class` con subclases específicas                                |
+| **Manejo de Errores**                | Uso de condicionales (`if`, `switch`)                                              | Uso idiomático de `when`                                                    |
+| **Composición**                      | No tiene utilidades nativas como `flatMap` o `map`                                 | Facilita la composición con funciones como `flatMap` y `map`                |
+| **Manejo Funcional**                 | Implementación manual de funciones utilitarias                                     | Implementación directa o uso de bibliotecas como **Arrow**                  |
+| **Compatibilidad con el Ecosistema** | Flexible pero sin soporte nativo para estructuras de manejo de errores funcionales | Integra manejo funcional de errores con bibliotecas externas como **Arrow** |

@@ -1,0 +1,199 @@
+import References from "../../../../components/ReferencesComponent";
+import Tooltip from "../../../../components/Tooltip";
+
+# Tipos producto en C#
+
+### Comparación con C#: Records y Structs
+
+En **C#**, al igual que en Kotlin, los **tipos producto** se utilizan para representar estructuras de datos que contienen múltiples valores. A partir de **C# 9**, se introdujo el concepto de **records**, que son similares a las **data classes** de Kotlin, proporcionando una forma concisa de definir objetos inmutables. Además, C# ofrece **structs** como una alternativa eficiente en memoria, y a partir de **C# 10**, se puede utilizar `with` para copiar tanto **records** como **structs**. Aquí veremos cómo se implementan estos conceptos en C# y los compararemos con las **data classes** y otras estructuras en Kotlin.
+
+### Tuplas
+
+C# permite el uso de **tuplas** a través de `ValueTuple`, que es similar a las tuplas en otros lenguajes funcionales. Esto permite agrupar más de dos valores, cada uno de diferente tipo:
+
+```csharp showLineNumbers
+var tuple = (1, "hello", true);
+Console.WriteLine(tuple.Item1);  // Output: 1
+Console.WriteLine(tuple.Item2);  // Output: hello
+Console.WriteLine(tuple.Item3);  // Output: True
+```
+
+<details>
+    <summary>``ValueTuple`` vs ``Tuple``</summary>
+
+    C# también proporciona un tipo ``Tuple`` para agrupar elementos, la diferencia es que ``Tuple`` guarda [referencias a los elementos](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/reference-types), mientras que ``ValueTuple`` guarda los [elementos como valores](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/reference-types). ``ValueTuple`` es más eficiente en términos de memoria y rendimiento, y es preferido en la mayoría de los casos.
+</details>
+
+### Registros en C#
+
+A partir de **C# 9**, se introdujo el concepto de **records**, que son objetos inmutables ideales para representar datos. Son similares a las **data classes** en Kotlin, donde se generan automáticamente métodos como `Equals()`, `GetHashCode()`, y `ToString()`.
+
+#### Record Class
+
+```csharp showLineNumbers
+public record Person(string Name, int Age);
+```
+
+#### Uso de `with` para copiar
+
+En **C# 9**, los **records** introducen la palabra clave `with`, que permite crear una copia de un objeto con una o más propiedades modificadas:
+
+```csharp showLineNumbers
+var person = new Person("Alice", 30);
+var newPerson = person with { Name = "Bob" };
+Console.WriteLine(newPerson);  // Output: Person { Name = Bob, Age = 30 }
+```
+
+### Structs en C#
+
+En **C#**, también se pueden definir **structs**, que son tipos de valor, lo que significa que se almacenan en la pila en lugar del heap, siendo más eficientes en términos de memoria. A partir de **C# 10**, los **structs** también pueden usar `with` para copiar:
+
+#### Record Struct
+
+```csharp showLineNumbers
+public record struct Person(string Name, int Age);
+```
+
+Este `record struct` permite definir un tipo inmutable con las mismas ventajas de los **records**, pero como un **struct** en lugar de una **class**. Esto es útil cuando se desea mejorar la eficiencia en memoria.
+
+#### Struct Normal
+
+Un **struct** normal en C# se define de la siguiente manera:
+
+```csharp showLineNumbers
+public struct Point
+{
+    public int X { get; init; }
+    public int Y { get; init; }
+}
+```
+
+A partir de **C# 10**, se puede usar `with` para copiar **structs**:
+
+```csharp showLineNumbers
+var point = new Point { X = 1, Y = 2 };
+var newPoint = point with { X = 3 };
+Console.WriteLine(newPoint);  // Output: Point { X = 3, Y = 2 }
+```
+
+En **Kotlin**, no existe un equivalente directo a los **structs** de C#, pero los [**value classes**](https://kotlinlang.org/docs/inline-classes.html) y **data classes** pueden ser utilizados para propósitos similares.
+
+### Desestructuración en C#
+
+Al igual que en Kotlin, **C#** ofrece la capacidad de **desestructurar** objetos en variables individuales. La **desestructuración** es una característica que permite extraer las propiedades de un objeto directamente en variables, lo que facilita el acceso a los valores sin necesidad de referirse a las propiedades explícitamente.
+
+En **C#**, la desestructuración se realiza mediante **tuplas** o mediante la implementación del método `Deconstruct` en una clase o `record`. Esta característica fue introducida en **C# 7** y proporciona una forma muy conveniente de trabajar con tipos producto.
+
+### Desestructuración de Tuplas
+
+Las tuplas en **C#** se pueden desestructurar fácilmente en variables individuales utilizando la sintaxis de paréntesis:
+
+```csharp showLineNumbers
+var tuple = (1, "hello", true);
+var (number, greeting, isActive) = tuple;
+
+Console.WriteLine(number);    // Output: 1
+Console.WriteLine(greeting);  // Output: hello
+Console.WriteLine(isActive);  // Output: True
+```
+
+Esto es similar a la desestructuración de tuplas en **Kotlin**:
+
+```kotlin
+val (number, greeting, isActive) = Triple(1, "hello", true)
+println(number)    // Output: 1
+println(greeting)  // Output: hello
+println(isActive)  // Output: true
+```
+
+### Desestructuración de Records
+
+En **C#**, cuando trabajas con **records**, puedes implementar un método `Deconstruct` para permitir la desestructuración de los valores de un record en variables individuales. Por defecto, los **records** en C# ya proporcionan un método `Deconstruct`, por lo que puedes desestructurarlos sin esfuerzo adicional.
+
+```csharp showLineNumbers
+public record Person(string Name, int Age);
+
+var person = new Person("Alice", 30);
+var (name, age) = person;  // Desestructuración automática
+
+Console.WriteLine(name);  // Output: Alice
+Console.WriteLine(age);   // Output: 30
+```
+
+Esto es equivalente a la desestructuración en **Kotlin** utilizando **data classes**:
+
+```kotlin
+data class Person(val name: String, val age: Int)
+
+val person = Person("Alice", 30)
+val (name, age) = person
+
+println(name)  // Output: Alice
+println(age)   // Output: 30
+```
+
+### Implementación Manual de `Deconstruct`
+
+Si estás trabajando con una clase o `struct` que no es un **record**, puedes implementar manualmente el método `Deconstruct` para permitir la desestructuración:
+
+```csharp showLineNumbers
+public class Point
+{
+    public int X { get; }
+    public int Y { get; }
+
+    public Point(int x, int y)
+    {
+        X = x;
+        Y = y;
+    }
+
+    public void Deconstruct(out int x, out int y)
+    {
+        x = X;
+        y = Y;
+    }
+}
+
+var point = new Point(3, 5);
+var (x, y) = point;  // Desestructuración
+
+Console.WriteLine(x);  // Output: 3
+Console.WriteLine(y);  // Output: 5
+```
+
+Este mecanismo te permite agregar desestructuración a cualquier tipo en **C#**, similar a lo que se hace con las **data classes** en **Kotlin**.
+
+### Comparación entre C# y Kotlin
+
+| Característica                   | C#                                             | Kotlin                                                                  |
+|----------------------------------|------------------------------------------------|-------------------------------------------------------------------------|
+| **Desestructuración de Tuplas**  | Utiliza la sintaxis `(var1, var2) = tupla`     | Utiliza la sintaxis `val (var1, var2) = tupla`                          |
+| **Desestructuración de Records** | Desestructuración automática con `Deconstruct` | Desestructuración automática con `data classes`                         |
+| **Implementación Manual**        | Se puede implementar el método `Deconstruct`   | No se requiere implementación manual para desestructurar `data classes` |
+
+Ambos lenguajes proporcionan mecanismos potentes para la desestructuración de objetos, lo que facilita la extracción de valores de tipos producto como tuplas, **records** en **C#**, o **data classes** en **Kotlin**.
+
+### Similitudes y Diferencias
+
+1. **Inmutabilidad**: Tanto en C# como en Kotlin, los **records** y **data classes** son inmutables por defecto, lo que significa que no se pueden modificar después de su creación sin crear una nueva instancia.
+2. **Copia y modificación**: En ambos lenguajes, se pueden copiar objetos de **records** o **data classes** utilizando `with` en C# y `copy()` en Kotlin.
+3. **Comparación de igualdad**: Tanto en **C# records** como en **Kotlin data classes**, la comparación de igualdad se basa en los valores de los campos, en lugar de la referencia del objeto.
+4. **Structs vs Classes**: C# ofrece la opción de utilizar **structs** para optimizar el uso de la memoria en ciertos escenarios, mientras que Kotlin no tiene un equivalente directo, pero ofrece **data classes** para la mayoría de las necesidades de modelado de datos.
+
+<References references={[
+    {
+        title: "Structure Types - C# Reference",
+        url: "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/struct",
+        type: "article",
+        author: "BillWagner",
+        publishedDate: "26 de octubre de 2023",
+    },
+    {
+        title: "Record Types - C#",
+        url: "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/records",
+        type: "article",
+        author: "BillWagner",
+        publishedDate: "26 de mayo de 2023",
+    },
+]}/>

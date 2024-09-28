@@ -1,0 +1,42 @@
+En **Java**, las **checked exceptions** imponen que cualquier función que pueda lanzar una excepción verificada debe manejarse explícitamente con un bloque `try-catch` o declararla en la firma del método usando `throws`. Este enfoque introduce complicaciones cuando se utilizan **funciones de orden superior**, ya que no es posible determinar si estas funciones, que pueden aceptar otras funciones como parámetros o devolverlas, lanzarán una excepción verificada. Esto se debe a que el contexto donde se llama a la función no puede prever ni manejar las excepciones que podrían ser arrojadas. A continuación, un ejemplo típico de **checked exceptions** en Java:
+
+```java showLineNumbers
+public String readFile(String path) throws IOException {
+    if (path == null) {
+        throw new IOException("Invalid file path");
+    }
+    return "File content";
+}
+
+public void processFile(String path) {
+    try {
+        String content = readFile(path);
+        System.out.println(content);
+    } catch (IOException e) {
+        System.out.println("Error: " + e.getMessage());
+    }
+}
+```
+
+En este ejemplo, el método `readFile` lanza una `IOException`, que es una excepción verificada, y el llamador de este método, `processFile`, debe manejar explícitamente la excepción con `try-catch`.
+
+### Problema con las Funciones de Orden Superior
+
+El uso de **checked exceptions** en combinación con funciones de orden superior se vuelve problemático porque no es posible saber si una función pasará una excepción verificada cuando se llame desde un contexto distinto. Por ejemplo, si intentamos pasar una función que arroja una excepción verificada a un método de orden superior, el compilador no puede inferir si ese método debe declarar la excepción o manejarla. Esto limita la flexibilidad de la programación funcional en Java y otros lenguajes con excepciones verificadas.
+
+```java showLineNumbers
+@FunctionalInterface
+interface FileProcessor {
+    void process(String path) throws IOException;
+}
+
+public void handleFile(FileProcessor processor) {
+    // ¿Cómo sabe el compilador que "processor" arroja una excepción checked?
+}
+```
+
+El compilador no puede verificar si `FileProcessor` lanzará una excepción verificada, lo que obliga a manejar manualmente las excepciones, lo que rompe la fluidez de la composición de funciones.
+
+### Alternativa en Kotlin sin Excepciones Verificadas
+
+En **Kotlin**, no existen **checked exceptions**, lo que permite un enfoque más flexible y funcional. Sin embargo, esto significa que se deben manejar las excepciones de manera explícita, por ejemplo, usando patrones de error como `Either`.
