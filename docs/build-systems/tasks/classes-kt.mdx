@@ -11,9 +11,8 @@ import Exercise from "../../../src/components/exercise/Exercise";
 import Solution from "../../../src/components/exercise/Solution";
 
 <ReadingTime/>
-<GithubRepoLink user={"r8vnhill"} repo={"echo-app-kt"}/>
+<GithubRepoLink user={"r8vnhill"} repo={"echo-app-kt"} addLineBreak={false}/>
 <GithubRepoLink user={"r8vnhill"} repo={"echo-app-groovy"}/>
-
 
 A veces necesitamos definir tareas más complejas que requieren lógica más avanzada o necesitamos reutilizar tareas en
 diferentes contextos. En estos casos, es posible definir tareas como clases en Gradle, lo que permite encapsular la
@@ -35,9 +34,31 @@ ahora queremos extender esta tarea para calcular la secuencia hasta un número e
 Primero, creamos un paquete llamado `tasks` en el directorio `src/main/kotlin` del módulo `convention-plugins`.
 Dentro de este paquete, crearemos un archivo llamado `FibonacciTask.kt` con el siguiente contenido:
 
+<details>
+    <summary>Si quieres crear el archivo desde la terminal...</summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "convention-plugins\src\main\kotlin\tasks\FibonacciTask.kt" -ItemType "file"
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            ni convention-plugins\src\main\kotlin\tasks\FibonacciTask.kt
+            ```
+        </TabItem>
+        <TabItem value="Unix" label="Unix">
+            ```bash
+            touch convention-plugins/src/main/kotlin/tasks/FibonacciTask.kt
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
 <Tabs>
     <TabItem value="Implementación" label={"Implementación"}>
-        ```kotlin title="convention-plugins/src/main/kotlin/tasks/FibonacciTask.kt"
+        ```kotlin title="convention-plugins/src/main/kotlin/tasks/FibonacciTask.kt" showLineNumbers
         package tasks
 
         import org.gradle.api.DefaultTask
@@ -46,15 +67,15 @@ Dentro de este paquete, crearemos un archivo llamado `FibonacciTask.kt` con el s
         import org.gradle.api.tasks.StopExecutionException
         import org.gradle.api.tasks.TaskAction
 
-        abstract class FibonacciTask : DefaultTask() {  // (1)
-            @get:Input  // (2)
-            abstract val number: Property<Int>  // (3)
+        abstract class FibonacciTask : DefaultTask() {
+            @get:Input
+            abstract val number: Property<Int>
 
-            @TaskAction // (4)
+            @TaskAction
             fun calculateFibonacci() {
-                val n = number.get()  // (5)
+                val n = number.get()
                 if (n < 0) {
-                    throw StopExecutionException("The number must be greater than or equal to 0")  // (6)
+                    throw StopExecutionException("The number must be greater than or equal to 0")
                 }
                 var first = 0
                 var second = 1
@@ -70,15 +91,15 @@ Dentro de este paquete, crearemos un archivo llamado `FibonacciTask.kt` con el s
 
         ### Explicación
 
-        1. **Clase `FibonacciTask`**: Definimos una clase que extiende `DefaultTask`. Lo más común es que las tareas en Gradle hereden de `DefaultTask`. Notamos que la clase es **abstracta**, lo que indica que ciertos parámetros de la tarea, como el input, deben ser definidos antes de usarla.
-        2. **Anotación `@get:Input`**: Anotamos la propiedad `number` para indicarle a Gradle que este valor es un input de la tarea. Esto permite que Gradle detecte cambios y decida si es necesario ejecutar la tarea nuevamente.
-        3. **Propiedad `number`**: Utilizamos un `Property<Int>` para almacenar el número hasta el cual queremos calcular la secuencia de Fibonacci. `Property` es como una caja que contiene un valor mutable que Gradle puede monitorear.
-        4. **Método `@TaskAction`**: Este método contiene la lógica principal de la tarea. Gradle lo ejecuta automáticamente cuando la tarea se llama, ejecutándose entre los bloques `doFirst` y `doLast`.
-        5. **Obtener el número**: Utilizamos `number.get()` para obtener el valor del número proporcionado por lx usuarix.
-        6. **Validación del número**: Verificamos que el número sea mayor o igual a 0. Si no lo es, lanzamos una excepción `StopExecutionException` para detener la ejecución de la tarea. Gradle manejará esta excepción y mostrará un mensaje de error.
+        - [9-28] **Clase `FibonacciTask`**: Definimos una clase que extiende `DefaultTask`. Lo más común es que las tareas en Gradle hereden de `DefaultTask`. Notamos que la clase es **abstracta**, lo que indica que ciertos parámetros de la tarea, como el input, deben ser definidos antes de usarla.
+        - [10] **Anotación `@get:Input`**: Anotamos la propiedad `number` para indicarle a Gradle que este valor es un input de la tarea. Esto permite que Gradle detecte cambios y decida si es necesario ejecutar la tarea nuevamente.
+        - [11] **Propiedad `number`**: Utilizamos un `Property<Int>` para almacenar el número hasta el cual queremos calcular la secuencia de Fibonacci. `Property` es como una caja que contiene un valor mutable que Gradle puede monitorear.
+        - [13-27] **Método `@TaskAction`**: Este método contiene la lógica principal de la tarea. Gradle lo ejecuta automáticamente cuando la tarea se llama, ejecutándose entre los bloques `doFirst` y `doLast`.
+        - [15] **Obtener el número**: Utilizamos `number.get()` para obtener el valor del número proporcionado por lx usuarix.
+        - [16-18] **Validación del número**: Verificamos que el número sea mayor o igual a 0. Si no lo es, lanzamos una excepción `StopExecutionException` para detener la ejecución de la tarea. Gradle manejará esta excepción y mostrará un mensaje de error.
     </TabItem>
     <TabItem value="Implementación (mejorada)" label={"Implementación (mejorada)"}>
-        ```kotlin title="convention-plugins/src/main/kotlin/tasks/FibonacciTask.kt"
+        ```kotlin title="convention-plugins/src/main/kotlin/tasks/FibonacciTask.kt" showLineNumbers
         package tasks
 
         import org.gradle.api.DefaultTask
@@ -106,9 +127,9 @@ Dentro de este paquete, crearemos un archivo llamado `FibonacciTask.kt` con el s
         ```
         ### Mejoras en la segunda implementación
 
-        1. **Uso de `takeIf` para validación más concisa**: En la primera implementación, la validación del número se realizaba mediante un `if` seguido de una excepción. En la segunda implementación, esta validación se ha simplificado utilizando el método `takeIf`. Este método permite realizar una verificación en una sola línea y lanzar la excepción si la condición no se cumple, haciendo el código más legible y conciso.
-        2. **Uso de la asignación múltiple**: En la primera implementación, los valores de `first` y `second` se actualizaban en dos líneas separadas dentro del bucle `repeat`. En la segunda implementación, se utiliza una estructura más compacta mediante la asignación múltiple (`var (first, second) = 0 to 1`) y el método `also` para actualizar ambos valores en una sola línea. Esto reduce la cantidad de código y mejora la claridad.
-        3. **Código más expresivo y eficiente**: La segunda implementación es más idiomática en Kotlin, aprovechando características como el uso de `also` para simplificar la actualización de variables dentro del bucle. Esto no solo mejora la legibilidad, sino que también mantiene la lógica clara y directa.
+        - [15-16] **Uso de `takeIf` para validación más concisa**: En la primera implementación, la validación del número se realizaba mediante un `if` seguido de una excepción. En la segunda implementación, esta validación se ha simplificado utilizando el método `takeIf`. Este método permite realizar una verificación en una sola línea y lanzar la excepción si la condición no se cumple, haciendo el código más legible y conciso.
+        - [17] **Uso de la asignación múltiple**: En la primera implementación, los valores de `first` y `second` se actualizaban en dos líneas separadas dentro del bucle `repeat`. En la segunda implementación, se utiliza una estructura más compacta mediante la asignación múltiple (`var (first, second) = 0 to 1`) y el método `also` para actualizar ambos valores en una sola línea. Esto reduce la cantidad de código y mejora la claridad.
+        - [20] **Código más expresivo y eficiente**: La segunda implementación es más idiomática en Kotlin, aprovechando características como el uso de `also` para simplificar la actualización de variables dentro del bucle. Esto no solo mejora la legibilidad, sino que también mantiene la lógica clara y directa.
 
         :::info Scope functions
         Las [funciones de alcance](https://kotlinlang.org/docs/scope-functions.html) (`scope functions`) en Kotlin, como `let`, `run`, `with`, `apply` y `also`, son funciones que permiten realizar operaciones en un objeto dentro de un contexto específico. En este caso, `also` se utiliza para realizar una operación adicional en un objeto y devolver el mismo objeto, lo que permite encadenar operaciones de manera más concisa.
@@ -116,59 +137,56 @@ Dentro de este paquete, crearemos un archivo llamado `FibonacciTask.kt` con el s
     </TabItem>
 </Tabs>
 
-## Registro de la tarea en un archivo `*.gradle.kts`
+### Registro de la tarea en un archivo `*.gradle.kts`
 
 Para usar nuestra tarea, debemos registrarla en algún archivo `*.gradle.kts`. Aquí te mostramos cómo hacerlo en el
 archivo `playground.gradle.kts`:
 
 <Tabs>
-<TabItem value="Kotlin DSL" label="Kotlin DSL">
-```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
-import tasks.FibonacciTask
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts" showLineNumbers
+        import tasks.FibonacciTask
+        // ...
+        tasks.register<FibonacciTask>("fib_10") {
+            group = "playground"
+            description = "Calculates the 10th Fibonacci number"
+            number = 10
+            doFirst {
+                println("Calculating the 10th Fibonacci number...")
+            }
+            doLast {
+                println("Calculation complete.")
+            }
+        }
 
-// ...
+        tasks.register<FibonacciTask>("fib_20") {
+            group = "playground"
+            description = "Calculates the 20th Fibonacci number"
+            number = 20
+            doFirst {
+                println("Calculating the 20th Fibonacci number...")
+            }
+            doLast {
+                println("Calculation complete.")
+            }
+        }
+        ```
 
-tasks.register<FibonacciTask>("fib_10") {
-    group = "playground"
-    description = "Calculates the 10th Fibonacci number"
-    number = 10
-    doFirst {
-        println("Calculating the 10th Fibonacci number...")
-    }
-    doLast {
-        println("Calculation complete.")
-    }
-}
+        En este ejemplo:
 
-tasks.register<FibonacciTask>("fib_20") {
-    group = "playground"
-    description = "Calculates the 20th Fibonacci number"
-    number = 20
-    doFirst {
-        println("Calculating the 20th Fibonacci number...")
-    }
-    doLast {
-        println("Calculation complete.")
-    }
-}
-```
-</TabItem>
-<TabItem value="Groovy DSL" label="Groovy DSL">
-```groovy title="convention-plugins/src/main/groovy/playground.gradle"
-Eventualmente voy a implementar esto
-```
-</TabItem>
+        - [3, 15] **Registro de la Tarea `fib_10` y ``fib_20``**: Definimos una instancia de `FibonacciTask` con la propiedad `number` configurada en 10 y 20, respectivamente.
+        - [7-12, 19-24] **`doFirst` y `doLast`**: Estos bloques definen acciones adicionales que se ejecutan antes y después de la lógica
+        principal de la tarea.
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+    ```groovy title="convention-plugins/src/main/groovy/playground.gradle"
+    Eventualmente voy a implementar esto
+    ```
+    </TabItem>
 </Tabs>
 
-En este ejemplo:
 
-- **Registro de la Tarea `fib_10`**: Definimos una instancia de `FibonacciTask` con la propiedad `number`
-configurada en 10.
-- **`doFirst` y `doLast`**: Estos bloques definen acciones adicionales que se ejecutan antes y después de la lógica
-principal de la tarea.
-
-
-## Ejecución de las tareas
+### Ejecución de las tareas
 
 Podemos ejecutar las tareas desde la línea de comandos de Gradle:
 
@@ -204,7 +222,29 @@ se ejecute.
 Implementaremos una tarea para procesar archivos de texto. Tendremos archivos de entrada y salida. El texto debe ser
 tomado de un archivo de texto (input), transformado en mayúsculas, y ser guardado en otro archivo de texto (output).
 
-```kotlin title="convention-plugins/src/main/kotlin/tasks/UppercaseTask.kt"
+<details>
+    <summary>Si quieres crear los archivos desde la terminal...</summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "convention-plugins\src\main\kotlin\tasks\UppercaseTask.kt" -ItemType "file"
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            ni convention-plugins\src\main\kotlin\tasks\UppercaseTask.kt
+            ```
+        </TabItem>
+        <TabItem value="Unix" label="Unix">
+            ```bash
+            touch convention-plugins/src/main/kotlin/tasks/UppercaseTask.kt
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+```kotlin title="convention-plugins/src/main/kotlin/tasks/UppercaseTask.kt" showLineNumbers
 package tasks
 
 import org.gradle.api.DefaultTask
@@ -215,10 +255,10 @@ import java.io.File
 import java.util.*
 
 abstract class UppercaseTask : DefaultTask() {
-    @get:InputFile  // (1)
+    @get:InputFile
     abstract var inputFile: File
 
-    @get:OutputFile // (2)
+    @get:OutputFile
     abstract var outputFile: File
 
     @TaskAction
@@ -230,33 +270,37 @@ abstract class UppercaseTask : DefaultTask() {
 }
 ```
 
-1. **Anotación `@get:InputFile`**: Anotamos la propiedad `inputFile` para indicar que es un archivo de entrada.
-2. **Anotación `@get:OutputFile`**: Anotamos la propiedad `outputFile` para indicar que es un archivo de salida.
+- [11-12] **Anotación `@get:InputFile`**: Anotamos la propiedad `inputFile` para indicar que es un archivo de entrada.
+- [14-15] **Anotación `@get:OutputFile`**: Anotamos la propiedad `outputFile` para indicar que es un archivo de salida.
 
 Ahora, registramos la tarea en un archivo `*.gradle.kts`:
 
 <Tabs>
-<TabItem value="Kotlin DSL" label="Kotlin DSL">
-```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
-import tasks.UppercaseTask
+    <TabItem value="Kotlin DSL" label="Kotlin DSL">
+        ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts" showLineNumbers
+        import tasks.UppercaseTask
 
-// ...
+        // ...
 
-tasks.register<UppercaseTask>("processText") {
-    group = "playground"
-    description = "Process text from input file and write to output file in uppercase"
-    inputFile = file("input.txt")
-    outputFile = file("output.txt")
-    doFirst { println("Processing text...") }
-    doLast { println("Processing complete.") }
-}
-```
-</TabItem>
-<TabItem value="Groovy DSL" label="Groovy DSL">
-```groovy title="convention-plugins/src/main/groovy/playground.gradle"
-Juro que aquí va a aparecer código más adelante
-```
-</TabItem>
+        tasks.register<UppercaseTask>("processText") {
+            group = "playground"
+            description = "Process text from input file and write to output file in uppercase"
+            inputFile = file("input.txt")
+            outputFile = file("output.txt")
+            doFirst {
+                println("Processing text...")
+            }
+            doLast {
+                println("Processing complete.")
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem value="Groovy DSL" label="Groovy DSL">
+        ```groovy title="convention-plugins/src/main/groovy/playground.gradle"
+        Juro que aquí va a aparecer código más adelante
+        ```
+    </TabItem>
 </Tabs>
 
 Finalmente, ejecutamos la tarea desde la línea de comandos de Gradle:

@@ -17,8 +17,8 @@ Comencemos por crear un módulo para el código llamado ``trampoline``.
 <Tabs groupId={"os"}>
     <TabItem value="Windows" label="Windows">
         ```powershell
-        New-Item -Path "trampoline\src\main\kotlin" -ItemType Directory
-        Set-Content -Path "trampoline\build.gradle.kts" -Value "// Intentionally left blank"
+        New-Item -Path trampoline\src\main\kotlin -ItemType Directory
+        Set-Content -Path trampoline\build.gradle.kts -Value "// Intentionally left blank"
         ```
     </TabItem>
     <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
@@ -91,228 +91,29 @@ Esta función toma un trampolín y evalúa su valor iterativamente. Si encuentra
 :::tip Ejercicio: Factorial con Trampolín
 <Tabs>
     <TabItem value="Ejercicio" label="Ejercicio">
-        Vamos a implementar el cálculo del **factorial** usando el método del trampolín. Al igual que en el ejemplo de suma, la función factorial utiliza un acumulador para llevar el resultado parcial y evita el desbordamiento de pila mediante continuaciones.
+        Las funciones mutuamente recursivas son aquellas que se llaman entre sí, pero no podemos usar la optimización de ``tailrec`` en estos casos, ya que Kotlin no soporta la optimización de recursión de cola en funciones mutuamente recursivas.
+
+        Vamos a implementar dos funciones, ``isEven(n)`` e ``isOdd(n)``, que determinen si un número es par o impar. Estas funciones se llamarán entre sí recursivamente, pero en lugar de usar una recursión directa que podría desbordar la pila, usaremos un trampolín para evitarlo.
     </TabItem>
     <TabItem value="Solución" label="Solución">
         ```kotlin title="trampoline/src/main/kotlin/cl/ravenhill/factorial/Factorial.kt"
-        fun factorial(n: Int, acc: Int = 1): Trampoline = if (n == 0) {
-            Done(acc)
-        } else {
-            More { factorial(n - 1, acc * n) }
-        }
+        fun isEven(n: Int): Trampoline<Boolean> =
+            if (n == 0) {
+                Done(true)
+            } else {
+                More { isOdd(n - 1) }
+            }
+
+        fun isOdd(n: Int): Trampoline<Boolean> =
+            if (n == 0) {
+                Done(false)
+            } else {
+                More { isEven(n - 1) }
+            }
         ```
     </TabItem>
 </Tabs>
 :::
-
-## Ejemplos en otros lenguajes
-<details>
-    <summary>Ver ejemplos en otros lenguajes</summary>
-
-    ### TypeScript
-
-    En TypeScript, podemos implementar el método del trampolín utilizando funciones y clausuras (closures). Dado que JavaScript (y TypeScript al compilarse a JavaScript) no optimiza las llamadas recursivas de cola, el trampolín es especialmente útil para evitar desbordamientos de pila.
-
-    ```typescript
-    type Trampoline<T> = Done<T> | More<T>;
-
-    interface Done<T> {
-        type: 'Done';
-        result: T;
-    }
-
-    interface More<T> {
-        type: 'More';
-        continuation: () => Trampoline<T>;
-    }
-
-    function Done<T>(result: T): Done<T> {
-        return { type: 'Done', result };
-    }
-
-    function More<T>(continuation: () => Trampoline<T>): More<T> {
-        return { type: 'More', continuation };
-    }
-    ```
-
-    Implementamos una función recursiva para sumar los primeros números naturales usando el trampolín:
-
-    ```typescript
-    function sumFirstNaturals(n: number, acc: number = 0): Trampoline<number> {
-        if (n === 0) {
-            return Done(acc);
-        } else {
-            return More(() => sumFirstNaturals(n - 1, acc + n));
-        }
-    }
-    ```
-
-    Creamos una función `runTrampoline` que ejecuta las continuaciones hasta obtener el resultado final:
-
-    ```typescript
-    function runTrampoline(trampoline: Trampoline): number {
-        let current = trampoline;
-        while (true) {
-            if (current.type === 'Done') {
-                return current.result;
-            } else if (current.type === 'More') {
-                current = current.continuation();
-            }
-        }
-    }
-    ```
-
-    ```typescript
-    const result = runTrampoline(sumFirstNaturals(100000));
-    console.log(result);
-    ```
-
-    ### Python
-
-    En Python, la recursión de cola no es optimizada, por lo que el método del trampolín es útil para evitar el desbordamiento de la pila. Utilizaremos el decorador `@dataclass` y pattern matching para implementar el trampolín.
-
-    ```python
-    from dataclasses import dataclass
-    from typing import Callable, TypeVar, Generic
-
-    T = TypeVar('T')
-
-    class Trampoline(ABC, Generic[T]):
-        pass
-
-    # Caso Done con tipo genérico T
-    @dataclass
-    class Done(Trampoline[T]):
-        result: T
-
-    # Caso More con tipo genérico T
-    @dataclass
-    class More(Trampoline[T]):
-        continuation: Callable[[], Trampoline[T]]
-    ```
-
-    Implementamos la función recursiva usando el trampolín:
-
-    ```python
-    def sum_first_naturals(n: int, acc: int = 0) -> Trampoline[int]:
-        if n == 0:
-            return Done(acc)
-        else:
-            return More(lambda: sum_first_naturals(n - 1, acc + n))
-    ```
-
-    La función `run_trampoline` ejecuta las continuaciones hasta obtener el resultado final:
-
-    ```python
-    def run_trampoline(trampoline: Trampoline) -> int:
-        current = trampoline
-        while True:
-            match current:
-                case Done(result=result):
-                    return result
-                case More(continuation=continuation):
-                    current = continuation()
-    ```
-
-    ```python
-    result = run_trampoline(sum_first_naturals(100000))
-    print(result)
-    ```
-
-    ### Rust
-
-    En Rust, podemos implementar el trampolín utilizando enumeraciones (``enum``) y clausuras. Aunque Rust soporta optimización de recursión de cola, el trampolín es útil para casos más complejos.
-
-    ```rust
-    enum Trampoline<T> {
-        Done(T),
-        More(Box<dyn FnOnce() -> Trampoline<T>>),
-    }
-
-    fn sum_first_naturals(n: i32, acc: i32) -> Trampoline<i32> {
-        if n == 0 {
-            Trampoline::Done(acc)
-        } else {
-            Trampoline::More(Box::new(move || sum_first_naturals(n - 1, acc + n)))
-        }
-    }
-
-    fn run_trampoline(mut trampoline: Trampoline) -> i32 {
-        loop {
-            match trampoline {
-                Trampoline::Done(result) => return result,
-                Trampoline::More(next) => trampoline = next(),
-            }
-        }
-    }
-
-    // Ejemplo
-    fn main() {
-        let result = run_trampoline(sum_first_naturals(100000, 0));
-        println!("{}", result);  // Imprime 5000050000
-    }
-    ```
-
-    ### Clojure
-
-    En **Clojure**, se puede utilizar la función `trampoline` incorporada, que convierte una llamada recursiva en iteración, evitando así desbordamientos de pila.
-
-    ```clojure
-    (defn sum-first-naturals [n acc]
-        (if (zero? n)
-            acc
-            #(sum-first-naturals (dec n) (+ acc n))))
-
-    (def result (trampoline sum-first-naturals 100000 0))
-    (println result)
-    ```
-
-    Clojure usa `#()` para definir funciones de continuación de manera diferida, y `trampoline` es invocado para ejecutar las llamadas recursivas.
-
-    ### Ruby
-
-    En **Ruby**, la recursión de cola no es optimizada, por lo que el método del trampolín es útil para evitar el desbordamiento de pila.
-
-    ```ruby
-    class Done
-        def initialize(result)
-            @result = result
-        end
-
-        attr_reader :result
-    end
-
-    class More
-        def initialize(&continuation)
-            @continuation = continuation
-        end
-
-        def continue
-            @continuation.call
-        end
-    end
-
-    def sum_first_naturals(n, acc = 0)
-        if n == 0
-            Done.new(acc)
-        else
-            More.new { sum_first_naturals(n - 1, acc + n) }
-        end
-    end
-
-    def run_trampoline(trampoline)
-        loop do
-            return trampoline.result if trampoline.is_a?(Done)
-            trampoline = trampoline.continue
-        end
-    end
-
-    result = run_trampoline(sum_first_naturals(100000))
-    puts result
-    ```
-
-    Aquí usamos clases `Done` y `More`, y la función `run_trampoline` ejecuta la continuación hasta obtener el resultado final.
-</details>
 
 ## Conclusión
 

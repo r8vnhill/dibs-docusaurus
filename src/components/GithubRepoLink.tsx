@@ -8,9 +8,10 @@ import React from 'react';
  *
  * @param user - The GitHub username or organization name.
  * @param repo - The repository name within the user's GitHub account.
+ * @param addLineBreak - Whether to add a line break after the link (default: true).
  * @returns A JSX element that links to the specified GitHub repository.
  */
-const GitHubRepoLink = ({ user, repo }) => {
+const GitHubRepoLink = ({user, repo, addLineBreak = true}) => {
     // Construct the URL to the GitHub repository
     const repoUrl = `https://github.com/${user}/${repo}`;
 
@@ -30,7 +31,9 @@ const GitHubRepoLink = ({ user, repo }) => {
             </svg>
             {/* User/Repo text */}
             <span>{user}/{repo}</span>
-        </a><br/></>
+        </a>
+            {addLineBreak && <br/>}
+        </>
     );
 };
 

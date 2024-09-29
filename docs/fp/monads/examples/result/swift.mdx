@@ -1,0 +1,105 @@
+---
+title: Result en Swift
+---
+import References from "@site/src/components/ReferencesComponent";
+import ReadingTime from '@site/src/components/ReadingTime';
+
+<ReadingTime/>
+
+En **Swift**, el tipo `Result` se introdujo oficialmente en **Swift 5** para manejar errores de manera explícita y segura. Similar a Kotlin y Rust, encapsula el éxito o el fallo de una operación. Antes de `Result`, Swift usaba ampliamente el manejo de errores con `throw` y `try`, que siguen siendo válidos, pero `Result` proporciona una forma más funcional de manejar fallos.
+
+## Componentes de `Result` en Swift
+
+- **Success**: Representa el resultado exitoso de una operación.
+- **Failure**: Representa un error que ocurrió durante la operación.
+
+## Ejemplo en Swift
+
+La implementación de `Result` en Swift utiliza genéricos para definir los tipos de éxito y error.
+
+```swift
+enum Result<Success, Failure: Error> {
+    case success(Success)
+    case failure(Failure)
+}
+```
+
+## Uso de `Result` en Swift
+
+Al igual que Kotlin y Rust, Swift proporciona formas funcionales de trabajar con `Result`, incluyendo métodos como `map` y `flatMap` para encadenar operaciones de manera segura.
+
+```swift
+func divide(_ a: Int, _ b: Int) -> Result<Int, Error> {
+    if b == 0 {
+        return .failure(NSError(domain: "DivideError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot divide by zero"]))
+    } else {
+        return .success(a / b)
+    }
+}
+
+func multiplyByTwo(_ value: Int) -> Result<Int, Error> {
+    return .success(value * 2)
+}
+
+func process() -> Result<Int, Error> {
+    return divide(10, 2).flatMap { value in
+        multiplyByTwo(value)
+    }
+}
+
+switch process() {
+case .success(let value):
+    print("Success: \(value)")
+case .failure(let error):
+    print("Error: \(error.localizedDescription)")
+}
+```
+
+En este ejemplo:
+
+- **`divide`** devuelve un `Result`, utilizando `success` para el éxito y `failure` para el error.
+- **`flatMap`** se usa para encadenar operaciones y propagar errores.
+- **`switch`** se utiliza para manejar los resultados de manera explícita.
+
+## Comparación con Kotlin
+
+| Aspecto                                        | Kotlin                                          | Swift                                                      |
+|------------------------------------------------|-------------------------------------------------|------------------------------------------------------------|
+| **Soporte nativo de `Result`**                 | Sí, en la biblioteca estándar                   | Sí, introducido en Swift 5                                 |
+| **Manejo de errores**                          | `Result` encapsula `Success` y `Failure`        | `Result` encapsula `Success` y `Failure`                   |
+| **Propagación de errores**                     | `runCatching`, `fold`, `flatMap`                | `flatMap`, `map`                                           |
+| **Sistema de tipos**                           | Fuerte y estático                               | Fuerte y estático                                          |
+| **Manejo de errores en tiempo de compilación** | Kotlin ofrece manejo con `Result` o `try-catch` | Swift usa `Result` o manejo tradicional de `try` y `throw` |
+
+## Diferencias clave
+
+- **Propagación de errores**: Tanto Kotlin como Swift permiten la propagación de errores utilizando funciones como `flatMap`, pero Swift también mantiene su tradicional manejo de errores basado en `try` y `throw`.
+- **Manejo de errores tradicional**: En Swift, el manejo de errores tradicional con `throw` sigue siendo un enfoque común, mientras que en Kotlin, `Result` y `try-catch` se utilizan con mayor flexibilidad en la captura de errores.
+
+
+<References references={[
+    {
+        title: "",
+        url: "",
+        type: "article",
+        author: "",
+        publishedDate: "",
+    },
+    {
+        accessedDate: '',
+        siteOrAuthor: '',
+        title: '',
+        type: 'web',
+        url: '',
+    },
+    {
+        title: "",
+        bookTitle: "",
+        pages: "",
+        location: "",
+        publisher: "",
+        year: "",
+        type: "book",
+        author: ''
+    },
+]}/>

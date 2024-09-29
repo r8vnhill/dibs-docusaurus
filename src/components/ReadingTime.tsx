@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 function calculateReadingTime(html) {
-    const wordsPerMinute = 250;
+    const wordsPerMinute = 300;
 
     // Eliminar saltos de línea y reducir espacios para evitar falsos positivos
     const cleanHtml = html.replace(/\n/g, ' ').trim();
@@ -28,7 +28,14 @@ const ReadingTime = () => {
         }
     }, []);
 
-    return <p>⏱ Dedicación recomendada: {readingTime} {readingTime === 1 ? 'minuto' : 'minutos'}</p>;
+    return <>
+        <p>
+            ⏱ Dedicación recomendada: {readingTime} {readingTime === 1 ? 'minuto' : 'minutos'}<br/>
+            Esto considera la lectura completa del contenido, incluyendo todas las pestañas, ejemplos y ejercicios.
+            <hr/>
+        </p>
+
+    </>;
 };
 
 export default ReadingTime;

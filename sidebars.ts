@@ -106,17 +106,7 @@ const sidebars: SidebarsConfig = {
                         'build-systems/basic-config/basic-config-langs',
                     ],
                 },
-                {
-                    type: 'category',
-                    label: 'Mi primera aplicación',
-                    link: {
-                        type: 'doc',
-                        id: 'build-systems/my-app',
-                    },
-                    items: [
-                        'build-systems/my-app-langs'
-                    ],
-                },
+                'build-systems/app/my-app',
                 {
                     label: 'Tareas',
                     type: 'category',
@@ -136,17 +126,7 @@ const sidebars: SidebarsConfig = {
                                 'build-systems/tasks/default/default-langs',
                             ],
                         },
-                        {
-                            label: 'Tareas personalizadas',
-                            type: 'category',
-                            link: {
-                                type: 'doc',
-                                id: 'build-systems/tasks/custom/custom-kt',
-                            },
-                            items: [
-                                'build-systems/tasks/custom/custom-langs',
-                            ],
-                        },
+                        'build-systems/tasks/custom/custom-kt',
                         'build-systems/tasks/classes-kt'
                     ],
                 },
@@ -229,17 +209,7 @@ const sidebars: SidebarsConfig = {
                                         "fp/adt/sum/enums-langs",
                                     ]
                                 },
-                                {
-                                    type: 'category',
-                                    label: 'Clases selladas',
-                                    link: {
-                                        type: 'doc',
-                                        id: 'fp/adt/sum/sealed',
-                                    },
-                                    items: [
-                                        "fp/adt/sum/sealed-langs",
-                                    ]
-                                },
+                                'fp/adt/sum/sealed/sealed'
                             ],
                         },
                     ],
@@ -301,17 +271,7 @@ const sidebars: SidebarsConfig = {
                                     ],
                                 },
                                 'fp/monads/examples/either-kt',
-                                {
-                                    label: 'Result',
-                                    type: 'category',
-                                    link: {
-                                        type: 'doc',
-                                        id: 'fp/monads/examples/result-kt',
-                                    },
-                                    items: [
-                                        'fp/monads/examples/result-langs',
-                                    ],
-                                },
+                                'fp/monads/examples/result/result-kt'
                             ],
                         },
                     ]

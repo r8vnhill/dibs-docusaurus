@@ -108,6 +108,7 @@ const config: Config = {
                 'groovy',
                 'haskell',
                 'java',
+                'ocaml',
                 'powershell',
                 'properties',
                 'ruby',

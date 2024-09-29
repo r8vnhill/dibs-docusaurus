@@ -1,0 +1,113 @@
+---
+title: scalaa
+---
+import References from "@site/src/components/ReferencesComponent";
+import ReadingTime from '@site/src/components/ReadingTime';
+
+<ReadingTime/>
+
+## Scala
+
+En **Scala**, también existen las **clases selladas** (sealed classes), que funcionan de manera similar a Kotlin, limitando las subclases a un conjunto específico que debe declararse en el mismo archivo o módulo. Las clases selladas permiten modelar de manera segura estados finitos, y facilitan la exhaustividad en expresiones como `match`, similar al `when` en Kotlin.
+
+### Características de Clases Selladas en Scala
+
+- **Propósito**: Al igual que en Kotlin, las clases selladas en Scala restringen la herencia para garantizar que solo un conjunto definido de subclases extienda la clase sellada.
+- **Exhaustividad**: Scala asegura que las expresiones `match` sean exhaustivas, y advertirá al desarrollador si no se manejan todos los casos posibles.
+- **Subclases**: Todas las subclases de una clase sellada deben declararse en el mismo archivo fuente.
+
+### Ejemplo en Scala
+
+Modelaremos el mismo sistema de estados de un pedido usando clases selladas en Scala:
+
+```scala
+sealed trait DeliveryState {
+    def signal: String
+    def isFinalState: Boolean = false
+}
+
+case object Pending extends DeliveryState {
+    override def signal: String = "Order is pending"
+}
+
+case object Paid extends DeliveryState {
+    override def signal: String = "Order is paid"
+}
+
+case class Shipped(trackingNumber: String) extends DeliveryState {
+    override def signal: String = s"Order is shipped with tracking number $trackingNumber"
+}
+
+case object Delivered extends DeliveryState {
+    override def signal: String = "Order is delivered"
+    override def isFinalState: Boolean = true
+}
+
+case class Cancelled(reason: String) extends DeliveryState {
+    override def signal: String = s"Order is cancelled because $reason"
+    override def isFinalState: Boolean = true
+}
+```
+
+### Uso con `match` Exhaustivo
+
+En Scala, `match` es exhaustivo, y el compilador te advertirá si no has cubierto todas las posibilidades para una clase sellada:
+
+```scala
+def handleOrderState(state: DeliveryState): Unit = state match {
+  case Pending => println(state.signal)
+  case Paid => println(state.signal)
+  case Shipped(trackingNumber) => println(state.signal)
+  case Delivered => println(state.signal)
+  case Cancelled(reason) => println(state.signal)
+}
+```
+
+### Diferencias Clave con Kotlin
+
+- **Exhaustividad**: Scala, al igual que Kotlin, garantiza la exhaustividad de las expresiones `match`, evitando errores en tiempo de ejecución debido a estados no manejados. Si no se manejan todos los casos, el compilador de Scala emitirá una advertencia.
+- **Declaración de Subclases**: En Scala, las subclases de una clase sellada deben declararse en el mismo archivo fuente, lo que es similar a Kotlin, donde las subclases deben estar en el mismo módulo y paquete.
+- **Compatibilidad**: Scala tiene soporte nativo para el patrón de **case classes**, lo que permite el uso de clases inmutables que implementan automáticamente métodos como `toString`, `equals`, y `hashCode`, similar a las `data classes` de Kotlin.
+
+### Comparación con Kotlin
+
+| Aspecto                           | Kotlin                                   | Scala                                |
+|-----------------------------------|------------------------------------------|--------------------------------------|
+| **Exhaustividad**                 | `when` exhaustivo                        | `match` exhaustivo                   |
+| **Restricción de subclases**      | Mismo módulo y paquete                   | Mismo archivo fuente                 |
+| **Clases inmutables**             | `data class`                             | `case class`                         |
+| **Advertencias de exhaustividad** | Error de compilación si no es exhaustivo | Advertencia en tiempo de compilación |
+
+#### Diferencias Clave
+
+- **Exhaustividad en Kotlin**: Si un `when` sobre una clase sellada no cubre todos los casos, el código **no compilará** en Kotlin. Esto asegura que los desarrolladores siempre manejen todos los posibles estados, evitando errores en tiempo de ejecución.
+- **Exhaustividad en Scala**: En Scala, si un `match` no cubre todas las posibilidades de una clase sellada, se genera una **advertencia** de compilación. Aunque esto advierte al desarrollador, el código sigue compilando.
+
+Este comportamiento más estricto de Kotlin proporciona mayor seguridad al garantizar que los estados no manejados se identifiquen antes de la compilación, mientras que Scala otorga algo más de flexibilidad, pero con menos garantías en cuanto a exhaustividad.
+
+<References references={[
+    {
+        title: "",
+        url: "",
+        type: "article",
+        author: "",
+        publishedDate: "",
+    },
+    {
+        accessedDate: '',
+        siteOrAuthor: '',
+        title: '',
+        type: 'web',
+        url: '',
+    },
+    {
+        title: "",
+        bookTitle: "",
+        pages: "",
+        location: "",
+        publisher: "",
+        year: "",
+        type: "book",
+        author: ''
+    },
+]}/>

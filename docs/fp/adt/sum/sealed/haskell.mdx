@@ -1,0 +1,125 @@
+---
+title: haskell
+---
+import References from "@site/src/components/ReferencesComponent";
+import ReadingTime from '@site/src/components/ReadingTime';
+
+<ReadingTime/>
+
+## Haskell
+
+En **Haskell**, los **tipos algebraicos de datos** (ADT, por sus siglas en inglés) son una forma común de representar **tipos suma**, equivalentes a las **clases selladas** en **Kotlin** o **Scala**. Los ADTs permiten definir un conjunto limitado de variantes, donde cada una puede tener datos asociados.
+
+### Definición de Tipos Suma en Haskell
+
+En Haskell, se puede definir un tipo suma con la palabra clave `data` para crear variantes con datos asociados. Aquí tienes un ejemplo que modela los estados de un pedido:
+
+```haskell
+data DeliveryState
+    = Pending
+    | Paid
+    | Shipped String       -- Incluye un número de seguimiento
+    | Delivered
+    | Cancelled String     -- Incluye una razón de cancelación
+    deriving (Show)
+```
+
+En este tipo `DeliveryState`, hemos definido cinco posibles estados:
+
+- `Pending`
+- `Paid`
+- `Shipped String` (con un número de seguimiento)
+- `Delivered`
+- `Cancelled String` (con una razón de cancelación)
+
+:::info `deriving (Show)`
+La cláusula `deriving (Show)` en Haskell genera automáticamente una instancia de la clase `Show` para el tipo `DeliveryState`, lo que permite mostrar sus valores en la consola sin necesidad de definir manualmente cómo se imprimen.
+:::
+
+### Uso con Patrones
+
+Haskell utiliza la coincidencia de patrones para manejar los diferentes casos de un tipo suma. El compilador **emite una advertencia**, pero no un error, si no se manejan todos los casos, y el código seguirá compilando.
+
+Aquí hay una función que maneja los diferentes estados de un pedido:
+
+```haskell
+handleOrderState :: DeliveryState -> String
+handleOrderState state = case state of
+  Pending ->
+    "Order is pending"
+  Paid ->
+    "Order is paid"
+  Shipped trackingNumber ->
+    "Order is shipped with tracking number " ++ trackingNumber
+  Delivered ->
+    "Order is delivered"
+  Cancelled reason ->
+    "Order is cancelled because " ++ reason
+```
+
+Si omitimos alguno de los casos, el compilador generará una advertencia:
+
+```
+Warning: Pattern match(es) are non-exhaustive
+```
+
+Sin embargo, el programa **compilará sin errores** y seguirá ejecutándose, aunque podría fallar en tiempo de ejecución si se encuentra un caso no manejado.
+
+### Ventajas de Haskell en el Manejo de Tipos Suma
+
+- **Advertencias de exhaustividad**: Haskell genera advertencias si no se manejan todas las variantes en una coincidencia de patrones.
+- **Inmutabilidad**: Todos los datos en Haskell son inmutables por defecto, lo que simplifica el razonamiento sobre el estado.
+- **Simplicidad Sintáctica**: La definición de tipos suma es concisa y clara, facilitando su comprensión y uso.
+
+### Comparación con Kotlin
+
+| Aspecto                      | Kotlin                                     | Haskell                                                 |
+|------------------------------|--------------------------------------------|---------------------------------------------------------|
+| **Definición de Tipos Suma** | `sealed class` o ``enum class``            | `data` con variantes                                    |
+| **Exhaustividad**            | `when` exhaustivo (error si no cubre todo) | Coincidencia de patrones (advertencia si no exhaustivo) |
+| **Restricción de Subtipos**  | Subclases en el mismo módulo y paquete     | Variantes definidas en el mismo tipo                    |
+| **Inmutabilidad**            | Opcional con ``val``                       | Datos inmutables por defecto                            |
+
+### Diferencias Clave
+
+- **Advertencias de Exhaustividad**: En Haskell, la falta de coincidencia exhaustiva genera **advertencias** en tiempo de compilación, pero el código sigue compilando. En Kotlin, la falta de exhaustividad en `when` impide que el código compile.
+- **Inmutabilidad**: En Haskell, la inmutabilidad es la norma, mientras que en Kotlin, las clases deben declararse explícitamente como inmutables.
+
+### Reflexión y Variantes en Haskell
+
+A diferencia de Kotlin, donde puedes usar `sealedSubclasses` para obtener todas las subclases de una clase sellada en tiempo de ejecución, Haskell no tiene un mecanismo similar integrado para obtener todas las variantes de un tipo suma de forma automática. Esto se debe a que Haskell es un lenguaje puramente funcional y no tiene un enfoque orientado a objetos ni un sistema de reflexión en el mismo sentido que Kotlin.
+
+Si necesitas obtener todas las variantes de un tipo suma en Haskell, debes manejarlo de forma manual, utilizando las variantes explícitamente en el código:
+
+```haskell
+allDeliveryStates :: [DeliveryState]
+allDeliveryStates = [Pending, Paid, Shipped "Example", Delivered, Cancelled "Example"]
+```
+
+Este enfoque funciona, pero requiere que lx desarrolladorx mantenga manualmente la lista de variantes, lo que introduce una posible fuente de error si se añaden o eliminan variantes en el futuro.
+<References references={[
+    {
+        title: "",
+        url: "",
+        type: "article",
+        author: "",
+        publishedDate: "",
+    },
+    {
+        accessedDate: '',
+        siteOrAuthor: '',
+        title: '',
+        type: 'web',
+        url: '',
+    },
+    {
+        title: "",
+        bookTitle: "",
+        pages: "",
+        location: "",
+        publisher: "",
+        year: "",
+        type: "book",
+        author: ''
+    },
+]}/>
