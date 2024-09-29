@@ -34,17 +34,7 @@ const sidebars: SidebarsConfig = {
                                 "intro/oop/oop-langs",
                             ]
                         },
-                        {
-                            label: 'Clases abiertas y cerradas',
-                            type: 'category',
-                            link: {
-                                type: 'doc',
-                                id: 'intro/open-closed/open-closed-kt',
-                            },
-                            items: [
-                                'intro/open-closed/open-closed-langs',
-                            ],
-                        },
+                        'intro/open-closed/open-closed-kt',
                         'intro/properties/properties-kt',
                         {
                             type: 'category',
@@ -237,7 +227,7 @@ const sidebars: SidebarsConfig = {
                         description: 'Uno de los problemas con la recursión es el caso en que la pila de ejecución se desborda. Existen distintas soluciones',
                     },
                     items: [
-                        'fp/recursion-optimization/tail',
+                        'fp/recursion-optimization/tail/tail',
                         'fp/recursion-optimization/trampoline',
                     ],
                 },
@@ -249,7 +239,6 @@ const sidebars: SidebarsConfig = {
                         id: 'fp/monads/monads-kt',
                     },
                     items: [
-                        "fp/monads/monads-langs",
                         {
                             type: 'category',
                             label: 'Ejemplos de mónadas',
@@ -340,9 +329,7 @@ const sidebars: SidebarsConfig = {
                         type: 'doc',
                         id: 'testing/pbt/index',
                     },
-                    items: [
-
-                    ],
+                    items: [],
                 },
             ],
         },

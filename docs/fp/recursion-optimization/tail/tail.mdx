@@ -1,0 +1,220 @@
+---
+    title: Recursión por la Cola
+---
+import Hint from "../../../../src/components/exercise/Hint";
+import Solution from "../../../../src/components/exercise/Solution";
+import Exercise from "../../../../src/components/exercise/Exercise";
+import References from "../../../../src/components/ReferencesComponent";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import ReadingTime from '../../../../src/components/ReadingTime';
+
+<ReadingTime />
+
+La **recursión por la cola** es un tipo específico de recursión en la que la **llamada recursiva es la última operación** realizada por la función. Este tipo de recursión es especialmente útil en lenguajes que admiten la **optimización de la cola**, como Kotlin y Scala. Cuando el compilador detecta una recursión por la cola, puede optimizar la función convirtiéndola en un bucle iterativo, lo que mejora significativamente el rendimiento y evita el desbordamiento de pila.
+
+En Kotlin, podemos indicar que una función debe ser optimizada como recursión por la cola utilizando la palabra clave `tailrec`. Esto garantiza que el compilador aplique la optimización.
+
+<details>
+<summary>
+Comencemos por crear un módulo para el código llamado ``tail-recursion``.
+</summary>
+
+<Tabs groupId={"os"}>
+<TabItem value="Windows" label="Windows">
+    ```powershell
+    New-Item -Path "tail-recursion\src\main\kotlin" -ItemType Directory
+    Set-Content -Path "tail-recursion\build.gradle.kts" -Value "// Intentionally left blank"
+    ```
+</TabItem>
+<TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+    ```powershell
+    mkdir tail-recursion\src\main\kotlin
+    "// Intentionally left blank" > tail-recursion\build.gradle.kts
+    ```
+</TabItem>
+<TabItem value="Unix" label="Unix">
+    ```bash
+    mkdir -p tail-recursion/src/main/kotlin
+    echo "// Intentionally left blank" > tail-recursion/build.gradle.kts
+    ```
+</TabItem>
+</Tabs>
+
+Recuerda añadir el módulo a la configuración de Gradle en el archivo `settings.gradle.kts`.
+</details>
+
+## Ejemplo: Factorial con Recursión por la Cola
+
+<details>
+<summary>Si quieres crear el archivo desde la terminal...</summary>
+
+<Tabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        New-Item -Path "tail-recursion\src\main\kotlin\cl\ravenhill\factorial\Factorial.kt" -ItemType "File"
+        ```
+    </TabItem>
+    <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+        ```powershell
+        ni "tail-recursion\src\main\kotlin\cl\ravenhill\factorial\Factorial.kt"
+        ```
+    </TabItem>
+    <TabItem value="Unix" label="Unix">
+        ```bash
+        touch tail-recursion/src/main/kotlin/cl/ravenhill/factorial/Factorial.kt
+        ```
+    </TabItem>
+</Tabs>
+</details>
+
+```kotlin showLineNumbers title="tail-recursion/src/main/kotlin/cl/ravenhill/factorial/Factorial.kt"
+tailrec fun factorial(n: Int, acc: Int): Int =
+if (n == 0) {
+    acc
+} else {
+    factorial(n - 1, acc * n)
+}
+```
+
+En este ejemplo, la función `factorial` utiliza un **acumulador** (`acc`) que lleva el resultado parcial de la operación, y la llamada recursiva es la última operación en la función, lo que permite la optimización.
+
+Esto será traducido por el compilador a algo como:
+
+```kotlin showLineNumbers
+fun factorial(n: Int): Int {
+var acc = 1
+var current = n
+while (current != 0) {
+    acc *= current
+    current--
+}
+return acc
+}
+```
+
+<Exercise title={"Identificar Recursión por la Cola"}>
+Analiza las siguientes funciones y determina si son recursivas por la cola:
+```kotlin
+fun sum(n: Int, acc: Int = 0): Int = if (n == 0) acc else sum(n - 1, acc + n)
+```
+
+```kotlin
+fun factorial(n: Int): Long = if (n == 0) {
+1
+} else {
+n * factorial(n - 1)
+}
+```
+
+```kotlin
+fun countdown(n: Int) {
+if (n == 0) {
+return
+} else {
+println(n)
+countdown(n - 1)
+}
+}
+```
+
+<Solution>
+    1. Sí, es recursiva por la cola.
+    2. No, la última operación es una multiplicación, no la llamada recursiva.
+    3. Sí, la llamada recursiva es la última operación.
+</Solution>
+</Exercise>
+
+## Solución: Uso de una Función Auxiliar y Acumulador
+
+Para solucionar el problema con la función ``factorial``, podemos usar una **función auxiliar** que maneje el acumulador:
+
+```kotlin showLineNumbers title="tail-recursion/src/main/kotlin/cl/ravenhill/factorial/Factorial.kt"
+fun factorial(n: Int): Int {
+tailrec fun aux(n: Int, acc: Int): Int =
+    if (n == 0) {
+        acc
+    } else {
+        aux(n - 1, acc * n)
+    }
+return aux(n, 1)
+}
+```
+
+En este caso, la función `aux` realiza la recursión, y como la llamada recursiva es la última operación, el compilador puede optimizarla.
+
+## Solución Alternativa: Uso de Parámetros por Defecto
+
+Otra opción es utilizar **parámetros por defecto** para lograr el mismo resultado sin necesidad de una función auxiliar:
+
+```kotlin showLineNumbers title="tail-recursion/src/main/kotlin/cl/ravenhill/factorial/Factorial.kt"
+tailrec fun factorial(n: Int, acc: Int = 1): Int = if (n == 0) {
+acc
+} else {
+factorial(n - 1, acc * n)
+}
+```
+
+Este enfoque es más conciso y aprovecha los parámetros por defecto de Kotlin para manejar el acumulador.
+
+:::warning ¿Por qué no usar siempre parámetros por defecto?
+
+Uno de los principios fundamentales del **código limpio** es minimizar la cantidad de parámetros en una función. Un mal uso de los **parámetros por defecto** puede resultar en funciones con demasiados parámetros, complicando la legibilidad y comprensión del código. Al utilizar **funciones auxiliares**, podemos encapsular la lógica que requiere más parámetros dentro de una función de menor visibilidad, manteniendo la **interfaz** de la función principal **sencilla** y fácil de entender.
+
+:::
+
+<Exercise title={"Suma de Dígitos con Recursión por la Cola"}>
+
+Implementa una función que tome un número y retorne la suma de sus dígitos. Optimiza la función utilizando recursión por la cola y una función auxiliar.
+
+<Hint hints={[
+    <>Para obtener el último dígito de un número, puedes utilizar <code>n % 10</code>.</>
+]} />
+
+<Solution title={"con función auxiliar"}>
+    ```kotlin showLineNumbers
+    private const val TEN = 10
+
+    fun sumDigits(n: Int): Int {
+    tailrec fun aux(n: Int, sum: Int): Int = if (n == 0) {
+    sum
+} else {
+    val lastDigit = n % TEN
+    aux(n / TEN, sum + lastDigit)
+}
+    return aux(n, 0)
+}
+    ```
+</Solution>
+<Solution title={"con parámetros por defecto"}>
+    ```kotlin showLineNumbers
+    private const val TEN = 10
+
+    tailrec fun sumDigits(n: Int, sum: Int = 0): Int = if (n == 0) {
+    sum
+} else {
+    val lastDigit = n % TEN
+    sumDigits(n / TEN, sum + lastDigit)
+}
+    ```
+</Solution>
+</Exercise>
+
+<References references={[
+{
+title: "2. Getting started with functional programming in Kotlin",
+        type: "book",
+        bookTitle: "Functional Programming in Kotlin",
+        pages: "17–30",
+        author: "Marco Vermeulen, Rúnar Bjarnason, Paul Chiusano",
+        publisher: "Manning Publications Co. LLC",
+        year: "2021",
+    },
+    {
+        title: "Kotlin and Tail Recursion | Baeldung on Kotlin",
+        type: "web",
+        year: "2017",
+        url: "https://www.baeldung.com/kotlin/tail-recursion/",
+        siteOrAuthor: "Graham Cox",
+    },
+]} />

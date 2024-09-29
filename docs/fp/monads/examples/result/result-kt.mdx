@@ -1,29 +1,30 @@
 ---
 title: Result/Try
 ---
-import LanguageCard from "../../../../../src/components/cards/LanguageCard";
-import Exercise from "../../../../../src/components/exercise/Exercise";
-import GitHubRepoLink from "../../../../../src/components/GithubRepoLink";
-import ReadingTime from "../../../../../src/components/ReadingTime";
-import Solution from "../../../../../src/components/exercise/Solution";
+import TabItem from "@theme/TabItem";
+import Tabs from "@theme/Tabs";
+import LanguageCard from "@site/src/components/cards/LanguageCard";
+import Exercise from "@site/src/components/exercise/Exercise";
+import GitHubRepoLink from "@site/src/components/GithubRepoLink";
+import ReadingTime from "@site/src/components/ReadingTime";
+import Solution from "@site/src/components/exercise/Solution";
+import References from "@site/src/components/ReferencesComponent";
 
 <ReadingTime/>
 <GitHubRepoLink repo={"functional-programming-kt"} user={"r8vnhill"}/>
 
-<br/>
 La mónada **Result** (o **Try** en algunos lenguajes) se utiliza para encapsular operaciones que pueden fallar, representando tanto el éxito como el fallo de manera explícita y segura.
 
-## Componentes Principales:
+## Componentes Principales
 
 - **Success** (o **Ok** en algunos lenguajes):
     - Representa un resultado exitoso de la operación.
     - Contiene el valor resultante de la operación.
-
 - **Failure** (o **Err** en algunos lenguajes):
     - Representa un fallo o error durante la operación.
     - Contiene la excepción o un mensaje que describe el error.
 
-## Motivación:
+## Motivación
 
 1. **Evita excepciones no controladas**: Result permite manejar errores de forma explícita sin depender de excepciones lanzadas que puedan ser ignoradas o propagadas accidentalmente.
 2. **Manejo de errores más seguro**: Obliga a lx desarrolladorx a manejar ambos casos (éxito y fallo), previniendo errores no gestionados y haciendo el código más robusto.
@@ -33,32 +34,54 @@ La mónada **Result** (o **Try** en algunos lenguajes) se utiliza para encapsula
 
 En Kotlin, podemos implementar la mónada Result utilizando una clase sellada que contenga dos subclases: `Success` y `Failure`. Cada subclase puede contener el valor resultante o el error, respectivamente.
 
-```kotlin title="monads/src/main/kotlin/cl/ravenhill/result/Result.kt" showLineNumbers
-package cl.ravenhill.result
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        sealed class Result<out T> {
+            inline fun <U> flatMap(f: (T) -> Result<U>) = when (this) {
+                is Failure -> this
+                is Success -> f(value)
+            }
 
-sealed class Result<out T> {
-    inline fun <U> flatMap(f: (T) -> Result<U>) = when (this) {
-        is Failure -> this
-        is Success -> f(value)
-    }
+            companion object {
+                fun <T> pure(value: T) = Success(value)
+            }
+        }
 
-    companion object {
-        fun <T> pure(value: T) = Success(value)
-    }
-}
-```
+        data class Success<out T>(val value: T) : Result<T>()
 
-```kotlin title="monads/src/main/kotlin/cl/ravenhill/result/Success.kt" showLineNumbers
-package cl.ravenhill.result
+        data class Failure(val error: Throwable) : Result<Nothing>()
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin title="monads/src/main/kotlin/com/github/tu_usuario/monads/result/Result.kt" showLineNumbers
+        package com.github.tu_usuario.monads.result
 
-data class Success<out T>(val value: T) : Result<T>()
-```
+        sealed class Result<out T> {
+            inline fun <U> flatMap(f: (T) -> Result<U>) = when (this) {
+                is Failure -> this
+                is Success -> f(value)
+            }
 
-```kotlin title="monads/src/main/kotlin/cl/ravenhill/result/Failure.kt" showLineNumbers
-package cl.ravenhill.result
+            companion object {
+                fun <T> pure(value: T) = Success(value)
+            }
+        }
+        ```
 
-data class Failure(val error: Throwable) : Result<Nothing>()
-```
+        ```kotlin title="monads/src/main/kotlin/com/github/tu_usuario/monads/result/Success.kt" showLineNumbers
+        package com.github.tu_usuario.monads.result
+
+        data class Success<out T>(val value: T) : Result<T>()
+        ```
+
+        ```kotlin title="monads/src/main/kotlin/com/github/tu_usuario/monads/result/Failure.kt" showLineNumbers
+        package com.github.tu_usuario.monads.result
+
+        data class Failure(val error: Throwable) : Result<Nothing>()
+        ```
+    </TabItem>
+</Tabs>
 
 :::note
 En este caso implementamos la mónada ``Result`` para fines didácticos, pero Kotlin ya proporciona una implementación dentro de su biblioteca estándar.
@@ -84,7 +107,7 @@ En este caso implementamos la mónada ``Result`` para fines didácticos, pero Ko
             onSuccess: (T) -> U
         ) = when (result) {
             is Failure -> onFailure(result.error)
-            is Success -> onSuccess(result.value)
+            is Success -> onSuccess(result.value)tt
         }
         ```
 
@@ -98,13 +121,13 @@ En este caso implementamos la mónada ``Result`` para fines didácticos, pero Ko
 
 Tanto `Result` como `Either` son tipos que nos permiten manejar operaciones que pueden fallar, pero existen algunas diferencias clave entre ellos:
 
-### Similitudes:
+### Similitudes
 
 - **Manejo explícito de errores**: Ambos tipos hacen que el manejo de errores sea más explícito, evitando el uso de excepciones no controladas.
 - **Composición**: Tanto `Result` como `Either` permiten encadenar operaciones de forma segura mediante el uso de métodos como `flatMap`, lo que facilita el manejo de errores sin necesidad de `try-catch`.
 - **Estructura básica**: Ambos tipos tienen dos posibles resultados. En `Result`, los casos son `Success` y `Failure`, mientras que en `Either` son `Right` (para éxito) y `Left` (para fallo).
 
-### Diferencias:
+### Diferencias
 
 - **Semántica**: `Either` es un tipo más general, utilizado para representar una elección entre dos valores, no necesariamente relacionado con errores. `Result` está diseñado específicamente para modelar operaciones que pueden fallar, con el éxito representado por `Success` y el fallo por `Failure`.
 - **Información del Error**: En `Result`, el caso de fallo (`Failure`) generalmente contiene una excepción (`Throwable`), mientras que en `Either`, el `Left` puede contener cualquier tipo de dato, permitiendo más flexibilidad en la información que se proporciona sobre el error.
@@ -153,7 +176,7 @@ when (resultResult) {
 }
 ```
 
-En ambos ejemplos:
+En ambos ejemplos
 
 - Definimos una función `divide` que puede fallar si se intenta dividir por cero.
 - Usamos `flatMap` para encadenar otra operación (`multiplyByTwo`) que se ejecutará solo si la operación anterior tuvo éxito.
@@ -197,3 +220,14 @@ Ahora, con este conocimiento, puedes elegir la herramienta adecuada para manejar
         link="swift"
     />
 </div>
+
+<References references={[
+    {
+        accessedDate: '29 de septiembre de 2024',
+        siteOrAuthor: 'Kotlin',
+        title: 'Result - Kotlin Programming Language',
+        type: 'web',
+        url: 'https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-result/index.html',
+    },
+]}
+/>

@@ -1,6 +1,9 @@
 ---
 title: Clases Selladas
 ---
+import References from "../../../../../src/components/ReferencesComponent";
+import TabItem from "@theme/TabItem";
+import Tabs from "@theme/Tabs";
 import LanguageCard from "../../../../../src/components/cards/LanguageCard";
 import ReadingTime from "../../../../../src/components/ReadingTime"
 import Exercise from "../../../../../src/components/exercise/Exercise";
@@ -12,14 +15,12 @@ Las **clases e interfaces selladas** son clases abstractas que restringen la her
 
 ### Características Clave
 
-- **Clases e interfaces selladas**:
-    - **Propósito**: Controlar y restringir la jerarquía de tipos. Solo las subclases definidas en el mismo paquete y módulo pueden extenderlas.
-    - **Restricciones**: Las subclases deben estar dentro del mismo paquete y módulo que la clase o interfaz sellada.
-
-    - **Beneficios**:
-        - **Control de jerarquía**: Garantiza que todas las posibles subclases estén controladas y conocidas en tiempo de compilación.
-        - **Patrones exhaustivos**: Facilita el uso de `when` exhaustivos, mejorando la legibilidad y evitando errores de estado no manejados.
-        - **Mantenimiento**: Simplifica el mantenimiento del código, ya que no se puede extender la clase fuera de su contexto definido.
+- **Propósito**: Controlar y restringir la jerarquía de tipos. Solo las subclases definidas en el mismo paquete y módulo pueden extenderlas.
+- **Restricciones**: Las subclases deben estar dentro del mismo paquete y módulo que la clase o interfaz sellada.
+- **Beneficios**:
+    - **Control de jerarquía**: Garantiza que todas las posibles subclases estén controladas y conocidas en tiempo de compilación.
+    - **Patrones exhaustivos**: Facilita el uso de `when` exhaustivos, mejorando la legibilidad y evitando errores de estado no manejados.
+    - **Mantenimiento**: Simplifica el mantenimiento del código, ya que no se puede extender la clase fuera de su contexto definido.
 
 ### Ejemplo: Sistema de Pagos
 
@@ -36,66 +37,100 @@ Aquí, `Payment` es una interfaz sellada que permite solo tres implementaciones 
 
 Las clases selladas también son muy útiles para modelar estados de un sistema. Veamos un ejemplo donde se modelan los estados de un pedido en una tienda en línea:
 
-```kotlin
-sealed class DeliveryState {
-    abstract fun signal(): String
-    open fun isFinalState() = false
-}
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        sealed class DeliveryState {
+            abstract fun signal(): String
+            open fun isFinalState() = false
+        }
 
-data object Pending : DeliveryState() {
-    override fun signal() = "Order is pending"
-}
+        data object Pending : DeliveryState() {
+            override fun signal() = "Order is pending"
+        }
 
-data object Paid : DeliveryState() {
-    override fun signal() = "Order is paid"
-}
+        data class Cancelled(val reason: String) : DeliveryState() {
+            override fun signal() = "Order is cancelled because $reason"
+            override fun isFinalState() = true
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        package com.github.tu_usuario.deliveries
 
-data class Shipped(val trackingNumber: String) : DeliveryState() {
-    override fun signal() = "Order is shipped with tracking number $trackingNumber"
-}
+        sealed class DeliveryState {
+            abstract fun signal(): String
+            open fun isFinalState() = false
+        }
 
-data object Delivered : DeliveryState() {
-    override fun signal() = "Order is delivered"
-    override fun isFinalState() = true
-}
+        data object Pending : DeliveryState() {
+            override fun signal() = "Order is pending"
+        }
 
-data class Cancelled(val reason: String) : DeliveryState() {
-    override fun signal() = "Order is cancelled because $reason"
-    override fun isFinalState() = true
-}
-```
+        data object Paid : DeliveryState() {
+            override fun signal() = "Order is paid"
+        }
+
+        data class Shipped(val trackingNumber: String) : DeliveryState() {
+            override fun signal() = "Order is shipped with tracking number $trackingNumber"
+        }
+
+        data object Delivered : DeliveryState() {
+            override fun signal() = "Order is delivered"
+            override fun isFinalState() = true
+        }
+
+        data class Cancelled(val reason: String) : DeliveryState() {
+            override fun signal() = "Order is cancelled because $reason"
+            override fun isFinalState() = true
+        }
+        ```
+    </TabItem>
+</Tabs>
 
 ### Manejo con `when` Exhaustivo
 
 El uso de un `when` exhaustivo asegura que todos los posibles estados sean manejados, lo que ayuda a evitar errores en tiempo de ejecución.
 
-```kotlin
-fun handleOrderState(state: DeliveryState) = when (state) {
-    is Pending -> println(state.signal())
-    is Paid -> println(state.signal())
-    is Shipped -> println(state.signal())
-    is Delivered -> println(state.signal())
-    is Cancelled -> println(state.signal())
-}
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin
+        fun handleOrderState(state: DeliveryState) = when (state) {
+            is Pending -> println(state.signal())
+            is Paid -> println(state.signal())
+            is Shipped -> println(state.signal())
+            is Delivered -> println(state.signal())
+            is Cancelled -> println(state.signal())
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin
+        fun handleOrderState(state: DeliveryState) = when (state) {
+            is Pending -> println(state.signal())
+            is Paid -> println(state.signal())
+            is Shipped -> println(state.signal())
+            is Delivered -> println(state.signal())
+            is Cancelled -> println(state.signal())
+        }
 
-### Ejemplo de Uso
-
-```kotlin
-fun main() {
-    handleOrderState(Pending)
-    handleOrderState(Paid)
-    handleOrderState(Shipped("123"))
-    handleOrderState(Delivered)
-    handleOrderState(Cancelled("no stock"))
-}
-```
+        fun main() {
+            handleOrderState(Pending)
+            handleOrderState(Paid)
+            handleOrderState(Shipped("123"))
+            handleOrderState(Delivered)
+            handleOrderState(Cancelled("no stock"))
+        }
+        ```
+    </TabItem>
+</Tabs>
 
 ### Uso de Reflexión con Clases Selladas
 
 Para obtener las subclases de una clase o interfaz sellada en Kotlin, puedes usar reflexión. Para ello, es necesario añadir la dependencia de reflexión en el archivo `build.gradle.kts`:
 
-```kotlin
+```kotlin showLineNumbers
 dependencies {
     implementation(kotlin("reflect"))
 }
@@ -103,9 +138,22 @@ dependencies {
 
 Y luego puedes listar las subclases selladas:
 
-```kotlin
-fun listOrderStates() = DeliveryState::class.sealedSubclasses
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin
+        fun listOrderStates() = DeliveryState::class.sealedSubclasses
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin
+        fun listOrderStates() = DeliveryState::class.sealedSubclasses
+
+        fun main() {
+            listOrderStates().forEach { println(it.simpleName) }
+        }
+        ```
+    </TabItem>
+</Tabs>
 
 <Exercise title={"Sistema multimedia"}>
     Desarrolla un sistema que maneje distintos tipos de contenido multimedia. Define una interfaz sellada `Media` que represente diferentes tipos de contenido, como `Music` y `Video`. La interfaz debe incluir dos métodos: `play()` y `pause()`.
@@ -197,3 +245,23 @@ Las **clases e interfaces selladas** en Kotlin ofrecen un poderoso mecanismo par
         link="swift"
     />
 </div>
+
+<References references={[
+    {
+        title: "4. Classes, objects, and interfaces",
+        bookTitle: "Kotlin in action",
+        pages: "67–102",
+        location: "Shelter Island, NY",
+        publisher: "Manning Publications Co",
+        year: "2017",
+        type: "book",
+        author: 'Dmitry Jemerov, Svetlana Isakova',
+    },
+    {
+        accessedDate: '29 de septiembre de 2024',
+        siteOrAuthor: 'Kotlin Help',
+        title: 'Sealed Classes and Interfaces | Kotlin',
+        type: 'web',
+        url: 'https://kotlinlang.org/docs/sealed-classes.html',
+    },
+]}/>
