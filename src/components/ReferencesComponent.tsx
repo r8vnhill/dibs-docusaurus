@@ -15,6 +15,7 @@ interface Reference {
     year?: string;
     author?: string;
     edition?: string;
+    series?: string;
 }
 
 interface ReferencesProps {
@@ -89,15 +90,13 @@ const renderReference = (reference: Reference) => {
         return (
             <li key={reference.id}>
                 {renderTypeEmoji(reference.type)}{' '}
-                {reference.author && <strong>{reference.author}.</strong>} "{reference.title}".{' '}
-                {reference.edition && `${reference.edition}. `}
-                {reference.bookTitle && (
-                    <>
-                        En <em>{reference.bookTitle}</em>{reference.pages && `, ${reference.pages}`}.{' '}
-                    </>
-                )}
+                {<strong>{reference.author},</strong>} "{reference.title}",{' '}
+                {reference.bookTitle && (<>en <em>{reference.bookTitle},</em></>)}{' '}
+                {reference.edition && `${reference.edition}, `}
+                {reference.series && `en ${reference.series}, `}
                 {reference.location && reference.publisher && `${reference.location}: ${reference.publisher}, `}
-                {reference.year}.
+                {reference.year},{' '}
+                {reference.pages && `pp. ${reference.pages}`}.{' '}
             </li>
         );
     }

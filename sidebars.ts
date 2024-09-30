@@ -47,17 +47,7 @@ const sidebars: SidebarsConfig = {
                                 "intro/operator-overload/operator-overload-langs",
                             ]
                         },
-                        {
-                            label: 'Excepciones',
-                            type: 'category',
-                            link: {
-                                type: 'doc',
-                                id: 'intro/exceptions/exceptions-kt',
-                            },
-                            items: [
-                                "intro/exceptions/exceptions-langs",
-                            ]
-                        },
+                        'intro/exceptions/exceptions-kt',
                         'intro/generics/generics-kt',
                         {
                             type: 'category',
@@ -120,7 +110,6 @@ const sidebars: SidebarsConfig = {
                         'build-systems/tasks/classes-kt'
                     ],
                 },
-
                 {
                     type: 'category',
                     label: 'Plugins',
@@ -231,7 +220,7 @@ const sidebars: SidebarsConfig = {
                         'fp/recursion-optimization/trampoline',
                     ],
                 },
-
+                'fp/kinds/higher-kinded-types-kt',
                 {
                     type: 'category',
                     label: 'Functores',

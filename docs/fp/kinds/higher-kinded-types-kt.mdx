@@ -1,0 +1,193 @@
+---
+title: Higher-Kinded Types
+---
+import References from "@site/src/components/ReferencesComponent";
+import ReadingTime from '@site/src/components/ReadingTime';
+
+<ReadingTime/>
+
+Los **Higher-Kinded Types** (Tipos de Clase Superior) son un concepto avanzado en programación funcional que permite abstraer sobre tipos que son, a su vez, constructores de tipos. Esto nos permite escribir código genérico y reutilizable que puede operar sobre diferentes estructuras de datos sin conocer sus detalles internos.
+
+## ¿Qué son los Higher-Kinded Types?
+
+En programación, un tipo genérico de primer orden es aquel que toma tipos concretos como parámetros. Por ejemplo, una clase genérica `List<A>` toma un tipo `A` y produce un nuevo tipo `List<A>`. Un **Higher-Kinded Type** va un paso más allá: es un tipo que toma como parámetro un constructor de tipos.
+
+### Concepto Clave
+
+- **Tipo de Orden Superior**: Un tipo que acepta como parámetro un constructor de tipos, no solo tipos concretos.
+- **Constructor de Tipos**: Una función que toma uno o más tipos y devuelve un nuevo tipo.
+
+Por ejemplo, en lenguajes que soportan higher-kinded types nativamente (como Haskell), podríamos definir una interfaz genérica que funciona para cualquier constructor de tipos:
+
+```haskell
+class Functor f where
+  fmap :: (a -> b) -> f a -> f b
+```
+
+Aquí, `f` es un constructor de tipos que puede ser, por ejemplo, `List`, `Maybe`, etc.
+
+Otros lenguajes que soportan higher-kinded types incluyen Scala, Idris, PureScript, F#, y otros.
+
+## Limitaciones en Kotlin
+
+Kotlin, al igual que Java, C#, TypeScript, Swift y otros lenguajes populares, **no soporta higher-kinded types de forma nativa**. Esto significa que no podemos directamente declarar una interfaz que acepte como parámetro un constructor de tipos.
+
+Sin embargo, podemos **simular** este comportamiento utilizando un patrón que involucra una interfaz llamada `Kind`.
+
+## El Concepto de `Kind`
+
+La interfaz `Kind<K, out A>` sirve como un contenedor que nos permite representar un constructor de tipos aplicado a un tipo concreto en Kotlin.
+
+```kotlin
+interface Kind<K, out A>
+```
+
+- **`K`**: Representa el constructor de tipos.
+- **`A`**: Representa el tipo del valor contenido.
+
+Al hacer que nuestros tipos genéricos implementen `Kind`, podemos escribir funciones que operen sobre estos tipos de manera genérica.
+
+## Ejemplo Simple: El Contenedor `Box`
+
+Supongamos que tenemos una clase `Box` que actúa como un contenedor genérico para un valor de tipo `A`.
+
+### Definición de `Box` implementando `Kind`
+
+```kotlin
+class Box<out A>(val value: A) : Kind<Box.K, A> {
+    object K
+}
+```
+
+En este caso:
+
+- **`Box.K`** es un objeto que actúa como identificador único para el constructor de tipos `Box`.
+- La clase `Box` implementa `Kind<Box.K, A>`, indicando que es un constructor de tipos aplicado al tipo `A`.
+
+### Función Genérica que Opera sobre `Kind`
+
+Podemos escribir una función que opere sobre cualquier instancia de `Kind<Box.K, A>`.
+
+```kotlin
+fun <A> getValue(box: Kind<Box.K, A>): A {
+    val actualBox = box as Box<A>
+    return actualBox.value
+}
+```
+
+- Aceptamos un `Kind<Box.K, A>`, lo que nos permite trabajar con cualquier `Box` que contenga un tipo `A`.
+- Hacemos un **cast** a `Box<A>` para acceder al valor interno.
+
+### Uso de la Función
+
+```kotlin
+fun main() {
+    val intBox: Kind<Box.K, Int> = Box(42)
+    val stringBox: Kind<Box.K, String> = Box("Hello")
+
+    println(getValue(intBox))      // Output: 42
+    println(getValue(stringBox))   // Output: Hello
+}
+```
+
+## Explicación del Patrón `Kind`
+
+El uso de `Kind<F, A>` nos permite simular higher-kinded types en Kotlin al:
+
+- **Encapsular** el constructor de tipos y su parámetro en una interfaz común.
+- **Permitir** que las funciones genéricas operen sobre diferentes tipos que implementan `Kind`.
+
+### Ventajas
+
+- **Abstracción**: Podemos escribir funciones genéricas que trabajan con diferentes tipos de contenedores.
+- **Reutilización**: Evitamos duplicar código para cada tipo específico.
+
+### Limitaciones
+
+- **Casting Explícito**: Necesitamos hacer casts explícitos, lo que puede introducir errores en tiempo de ejecución si no se maneja correctamente.
+- **Menor Seguridad de Tipos**: Kotlin no puede garantizar en tiempo de compilación que el cast sea seguro.
+
+## Otro Ejemplo: El Contenedor `Wrapper`
+
+Veamos otro ejemplo con una clase `Wrapper`.
+
+### Definición de `Wrapper`
+
+```kotlin
+class Wrapper<out A>(val content: A) : Kind<Wrapper.K, A> {
+    object K
+}
+```
+
+### Función Genérica que Opera sobre `Kind`
+
+Podemos definir una función que envuelva un valor en una lista utilizando `Wrapper`.
+
+```kotlin
+fun <A> wrapInList(wrapper: Kind<Wrapper.K, A>): List<A> {
+    val actualWrapper = wrapper as Wrapper<A>
+    return listOf(actualWrapper.content)
+}
+```
+
+### Uso de la Función
+
+```kotlin
+fun main() {
+    val intWrapper: Kind<Wrapper.K, Int> = Wrapper(7)
+    val list = wrapInList(intWrapper)
+    println(list)  // Output: [7]
+}
+```
+
+## Limitaciones y Consideraciones
+
+Aunque este patrón nos permite simular higher-kinded types, hay algunas limitaciones:
+
+- **Complejidad Añadida**: El código puede volverse más complejo y menos legible debido a los casts y la verbosidad.
+- **Seguridad de Tipos**: No tenemos la misma seguridad de tipos en tiempo de compilación que en lenguajes que soportan higher-kinded types nativamente.
+- **Inferencia de Tipos**: Kotlin puede tener dificultades para inferir los tipos en contextos más complejos.
+
+### ¿Qué hemos Aprendido?
+
+En esta lección, exploramos el concepto de **higher-kinded types** (tipos de orden superior), que nos permiten abstraer sobre constructores de tipos y escribir código genérico y reutilizable que puede operar sobre múltiples estructuras de datos. Aunque Kotlin no soporta higher-kinded types de forma nativa como lo hacen lenguajes como **Haskell**, **Scala** o **Idris**, utilizamos el patrón `Kind<F, A>` para simular este comportamiento.
+
+### Puntos clave:
+
+1. **Higher-Kinded Types**: Un higher-kinded type es un tipo que toma como parámetro un constructor de tipos, permitiendo mayor flexibilidad y abstracción en el código genérico.
+2. **Limitaciones en Kotlin**: Kotlin no tiene soporte nativo para higher-kinded types, lo que significa que no podemos definir directamente funciones o clases que acepten constructores de tipos como parámetros.
+3. **Patrón `Kind` en Kotlin**:
+    - Utilizamos `Kind<F, A>` para encapsular un constructor de tipos y su parámetro en una interfaz común, permitiendo simular los higher-kinded types en Kotlin.
+    - Vimos ejemplos con clases simples como `Box` y `Wrapper`, que implementan `Kind` para demostrar cómo aplicar este patrón.
+4. **Ventajas y Limitaciones**:
+    - **Ventajas**: Abstracción, reutilización de código, y la capacidad de escribir funciones genéricas que operan sobre diferentes tipos.
+    - **Limitaciones**: Necesidad de hacer casts explícitos, menor seguridad de tipos y complejidad añadida en comparación con lenguajes que soportan higher-kinded types nativamente.
+
+Al finalizar la lección, aprendimos cómo manejar este concepto avanzado en Kotlin, simulando higher-kinded types con el patrón `Kind`, y entendimos tanto los beneficios como las limitaciones que trae consigo.
+
+<References references={[
+    {
+        title: "",
+        url: "",
+        type: "article",
+        author: "",
+        publishedDate: "",
+    },
+    {
+        accessedDate: '',
+        siteOrAuthor: '',
+        title: '',
+        type: 'web',
+        url: '',
+    },
+    {
+        title: "",
+        bookTitle: "",
+        pages: "",
+        location: "",
+        publisher: "",
+        year: "",
+        type: "book",
+        author: ''
+    },
+]}/>
