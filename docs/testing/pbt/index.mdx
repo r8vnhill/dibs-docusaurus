@@ -13,19 +13,55 @@ import ReadingTime from "../../../src/components/ReadingTime";
 
 Si tienes ``gh`` instalado, puedes obtener el código haciendo:
 
-```bash
-gh repo clone r8vnhill/property-based-testing-kt
-cd property-based-testing-kt || exit
-git checkout base
-```
+<Tabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        gh repo clone r8vnhill/property-based-testing-kt
+        Set-Location -Path ".\property-based-testing-kt"
+        git checkout base
+        ```
+    </TabItem>
+    <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+        ```powershell
+        gh repo clone r8vnhill/property-based-testing-kt
+        cd ".\property-based-testing-kt"
+        git checkout base
+        ```
+    </TabItem>
+    <TabItem value="Unix" label="Unix">
+        ```bash
+        gh repo clone r8vnhill/property-based-testing-kt
+        cd property-based-testing-kt || exit
+        git checkout base
+        ```
+    </TabItem>
+</Tabs>
 
 Si quieres tener tu propia copia del código, puedes hacer un fork del repositorio y clonarlo desde tu cuenta de GitHub.
 
-```bash
-gh repo fork r8vnhill/property-based-testing-kt
-cd property-based-testing-kt || exit
-git checkout base
-```
+<Tabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        gh repo fork r8vnhill/property-based-testing-kt
+        Set-Location -Path ".\property-based-testing-kt"
+        git checkout base
+        ```
+    </TabItem>
+    <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+        ```powershell
+        gh repo fork r8vnhill/property-based-testing-kt
+        cd ".\property-based-testing-kt"
+        git checkout base
+        ```
+    </TabItem>
+    <TabItem value="Unix" label="Unix">
+        ```bash
+        gh repo fork r8vnhill/property-based-testing-kt
+        cd property-based-testing-kt || exit
+        git checkout base
+        ```
+    </TabItem>
+</Tabs>
 
 :::
 
@@ -65,7 +101,7 @@ Podríamos recurrir a **Data-Driven Testing** para verificar su comportamiento. 
         </TabItem>
         <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
             ```powershell
-            mkdir intro\src\test\kotlin
+            mkdir "intro\src\test\kotlin"
             "// Intentionally left blank" > intro\build.gradle.kts
             ```
         </TabItem>
@@ -84,48 +120,92 @@ Podríamos recurrir a **Data-Driven Testing** para verificar su comportamiento. 
 
 En primer lugar, definimos una **data class** para encapsular los casos de prueba. Esta clase representa los inputs (`list1`, `list2`) y el resultado esperado (`expected`), lo que facilita la organización y reutilización de datos en nuestras pruebas.
 
-```kotlin title="intro/src/test/kotlin/com/github/tu_usuario/merge/MergeTest.kt" showLineNumbers
-package com.github.tu_usuario.merge
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="intro/src/test/kotlin/com/github/tu_usuario/merge/MergeTest.kt"
+        private data class MergeTestCase(
+            val list1: List<Int>,   // Primera lista de enteros
+            val list2: List<Int>,   // Segunda lista de enteros
+            val expected: List<Int> // Lista resultante esperada
+        )
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="intro/src/test/kotlin/com/github/tu_usuario/merge/MergeTest.kt"
+        package com.github.tu_usuario.merge
 
-// Clase de prueba para almacenar listas y el resultado esperado
-private data class MergeTestCase(
-    val list1: List<Int>,    // Primera lista de enteros
-    val list2: List<Int>,    // Segunda lista de enteros
-    val expected: List<Int>  // Lista resultante esperada
-)
-```
+        // Clase de prueba para almacenar listas y el resultado esperado
+        private data class MergeTestCase(
+            val list1: List<Int>,    // Primera lista de enteros
+            val list2: List<Int>,    // Segunda lista de enteros
+            val expected: List<Int>  // Lista resultante esperada
+        )
+        ```
+    </TabItem>
+</Tabs>
 
 ### Definición de los Casos de Prueba con `withData`
 
 A continuación, definimos los casos de prueba usando la estructura `FreeSpec` y la función `withData`, lo que permite pasar múltiples casos de prueba de forma concisa y ejecutar la misma lógica sobre diferentes inputs.
 
-```kotlin title="intro/src/test/kotlin/com/github/tu_usuario/merge/MergeTest.kt" showLineNumbers
-// ...
-class MergeTest : FreeSpec({
-    "Merging two lists" - {
-        "should return a list with all elements sorted" - {
-            withData(  // Se definen los casos de prueba
-                MergeTestCase(listOf(), listOf(), listOf()),                         // Caso: ambas listas vacías
-                MergeTestCase(listOf(1), listOf(), listOf(1)),                       // Caso: primera lista con un elemento
-                MergeTestCase(listOf(), listOf(1), listOf(1)),                       // Caso: segunda lista con un elemento
-                MergeTestCase(listOf(1), listOf(1), listOf(1, 1)),                   // Caso: listas con el mismo elemento
-                MergeTestCase(listOf(1, 2), listOf(1), listOf(1, 1, 2)),             // Caso: listas de tamaño diferente
-                MergeTestCase(listOf(1), listOf(1, 2), listOf(1, 1, 2)),             // Otro caso con listas de diferente tamaño
-                MergeTestCase(listOf(1, 3), listOf(2, 4), listOf(1, 2, 3, 4)),       // Caso: listas intercaladas
-                MergeTestCase(listOf(1, 2, 3), listOf(4, 5, 6), listOf(1, 2, 3, 4, 5, 6))  // Caso: listas consecutivas
-            ) { (list1, list2, expected) ->  // Desestructuración de la clase MergeTestCase
-                merge(list1, list2) shouldBe expected  // Verificación del resultado
-            }
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="intro/src/test/kotlin/com/github/tu_usuario/merge/MergeTest.kt"
+        withData(
+            MergeTestCase(listOf(), listOf(), listOf()),                         // Caso: ambas listas vacías
+            MergeTestCase(listOf(1), listOf(), listOf(1)),                       // Caso: primera lista con un elemento
+            MergeTestCase(listOf(), listOf(1), listOf(1)),                       // Caso: segunda lista con un elemento
+            MergeTestCase(listOf(1), listOf(1), listOf(1, 1)),                   // Caso: listas con el mismo elemento
+            MergeTestCase(listOf(1, 2), listOf(1), listOf(1, 1, 2)),             // Caso: listas de tamaño diferente
+            MergeTestCase(listOf(1), listOf(1, 2), listOf(1, 1, 2)),             // Otro caso con listas de diferente tamaño
+            MergeTestCase(listOf(1, 3), listOf(2, 4), listOf(1, 2, 3, 4)),       // Caso: listas intercaladas
+            MergeTestCase(listOf(1, 2, 3), listOf(4, 5, 6), listOf(1, 2, 3, 4, 5, 6))  // Caso: listas consecutivas
+        ) { (list1, list2, expected) ->  // Desestructuración de la clase MergeTestCase
+            merge(list1, list2) shouldBe expected  // Verificación del resultado
         }
-    }
-})
-```
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="intro/src/test/kotlin/com/github/tu_usuario/merge/MergeTest.kt"
+        package com.github.tu_usuario.merge
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.datatest.withData
+        import io.kotest.matchers.shouldBe
+
+        class MergeTest : FreeSpec({
+            "Merging two lists" - {
+                "should return a list with all elements sorted" - {
+                    withData(
+                        MergeTestCase(listOf(), listOf(), listOf()),
+                        MergeTestCase(listOf(1), listOf(), listOf(1)),
+                        MergeTestCase(listOf(), listOf(1), listOf(1)),
+                        MergeTestCase(listOf(1), listOf(1), listOf(1, 1)),
+                        MergeTestCase(listOf(1, 2), listOf(1), listOf(1, 1, 2)),
+                        MergeTestCase(listOf(1), listOf(1, 2), listOf(1, 1, 2)),
+                        MergeTestCase(listOf(1, 3), listOf(2, 4), listOf(1, 2, 3, 4)),
+                        MergeTestCase(listOf(1, 2, 3), listOf(4, 5, 6), listOf(1, 2, 3, 4, 5, 6)),
+                    ) { (list1, list2, expected) ->
+                        merge(list1, list2) shouldBe expected
+                    }
+                }
+            }
+        })
+
+        private data class MergeTestCase(
+            val list1: List<Int>,
+            val list2: List<Int>,
+            val expected: List<Int>
+        )
+        ```
+    </TabItem>
+</Tabs>
 
 ## El Desafío del Data-Driven Testing
 
 Aunque el **Data-Driven Testing** es una técnica poderosa para probar diferentes conjuntos de datos de manera sistemática, presenta algunos desafíos importantes:
 
-1. **Mantenimiento y Complejidad**: Requiere que el desarrollador piense y defina manualmente todos los casos de prueba posibles. A medida que los escenarios crecen en complejidad, la cantidad de datos y la gestión de los mismos pueden volverse complicadas y propensas a errores.
+1. **Mantenimiento y Complejidad**: Requiere que lx desarrolladorx piense y defina manualmente todos los casos de prueba posibles. A medida que los escenarios crecen en complejidad, la cantidad de datos y la gestión de los mismos pueden volverse complicadas y propensas a errores.
 
 2. **Dificultad para Cumplir el Principio Open/Closed**: Si necesitamos agregar más casos de prueba, esto generalmente implica modificar directamente el código de prueba existente, lo que puede ir en contra del principio **Open/Closed** del diseño de software. Este principio establece que el código debe estar abierto a la extensión pero cerrado a la modificación. Cada vez que agregamos nuevos casos, estamos alterando el cuerpo de las pruebas, lo que aumenta el riesgo de introducir errores o inconsistencias.
 
@@ -174,7 +254,7 @@ Para que las propiedades sean efectivas y fiables en **Property-Based Testing**,
 
 - **Reproducibilidad**: Si una prueba falla, es más fácil reproducir el error porque no hay estados externos que afecten el comportamiento.
 - **Facilidad de Mantenimiento**: Las propiedades puras son más simples de entender y mantener, ya que su comportamiento está completamente determinado por sus inputs.
-- **Eficiencia**: Al no depender de efectos secundarios, las propiedades puras pueden ejecutarse más rápidamente y de manera más eficiente.
+- **Eficiencia**: Al no depender de efectos secundarios, las propiedades puras pueden paralelizarse de forma segura, lo que mejora la eficiencia de las pruebas.
 
 #### Generación Automática de Casos de Prueba
 
@@ -185,8 +265,6 @@ El **framework de testing** genera automáticamente una variedad de casos de pru
 Los **generadores arbitrarios** son herramientas poderosas que permiten generar una gran variedad de entradas aleatorias para probar propiedades en los tests. En **Kotest**, existe una amplia gama de generadores prediseñados para diferentes tipos de datos, como enteros, cadenas, y colecciones, lo que facilita la creación de pruebas robustas con diversos escenarios de entrada.
 
 Además, Kotest permite definir **generadores personalizados**, lo que brinda flexibilidad para casos de prueba más específicos y complejos. Estos generadores pueden componerse y transformarse, lo que los hace extremadamente versátiles para probar funciones bajo múltiples condiciones.
-
-Aunque los generadores de Kotest **no son mónadas formales**, ya que no cumplen estrictamente con todas las leyes monádicas, se comportan de forma similar. Al igual que las mónadas, los generadores permiten la **composición** mediante operaciones como `flatMap`, facilitando la construcción de flujos de generación de datos altamente personalizables para pruebas más exhaustivas y dinámicas.
 
 ## ¿Qué hemos visto?
 

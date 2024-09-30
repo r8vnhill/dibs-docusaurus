@@ -4,6 +4,10 @@ const sidebars: SidebarsConfig = {
     tutorialSidebar: [
         {
             type: 'doc',
+            id: 'howto',
+        },
+        {
+            type: 'doc',
             id: 'installation',
         },
         {
@@ -23,17 +27,7 @@ const sidebars: SidebarsConfig = {
                     items: [
                         'intro/basics',
                         'intro/types',
-                        {
-                            type: 'category',
-                            label: 'Introducción a la programación orientada a objetos',
-                            link: {
-                                type: 'doc',
-                                id: 'intro/oop/oop',
-                            },
-                            items: [
-                                "intro/oop/oop-langs",
-                            ]
-                        },
+                        'intro/oop/oop',
                         'intro/open-closed/open-closed-kt',
                         'intro/properties/properties-kt',
                         {
@@ -298,7 +292,7 @@ const sidebars: SidebarsConfig = {
                         'testing/ddt/ddt-langs',
                     ],
                 },
-                "testing/assertions",
+                "testing/assertions/assertions-kt",
                 {
                     label: 'Matchers',
                     type: 'category',
