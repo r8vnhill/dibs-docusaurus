@@ -1,61 +1,114 @@
 ---
 title: Aserciones
 ---
-import References from "@site/src/components/ReferencesComponent";
-import TabItem from "@theme/TabItem";
+import CodeBlock from "@theme/CodeBlock";
+import Exercise from "@site/src/components/exercise/Exercise";
 import GithubRepoLink from "@site/src/components/GithubRepoLink";
-import Tabs from "@theme/Tabs";
+import Hint from "@site/src/components/exercise/Hint";
 import ReadingTime from "@site/src/components/ReadingTime";
+import References from "@site/src/components/ReferencesComponent";
+import Solution from "@site/src/components/exercise/Solution";
+import TabItem from "@theme/TabItem";
+import Tabs from "@theme/Tabs";
 
 <ReadingTime/>
 <GithubRepoLink repo={"assertions-kt"} user={"r8vnhill"}/>
 
-<details>
-    <summary>Si quieres seguir el código del tutorial puedes comenzar desde [este punto](https://github.com/r8vnhill/assertions-kt/tree/base).</summary>
+:::note Si quieres seguir el código del tutorial puedes comenzar desde [este punto](https://github.com/r8vnhill/assertions-kt/tree/base)
 
-    Si tienes ``gh`` instalado, puedes obtener el código haciendo:
+Si tienes ``gh`` instalado, puedes obtener el código haciendo:
 
-    ```bash
-    gh repo clone r8vnhill/assertions-kt
-    cd assertions-kt || exit
-    git checkout base
-    ```
+<Tabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        gh repo clone r8vnhill/assertions-kt
+        Set-Location -Path "assertions-kt"
+        git checkout base
+        ```
+    </TabItem>
+    <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+        ```powershell
+        gh repo clone r8vnhill/assertions-kt
+        cd assertions-kt
+        git checkout base
+        ```
+    </TabItem>
+    <TabItem value="Unix" label="Unix">
+        ```bash
+        gh repo clone r8vnhill/assertions-kt
+        cd assertions-kt
+        git checkout base
+        ```
+    </TabItem>
+</Tabs>
 
-    Si quieres tener tu propia copia del código, puedes hacer un fork del repositorio y clonarlo desde tu cuenta de GitHub.
+Si quieres tener tu propia copia del código, puedes hacer un fork del repositorio y clonarlo desde tu cuenta de GitHub.
 
-    ```bash
-    gh repo fork r8vnhill/assertions-kt
-    cd assertions-kt || exit
-    git checkout base
-    ```
-</details>
+<Tabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        gh repo fork r8vnhill/assertions-kt
+        Set-Location -Path "assertions-kt"
+        git checkout base
+        ```
+    </TabItem>
+    <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+        ```powershell
+        gh repo fork r8vnhill/assertions-kt
+        cd assertions-kt
+        git checkout base
+        ```
+    </TabItem>
+    <TabItem value="Unix" label="Unix">
+        ```bash
+        gh repo fork r8vnhill/assertions-kt
+        cd assertions-kt || exit
+        git checkout base
+        ```
+    </TabItem>
+</Tabs>
+
+:::
 
 Las **aserciones** son instrucciones que verifican si una condición específica es verdadera en un punto particular del código. Si la condición es falsa, la aserción falla y se lanza una excepción, interrumpiendo la ejecución del programa o prueba. Los frameworks de testing capturan estas excepciones para generar reportes detallados de los resultados.
 
 Por ejemplo, consideremos una prueba escrita manualmente:
 
-```kotlin title="assert/src/test/kotlin/cl/ravenhill/calculator/CalculatorTest.kt"
-package cl.ravenhill.calculator
-
-import io.kotest.core.spec.style.FreeSpec
-
-class CalculatorTest : FreeSpec({
-    "Manual assertion test" {
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="assert/src/test/kotlin/com/github/username/calculator/CalculatorTest.kt"
         if (Calculator.add(1, 2) != 3) {
             throw AssertionError("1 + 2 should be 3")
         } else {
             println("Test passed")
         }
-    }
-})
-```
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="assert/src/test/kotlin/com/github/username/calculator/CalculatorTest.kt"
+        package com.github.username.calculator
+
+        import io.kotest.core.spec.style.FreeSpec
+
+        class CalculatorTest : FreeSpec({
+            "Manual assertion test" {
+                if (Calculator.add(1, 2) != 3) {
+                    throw AssertionError("1 + 2 should be 3")
+                } else {
+                    println("Test passed")
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
 
 En este código, verificamos si `Calculator.add(1, 2)` es igual a `3`. Si no lo es, lanzamos una excepción `AssertionError` con un mensaje descriptivo; de lo contrario, imprimimos "Test passed".
 
 Supongamos ahora que tenemos la siguiente implementación errónea de ``Calculator``:
 
-```kotlin title="assert/src/main/kotlin/cl/ravenhill/calculator/Calculator.kt"
-package cl.ravenhill.calculator
+```kotlin title="assert/src/main/kotlin/com/github/username/calculator/Calculator.kt"
+package com.github.username.calculator
 
 object Calculator {
     fun add(a: Int, b: Int): Int = a - b
@@ -66,46 +119,58 @@ En este caso, si ejecutamos el test obtendremos la siguiente salida:
 
 ```plaintext
 java.lang.AssertionError: 1 + 2 should be 3
-	at cl.ravenhill.assertions.CalculatorTest$1$1.invokeSuspend(CalculatorTest.kt:8)
-	at cl.ravenhill.assertions.CalculatorTest$1$1.invoke(CalculatorTest.kt)
-	at cl.ravenhill.assertions.CalculatorTest$1$1.invoke(CalculatorTest.kt)
+	at com.github.username.assertions.CalculatorTest$1$1.invokeSuspend(CalculatorTest.kt:8)
+	at com.github.username.assertions.CalculatorTest$1$1.invoke(CalculatorTest.kt)
+	at com.github.username.assertions.CalculatorTest$1$1.invoke(CalculatorTest.kt)
 	at io.kotest.core.spec.style.scopes.FreeSpecRootScope$invoke$1.invokeSuspend(FreeSpecRootScope.kt:26)
 	...
 Caused by: java.lang.AssertionError: 1 + 2 should be 3
-	at cl.ravenhill.assertions.CalculatorTest$1$1.invokeSuspend(CalculatorTest.kt:8)
-	at cl.ravenhill.assertions.CalculatorTest$1$1.invoke(CalculatorTest.kt)
-	at cl.ravenhill.assertions.CalculatorTest$1$1.invoke(CalculatorTest.kt)
+	at com.github.username.assertions.CalculatorTest$1$1.invokeSuspend(CalculatorTest.kt:8)
+	at com.github.username.assertions.CalculatorTest$1$1.invoke(CalculatorTest.kt)
+	at com.github.username.assertions.CalculatorTest$1$1.invoke(CalculatorTest.kt)
 	at io.kotest.core.spec.style.scopes.FreeSpecRootScope$invoke$1.invokeSuspend(FreeSpecRootScope.kt:26)
 	...
 ```
 
 Sin embargo, podemos simplificar y mejorar este test utilizando las aserciones que ofrece el framework:
 
-```kotlin title="assert/src/test/kotlin/cl/ravenhill/calculator/CalculatorTest.kt"
-package cl.ravenhill.calculator
-
-import io.kotest.assertions.fail
-import io.kotest.core.spec.style.FreeSpec
-
-class CalculatorTest : FreeSpec({
-    "Using framework assertions" {
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="assert/src/test/kotlin/com/github/username/calculator/CalculatorTest.kt"
         if (Calculator.add(1, 2) != 3) {
             fail("1 + 2 should be 3")
         } else {
             println("Test passed")
         }
-    }
-})
-```
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="assert/src/test/kotlin/com/github/username/calculator/CalculatorTest.kt"
+        package com.github.username.calculator
 
+        import io.kotest.assertions.fail
+        import io.kotest.core.spec.style.FreeSpec
+
+        class CalculatorTest : FreeSpec({
+            "Using framework assertions" {
+                if (Calculator.add(1, 2) != 3) {
+                    fail("1 + 2 should be 3")
+                } else {
+                    println("Test passed")
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
 Aquí, en lugar de lanzar una excepción manualmente, utilizamos la función `fail` proporcionada por el framework, que marca la prueba como fallida y proporciona el mensaje de error correspondiente. Esto también ayudará al framework a generar un informe detallado de la prueba.
 
 ## Implementación de Aserciones Personalizadas
 
 Supongamos ahora que queremos implementar nuestras propias funciones de aserción personalizadas para simplificar la escritura de pruebas. Por ejemplo, podemos crear una función `assertTrue` que verifique si una condición es verdadera y lance una excepción si no lo es.
 
-```kotlin title="assert/src/test/kotlin/cl/ravenhill/assertions/assertTrue.kt"
-package cl.ravenhill.assertions
+```kotlin title="assert/src/test/kotlin/com/github/username/assertions/assertTrue.kt"
+package com.github.username.assertions
 
 import io.kotest.assertions.fail
 
@@ -125,14 +190,29 @@ fun assertTrue(condition: Boolean, message: () -> String = { "Assertion failed" 
 
 ### Ejemplo de uso en tu prueba
 
-```kotlin
-class CalculatorTest : FreeSpec({
-    "Usando assertTrue" {
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="assert/src/test/kotlin/com/github/username/calculator/CalculatorTest.kt"
         val result = Calculator.add(1, 2)
         assertTrue(result == 3) { "1 + 2 should be 3" }
-    }
-})
-```
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="assert/src/test/kotlin/com/github/username/calculator/CalculatorTest.kt"
+        package com.github.username.calculator
+
+        import io.kotest.core.spec.style.FreeSpec
+        import com.github.username.assertions.assertTrue
+
+        class CalculatorTest : FreeSpec({
+            "Usando assertTrue" {
+                val result = Calculator.add(1, 2)
+                assertTrue(result == 3) { "1 + 2 should be 3" }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
 
 En este ejemplo:
 
@@ -140,24 +220,26 @@ En este ejemplo:
 - Usamos `assertTrue` para verificar que el resultado es igual a `3`.
 - Si la condición no se cumple, se lanza un `AssertionError` con el mensaje especificado.
 
-:::tip Ejercicio
-<Tabs>
-    <TabItem value={"Enunciado"} label={"Enunciado"}>
-        Crea una aserción ``assertIsOrdered: (List<Int>, IsStrictlyOrdered) -> Unit`` que verifique si una lista de enteros está ordenada de forma ascendente.
-        - Si el segundo parámetro es ``IsStrictlyOrdered.ENABLED``, la lista debe estar ordenada de forma estrictamente ascendente (sin elementos repetidos).
-        - Si el segundo parámetro es ``IsStrictlyOrdered.DISABLED``, la lista puede contener elementos repetidos.
+<Exercise title={"Verificar si una lista está ordenada"}>
+    Crea una aserción ``assertIsOrdered: (List<Int>, IsStrictlyOrdered) -> Unit`` que verifique si una lista de enteros está ordenada de forma ascendente.
+    - Si el segundo parámetro es ``IsStrictlyOrdered.ENABLED``, la lista debe estar ordenada de forma estrictamente ascendente (sin elementos repetidos).
+    - Si el segundo parámetro es ``IsStrictlyOrdered.DISABLED``, la lista puede contener elementos repetidos.
 
-        _Hint: Puedes usar la función ``zipWithNext`` para comparar elementos consecutivos de la lista._
+    <Hint hints={[
+        <>
+            Puedes usar la función <code>zipWithNext</code> para comparar elementos consecutivos de la lista.
+            <br/>
+            <strong>Ejemplo de <code>zipWithNext</code>:</strong>
 
-        **Ejemplo de ``zipWithNext``:**
+            <CodeBlock showLineNumbers language={"kotlin"}>
+                {`val list = listOf(1, 2, 3, 5, 5, 7)
+val pairs = list.zipWithNext()
+println(pairs) // [(1, 2), (2, 3), (3, 5), (5, 5), (5, 7)`}
+            </CodeBlock>
+        </>
+    ]} />
 
-        ```kotlin
-        val list = listOf(1, 2, 3, 5, 5, 7)
-        val pairs = list.zipWithNext()
-        println(pairs) // [(1, 2), (2, 3), (3, 5), (5, 5), (5, 7)]
-        ```
-    </TabItem>
-    <TabItem value={"Solución"} label={"Solución"}>
+    <Solution>
         ```kotlin
         fun assertIsOrdered(
             list: List<Int>,
@@ -176,104 +258,10 @@ En este ejemplo:
             }
         }
         ```
-    </TabItem>
-</Tabs>
-:::
+    </Solution>
+</Exercise>
 
-## Ejemplos en Otros Frameworks
-
-<details>
-    <summary>Ejemplos en otros frameworks</summary>
-
-    Aunque este curso está enfocado en **Kotlin**, otras plataformas y frameworks también permiten la creación de aserciones personalizadas.
-
-    ### JUnit (Java)
-
-    En **JUnit**, podemos crear una aserción personalizada utilizando `Assertions.assertTrue` o `Assertions.fail` para encapsular la lógica específica. Aquí tienes un ejemplo similar al de Kotlin:
-
-    ```java
-    public class CustomAssertions {
-        public static void assertIsPositive(int value) {
-            if (value <= 0) {
-                Assertions.fail("Value should be positive, but was " + value);
-            }
-        }
-    }
-    ```
-
-    En el test:
-
-    ```java
-    @Test
-    public void testPositiveValue() {
-        CustomAssertions.assertIsPositive(5);  // Test pasará
-        CustomAssertions.assertIsPositive(-1);  // Test fallará
-    }
-    ```
-
-    ### Pytest (Python)
-
-    En **Pytest**, puedes definir aserciones personalizadas mediante la creación de funciones que lancen excepciones en caso de fallos.
-
-    ```python
-    def assert_is_positive(value):
-        assert value > 0, f"Value should be positive, but was {value}"
-
-    def test_positive_value():
-        assert_is_positive(5)   # Pasará
-        assert_is_positive(-1)  # Fallará con AssertionError
-    ```
-
-    ### Mocha + Chai (Typescript)
-
-    En **Mocha** con **Chai**, puedes crear aserciones personalizadas utilizando la librería Chai de esta manera:
-
-    ```typescript
-    import { assert } from 'chai';
-
-    function assertIsPositive(value: number): void {
-        if (value <= 0) {
-            assert.fail(`Value should be positive, but was ${value}`);
-        }
-    }
-    ```
-
-    En el test:
-
-    ```typescript
-    describe('Custom Assertion Test', function () {
-        it('should pass for positive values', function () {
-            assertIsPositive(5);  // Pasará
-        });
-
-        it('should fail for non-positive values', function () {
-            assertIsPositive(-1);  // Fallará
-        });
-    });
-    ```
-
-    ### XCTest (Swift)
-
-    En **XCTest** (Swift), puedes definir una función personalizada para lanzar un error en caso de que la condición no se cumpla:
-
-    ```swift
-    func assertIsPositive(_ value: Int, file: StaticString = #file, line: UInt = #line) {
-        if value <= 0 {
-            XCTFail("Value should be positive, but was \(value)", file: file, line: line)
-        }
-    }
-
-    class CustomAssertionsTests: XCTestCase {
-        func testPositiveValue() {
-            assertIsPositive(5)  // Pasará
-            assertIsPositive(-1)  // Fallará
-        }
-    }
-    ```
-
-</details>
-
-## Resumen
+## ¿Qué aprendimos?
 
 En esta lección aprendimos sobre **aserciones**, una herramienta fundamental en los tests que nos permite verificar que las condiciones de nuestro código sean correctas. Comenzamos viendo ejemplos simples de cómo podemos implementar aserciones manualmente y cómo utilizar las aserciones proporcionadas por los frameworks de pruebas para mejorar la legibilidad y el manejo de errores en nuestros tests.
 
