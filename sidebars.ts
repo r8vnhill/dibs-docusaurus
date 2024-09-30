@@ -231,6 +231,27 @@ const sidebars: SidebarsConfig = {
                         'fp/recursion-optimization/trampoline',
                     ],
                 },
+
+                {
+                    type: 'category',
+                    label: 'Functores',
+                    link: {
+                        type: 'doc',
+                        id: 'fp/functors/index',
+                    },
+                    items: [
+                        {
+                            type: 'category',
+                            label: 'Ejemplos de functores',
+                            link: {
+                                type: 'generated-index',
+                                title: 'Ejemplos comunes de functores',
+                                description: 'Los functores son un concepto fundamental en programación funcional. Aquí se presentan algunos ejemplos comunes',
+                            },
+                            items: [],
+                        },
+                    ]
+                },
                 {
                     type: 'category',
                     label: 'Mónadas',

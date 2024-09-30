@@ -1,64 +1,166 @@
 ---
 title: Sobrecarga de Operadores
 ---
-import References from "../../../src/components/ReferencesComponent";
-import ReadingTime from "../../../src/components/ReadingTime";
+import TabItem from "@theme/TabItem";
+import Tabs from "@theme/Tabs";
+import References from "@site/src/components/ReferencesComponent";
+import ReadingTime from "@site/src/components/ReadingTime";
 
 <ReadingTime />
 
-La sobrecarga de operadores es una característica de algunos lenguajes de programación, como Kotlin, que permite a lxs desarrolladorxs definir comportamientos personalizados para operadores estándar como `+`, `-`, `*`, `/`, entre otros. Esta capacidad es útil cuando trabajamos con tipos de datos definidos por el usuario y queremos que estos interactúen de manera más natural con los operadores predefinidos.
+A estas alturas, ya deberías estar familiarizadx con el concepto de **sobrecarga de funciones** (overloading). Como repaso rápido, la sobrecarga permite definir varias funciones con el mismo nombre pero diferentes firmas (es decir, con distintos números o tipos de parámetros). Esto le permite a los desarrolladores reutilizar un mismo nombre para funciones que realizan tareas similares con diferentes tipos de datos.
+
+De manera similar, la **sobrecarga de operadores** es una característica presente en lenguajes como Kotlin que permite definir comportamientos personalizados para operadores estándar como `+`, `-`, `*`, `/`, entre otros. Esto resulta especialmente útil cuando trabajamos con tipos de datos definidos por el usuario, ya que nos permite hacer que interactúen de forma más natural e intuitiva con los operadores existentes del lenguaje, facilitando su uso y mejorando la legibilidad del código.
 
 ## Cómo Funciona la Sobrecarga de Operadores
 
-En Kotlin, para sobrecargar un operador, se declara una función utilizando la palabra clave `operator` antes de `fun`. El nombre de la función debe coincidir con una de las funciones de operador predefinidas, como `plus`, `minus`, `times`, entre otras.
+En Kotlin, para sobrecargar un operador, se declara una función utilizando la palabra clave `operator` antes de `fun`. El nombre de la función debe coincidir con uno de los nombres de las funciones de operador predefinidas, como `plus`, `minus`, `times`, entre otras.
 
-Por ejemplo, la función `plus` se utiliza para sobrecargar el operador `+`. Esto permite que cuando utilices el operador `+` con objetos de esa clase, Kotlin sepa qué operación ejecutar.
+Por ejemplo, la función `plus` se utiliza para sobrecargar el operador `+`. Esto permite que, cuando utilices el operador `+` con objetos de esa clase, Kotlin sepa qué operación ejecutar.
 
 ## Ejemplo Práctico: Sobrecarga del Operador `+` para Números Complejos
 
-Veamos un ejemplo práctico utilizando una clase `Complex` que representa un número complejo (con partes reales e imaginarias). En este ejemplo, sobrecargamos el operador `+` para permitir la suma de dos números complejos de forma natural.
+Veamos un ejemplo práctico utilizando una clase `Complex` que representa un número complejo (con partes real e imaginaria). En este ejemplo, sobrecargamos el operador `+` para permitir la suma de dos números complejos de forma natural.
 
 ```kotlin
 class Complex(val real: Double, val imaginary: Double) {
-    operator fun plus(other: Complex) =
+
+    operator fun plus(other: Complex): Complex =
         Complex(real + other.real, imaginary + other.imaginary)
+
+    operator fun plus(value: Double): Complex =
+        Complex(real + value, imaginary)
 }
 ```
 
-En este código:
-- `Complex` es una clase que almacena dos propiedades: `real` (la parte real) e `imaginary` (la parte imaginaria).
-- La función `plus` está marcada con el modificador `operator`, lo que indica que estamos sobrecargando el operador `+`.
-- El método toma como parámetro otro objeto `Complex` y devuelve un nuevo objeto `Complex` cuya parte real e imaginaria es la suma de los respectivos valores de los dos números complejos.
+**Explicación del código:**
+
+- **Clase `Complex`**: Almacena dos propiedades `real` (parte real) e `imaginary` (parte imaginaria).
+- **Sobrecarga de `plus` para `Complex`**: Permite sumar otro objeto `Complex`, devolviendo un nuevo `Complex` cuya parte real e imaginaria son la suma de las respectivas partes de ambos números.
+- **Sobrecarga de `plus` para `Double`**: Permite sumar un valor `Double` a la parte real del número complejo.
 
 ## Uso de la Sobrecarga de Operadores
 
-Gracias a esta sobrecarga, podemos sumar números complejos de manera intuitiva usando el operador `+` como si fueran tipos primitivos:
+Gracias a esta sobrecarga, podemos sumar números complejos de manera intuitiva usando el operador `+`, como si fueran tipos primitivos:
 
-```kotlin
-val number1 = Complex(1.0, 2.0)
-val number2 = Complex(3.0, 4.0)
-val sum = number1 + number2
-println("Suma: (${sum.real}, ${sum.imaginary})")
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        val number1 = Complex(1.0, 2.0)
+        val number2 = Complex(3.0, 4.0)
+        val sum = number1 + number2
+        val number3 = number1 + 5.0
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        fun main() {
+            val number1 = Complex(1.0, 2.0)
+            val number2 = Complex(3.0, 4.0)
+            val sum = number1 + number2
+            println("Suma: (${sum.real}, ${sum.imaginary})")
+            // Output: Suma: (4.0, 6.0)
+
+            val number3 = number1 + 5.0
+            println("Suma con Double: (${number3.real}, ${number3.imaginary})")
+            // Output: Suma con Double: (6.0, 2.0)
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+**Salida:**
+
+```
+Suma: (4.0, 6.0)
+Suma con Double: (6.0, 2.0)
 ```
 
-:::warning
-La sobrecarga de operadores es una herramienta poderosa que puede mejorar la legibilidad y expresividad de las APIs. Sin embargo, debe usarse con precaución, ya que un mal uso puede conducir a un código confuso o engañoso, comprometiendo su claridad y coherencia.
+## Consideraciones Importantes
+
+:::warning Uso Responsable de la Sobrecarga de Operadores
+
+La sobrecarga de operadores es una herramienta poderosa que puede mejorar la legibilidad y expresividad de las APIs. Sin embargo, debe usarse con precaución, ya que un mal uso puede conducir a código confuso o engañoso, comprometiendo su claridad y coherencia.
 
 **Ejemplo de mal uso:**
 
 ```kotlin
 class Employee(val name: String, val salary: Double) {
-    operator fun plus(employee: Employee) =
-        Employee("$name & ${employee.name}", salary + employee.salary)
+
+    operator fun plus(other: Employee): Employee =
+        Employee("$name & ${other.name}", salary + other.salary)
 }
 
-val emp1 = Employee("Alice", 5000.0)
-val emp2 = Employee("Bob", 4500.0)
-val combined = emp1 + emp2  // ¿Suma de salarios o algo más?
+fun main() {
+    val emp1 = Employee("Alice", 5000.0)
+    val emp2 = Employee("Bob", 4500.0)
+    val combined = emp1 + emp2
+    println("Empleado combinado: ${combined.name}, Salario total: ${combined.salary}")
+}
 ```
 
-En este caso, la sobrecarga del operador `+` puede inducir a pensar que simplemente está sumando valores numéricos, cuando en realidad combina nombres y suma salarios, lo que puede ser confuso.
+**Salida:**
+
+```
+Empleado combinado: Alice & Bob, Salario total: 9500.0
+```
+
+En este caso, la sobrecarga del operador `+` combina nombres y suma salarios. Aunque técnicamente funciona, puede ser confuso para otros desarrolladores, ya que el operador `+` generalmente se asocia con una suma o concatenación simple, y no con la combinación de objetos de esta manera. Es mejor proporcionar métodos con nombres claros como `combineWith` para evitar ambigüedades.
+
 :::
+
+## Ejemplo Práctico: Sobrecarga del Operador `invoke` para Invocación de Funciones
+
+Además de los operadores aritméticos, Kotlin permite sobrecargar el operador `invoke`, lo que permite que los objetos se llamen como si fueran funciones. Esto es útil cuando queremos que un objeto se comporte como una función.
+
+```kotlin
+class Greeter(val greeting: String) {
+
+    operator fun invoke(name: String) {
+        println("$greeting, $name!")
+    }
+}
+```
+
+**Explicación del código:**
+
+- **Clase `Greeter`**: Contiene un saludo predefinido.
+- **Sobrecarga de `invoke`**: Permite llamar a una instancia de `Greeter` pasando un nombre, como si fuera una función.
+
+**Uso:**
+
+```kotlin
+fun main() {
+    val greeter = Greeter("¡Hola")
+    greeter("Carlos")  // Output: ¡Hola, Carlos!
+}
+```
+
+**Salida:**
+
+```
+¡Hola, Carlos!
+```
+
+Este enfoque hace que el código sea más conciso y natural, especialmente cuando el objeto representa una acción o comportamiento.
+
+## Conclusión
+
+La sobrecarga de operadores en Kotlin nos permite extender el comportamiento de los operadores existentes para que funcionen de manera intuitiva con nuestros tipos personalizados. Esto puede mejorar significativamente la legibilidad y usabilidad de nuestro código.
+
+Sin embargo, es fundamental usar esta característica con responsabilidad. Asegúrate de que la sobrecarga de operadores respete las expectativas y convenciones comunes asociadas con cada operador. Esto ayudará a mantener el código claro y evitará confusiones para otros desarrolladores que interactúen con tu código.
+
+- **Beneficios:**
+- **Legibilidad mejorada**: Operaciones más naturales y expresivas.
+- **Consistencia**: Los tipos personalizados se comportan de manera similar a los tipos incorporados.
+- **Código más limpio**: Menos código repetitivo y más intuitivo.
+
+- **Precauciones:**
+- **Evitar confusiones**: No redefinir operadores de manera que contradigan su comportamiento esperado.
+- **Claridad sobre conveniencia**: Priorizar la comprensión del código sobre la reducción de caracteres.
+- **Documentación**: Proporcionar documentación clara cuando la sobrecarga pueda no ser obvia.
+
+Al seguir estas prácticas, podrás aprovechar al máximo la sobrecarga de operadores en Kotlin para crear APIs y clases más elegantes y fáciles de usar.
 
 <References references={[
     {
