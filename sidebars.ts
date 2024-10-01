@@ -204,7 +204,9 @@ const sidebars: SidebarsConfig = {
                         'fp/recursion-optimization/trampoline',
                     ],
                 },
+                'fp/ad-hoc/kt',
                 'fp/kinds/higher-kinded-types-kt',
+                'fp/typeclass/kt',
                 {
                     type: 'category',
                     label: 'Functores',
@@ -271,17 +273,7 @@ const sidebars: SidebarsConfig = {
             items: [
                 "testing/tdd",
                 'testing/exceptions-kt',
-                {
-                    label: 'Data-Driven Testing',
-                    type: 'category',
-                    link: {
-                        type: 'doc',
-                        id: 'testing/ddt/ddt-kt',
-                    },
-                    items: [
-                        'testing/ddt/ddt-langs',
-                    ],
-                },
+                'testing/ddt/kt',
                 "testing/assertions/assertions-kt",
                 {
                     label: 'Matchers',
@@ -291,17 +283,7 @@ const sidebars: SidebarsConfig = {
                         id: 'testing/matchers/index',
                     },
                     items: [
-                        {
-                            type: 'category',
-                            label: 'Matchers comunes',
-                            link: {
-                                type: 'doc',
-                                id: 'testing/matchers/common',
-                            },
-                            items: [
-                                'testing/matchers/common-langs',
-                            ],
-                        },
+                        'testing/matchers/common/kt',
                         'testing/matchers/custom/custom',
                         'testing/matchers/composed/composition',
                     ]

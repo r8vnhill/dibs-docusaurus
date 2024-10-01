@@ -11,8 +11,6 @@ import Tabs from "@theme/Tabs";
 <ReadingTime/>
 <GithubRepoLink repo="example-based-testing" user="r8vnhill"/>
 
-<br/>
-
 Retomemos el ejemplo de la lección anterior, y agreguemos algunos requisitos adicionales para los **Bakémon**:
 
 1. Los Bakémon tienen **puntos de salud máximos**.
@@ -22,65 +20,115 @@ Retomemos el ejemplo de la lección anterior, y agreguemos algunos requisitos ad
 
 Abordaremos los primeros tres puntos juntos, ya que están relacionados, aunque también podríamos implementarlos de manera individual.
 
-Comencemos por agregar un módulo ``test-exceptions`` al proyecto, que contendrá las pruebas de los puntos de salud de los Bakémon.
+<details>
+    <summary>
+        Comencemos por agregar un módulo para esta lección...
+    </summary>
 
-<Tabs groupId={"os"}>
-    <TabItem value="Windows" label="Windows">
-        ```powershell
-        New-Item -Path "test-exceptions\src\main\kotlin" -ItemType Directory
-        Set-Content -Path "test-exceptions\build.gradle.kts" -Value "// Intentionally left blank"
-        ```
-    </TabItem>
-    <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-        ```powershell
-        mkdir test-exceptions\src\main\kotlin
-        "// Intentionally left blank" > test-exceptions\build.gradle.kts
-        ```
-    </TabItem>
-    <TabItem value="Unix" label="Unix">
-        ```bash
-        mkdir -p test-exceptions/src/main/kotlin
-        echo "// Intentionally left blank" > test-exceptions/build.gradle.kts
-        ```
-    </TabItem>
-</Tabs>
+    Comencemos por agregar un módulo ``test-exceptions`` al proyecto, que contendrá las pruebas de los puntos de salud de los Bakémon.
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "test-exceptions\src\test\kotlin" -ItemType Directory
+            Set-Content -Path "test-exceptions\build.gradle.kts" -Value "// Intentionally left blank"
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            mkdir -p test-exceptions\src\test\kotlin
+            "// Intentionally left blank" > test-exceptions\build.gradle.kts
+            ```
+        </TabItem>
+        <TabItem value="Unix" label="Unix">
+            ```bash
+            mkdir -p test-exceptions/src/main/kotlin
+            echo "// Intentionally left blank" > test-exceptions/build.gradle.kts
+            ```
+        </TabItem>
+    </Tabs>
+</details>
 
 ## Tests básicos de puntos de salud
 
 ### Paso 1: Mostrar que falla
 
+<details>
+    <summary>
+        Si quieres crear el archivo desde la terminal
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $BaseDir = 'com\github\username'
+            New-Item -Path "test-exceptions\src\test\kotlin\$BaseDir\BakemonTest.kt" -ItemType 'File' -Force
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            $BaseDir = 'com\github\username'
+            ni "test-exceptions\src\test\kotlin\$BaseDir\BakemonTest.kt" -i 'File' -f
+            ```
+        </TabItem>
+        <TabItem value="Unix" label="Unix">
+            ```bash
+            BASE_DIR="com/github/username"
+            touch "test-exceptions/src/test/kotlin/$BASE_DIR/BakemonTest.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
 Comenzamos escribiendo una prueba que falle con las nuevas expectativas.
 
-```kotlin title="test-exceptions/src/main/kotlin/cl/ravenhill/bakemon/BakemonTest.kt"
-package cl.ravenhill.bakemon
-
-import io.kotest.core.spec.style.FreeSpec
-import io.kotest.matchers.shouldBe
-
-private const val BAKEMON_NAME = "Bigachu"
-private const val BAKEMON_MAX_HP = 100
-private const val STARTING_CURRENT_HP = BAKEMON_MAX_HP
-
-class BakemonHpTest : FreeSpec({
-    lateinit var bigachu: Bakemon
-
-    beforeTest {
-        bigachu = createBakemon(BAKEMON_NAME, BAKEMON_MAX_HP)
-    }
-
-    "Un Bakémon" - {
-        "debería tener salud máxima" {
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        "should have a maximum health property" {
             // highlight-next-line
             bigachu.maxHealthPoints shouldBe BAKEMON_MAX_HP
         }
 
-        "debería empezar con la salud máxima" {
+        "should start with the maximum health value" {
             // highlight-next-line
             bigachu.currentHealthPoints shouldBe STARTING_CURRENT_HP
         }
-    }
-})
-```
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        package cl.ravenhill.bakemon
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        private const val BAKEMON_NAME = "Bigachu"
+        private const val BAKEMON_MAX_HP = 100
+        private const val STARTING_CURRENT_HP = BAKEMON_MAX_HP
+
+        class BakemonHpTest : FreeSpec({
+            lateinit var bigachu: Bakemon
+
+            beforeTest {
+                bigachu = createBakemon(BAKEMON_NAME, BAKEMON_MAX_HP)
+            }
+
+            "A Bakémon" - {
+                "should have a maximum health property" {
+                    // highlight-next-line
+                    bigachu.maxHealthPoints shouldBe BAKEMON_MAX_HP
+                }
+
+                "should start with the maximum health value" {
+                    // highlight-next-line
+                    bigachu.currentHealthPoints shouldBe STARTING_CURRENT_HP
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
 
 La prueba fallará porque `maxHealthPoints` y `currentHealthPoints` aún no están implementados.
 
@@ -88,17 +136,21 @@ La prueba fallará porque `maxHealthPoints` y `currentHealthPoints` aún no est�
 
 Para que el test pase, implementamos las propiedades requeridas en la interfaz `Bakemon` y en la clase abstracta `AbstractBakemon`.
 
-```kotlin title="src/main/kotlin/cl/ravenhill/bakemon/Bakemon.kt"
+```kotlin title="src/main/kotlin/com/github/username/bakemon/Bakemon.kt"
+package com.github.username.bakemon
+
 interface Bakemon {
     val name: String
     val maxHealthPoints: Int
-    val currentHealthPoints: Int
+    var currentHealthPoints: Int
 }
 ```
 
 En la clase `AbstractBakemon`, definimos `currentHealthPoints` como un `val`, calculado a partir de `maxHealthPoints`, lo que garantiza que no pueda ser modificado directamente.
 
-```kotlin title="src/main/kotlin/cl/ravenhill/bakemon/AbstractBakemon.kt"
+```kotlin title="src/main/kotlin/com/github/username/bakemon/AbstractBakemon.kt"
+package com.github.username.bakemon
+
 abstract class AbstractBakemon(
     override val name: String,
     override val maxHealthPoints: Int
@@ -108,7 +160,7 @@ abstract class AbstractBakemon(
 ```
 
 :::note
-Usamos `val` en lugar de `var` para evitar modificaciones directas en la propiedad `currentHealthPoints`, asegurando así un comportamiento más predecible.
+Usamos `val` en lugar de `var` para evitar modificaciones directas en la propiedad `currentHealthPoints`, asegurando así un comportamiento más predecible antes de refactorizar.
 :::
 
 ### Paso 3: Refactorización
@@ -119,7 +171,9 @@ Este comportamiento introduce un riesgo, ya que estamos permitiendo que las subc
 
 Para resolver este problema, podemos declarar `maxHealthPoints` como `final`, lo que evitará que las subclases lo sobrescriban y mantendrá la coherencia entre `maxHealthPoints` y `currentHealthPoints`.
 
-```kotlin title="src/main/kotlin/cl/ravenhill/bakemon/AbstractBakemon.kt"
+```kotlin title="src/main/kotlin/com/github/username/bakemon/AbstractBakemon.kt"
+package com.github.username.bakemon
+
 abstract class AbstractBakemon(
     override val name: String,
     // highlight-next-line
@@ -148,78 +202,102 @@ Es importante destacar que estos no son los únicos métodos disponibles para te
 
 En este paso, comenzamos creando un conjunto de pruebas para verificar el comportamiento de un Bakémon respecto a sus puntos de salud. Las pruebas incluyen validaciones para asegurarse de que los puntos de salud no puedan ser negativos ni exceder el máximo definido, y que se inicie correctamente en el valor máximo permitido.
 
-```kotlin title="test-exceptions/src/main/kotlin/cl/ravenhill/bakemon/BakemonHpTest.kt"
-package cl.ravenhill.bakemon
-
-import io.kotest.assertions.throwables.shouldThrowUnit
-import io.kotest.core.spec.style.FreeSpec
-import io.kotest.matchers.shouldBe
-
-private const val BAKEMON_NAME = "Bigachu"
-private const val BAKEMON_MAX_HP = 100
-private const val STARTING_CURRENT_HP = BAKEMON_MAX_HP
-private const val NEW_CURRENT_HP = 50
-private const val NEGATIVE_CURRENT_HP = -1
-private const val OVER_MAX_CURRENT_HP = BAKEMON_MAX_HP + 1
-
-class BakemonHpTest : FreeSpec({
-    lateinit var bigachu: Bakemon
-
-    beforeTest {
-        // Creamos un nuevo Bakémon con su nombre y puntos de salud máximos
-        bigachu = createBakemon(BAKEMON_NAME, BAKEMON_MAX_HP)
-    }
-
-    "A Bakémon" - {
-        "should have a maximum health property" {
-            bigachu.maxHealthPoints shouldBe BAKEMON_MAX_HP
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="src/test/kotlin/com/github/username/bakemon/BakemonHpTest.kt"
+        "cannot be set to a negative value" {
+            shouldThrowUnit<IllegalArgumentException> {
+                bigachu.currentHealthPoints = NEGATIVE_CURRENT_HP
+            }.message shouldBe "Current health points is not in [0, $BAKEMON_MAX_HP]: $NEGATIVE_CURRENT_HP"
         }
 
-        "should have current health property that" - {
-            "starts at the maximum health value" {
-                bigachu.currentHealthPoints shouldBe STARTING_CURRENT_HP
-            }
-
-            "can be set to a valid non-negative value" {
-                bigachu.currentHealthPoints = NEW_CURRENT_HP
-                bigachu.currentHealthPoints shouldBe NEW_CURRENT_HP
-            }
-
-            "cannot be set to a negative value" {
-                shouldThrowUnit<IllegalArgumentException> {
-                    bigachu.currentHealthPoints = NEGATIVE_CURRENT_HP
-                }.message shouldBe "Current health points is not in [0, $BAKEMON_MAX_HP]: $NEGATIVE_CURRENT_HP"
-            }
-
-            "cannot be set to a value exceeding the maximum health" {
-                shouldThrowUnit<IllegalArgumentException> {
-                    bigachu.currentHealthPoints = OVER_MAX_CURRENT_HP
-                }.message shouldBe "Current health points is not in [0, $BAKEMON_MAX_HP]: $OVER_MAX_CURRENT_HP"
-            }
+        "cannot be set to a value exceeding the maximum health" {
+            shouldThrowUnit<IllegalArgumentException> {
+                bigachu.currentHealthPoints = OVER_MAX_CURRENT_HP
+            }.message shouldBe "Current health points is not in [0, $BAKEMON_MAX_HP]: $OVER_MAX_CURRENT_HP"
         }
-    }
-})
-```
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="src/test/kotlin/com/github/username/bakemon/BakemonHpTest.kt"
+        package cl.ravenhill.bakemon
+
+        import io.kotest.assertions.throwables.shouldThrowUnit
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        private const val BAKEMON_NAME = "Bigachu"
+        private const val BAKEMON_MAX_HP = 100
+        private const val STARTING_CURRENT_HP = BAKEMON_MAX_HP
+        private const val NEW_CURRENT_HP = 50
+        private const val NEGATIVE_CURRENT_HP = -1
+        private const val OVER_MAX_CURRENT_HP = BAKEMON_MAX_HP + 1
+
+        class BakemonHpTest : FreeSpec({
+            lateinit var bigachu: Bakemon
+
+            beforeTest {
+                bigachu = createBakemon(BAKEMON_NAME, BAKEMON_MAX_HP)
+            }
+
+            "A Bakémon" - {
+                "should have a maximum health property" {
+                    bigachu.maxHealthPoints shouldBe BAKEMON_MAX_HP
+                }
+
+                "should have current health property that" - {
+                    "starts at the maximum health value" {
+                        bigachu.currentHealthPoints shouldBe STARTING_CURRENT_HP
+                    }
+
+                    "can be set to a valid non-negative value" {
+                        bigachu.currentHealthPoints = NEW_CURRENT_HP
+                        bigachu.currentHealthPoints shouldBe NEW_CURRENT_HP
+                    }
+
+                    // highlight-start
+                    "cannot be set to a negative value" {
+                        shouldThrowUnit<IllegalArgumentException> {
+                            bigachu.currentHealthPoints = NEGATIVE_CURRENT_HP
+                        }.message shouldBe "Current health points is not in [0, $BAKEMON_MAX_HP]: $NEGATIVE_CURRENT_HP"
+                    }
+
+                    "cannot be set to a value exceeding the maximum health" {
+                        shouldThrowUnit<IllegalArgumentException> {
+                            bigachu.currentHealthPoints = OVER_MAX_CURRENT_HP
+                        }.message shouldBe "Current health points is not in [0, $BAKEMON_MAX_HP]: $OVER_MAX_CURRENT_HP"
+                    }
+                    // highlight-end
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
 
 ### Paso 2: Hacer que funcione
 
 Para corregir el problema, cambiamos la propiedad `currentHealthPoints` de `val` a `var` en la interfaz `Bakemon` para permitir la modificación. Luego, la implementamos en la clase `AbstractBakemon`, agregando una validación que asegure que el valor asignado esté dentro del rango permitido (de 0 a `maxHealthPoints`).
 
-```kotlin title="src/main/kotlin/cl/ravenhill/bakemon/Bakemon.kt"
+```kotlin title="src/main/kotlin/com/github/username/bakemon/Bakemon.kt"
+package com.github.username.bakemon
+
 interface Bakemon {
     val name: String
     val maxHealthPoints: Int
-    // Cambiamos currentHealthPoints de val a var para que sea modificable
+    // highlight-next-line
     var currentHealthPoints: Int
 }
 ```
 
-```kotlin title="src/main/kotlin/cl/ravenhill/bakemon/AbstractBakemon.kt"
+```kotlin title="src/main/kotlin/com/github/username/bakemon/AbstractBakemon.kt"
+package com.github.username.bakemon
+
 abstract class AbstractBakemon(
     override val name: String,
     final override val maxHealthPoints: Int
 ) : Bakemon {
-    // Implementamos la propiedad con validación para asegurar que esté dentro del rango
+    // highlight-start
     override var currentHealthPoints: Int = maxHealthPoints
         set(value) {
             require(value in 0..maxHealthPoints) {
@@ -227,20 +305,26 @@ abstract class AbstractBakemon(
             }
             field = value
         }
+    // highlight-end
 }
 ```
 
 La validación en el `setter` garantiza que no se puedan asignar valores negativos ni mayores al valor máximo de salud.
 
-## In suma
+## ¿Qué hemos aprendido?
 
-En esta lección, hemos abordado cómo implementar pruebas para asegurar el comportamiento correcto de los puntos de salud en los **Bakémon**, asegurándonos de que:
+En esta lección, hemos abordado la implementación de **tests para excepciones** y hemos trabajado con propiedades importantes de los **Bakémon**, como los **puntos de salud máximos y actuales**. A lo largo del proceso, hemos aprendido lo siguiente:
 
-1. Los puntos de salud no puedan ser negativos ni exceder el máximo permitido.
-2. El estado inicial de un **Bakémon** comience con su salud máxima.
-3. Se lanza una excepción adecuada si los valores de salud están fuera de los límites permitidos.
+1. **Testing basado en excepciones**:
+    - Utilizamos herramientas de **Kotest** como `shouldThrowUnit` para verificar que nuestro código lance excepciones cuando ocurren errores en tiempo de ejecución.
+    - Nos aseguramos de que las excepciones que se lanzan contienen los mensajes esperados, lo cual es importante para una buena retroalimentación en caso de errores.
+2. **Refactorización del código**:
+    - Implementamos propiedades como `maxHealthPoints` y `currentHealthPoints`, garantizando la consistencia entre ellas.
+    - Al aplicar el principio de **sustitución de Liskov**, prevenimos modificaciones de propiedades importantes como `maxHealthPoints` desde subclases, lo que asegura un comportamiento consistente en toda la jerarquía de clases.
+3. **Validaciones de integridad en el código**:
+    - Añadimos validaciones para que los puntos de salud actuales de un Bakémon estén siempre dentro de un rango permitido (0 y `maxHealthPoints`), asegurando así que los objetos siempre estén en un estado válido.
 
-## Ejemplos en otros frameworks
+Este enfoque nos permite no solo mejorar la **robustez** de nuestras implementaciones mediante pruebas exhaustivas, sino también seguir buenas prácticas de diseño como mantener las clases coherentes y seguras al evitar modificaciones inesperadas.
 
 <div className="language-card-container">
     <LanguageCard

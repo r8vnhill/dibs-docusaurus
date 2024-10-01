@@ -116,13 +116,14 @@ const renderReference = (reference: Reference) => {
         );
     }
 
+    // [1] “Expect / Should - Chai”. Accedido: 1 de octubre de 2024. [En línea]. Disponible en: https://www.chaijs.com/api/bdd/#method_language-chains
     if (reference.type === 'web') {
         return (
             <li key={reference.id}>
                 {renderTypeEmoji(reference.type)}{' '}
-                {reference.siteOrAuthor && <strong>{reference.siteOrAuthor}.</strong>} "{reference.title}"{' '}
-                {reference.publishedDate && `En ${reference.siteOrAuthor} el ${reference.publishedDate}.`}{' '}
-                {reference.accessedDate && `Accedido el ${reference.accessedDate}.`}{' '}
+                {<em>"{reference.title}."</em>}{` `}
+                {`Accedido: ${reference.accessedDate}.`}{` `}
+                {`[En línea]. Disponible en: `}
                 {reference.url && (
                     <a href={reference.url} target="_blank" rel="noopener noreferrer">
                         {reference.url}
