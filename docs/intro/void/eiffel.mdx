@@ -1,0 +1,123 @@
+---
+title: Void-safety en Eiffel
+---
+import References from "@site/src/components/ReferencesComponent";
+import ReadingTime from '@site/src/components/ReadingTime';
+
+<ReadingTime/>
+
+**Eiffel** es uno de los primeros lenguajes en abordar de manera explícita el problema de **void-safety** mediante su sistema de contratos. Desde su creación, Eiffel introdujo un enfoque formal para manejar la nulabilidad a través de [**Design by Contract (DbC)**](https://en.wikipedia.org/wiki/Design_by_contract), lo que ayudó a evitar los problemas comunes causados por referencias nulas.
+
+Kotlin también incluye **Design by Contract** de forma nativa, lo que permite definir contratos en el código para establecer garantías sobre cómo se ejecutan ciertas funciones.
+
+<details>
+    <summary>
+        Design by Contract (DbC) en Kotlin
+    </summary>
+
+    Kotlin ofrece soporte nativo para **Design by Contract** a través de la API `kotlin.contracts`. Los contratos permiten definir comportamientos específicos de las funciones y asegurar el cumplimiento de ciertas condiciones. Con `kotlin.contracts`, es posible declarar **precondiciones**, **postcondiciones** y otras reglas que el compilador puede utilizar para optimizar y asegurar el código.
+
+    #### Uso de Contratos en Kotlin
+
+    La API de contratos de Kotlin puede utilizarse para garantizar, por ejemplo, que una función siempre se ejecute antes de continuar con el código o que un valor no sea nulo después de una operación. Un ejemplo común es garantizar que una función de inicialización se llame en su totalidad antes de que se continúe con la ejecución del código.
+
+    #### Ejemplo: Uso de `callsInPlace`
+
+    En Kotlin, podemos usar contratos como `callsInPlace` para definir que una lambda pasada a una función se ejecutará en un lugar específico y un número de veces determinado, lo que ayuda al compilador a entender cómo se comportará la función y si es seguro que el código sea optimizado o si se puede inferir un comportamiento predecible.
+
+    ```kotlin
+    import kotlin.contracts.*
+
+    inline fun runOnce(block: () -> Unit) {
+        contract {
+            callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+        }
+        block()
+    }
+
+    fun main() {
+        var number = 10
+        runOnce {
+            number += 5
+        }
+        println(number) // Output: 15
+    }
+    ```
+
+    En este ejemplo:
+
+    - El contrato `callsInPlace(block, InvocationKind.EXACTLY_ONCE)` garantiza que el bloque lambda se ejecutará exactamente una vez.
+    - Gracias a este contrato, el compilador sabe que cualquier operación dentro del bloque afectará de manera predecible las variables fuera de la función.
+
+    #### Garantía de No-Nulabilidad
+
+    Los contratos también se pueden usar para garantizar que una variable no será nula después de la verificación de una condición. Por ejemplo, podemos usar `returns` para especificar que, si una función devuelve un valor determinado, entonces una condición debe haberse cumplido.
+
+    ```kotlin
+    import kotlin.contracts.*
+
+    fun requireNotNull(value: Any?) {
+        contract {
+            returns() implies (value != null)
+        }
+        if (value == null) {
+            throw IllegalArgumentException("Value cannot be null")
+        }
+    }
+
+    fun main() {
+        val maybeNull: String? = "Hello"
+        requireNotNull(maybeNull)
+        // A partir de aquí, el compilador sabe que maybeNull no es nulo
+        println(maybeNull.length) // No requiere verificación de null
+    }
+    ```
+
+    En este caso, el contrato `returns() implies (value != null)` le asegura al compilador que si la función `requireNotNull` retorna sin lanzar una excepción, entonces `value` no puede ser nulo. Esto elimina la necesidad de verificaciones de nulabilidad adicionales después de la llamada a `requireNotNull`.
+</details>
+
+## Enfoque de void-safety en Eiffel
+
+Eiffel hace uso de contratos para garantizar que las referencias nunca sean nulas a menos que se especifique de forma explícita. El lenguaje asegura que todos los punteros se inicialicen correctamente, y permite declarar si una referencia puede o no ser nula, gestionando estas restricciones con una verificación en tiempo de compilación.
+
+- **Precondiciones y postcondiciones**: Eiffel utiliza precondiciones y postcondiciones para definir los estados válidos de un objeto antes y después de la ejecución de un método. Esto ayuda a que las referencias nulas sean controladas explícitamente.
+
+```eiffel showLineNumbers
+class
+    PERSON
+
+feature
+    name: STRING
+
+    set_name (a_name: STRING)
+        require
+            not_void: a_name /= Void -- Precondición: a_name no puede ser nulo
+        do
+            name := a_name
+        ensure
+            name_assigned: name = a_name -- Postcondición: name debe ser asignado
+        end
+end
+```
+
+En este ejemplo de Eiffel, la precondición **`not_void`** garantiza que el parámetro `a_name` no sea nulo antes de ejecutar el método, lo que evita errores de nulidad durante la ejecución.
+
+## Comparación: Eiffel vs Kotlin
+
+| Aspecto                                   | Eiffel                                                                                                  | Kotlin                                                                                          |
+|-------------------------------------------|---------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| **Pionero en void-safety**                | Eiffel fue uno de los primeros lenguajes en abordar void-safety explícitamente.                         | Kotlin ha adoptado un enfoque moderno, inspirado en Eiffel, con tipos anulables y no anulables. |
+| **Verificación en tiempo de compilación** | Eiffel utiliza contratos para verificar la nulabilidad y otros aspectos antes de la ejecución.          | Kotlin usa un sistema de tipos fuerte para evitar nulos en tiempo de compilación.               |
+| **Manejo de nulabilidad**                 | Contratos y precondiciones/postcondiciones aseguran que las referencias no sean nulas si no se permite. | Tipos anulables (`String?`) y operadores (`?.`, `?:`) para manejar nulos.                       |
+| **Lidiando con valores nulos**            | El lenguaje fuerza la definición explícita de la nulabilidad en los contratos.                          | El sistema de tipos diferencia explícitamente entre referencias anulables y no anulables.       |
+| **Error en tiempo de ejecución**          | Eiffel previene errores en tiempo de ejecución mediante el uso de contratos.                            | Kotlin previene `NullPointerException` usando un sistema de tipos fuerte.                       |
+
+<References references={[
+    {
+        title: "Void-safe programming in Eiffel",
+        type: "web",
+        accessedDate: "1 de octubre de 2024",
+        siteOrAuthor: "eiffel.org",
+        url: "https://www.eiffel.org/doc/eiffel/Void-safe_programming_in_Eiffel"
+    }
+]}/>

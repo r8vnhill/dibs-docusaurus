@@ -1,8 +1,10 @@
 ---
 title: Higher-Kinded Types
 ---
-import References from "@site/src/components/ReferencesComponent";
 import ReadingTime from '@site/src/components/ReadingTime';
+import References from "@site/src/components/ReferencesComponent";
+import TabItem from "@theme/TabItem";
+import Tabs from "@theme/Tabs";
 
 <ReadingTime/>
 
@@ -36,10 +38,46 @@ Sin embargo, podemos **simular** este comportamiento utilizando un patrón que i
 
 ## El Concepto de `Kind`
 
+<details>
+    <summary>
+        Comencemos por crear un módulo para la lección
+    </summary>
+
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $BaseDir = 'com\github\username'
+            New-Item -Path "hkt\src\main\kotlin\$BaseDir\kinds\Kind.kt" -ItemType 'File' -Force
+            Set-Content -Path 'hkt\build.gradle.kts' -Value '// Intentionally left blank'
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            $BaseDir = 'com\github\username'
+            ni "hkt\src\main\kotlin\$BaseDir\kinds\Kind.kt" -i 'File' -Force
+            '// Intentionally left blank' > 'hkt\build.gradle.kts'
+            ```
+        </TabItem>
+        <TabItem value="Unix" label="Unix">
+            ```bash
+            BaseDir='com/github/username'
+            mkdir -p "hkt/src/main/kotlin/$BaseDir/kinds"
+            touch "hkt/src/main/kotlin/$BaseDir/kinds/Kind.kt"
+            echo '// Intentionally left blank' > 'hkt/build.gradle.kts'
+            ```
+        </TabItem>
+    </Tabs>
+
+    Recuerda añadir el módulo a tu ``settings.gradle.kts``.
+</details>
+
 La interfaz `Kind<K, out A>` sirve como un contenedor que nos permite representar un constructor de tipos aplicado a un tipo concreto en Kotlin.
 
-```kotlin
-interface Kind<K, out A>
+```kotlin showLineNumbers title="hkt/src/main/kotlin/com/github/username/kinds/Kind.kt"
+package com.github.username.kinds
+
+interface Kind<F, out A>
 ```
 
 - **`K`**: Representa el constructor de tipos.
@@ -49,46 +87,85 @@ Al hacer que nuestros tipos genéricos implementen `Kind`, podemos escribir func
 
 ## Ejemplo Simple: El Contenedor `Box`
 
+<details>
+    <summary>Si quieres crear el archivo desde la terminal...</summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path 'hkt\src\main\kotlin\$BaseDir\kinds\Box.kt' -ItemType 'File'
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            ni 'hkt\src\main\kotlin\$BaseDir\kinds\Box.kt' -i 'File'
+            ```
+        </TabItem>
+        <TabItem value="Unix" label="Unix">
+            ```bash
+            touch 'hkt/src/main/kotlin/$BaseDir/kinds/Box.kt'
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
 Supongamos que tenemos una clase `Box` que actúa como un contenedor genérico para un valor de tipo `A`.
 
 ### Definición de `Box` implementando `Kind`
 
-```kotlin
-class Box<out A>(val value: A) : Kind<Box.K, A> {
-    object K
+```kotlin showLineNumbers title="hkt/src/main/kotlin/com/github/username/kinds/Box.kt"
+package com.github.username.kinds
+
+data class Box<out A>(val value: A) : Kind<Box.Of, A> {
+    object Of
 }
 ```
 
 En este caso:
 
-- **`Box.K`** es un objeto que actúa como identificador único para el constructor de tipos `Box`.
-- La clase `Box` implementa `Kind<Box.K, A>`, indicando que es un constructor de tipos aplicado al tipo `A`.
+- **`Box.Of`** es un objeto que actúa como identificador único para el constructor de tipos `Box`. De esta forma, podemos leer ``Kind<Box.Of, A>`` como "a `Box` of `A`".
+- La clase `Box` implementa `Kind<Box.Of, A>`, indicando que es un constructor de tipos aplicado al tipo `A`.
 
 ### Función Genérica que Opera sobre `Kind`
 
-Podemos escribir una función que opere sobre cualquier instancia de `Kind<Box.K, A>`.
+Podemos escribir una función que opere sobre cualquier instancia de `Kind<Box.Of, A>`.
 
-```kotlin
-fun <A> getValue(box: Kind<Box.K, A>): A {
-    val actualBox = box as Box<A>
-    return actualBox.value
-}
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="hkt/src/main/kotlin/com/github/username/kinds/Box.kt"
+        fun <A> getValue(box: Kind<Box.Of, A>): A {
+            require(box is Box<A>) { "Invalid Box" }
+            return box.value
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="hkt/src/main/kotlin/com/github/username/kinds/Box.kt"
+        package com.github.username.kinds
 
-- Aceptamos un `Kind<Box.K, A>`, lo que nos permite trabajar con cualquier `Box` que contenga un tipo `A`.
-- Hacemos un **cast** a `Box<A>` para acceder al valor interno.
+        data class Box<out A>(val value: A) : Kind<Box.Of, A> {
+            object Of
+        }
 
-### Uso de la Función
+        fun <A> getValue(box: Kind<Box.Of, A>): A {
+            require(box is Box<A>) { "Invalid Box" }
+            return box.value
+        }
 
-```kotlin
-fun main() {
-    val intBox: Kind<Box.K, Int> = Box(42)
-    val stringBox: Kind<Box.K, String> = Box("Hello")
+        fun main() {
+            val intBox: Kind<Box.Of, Int> = Box(420)
+            val stringBox: Kind<Box.Of, String> = Box("Hello")
 
-    println(getValue(intBox))      // Output: 42
-    println(getValue(stringBox))   // Output: Hello
-}
-```
+            println(getValue(intBox))      // Output: 420
+            println(getValue(stringBox))   // Output: Hello
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+- **[1]** Aceptamos un `Kind<Box.Of, A>`, lo que nos permite trabajar con cualquier `Box` que contenga un tipo `A`.
+- **[2]** Verificamos que el `box` sea realmente una instancia de `Box<A>` antes de extraer el valor.
+- **[3]** Como ya hemos verificado el tipo, el compilador infiere que `box` es de tipo `Box<A>` y podemos devolver `box.value`.
 
 ## Explicación del Patrón `Kind`
 
@@ -102,92 +179,48 @@ El uso de `Kind<F, A>` nos permite simular higher-kinded types en Kotlin al:
 - **Abstracción**: Podemos escribir funciones genéricas que trabajan con diferentes tipos de contenedores.
 - **Reutilización**: Evitamos duplicar código para cada tipo específico.
 
-### Limitaciones
+### Limitaciones del Patrón `Kind`
 
-- **Casting Explícito**: Necesitamos hacer casts explícitos, lo que puede introducir errores en tiempo de ejecución si no se maneja correctamente.
-- **Menor Seguridad de Tipos**: Kotlin no puede garantizar en tiempo de compilación que el cast sea seguro.
+Si bien el patrón `Kind` nos permite simular **higher-kinded types** en Kotlin, existen varias limitaciones importantes:
 
-## Otro Ejemplo: El Contenedor `Wrapper`
+1. **Casting Explícito**: Debido a la falta de soporte nativo para higher-kinded types en Kotlin, necesitamos realizar **casts explícitos** para convertir un `Kind<F, A>` en su tipo subyacente (como `Box<A>`). Esto introduce el riesgo de errores en tiempo de ejecución si el cast no es válido.
 
-Veamos otro ejemplo con una clase `Wrapper`.
+    ```kotlin
+    require(box is Box<A>) { "Invalid Box" }
+    ```
 
-### Definición de `Wrapper`
+2. **Menor Seguridad de Tipos**: A diferencia de lenguajes como Haskell o Scala que soportan higher-kinded types de forma nativa, en Kotlin no podemos garantizar en tiempo de compilación que `Kind<F, A>` pertenezca a un tipo específico. Esto reduce la **seguridad de tipos** y puede derivar en errores que solo se detecten en tiempo de ejecución.
 
-```kotlin
-class Wrapper<out A>(val content: A) : Kind<Wrapper.K, A> {
-    object K
-}
-```
+3. **Verificación en Tiempo de Ejecución**: Como el compilador no puede validar completamente los tipos subyacentes de `Kind`, debemos confiar en la verificación en **tiempo de ejecución** mediante `require`. Esto puede ralentizar el rendimiento en escenarios donde se esperan múltiples verificaciones.
 
-### Función Genérica que Opera sobre `Kind`
+4. **Verboso y Poco Intuitivo**: El uso del patrón `Kind` en Kotlin requiere una mayor cantidad de código y puede ser **menos intuitivo** que los mecanismos nativos disponibles en otros lenguajes. Lxs desarrolladorxs deben implementar manualmente los checks de tipo y conversiones, lo que incrementa la complejidad del código.
 
-Podemos definir una función que envuelva un valor en una lista utilizando `Wrapper`.
+5. **Menos Flexibilidad en Inferencia de Tipos**: Al trabajar con el patrón `Kind`, Kotlin no siempre puede inferir automáticamente los tipos de manera tan flexible como lo haría en lenguajes que soportan higher-kinded types de forma nativa. Esto puede llevar a más declaraciones explícitas de tipos, lo cual incrementa la verbosidad del código.
 
-```kotlin
-fun <A> wrapInList(wrapper: Kind<Wrapper.K, A>): List<A> {
-    val actualWrapper = wrapper as Wrapper<A>
-    return listOf(actualWrapper.content)
-}
-```
+Estas limitaciones hacen que, aunque el patrón `Kind` sea útil, no sea tan poderoso ni seguro como los **higher-kinded types** nativos en otros lenguajes funcionales, y puede requerir soluciones adicionales para garantizar un manejo correcto de tipos.
 
-### Uso de la Función
+## ¿Qué hemos aprendido?
 
-```kotlin
-fun main() {
-    val intWrapper: Kind<Wrapper.K, Int> = Wrapper(7)
-    val list = wrapInList(intWrapper)
-    println(list)  // Output: [7]
-}
-```
+En esta lección, hemos explorado el concepto de **Higher-Kinded Types (HKT)**, un mecanismo de abstracción común en lenguajes funcionales que permite operar sobre constructores de tipos de manera genérica. Aunque Kotlin no soporta HKT de forma nativa, hemos visto cómo podemos **simular este comportamiento** utilizando el patrón `Kind`.
 
-## Limitaciones y Consideraciones
+- **Simulación de HKT en Kotlin**: Al implementar una interfaz `Kind<F, A>`, podemos trabajar de manera genérica con diferentes tipos de contenedores, como `Box`. Este patrón nos permite escribir funciones que operan sobre constructores de tipos sin conocer su implementación interna.
+- **Ventajas**: El patrón `Kind` facilita la **abstracción** y **reutilización** del código, permitiendo trabajar con una variedad de tipos de contenedores sin duplicar funciones específicas para cada tipo.
+- **Limitaciones**: Sin embargo, este enfoque tiene importantes limitaciones:
+    - **Casting explícito** introduce riesgos de errores en tiempo de ejecución.
+    - **Menor seguridad de tipos** y la necesidad de realizar verificaciones dinámicas reducen la fiabilidad y seguridad en tiempo de compilación.
+    - El código puede volverse **verboso** y menos intuitivo en comparación con lenguajes que soportan HKT nativamente, como Haskell o Scala.
 
-Aunque este patrón nos permite simular higher-kinded types, hay algunas limitaciones:
-
-- **Complejidad Añadida**: El código puede volverse más complejo y menos legible debido a los casts y la verbosidad.
-- **Seguridad de Tipos**: No tenemos la misma seguridad de tipos en tiempo de compilación que en lenguajes que soportan higher-kinded types nativamente.
-- **Inferencia de Tipos**: Kotlin puede tener dificultades para inferir los tipos en contextos más complejos.
-
-### ¿Qué hemos Aprendido?
-
-En esta lección, exploramos el concepto de **higher-kinded types** (tipos de orden superior), que nos permiten abstraer sobre constructores de tipos y escribir código genérico y reutilizable que puede operar sobre múltiples estructuras de datos. Aunque Kotlin no soporta higher-kinded types de forma nativa como lo hacen lenguajes como **Haskell**, **Scala** o **Idris**, utilizamos el patrón `Kind<F, A>` para simular este comportamiento.
-
-### Puntos clave:
-
-1. **Higher-Kinded Types**: Un higher-kinded type es un tipo que toma como parámetro un constructor de tipos, permitiendo mayor flexibilidad y abstracción en el código genérico.
-2. **Limitaciones en Kotlin**: Kotlin no tiene soporte nativo para higher-kinded types, lo que significa que no podemos definir directamente funciones o clases que acepten constructores de tipos como parámetros.
-3. **Patrón `Kind` en Kotlin**:
-    - Utilizamos `Kind<F, A>` para encapsular un constructor de tipos y su parámetro en una interfaz común, permitiendo simular los higher-kinded types en Kotlin.
-    - Vimos ejemplos con clases simples como `Box` y `Wrapper`, que implementan `Kind` para demostrar cómo aplicar este patrón.
-4. **Ventajas y Limitaciones**:
-    - **Ventajas**: Abstracción, reutilización de código, y la capacidad de escribir funciones genéricas que operan sobre diferentes tipos.
-    - **Limitaciones**: Necesidad de hacer casts explícitos, menor seguridad de tipos y complejidad añadida en comparación con lenguajes que soportan higher-kinded types nativamente.
-
-Al finalizar la lección, aprendimos cómo manejar este concepto avanzado en Kotlin, simulando higher-kinded types con el patrón `Kind`, y entendimos tanto los beneficios como las limitaciones que trae consigo.
+Finalmente, hemos aprendido que mientras que Kotlin puede emular HKT a través del patrón `Kind`, no es tan poderoso ni seguro como en lenguajes funcionales dedicados.
 
 <References references={[
     {
-        title: "",
-        url: "",
-        type: "article",
-        author: "",
-        publishedDate: "",
-    },
-    {
-        accessedDate: '',
-        siteOrAuthor: '',
-        title: '',
-        type: 'web',
-        url: '',
-    },
-    {
-        title: "",
-        bookTitle: "",
-        pages: "",
-        location: "",
-        publisher: "",
-        year: "",
+        title: "C. Higher-kinded types",
+        bookTitle: "Functional Programming in Kotlin",
+        pages: "460–466",
+        location: "Shelter Island, NY",
+        publisher: "Manning Publications Co. LLC",
+        year: "2021",
         type: "book",
-        author: ''
+        author: 'Marco Vermeulen, Rúnar Bjarnason, and Paul Chiusano',
     },
 ]}/>

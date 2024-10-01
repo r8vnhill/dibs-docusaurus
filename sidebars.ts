@@ -43,17 +43,7 @@ const sidebars: SidebarsConfig = {
                         },
                         'intro/exceptions/exceptions-kt',
                         'intro/generics/generics-kt',
-                        {
-                            type: 'category',
-                            label: 'Void safety',
-                            link: {
-                                type: 'doc',
-                                id: 'intro/void/void-safety',
-                            },
-                            items: [
-                                "intro/void/void-safety-langs",
-                            ]
-                        },
+                        'intro/void/void-safety',
                     ]
                 },
             ],
@@ -312,17 +302,7 @@ const sidebars: SidebarsConfig = {
                                 'testing/matchers/common-langs',
                             ],
                         },
-                        {
-                            type: 'category',
-                            label: 'Matchers personalizados',
-                            link: {
-                                type: 'doc',
-                                id: 'testing/matchers/custom',
-                            },
-                            items: [
-                                "testing/matchers/custom-langs",
-                            ]
-                        },
+                        'testing/matchers/custom/custom',
                         'testing/matchers/composed/composition',
                     ]
                 },
@@ -333,7 +313,9 @@ const sidebars: SidebarsConfig = {
                         type: 'doc',
                         id: 'testing/pbt/index',
                     },
-                    items: [],
+                    items: [
+                        'testing/pbt/concatenation/str-cat',
+                    ],
                 },
             ],
         },
