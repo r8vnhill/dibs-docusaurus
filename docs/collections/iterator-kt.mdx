@@ -10,11 +10,27 @@ import Exercise from "../../src/components/exercise/Exercise";
 import References from "../../src/components/ReferencesComponent";
 import ReadingTime from "../../src/components/ReadingTime";
 import CodeBlock from '@theme/CodeBlock';
+import Mermaid from '@theme/Mermaid';
 
 <ReadingTime/>
 
-El **Iterator pattern** es un [patrón de diseño de comportamiento](https://en.wikipedia.org/wiki/Behavioral_pattern) que permite recorrer los elementos de una colección de manera secuencial, sin exponer su representación interna (por ejemplo, si es una lista, conjunto o árbol). Este patrón proporciona una interfaz común para acceder a los elementos, lo que facilita recorrer estructuras de datos de manera consistente y uniforme.
+El **Iterator pattern** es un patrón de diseño de comportamiento que permite recorrer los elementos de una colección de manera secuencial, sin exponer su representación interna (por ejemplo, si es una lista, conjunto o árbol). Este patrón proporciona una interfaz común para acceder a los elementos, lo que facilita recorrer estructuras de datos de manera consistente y uniforme.
 
+<details>
+    <summary>Tipos de patrones de diseño</summary>
+
+    Los **patrones de diseño** se clasifican en varias categorías, dependiendo del tipo de problema que resuelven y la forma en que lo abordan. Estas categorías son las siguientes:
+
+    1. [**Patrones Creacionales**](https://refactoring.guru/design-patterns/creational-patterns): Están enfocados en los mecanismos de creación de objetos, asegurando que el proceso sea adecuado para la situación. Ejemplos comunes incluyen el patrón **Singleton**, que garantiza una única instancia de una clase, y el **Builder**, que facilita la construcción de objetos complejos.
+
+    2. [**Patrones Estructurales**](https://refactoring.guru/design-patterns/structural-patterns): Se enfocan en cómo las clases y los objetos se componen para formar estructuras más grandes y flexibles. Ejemplos incluyen el patrón **Adapter**, que permite la compatibilidad entre interfaces, y el **Composite**, que trata estructuras jerárquicas.
+
+    3. [**Patrones de Comportamiento**](https://refactoring.guru/design-patterns/behavioral-patterns): Estos patrones gestionan la interacción y responsabilidad entre objetos. Ejemplos son el patrón **Observer**, que define una relación de dependencia entre objetos, y el **Strategy**, que permite seleccionar algoritmos en tiempo de ejecución.
+
+    4. [**Patrones de Concurrencia**](https://en.wikipedia.org/wiki/Concurrency_pattern): Abordan problemas asociados con la programación concurrente y la sincronización entre hilos. Ejemplos son el **Active Object**, que desacopla la ejecución de métodos del objeto, y el **Monitor**, que maneja la sincronización de acceso a recursos compartidos.
+
+    El **patrón Iterator** pertenece a los **patrones de comportamiento**, ya que se encarga de definir cómo los objetos interactúan entre sí para recorrer una colección de forma secuencial sin exponer su representación interna.
+</details>
 
 ### Problema que resuelve
 
@@ -33,41 +49,85 @@ El **Patrón Iterador** involucra los siguientes componentes principales:
 3. **Clases Concretas de Iterador**: Implementan los métodos definidos por la interfaz del iterador para manejar el recorrido específico de la colección.
 4. **Clases Concretas de Colección**: Implementan la interfaz iterable para devolver un iterador específico de esa colección.
 
+<img
+    src="/img/iterator-uml.png"
+    alt="Diagrama UML del patrón Iterator"
+    style={{
+        width: '100%',
+        maxWidth: '80%',
+        height: 'auto',
+        display: 'block',
+        margin: '0 auto'
+    }}
+/>
+
 ### Ejemplo de Implementación
 
 Supongamos que tenemos una clase `Book` y queremos crear una biblioteca que pueda almacenar varios libros y recorrerlos utilizando el patrón iterador.
 
-#### 0. Crear el módulo
+<details>
+    <summary>
+        Comencemos por crear un módulo...
+    </summary>
 
-Para comenzar, crea un directorio `iterator` y un archivo `build.gradle.kts` en blanco en el directorio raíz del proyecto:
+    Para comenzar, crea un directorio `iterator` y un archivo `build.gradle.kts` en blanco en el directorio raíz del proyecto:
 
-<Tabs groupId={"os"}>
-    <TabItem value="Windows" label="Windows">
-        ```powershell showLineNumbers
-        New-Item -Path "iterator\src\main\kotlin" -ItemType Directory
-        Set-Content -Path "iterator\build.gradle.kts" -Value "// Intentionally left blank"
-        ```
-    </TabItem>
-    <TabItem value="Windows (corto)" label="Windows (corto)">
-        ```powershell showLineNumbers
-        mkdir iterator\src\main\kotlin
-        "// Intentionally left blank" > iterator\build.gradle.kts
-        ```
-    </TabItem>
-    <TabItem value="Linux/Mac" label="Linux/Mac">
-        ```bash showLineNumbers
-        mkdir -p iterator/src/main/kotlin
-        echo "// Intentionally left blank" > iterator/build.gradle.kts
-        ```
-    </TabItem>
-</Tabs>
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell showLineNumbers
+            New-Item -Path 'iterator\src\main\kotlin' -ItemType 'Directory' -Force
+            Set-Content -Path 'iterator\build.gradle.kts' -Value '// Intentionally left blank'
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell showLineNumbers
+            mkdir -p 'iterator\src\main\kotlin'
+            '// Intentionally left blank' > 'iterator\build.gradle.kts'
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash showLineNumbers
+            mkdir -p iterator/src/main/kotlin
+            echo "// Intentionally left blank" > iterator/build.gradle.kts
+            ```
+        </TabItem>
+    </Tabs>
+</details>
 
 #### 1. Definir el Iterador
 
 Luego, definimos la interfaz `Iterator` con los métodos `hasNext()` y `next()`.
 
-```kotlin showLineNumbers title="src/main/kotlin/cl/ravenhill/iterator/Iterator.kt"
-package cl.ravenhill.iterator
+<details>
+    <summary>
+        Si quieres crear el archivo desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $BaseDir = 'com\github\username'
+            New-Item -Path "iterator\src\main\kotlin\$BaseDir\iterator\Iterator.kt" `
+                -ItemType 'File' -Force
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            $BaseDir = 'com\github\username'
+            ni "iterator\src\main\kotlin\$BaseDir\iterator\Iterator.kt" -i 'File' -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            BASE_DIR="com/github/username"
+            mkdir -p "iterator/src/main/kotlin/$BASE_DIR/iterator"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+```kotlin showLineNumbers title="src/main/kotlin/com/github/username/iterator/Iterator.kt"
+package com.github.username.iterator
 
 interface Iterator<T> {
     fun hasNext(): Boolean
@@ -79,8 +139,33 @@ interface Iterator<T> {
 
 Ahora definimos la interfaz `Iterable`, que tiene un método para obtener un iterador.
 
-```kotlin showLineNumbers title="src/main/kotlin/cl/ravenhill/iterator/Iterable.kt"
-package cl.ravenhill.iterator
+<details>
+    <summary>
+        Si quieres crear el archivo desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "iterator\src\main\kotlin\$BaseDir\iterator\Iterable.kt" `
+                -ItemType 'File' -Force
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            ni "iterator\src\main\kotlin\$BaseDir\iterator\Iterable.kt" -i 'File' -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            touch "iterator/src/main/kotlin/$BASE_DIR/iterator/Iterable.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+```kotlin showLineNumbers title="src/main/kotlin/com/github/username/iterator/Iterable.kt"
+package com.github.username.iterator
 
 interface Iterable<T> {
     fun iterator(): Iterator<T>
@@ -91,14 +176,44 @@ interface Iterable<T> {
 
 Definimos una clase `Book` y una colección `Library` que implementa la interfaz `Iterable`.
 
-```kotlin showLineNumbers title="src/main/kotlin/cl/ravenhill/library/Book.kt"
-package cl.ravenhill.library
+<details>
+    <summary>
+        Si prefieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "iterator\src\main\kotlin\$BaseDir\library\Book.kt" `
+                -ItemType 'File' -Force
+            New-Item -Path "iterator\src\main\kotlin\$BaseDir\library\Library.kt" `
+                -ItemType 'File' -Force
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            ni "iterator\src\main\kotlin\$BaseDir\library\Book.kt" -i 'File' -f
+            ni "iterator\src\main\kotlin\$BaseDir\library\Library.kt" -i 'File' -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            mkdir -p "iterator/src/main/kotlin/$BASE_DIR/library"
+            touch "iterator/src/main/kotlin/$BASE_DIR/library/Book.kt"
+            touch "iterator/src/main/kotlin/$BASE_DIR/library/Library.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+```kotlin showLineNumbers title="src/main/kotlin/com/github/username/library/Book.kt"
+package com.github.username.library
 
 data class Book(val title: String, val author: String)
 ```
 
-```kotlin showLineNumbers title="src/main/kotlin/cl/ravenhill/library/Library.kt"
-package cl.ravenhill.library
+```kotlin showLineNumbers title="src/main/kotlin/com/github/username/library/Library.kt"
+package com.github.username.library
 
 class Library(vararg books: Book) : Iterable<Book> {
     private val books = books.toList()
@@ -110,8 +225,33 @@ class Library(vararg books: Book) : Iterable<Book> {
 
 Ahora implementamos la clase `BookIterator` que recorre los libros dentro de la biblioteca.
 
-```kotlin showLineNumbers title="src/main/kotlin/cl/ravenhill/library/BookIterator.kt"
-package cl.ravenhill.library
+<details>
+    <summary>
+        Si prefieres crear el archivo desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "iterator\src\main\kotlin\$BaseDir\library\BookIterator.kt" `
+                -ItemType 'File' -Force
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            ni "iterator\src\main\kotlin\$BaseDir\library\BookIterator.kt" -i 'File' -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            touch "iterator/src/main/kotlin/$BASE_DIR/library/BookIterator.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+```kotlin showLineNumbers title="src/main/kotlin/com/github/username/library/BookIterator.kt"
+package com.github.username.library
 
 class BookIterator(private val books: List<Book>) : Iterator<Book> {
     private var position = 0
@@ -127,7 +267,9 @@ class BookIterator(private val books: List<Book>) : Iterator<Book> {
 
 
 :::info **`++i` vs `i++`**
+
 En Kotlin, `i++` devuelve el valor de `i` antes de incrementarlo, mientras que `++i` primero incrementa `i` y luego devuelve el valor actualizado. En el caso de `position++`, se devuelve el valor actual de `position` y después se incrementa. Esto es útil cuando deseas realizar una acción con el valor actual antes de modificarlo.
+
 :::
 
 ### Uso del Patrón Iterador
@@ -153,7 +295,7 @@ fun main() {
 
 - **Separación de responsabilidades**: La colección no necesita preocuparse por cómo se recorre, lo que hace que sea más fácil modificar o extender el comportamiento del iterador.
 - **Abstracción**: Permite ocultar los detalles de la estructura de la colección, exponiendo solo los elementos a través de la interfaz `Iterator`.
-- **Recorridos simultáneos**: Se pueden crear múltiples iteradores que recorran la misma colección simultáneamente, sin interferir entre sí.
+- **Recorridos simultáneos**: Se pueden crear múltiples iteradores que recorran la misma colección simultáneamente, sin interferir entre sí. Como cada iterador mantiene su propio estado, se puede **paralelizar** el recorrido de la colección de forma segura.
 
 :::
 
@@ -167,12 +309,12 @@ fun main() {
 <Exercise title={"Recorrer un árbol binario con un iterador"}>
     Implementa un iterador para recorrer un árbol binario en orden BFS (Breadth-First Search). Por ejemplo, para el siguiente árbol:
 
-    ```
-        1
-       / \
-      2   3
-     / \
-    4   5
+    ```mermaid
+    graph TD;
+    A[1] --> B[2];
+    A --> C[3];
+    B --> D[4];
+    B --> E[5];
     ```
 
     El recorrido en orden debería devolver `[1, 2, 3, 4, 5]`.
@@ -189,7 +331,7 @@ fun main() {
 
     <Hint hints={[
         <>
-            Puedes utilizar una cola (<code>Queue</code>) para almacenar los nodos del árbol que aún no han sido visitados. Los métodos siguientes métodos pueden serte útiles:
+            Puedes utilizar una cola (<code>Queue</code>) para almacenar los nodos del árbol que aún no han sido visitados. Los siguientes métodos pueden serte útiles:
             <ul>
                 <li><code>add: Queue&lt;E&gt;.(E) → Boolean</code>: Añade un elemento a la cola.</li>
                 <li><code>poll: Queue&lt;E&gt;.() → E?</code>: Extrae y elimina el primer elemento de la cola.</li>
@@ -237,9 +379,9 @@ queue.poll() // Devuelve 3`}
 
                 override fun next(): Int {
                     if (!hasNext()) throw NoSuchElementException()
-                    val node = queue.poll() // Sacar el primer nodo de la cola
-                    node.left?.let { queue.add(it) } // Agregar el subárbol izquierdo a la cola
-                    node.right?.let { queue.add(it) } // Agregar el subárbol derecho a la cola
+                    val node = queue.poll()
+                    node.left?.let { queue.add(it) }
+                    node.right?.let { queue.add(it) }
                     return node.value
                 }
             }
@@ -291,8 +433,6 @@ El patrón **Iterator** en Kotlin permite recorrer colecciones de manera segura 
 
 Este patrón separa la lógica de recorrido del almacenamiento de datos, haciendo el código más modular y reutilizable.
 
-## Ejemplos en otros lenguajes
-
 <div className="language-card-container">
     <LanguageCard
         logoSrc="https://www.svgrepo.com/show/184143/java.svg"
@@ -326,16 +466,25 @@ Este patrón separa la lógica de recorrido del almacenamiento de datos, haciend
         type: 'web',
         url: 'https://kotlinlang.org/docs/iterators.html',
     },
+]} additionalReferences={[
     {
-        type: 'book',
+        title: "5. Behavioral Patterns",
+        bookTitle: "Design patterns: elements of reusable object-oriented software",
+        pages: "221–349",
+        location: "Boston, Mass. Munich",
+        publisher: "Addison-Wesley",
+        year: "2011",
+        type: "book",
         author: 'Erich Gamma, Richard Helm, Ralph Johnson, y John Vlissides',
-        title: '5. Behavioral Patterns',
-        bookTitle: 'Design patterns: elements of reusable object-oriented software',
         edition: '39. printing',
-        series: 'Addison-Wesley professional computing series',
-        location: 'Boston, Mass. Munich',
-        publisher: 'Addison-Wesley',
-        year: '2011',
-        pages: '221–349',
+    },
+    {
+        title: "Iterator",
+        bookTitle: "Dive Into Design Patterns",
+        pages: "289–303",
+        year: "2021",
+        type: "book",
+        author: 'Alexander Shvets',
+        edition: 'v2021-2.28',
     },
 ]}/>

@@ -1,6 +1,8 @@
 ---
 title: Data-Driven Testing en NUnit
 ---
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 import References from "@site/src/components/ReferencesComponent";
 import ReadingTime from '@site/src/components/ReadingTime';
 
@@ -12,56 +14,101 @@ En **C#**, el framework de pruebas **NUnit** proporciona soporte robusto para **
 
 En este ejemplo, utilizamos el atributo `[TestCase]` para probar diferentes valores de entrada en un solo método de prueba:
 
-```csharp showLineNumbers
-using NUnit.Framework;
-using System;
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```csharp showLineNumbers
+        [TestCase("Bigachu", -100)]
+        [TestCase("Psygoose", -1)]
+        [TestCase("Bigachu", 101)]
+        [TestCase("Psygoose", 1000)]
+        public void TestInvalidHealthPoints(string name, int invalidHp)
+        {
+            Bakemon bakemon = createBakemon(name, 100);
+            Assert.Throws<ArgumentException>(() => bakemon.SetCurrentHealthPoints(invalidHp));
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```csharp showLineNumbers
+        namespace Bakemon.Test;
+        using NUnit.Framework;
+        using System;
 
-[TestFixture]
-public class BakemonTest
-{
-    [TestCase("Bigachu", -100)]
-    [TestCase("Psygoose", -1)]
-    [TestCase("Bigachu", 101)]
-    [TestCase("Psygoose", 1000)]
-    public void TestInvalidHealthPoints(string name, int invalidHp)
-    {
-        Bakemon bakemon = new Bakemon(name, 100);
-        Assert.Throws<ArgumentException>(() => bakemon.SetCurrentHealthPoints(invalidHp));
-    }
-}
-```
+        [TestFixture]
+        public class BakemonTest
+        {
+            [TestCase("Bigachu", -100)]
+            [TestCase("Psygoose", -1)]
+            [TestCase("Bigachu", 101)]
+            [TestCase("Psygoose", 1000)]
+            public void TestInvalidHealthPoints(string name, int invalidHp)
+            {
+                Bakemon bakemon = createBakemon(name, 100)
+                Assert.Throws<ArgumentException>(() => bakemon.SetCurrentHealthPoints(invalidHp));
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
 
 ## Ejemplo en NUnit con `[TestCaseSource]`
 
 Para casos más complejos o cuando los datos de prueba se obtienen dinámicamente, se puede utilizar `[TestCaseSource]`:
 
-```csharp showLineNumbers
-using NUnit.Framework;
-using System;
-using System.Collections;
-
-[TestFixture]
-public class BakemonTest
-{
-    static IEnumerable TestCases
-    {
-        get
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```csharp showLineNumbers
+        static IEnumerable TestCases
         {
-            yield return new TestCaseData("Bigachu", -100);
-            yield return new TestCaseData("Psygoose", -1);
-            yield return new TestCaseData("Bigachu", 101);
-            yield return new TestCaseData("Psygoose", 1000);
+            get
+            {
+                yield return new TestCaseData("Bigachu", -100);
+                yield return new TestCaseData("Psygoose", -1);
+                yield return new TestCaseData("Bigachu", 101);
+                yield return new TestCaseData("Psygoose", 1000);
+            }
         }
-    }
 
-    [Test, TestCaseSource(nameof(TestCases))]
-    public void TestInvalidHealthPoints(string name, int invalidHp)
-    {
-        Bakemon bakemon = new Bakemon(name, 100);
-        Assert.Throws<ArgumentException>(() => bakemon.SetCurrentHealthPoints(invalidHp));
-    }
-}
-```
+        [Test, TestCaseSource(nameof(TestCases))]
+        public void TestInvalidHealthPoints(string name, int invalidHp)
+        {
+            Bakemon bakemon = new Bakemon(name, 100);
+            Assert.Throws<ArgumentException>(() => bakemon.SetCurrentHealthPoints(invalidHp));
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```csharp showLineNumbers
+        namespace Bakemon.Test;
+
+        using NUnit.Framework;
+        using System;
+        using System.Collections;
+
+        [TestFixture]
+        public class BakemonTest
+        {
+            static IEnumerable TestCases
+            {
+                get
+                {
+                    yield return new TestCaseData("Bigachu", -100);
+                    yield return new TestCaseData("Psygoose", -1);
+                    yield return new TestCaseData("Bigachu", 101);
+                    yield return new TestCaseData("Psygoose", 1000);
+                }
+            }
+
+            [Test, TestCaseSource(nameof(TestCases))]
+            public void TestInvalidHealthPoints(string name, int invalidHp)
+            {
+                Bakemon bakemon = new Bakemon(name, 100);
+                Assert.Throws<ArgumentException>(() => bakemon.SetCurrentHealthPoints(invalidHp));
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
 
 ## Similitudes entre Kotest y NUnit
 
@@ -72,44 +119,14 @@ public class BakemonTest
 ## Diferencias entre Kotest y NUnit
 
 1. **Sintaxis**:
- - **Kotest**: Utiliza funciones como `withData` para una sintaxis más declarativa y fluida.
- - **NUnit**: Utiliza atributos como `[TestCase]` y `[TestCaseSource]`, lo que puede parecer más estructurado y menos flexible en comparación con Kotest.
+     - **Kotest**: Utiliza funciones como `withData` para una sintaxis más declarativa y fluida.
+     - **NUnit**: Utiliza atributos como `[TestCase]` y `[TestCaseSource]`, lo que puede parecer más estructurado y menos flexible en comparación con Kotest.
 2. **Flexibilidad en la Fuente de Datos**:
- - **Kotest**: Permite una mayor flexibilidad al combinar diferentes conjuntos de datos de manera anidada.
- - **NUnit**: Requiere el uso de múltiples atributos o métodos fuente (`TestCaseSource`) para combinar datos complejos.
+     - **Kotest**: Permite una mayor flexibilidad al combinar diferentes conjuntos de datos de manera anidada.
+     - **NUnit**: Requiere el uso de múltiples atributos o métodos fuente (`TestCaseSource`) para combinar datos complejos.
 3. **Estilo de Pruebas**:
- - **Kotest**: Ofrece múltiples estilos de especificación (BDD, FreeSpec, etc.), permitiendo una mayor personalización en la estructura de las pruebas.
- - **NUnit**: Sigue una estructura más tradicional basada en métodos de prueba dentro de clases de prueba.
-
-## Ejemplo en NUnit con múltiples parámetros usando `[TestCaseSource]`
-
-```csharp showLineNumbers
-using NUnit.Framework;
-using System;
-using System.Collections;
-
-[TestFixture]
-public class BakemonTest
-{
-    static IEnumerable TestCases
-    {
-        get
-        {
-            yield return new TestCaseData("Bigachu", -100);
-            yield return new TestCaseData("Psygoose", -1);
-            yield return new TestCaseData("Bigachu", 101);
-            yield return new TestCaseData("Psygoose", 1000);
-        }
-    }
-
-    [Test, TestCaseSource(nameof(TestCases))]
-    public void TestInvalidHealthPoints(string name, int invalidHp)
-    {
-        Bakemon bakemon = new Bakemon(name, 100);
-        Assert.Throws<ArgumentException>(() => bakemon.SetCurrentHealthPoints(invalidHp));
-    }
-}
-```
+     - **Kotest**: Ofrece múltiples estilos de especificación (BDD, FreeSpec, etc.), permitiendo una mayor personalización en la estructura de las pruebas.
+     - **NUnit**: Sigue una estructura más tradicional basada en métodos de prueba dentro de clases de prueba.
 
 ## Comparación Final
 
@@ -120,3 +137,12 @@ public class BakemonTest
 | **Sintaxis**               | Declarativa y fluida                                 | Basada en atributos y métodos                            |
 | **Estilo de Pruebas**      | Soporte para múltiples estilos (BDD, FreeSpec, etc.) | Tradicional, basado en métodos de prueba                 |
 
+<References references={[
+    {
+        title: "How to write Nunit Parameterized Test",
+        url: "https://browserstack.wpengine.com/guide/nunit-parameterized-test/",
+        type: "article",
+        author: "Gurudatt S A",
+        publishedDate: "1 de octubre de 2024",
+    },
+]}/>

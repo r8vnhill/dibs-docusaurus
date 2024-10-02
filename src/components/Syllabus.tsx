@@ -8,20 +8,17 @@ type CourseSection = {
 
 const sections: CourseSection[] = [
     {
-        title: "Introducción", // 2 semanas   total: 2/15 semanas
+        title: "Introducción", // 1.5 semanas   total: 1.5/15 semanas
         contents: [
             "Introducción a bibliotecas de software",
             "Principios de código limpio y mantenible",
             "Sintaxis de lenguaje de programación",
             "Void-safety",
             "Repaso de programación orientada a objetos",
-            "Repaso de generics",
-            "Declaration-site variance",
-            "Use-site variance",
         ],
     },
     {
-        title: "Build systems", // 3 semanas    total: 5/15 semanas
+        title: "Build systems", // 3 semanas    total: 4.5/15 semanas
         contents: [
             "Introducción a build systems",
             "Manejo de dependencias",
@@ -32,7 +29,17 @@ const sections: CourseSection[] = [
         ],
     },
     {
-        title: "Programación funcional",    // 2.5 semanas    total: 7.5/15 semanas
+        title: "Polimorfismo paramétrico",    // 1 semana    total: 5.5/15 semanas
+        contents: [
+            "Tipos genéricos",
+            "Varianza en sitio de declaración",
+            "Varianza en sitio de uso",
+            "Type erasure",
+            "Reificación de tipos",
+        ],
+    },
+    {
+        title: "Programación funcional",    // 3 semanas    total: 8.5/15 semanas
         contents: [
             "Funciones puras y efectos secundarios",
             "Funciones de alto orden",
@@ -43,7 +50,7 @@ const sections: CourseSection[] = [
         ],
     },
     {
-        title: "Testing",   // 3 semanas    total: 10.5/15 semanas
+        title: "Testing",   // 3 semanas    total: 11.5/15 semanas
         contents: [
             "Repaso de testing",
             "Data-driven testing",
@@ -55,7 +62,7 @@ const sections: CourseSection[] = [
         ],
     },
     {
-        title: "Programación orientada a objetos",  // 2 semanas    total: 12.5/15 semanas
+        title: "Programación orientada a objetos",  // 2 semanas    total: 13.5/15 semanas
         contents: [
             "Clases abiertas y cerradas/finales",
             "Métodos de extensión",
@@ -65,7 +72,7 @@ const sections: CourseSection[] = [
         ],
     },
     {
-        title: "Colecciones",   // 1 semana    total: 13.5/15 semanas
+        title: "Colecciones",   // 1 semana    total: 14.5/15 semanas
         contents: [
             "Iterator pattern",
             "Colecciones inmutables",

@@ -42,7 +42,6 @@ const sidebars: SidebarsConfig = {
                             ]
                         },
                         'intro/exceptions/exceptions-kt',
-                        'intro/generics/generics-kt',
                         'intro/void/void-safety',
                     ]
                 },
@@ -137,7 +136,18 @@ const sidebars: SidebarsConfig = {
             ],
         },
         {
-            label: 'Unidad 3: APIs Funcionales',
+            label: 'Unidad 3: Polimorfismo Paramétrico',
+            type: 'category',
+            link: {
+                type: 'doc',
+                id: 'generics/index',
+            },
+            items: [
+
+            ],
+        },
+        {
+            label: 'Unidad 4: APIs Funcionales',
             type: 'category',
             link: {
                 type: 'doc',
@@ -179,17 +189,7 @@ const sidebars: SidebarsConfig = {
                 },
                 "fp/recursion",
                 "fp/hof",
-                {
-                    label: 'Funciones lambda',
-                    type: 'category',
-                    link: {
-                        type: 'doc',
-                        id: 'fp/lambdas/lambdas-kt'
-                    },
-                    items: [
-                        "fp/lambdas/lambdas-langs",
-                    ]
-                },
+                'fp/lambdas/lambdas-kt',
                 "fp/pure",
                 {
                     type: 'category',
@@ -264,7 +264,7 @@ const sidebars: SidebarsConfig = {
             ],
         },
         {
-            label: 'Unidad 4: Testing',
+            label: 'Unidad 5: Testing',
             type: 'category',
             link: {
                 type: 'doc',
@@ -303,7 +303,7 @@ const sidebars: SidebarsConfig = {
         },
         {
             type: 'category',
-            label: 'Unidad 5: APIs Orientadas a Objetos',
+            label: 'Unidad 6: APIs Orientadas a Objetos',
             link: {
                 type: 'doc',
                 id: 'oop/index',
@@ -316,7 +316,7 @@ const sidebars: SidebarsConfig = {
             ],
         },
         {
-            label: 'Unidad 6: Colecciones',
+            label: 'Unidad 7: Colecciones',
             type: 'category',
             link: {
                 type: 'doc',
