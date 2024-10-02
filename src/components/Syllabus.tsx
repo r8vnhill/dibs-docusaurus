@@ -29,17 +29,30 @@ const sections: CourseSection[] = [
         ],
     },
     {
-        title: "Polimorfismo paramétrico",    // 1 semana    total: 5.5/15 semanas
+        title: "Programación orientada a objetos",  // 2 semanas    total: 6.5/15 semanas
+        contents: [
+            "Problema de la base débil",
+
+            "Métodos de extensión",
+            "Tipos anónimos",
+            "Sobrecarga de operadores",
+            "Variables y funciones estáticas",
+            "Herencia múltiple",
+            "Soluciones al problema del diamante",
+        ],
+    },
+    {
+        title: "Polimorfismo paramétrico",    // 1 semana    total: 7.5/15 semanas
         contents: [
             "Tipos genéricos",
             "Varianza en sitio de declaración",
             "Varianza en sitio de uso",
-            "Type erasure",
+            "Borrado de tipos",
             "Reificación de tipos",
         ],
     },
     {
-        title: "Programación funcional",    // 3 semanas    total: 8.5/15 semanas
+        title: "Programación funcional",    // 3 semanas    total: 10.5/15 semanas
         contents: [
             "Funciones puras y efectos secundarios",
             "Funciones de alto orden",
@@ -50,7 +63,7 @@ const sections: CourseSection[] = [
         ],
     },
     {
-        title: "Testing",   // 3 semanas    total: 11.5/15 semanas
+        title: "Testing",   // 3 semanas    total: 13.5/15 semanas
         contents: [
             "Repaso de testing",
             "Data-driven testing",
@@ -58,17 +71,7 @@ const sections: CourseSection[] = [
             "Property-based testing",
             "Generadores arbitrarios",
             "Técnicas de desarrollo de propiedades",
-            "Shrinking"
-        ],
-    },
-    {
-        title: "Programación orientada a objetos",  // 2 semanas    total: 13.5/15 semanas
-        contents: [
-            "Clases abiertas y cerradas/finales",
-            "Métodos de extensión",
-            "Herencia múltiple",
-            "Soluciones al problema del diamante",
-            "Tipos anónimos",
+            "Reducción de casos de prueba"
         ],
     },
     {

@@ -1,0 +1,92 @@
+---
+title: Void-Safety en C#
+---
+import References from "@site/src/components/ReferencesComponent";
+import ReadingTime from '@site/src/components/ReadingTime';
+
+<ReadingTime/>
+
+En lenguajes como **C#**, la **seguridad ante valores nulos** (o **null safety**) se ha abordado con un enfoque que mezcla las características del sistema de tipos y los mecanismos de verificación en tiempo de compilación. Aunque C# no fue diseñado originalmente con null safety en mente, versiones más recientes del lenguaje han introducido mejoras para hacer que los valores nulos sean más seguros y explícitos.
+
+## Tipos Anulables
+
+En C#, las referencias son no anulables por defecto a partir de C# 8.0, pero se puede optar por hacerlas anulables mediante la sintaxis `?`:
+
+```csharp showLineNumbers
+string? nullableString = null;  // Anulable
+string nonNullableString = "Hello";  // No anulable
+```
+
+Esto se parece al enfoque de Kotlin, donde las variables son no anulables por defecto, y debes declarar explícitamente si un valor puede ser `null` utilizando `?`. Si intentas asignar un valor nulo a una variable no anulable en C#, obtendrás una advertencia en tiempo de compilación, similar a Kotlin.
+
+## Operadores condicionales NULL ``?.`` y ``?[]``
+
+C# también introduce operadores condicionales para acceso a miembros ``?.`` y acceso a elementos de colección ``?[]`` que permiten acceder a propiedades y métodos de un objeto solo si no es nulo:
+
+```csharp showLineNumbers
+int? length = nullableString?.Length;  // Si es nulo, no lanza excepción, sino que devuelve null
+int? firstElement = nullableString?[0];  // Si es nulo o la cadena está vacía, devuelve null
+```
+
+
+## Null Coalescing Operator
+
+El **operador Elvis** (`?:`) en Kotlin tiene su equivalente en C# con el operador de null coalescing (`??`), que proporciona un valor por defecto si una expresión es nula:
+
+```csharp showLineNumbers
+int length = nullableString?.Length ?? -1;  // Si es nulo, devuelve -1
+```
+
+## Funciones Similares a `let`
+
+En C#, puedes usar una combinación de condicionales y expresiones lambda para lograr un comportamiento similar al de `let` en Kotlin. Aunque no hay un equivalente directo en C#, las comprobaciones de nulabilidad, los métodos de extensión y las expresiones lambda permiten un enfoque similar:
+
+```csharp showLineNumbers
+public static class Extensions
+{
+    public static TResult? Let<T, TResult>(
+        this T? value,
+        Func<T, TResult> func
+    ) where T : class where TResult : class => value != null ? func(value) : null;
+}
+
+nullableString?.Let(s => Console.WriteLine(s.ToUpper()));
+```
+
+### Comparación Final
+
+| Característica                            | Kotlin                                                           | C#                                                                             |
+|-------------------------------------------|------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| **Tipos Anulables por Defecto**           | No anulables por defecto, se usa `?` para hacer un tipo nullable | No anulables por defecto (a partir de C# 8.0), se usa `?` para tipos anulables |
+| **Operador de Llamada Segura**            | `?.` para llamadas seguras en objetos nulos                      | `?.` para acceso seguro a miembros, y `?[]` para elementos de colección        |
+| **Operador Elvis**                        | `?:` para proporcionar un valor por defecto si es `null`         | `??` para proporcionar un valor por defecto si es `null`                       |
+| **Método Similar a `let`**                | `let` para ejecutar código solo si un valor no es `null`         | Se puede simular usando métodos de extensión y lambdas                         |
+| **Verificación en Tiempo de Compilación** | Verificación estricta en tiempo de compilación para nulos        | Advertencias en tiempo de compilación para posibles nulos                      |
+
+:::tip Ventajas de C#
+
+- **Mayor flexibilidad en APIs existentes**: El sistema de tipos anulables de C# es opt-in, lo que significa que puedes seguir trabajando con código existente que no fue diseñado para null safety sin problemas de compatibilidad.
+- **Compatibilidad con versiones anteriores**: C# permite una adopción gradual de la null safety sin necesidad de modificar todo el código base, lo que es útil para grandes sistemas de software.
+- **Null coalescing en colecciones**: C# incluye un operador adicional (`?[]`) para acceder de manera segura a elementos de colecciones. En Kotlin podríamos lograr lo mismo usando ``?.get(index)``.
+
+:::
+
+:::danger Desventajas de C#
+
+- **Menor consistencia**: Dado que el soporte para null safety es opcional y no obligatorio desde el principio, el código puede seguir siendo propenso a errores de nulabilidad si no se adoptan las nuevas características de forma consistente.
+- **Mayor verbosidad**: En algunos casos, los operadores condicionales de C# pueden resultar más verbosos en comparación con las soluciones más concisas de Kotlin.
+
+:::
+
+### ¿Qué Hemos Aprendido?
+
+En esta sección, hemos comparado cómo Kotlin y C# manejan la seguridad ante valores nulos (void-safety). Ambos lenguajes han evolucionado para ofrecer mecanismos que ayudan a prevenir errores de nulabilidad, pero con enfoques diferentes:
+
+- **Kotlin** está diseñado con un sistema de tipos que previene referencias nulas desde el principio, lo que garantiza que los errores de `NullPointerException` se eviten en tiempo de compilación, siempre que lx desarrolladorx siga las reglas del sistema de tipos anulables y no anulables.
+
+- **C#**, por otro lado, ha integrado null safety a partir de la versión 8.0, ofreciendo un sistema que es **opt-in**, lo que significa que es opcional y se puede integrar de manera gradual. Aunque esto permite una transición más suave en proyectos existentes, puede resultar en menos consistencia en comparación con Kotlin, ya que el soporte no es obligatorio.
+
+En ambos lenguajes, los operadores condicionales y los mecanismos de verificación en tiempo de compilación ayudan a manejar los valores nulos de manera más segura y eficiente, pero C# puede ser más verboso en algunos casos. Sin embargo, la flexibilidad de C# para trabajar con código legado es una ventaja significativa para proyectos a largo plazo o sistemas grandes.
+
+Ambos lenguajes siguen evolucionando en la dirección de mejorar la null safety, proporcionando a lxs desarrolladorxs herramientas más robustas para escribir código seguro y libre de errores de nulabilidad.
+

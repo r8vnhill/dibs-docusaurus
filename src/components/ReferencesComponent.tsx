@@ -91,7 +91,7 @@ const renderReference = (reference: Reference) => {
             <li key={reference.id}>
                 {renderTypeEmoji(reference.type)}{' '}
                 <em>"{reference.title}"</em>,{' '}
-                {<strong>{reference.author},</strong>}{' '}
+                {`${reference.author}, `}
                 {reference.bookTitle && (<>en <em>{reference.bookTitle},</em></>)}{' '}
                 {reference.edition && `${reference.edition}, `}
                 {reference.series && `en ${reference.series}, `}
@@ -107,7 +107,7 @@ const renderReference = (reference: Reference) => {
             <li key={reference.id}>
                 {renderTypeEmoji(reference.type)}{' '}
                 {<em>"{reference.title}."</em>}{' '}
-                {reference.author && <strong>{reference.author},</strong>}{' '}
+                {`${reference.author}, `}
                 {reference.publishedDate && `${reference.publishedDate}.`}{' '}
                 {reference.url && (
                     <a href={reference.url} target="_blank" rel="noopener noreferrer">

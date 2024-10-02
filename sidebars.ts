@@ -30,17 +30,6 @@ const sidebars: SidebarsConfig = {
                         'intro/oop/oop',
                         'intro/open-closed/open-closed-kt',
                         'intro/properties/properties-kt',
-                        {
-                            type: 'category',
-                            label: 'Sobrecarga de operadores',
-                            link: {
-                                type: 'doc',
-                                id: 'intro/operator-overload/operator-overload-kt',
-                            },
-                            items: [
-                                "intro/operator-overload/operator-overload-langs",
-                            ]
-                        },
                         'intro/exceptions/exceptions-kt',
                         'intro/void/void-safety',
                     ]
@@ -136,7 +125,22 @@ const sidebars: SidebarsConfig = {
             ],
         },
         {
-            label: 'Unidad 3: Polimorfismo Paramétrico',
+            type: 'category',
+            label: 'Unidad 3: APIs Orientadas a Objetos',
+            link: {
+                type: 'doc',
+                id: 'oop/index',
+            },
+            items: [
+                'oop/extension/kt',
+                'oop/operator-overload/kt',
+                'oop/infix',
+                'oop/companion',
+                'oop/inheritance-2',
+            ],
+        },
+        {
+            label: 'Unidad 4: Polimorfismo Paramétrico',
             type: 'category',
             link: {
                 type: 'doc',
@@ -147,7 +151,7 @@ const sidebars: SidebarsConfig = {
             ],
         },
         {
-            label: 'Unidad 4: APIs Funcionales',
+            label: 'Unidad 5: APIs Funcionales',
             type: 'category',
             link: {
                 type: 'doc',
@@ -264,7 +268,7 @@ const sidebars: SidebarsConfig = {
             ],
         },
         {
-            label: 'Unidad 5: Testing',
+            label: 'Unidad 6: Testing',
             type: 'category',
             link: {
                 type: 'doc',
@@ -299,20 +303,6 @@ const sidebars: SidebarsConfig = {
                         'testing/pbt/concatenation/str-cat',
                     ],
                 },
-            ],
-        },
-        {
-            type: 'category',
-            label: 'Unidad 6: APIs Orientadas a Objetos',
-            link: {
-                type: 'doc',
-                id: 'oop/index',
-            },
-            items: [
-                'oop/extension',
-                'oop/infix',
-                'oop/companion',
-                'oop/inheritance-2',
             ],
         },
         {

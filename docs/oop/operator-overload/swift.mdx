@@ -1,0 +1,195 @@
+---
+title: Sobrecarga de Operadores en Swift
+---
+import References from "@site/src/components/ReferencesComponent";
+import ReadingTime from '@site/src/components/ReadingTime';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+<ReadingTime/>
+
+Al igual que en **Kotlin**, **Swift** también permite la sobrecarga de operadores, lo que significa que podemos definir comportamientos personalizados para operadores estándar como `+`, `-`, `*`, `/`, y otros. Aunque ambos lenguajes ofrecen soporte para la sobrecarga de operadores, su sintaxis y enfoque tienen algunas diferencias clave.
+
+## Sobrecarga de Operadores en Swift
+
+En Swift, los operadores también pueden sobrecargarse, pero en lugar de utilizar una palabra clave como `operator` en Kotlin, simplemente definimos una función global que implementa el operador. En Swift, los operadores son funciones, y podemos definir nuevas versiones de ellos para tipos personalizados.
+
+Veamos un ejemplo similar al de Kotlin, donde sobrecargamos el operador `+` para una clase `Complex` que representa números complejos.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```swift showLineNumbers
+        struct Complex {
+            // ...
+            static func +(lhs: Complex, rhs: Complex) -> Complex {
+                Complex(real: lhs.real + rhs.real, imaginary: lhs.imaginary + rhs.imaginary)
+            }
+        }
+
+        func +(lhs: Complex, rhs: Double) -> Complex {
+            Complex(real: lhs.real + rhs, imaginary: lhs.imaginary)
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```swift showLineNumbers
+        struct Complex {
+            let real: Double
+            let imaginary: Double
+
+            static func +(lhs: Complex, rhs: Complex) -> Complex {
+                Complex(real: lhs.real + rhs.real, imaginary: lhs.imaginary + rhs.imaginary)
+            }
+        }
+
+        func +(lhs: Complex, rhs: Double) -> Complex {
+            Complex(real: lhs.real + rhs, imaginary: lhs.imaginary)
+        }
+
+        let number1 = Complex(real: 1.0, imaginary: 2.0)
+        let number2 = Complex(real: 3.0, imaginary: 4.0)
+        let sum = number1 + number2
+        let number3 = number1 + 5.0
+
+        print("Sum: (\(sum.real), \(sum.imaginary))")  // Suma: (4.0, 6.0)
+        print("Sum with Double: (\(number3.real), \(number3.imaginary))")  // Sum with Double: (6.0, 2.0)
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del código
+
+- **[1-6]** `struct Complex`: Almacena las partes real e imaginaria de un número complejo.
+- **[3-5]** Sobrecarga de `+` como un método estático: Permite sumar dos números complejos, devolviendo un nuevo número complejo.
+- **[8-10]** Sobrecarga de `+` como una función global: Permite sumar un número complejo y un valor `Double`, devolviendo un nuevo número complejo.
+
+:::
+
+## Operadores Personalizados en Swift
+
+Swift permite definir **operadores personalizados**, lo que brinda la flexibilidad de crear nuevas formas de expresar operaciones sobre tipos definidos por el usuario. Estos operadores pueden ser:
+
+1. **Operadores prefijos**: Se colocan antes de un operando (e.g., `-a`). Se definen con el prefijo `prefix`.
+2. **Operadores infijos**: Se colocan entre dos operandos (e.g., `a + b`). Se definen con el prefijo `infix`.
+3. **Operadores postfijos**: Se colocan después de un operando (e.g., `a!`). Se definen con el prefijo `postfix`.
+
+### Precedencia y Asociatividad
+
+Los operadores personalizados en Swift pueden tener una **precedencia** y **asociatividad** específicas:
+
+- **Precedencia**: Define el orden en que se evalúan los operadores. Los operadores con mayor precedencia se evalúan antes que los operadores con menor precedencia.
+- **Asociatividad**: Define cómo se agrupan los operadores del mismo nivel de precedencia, ya sea de **izquierda a derecha** o de **derecha a izquierda**.
+
+### Definición de un Operador Personalizado
+
+A continuación, veremos cómo definir un operador personalizado en Swift, en este caso, un operador `^` para realizar la operación de **exponenciación** (elevar un número a una potencia).
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```swift showLineNumbers
+        precedencegroup ExponentiationPrecedence {
+            higherThan: MultiplicationPrecedence
+            associativity: right
+        }
+
+        infix operator ^: ExponentiationPrecedence
+
+        func ^ (base: Double, power: Double) -> Double {
+            pow(base, power)
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```swift showLineNumbers
+        precedencegroup ExponentiationPrecedence {
+            higherThan: MultiplicationPrecedence
+            associativity: right
+        }
+
+        infix operator ^: ExponentiationPrecedence
+
+        func ^ (base: Double, power: Double) -> Double {
+            pow(base, power)
+        }
+
+        let result = 2.0 ^ 3.0
+        print("2.0 ^ 3.0 = \(result)")  // Output: 2.0 ^ 3.0 = 8.0
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del Código
+
+- **[1-4]** Definición del grupo de precedencia `ExponentiationPrecedence`:
+  - **[2]** `higherThan: MultiplicationPrecedence`: Establece que el operador `^` tiene mayor precedencia que la multiplicación.
+  - **[3]** `associativity: right`: Define que el operador es **asociativo a la derecha**, lo que significa que en una expresión como `2 ^ 3 ^ 2`, se evaluará como `2 ^ (3 ^ 2)`.
+- **[6]** Definición del operador infijo `^`: Esto permite que el operador personalizado `^` se coloque entre dos operandos (e.g., `2.0 ^ 3.0`).
+- **[8-10]** Función para el operador `^`: Implementa la operación de exponenciación utilizando la función estándar `pow(base, power)` de Swift.
+
+:::
+
+:::tip Ventajas de los Operadores Personalizados
+
+- **Legibilidad mejorada**: Los operadores personalizados permiten expresar operaciones de manera más intuitiva y natural.
+- **Adaptabilidad**: Puedes crear operadores que se ajusten a la semántica de tu dominio específico (e.g., operadores para matemáticas avanzadas, álgebra, etc.).
+
+:::
+
+:::warning Consideraciones
+
+- **Precedencia**: Asegúrate de definir la precedencia y la asociatividad correctamente para evitar problemas con el orden de las operaciones.
+- **Responsabilidad**: Utiliza operadores personalizados de manera responsable. Si los operadores no son intuitivos, pueden confundir a otrxs desarrolladorxs y reducir la legibilidad del código.
+
+:::
+
+## Comparación Final
+
+| Característica                | Kotlin                                                           | Swift                                                                        |
+|-------------------------------|------------------------------------------------------------------|------------------------------------------------------------------------------|
+| **Definición de operadores**  | Utiliza la palabra clave `operator` dentro de la clase.          | Los operadores se definen como funciones globales.                           |
+| **Sobrecarga en structs**     | Kotlin no tiene `structs`; solo se pueden sobrecargar en clases. | Swift permite la sobrecarga en `structs` y `classes`.                        |
+| **Operadores personalizados** | No permite operadores personalizados.                            | Permite crear operadores personalizados con precedencia y asociatividad.     |
+| **Precedencia de operadores** | No se puede modificar la precedencia de operadores.              | Se puede definir precedencia y asociatividad para operadores personalizados. |
+| **Simplicidad de sintaxis**   | Más concisa al sobrecargar operadores en una clase.              | Requiere definir funciones globales para sobrecargar operadores.             |
+
+:::tip Ventajas de Swift
+
+- **Mayor flexibilidad con operadores personalizados**: Swift permite definir operadores infijos, prefijos, y postfijos con control sobre precedencia y asociatividad, lo que ofrece gran flexibilidad.
+- **Compatibilidad con structs**: Swift permite sobrecargar operadores tanto en `structs` como en `classes`, lo que facilita trabajar con tipos de valor y tipos de referencia de manera consistente.
+
+:::
+
+:::danger Desventajas de Swift
+
+- **Sintaxis más extensa**: La necesidad de definir operadores como funciones globales puede hacer el código más extenso y difícil de organizar en proyectos grandes.
+- **Mayor riesgo de confusión**: La posibilidad de crear operadores personalizados y asignar precedencias puede hacer que el código sea menos legible si no se usa con responsabilidad.
+
+:::
+
+## ¿Qué Aprendimos?
+
+En esta lección, hemos explorado la **sobrecarga de operadores** en **Swift** y **Kotlin**, observando sus similitudes y diferencias clave.
+
+### Kotlin
+
+Kotlin permite sobrecargar operadores de una forma concisa mediante la palabra clave `operator` dentro de las clases. Esta sintaxis facilita extender los comportamientos de operadores comunes como `+`, `-`, `*`, y otros para tipos personalizados. Sin embargo, Kotlin no soporta **operadores personalizados** ni permite definir **precedencia** o **asociatividad** para ellos.
+
+### Swift
+
+Swift ofrece una mayor flexibilidad que Kotlin al permitir la **creación de operadores personalizados**, tanto infijos, prefijos como postfijos, además de ofrecer control sobre la **precedencia** y **asociatividad**. Esto hace que Swift sea más adaptable en escenarios donde lxs desarrolladorxs necesiten operadores específicos para dominios especializados, como álgebra o matemáticas avanzadas. Sin embargo, esta flexibilidad implica una mayor complejidad, lo que puede afectar la claridad del código si no se utiliza con cuidado.
+
+### Comparación General:
+
+Ambos lenguajes ofrecen herramientas poderosas para mejorar la legibilidad y expresividad del código mediante la sobrecarga de operadores, pero **Swift** proporciona más opciones en cuanto a operadores personalizados y manipulación de precedencia, mientras que **Kotlin** se mantiene más simple y enfocado en una sintaxis directa dentro de las clases.
+
+Al aprovechar estas características en el contexto adecuado, puedes escribir código más limpio y natural, pero es crucial usarlas con responsabilidad para evitar confusión y problemas de mantenimiento.
+
+<References references={[
+    {
+        title: "Operator Overloading & Custom Operators in Swift 5",
+        url: "https://digitalbunker.dev/operator-overloading-custom-operators-in-swift/",
+        type: "article",
+        author: "Aryaman Sharda",
+        publishedDate: "16 de febrero de 2022",
+    },
+]}/>
