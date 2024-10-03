@@ -1,8 +1,9 @@
 ---
 title: Typeclasses
 ---
-import ReadingTime from '@site/src/components/ReadingTime';
-import References from "@site/src/components/ReferencesComponent";
+import Definition from "/src/components/Definition";
+import ReadingTime from '/src/components/ReadingTime';
+import References from "/src/components/ReferencesComponent";
 import TabItem from "@theme/TabItem";
 import Tabs from "@theme/Tabs";
 
@@ -70,9 +71,7 @@ Una **typeclass** es un concepto en programación funcional que permite definir 
 ### Características Principales:
 
 - **Abstracción de Comportamiento**: Las typeclasses definen operaciones abstractas sin proporcionar una implementación concreta. Los tipos que desean soportar estas operaciones deben proporcionar sus propias implementaciones.
-
 - **Polimorfismo Ad-hoc**: Permiten que una misma función opere sobre diferentes tipos, y que el comportamiento específico se determine en tiempo de compilación según la implementación de la typeclass para ese tipo.
-
 - **Resolución en Tiempo de Compilación**: Las instancias de typeclass se resuelven en tiempo de compilación, lo que mejora la seguridad y eficiencia del código.
 
 ### Ejemplo en Haskell:
@@ -104,9 +103,7 @@ Aquí, estamos haciendo que el tipo `Int` sea una instancia de `Eq`, proporciona
 ### Propiedades Clave de las Typeclasses:
 
 1. **Extensibilidad**: Se pueden añadir nuevas instancias de typeclasses para tipos existentes sin modificar el código original.
-
 2. **Composición**: Las typeclasses pueden extender otras typeclasses, permitiendo la composición y reutilización de comportamientos.
-
 3. **Resolución Implícita**: El compilador selecciona automáticamente la implementación correcta de una función basada en el tipo de los argumentos.
 
 ### Comparación con Interfaces en Kotlin:
@@ -116,58 +113,9 @@ Aunque las **interfaces** en Kotlin y las **typeclasses** comparten similitudes 
 - **Polimorfismo**:
     - **Interfaces**: Utilizan polimorfismo de subtipos (herencia). Un objeto debe declarar explícitamente que implementa una interfaz.
     - **Typeclasses**: Utilizan polimorfismo ad-hoc. La relación entre el tipo y la typeclass se establece fuera del tipo mismo, sin modificar su definición.
-
 - **Resolución**:
     - **Interfaces**: La implementación se resuelve en tiempo de ejecución.
     - **Typeclasses**: La implementación se resuelve en tiempo de compilación.
-
-### Emulación de Typeclasses en Kotlin con Context Receivers:
-
-Dado que Kotlin no soporta typeclasses nativamente, podemos emular su comportamiento utilizando **context receivers** y **interfaces**. Al definir una interfaz que actúa como una typeclass y usar context receivers para proporcionar las implementaciones en el ámbito necesario, logramos:
-
-- **Polimorfismo Ad-hoc**: Las funciones genéricas pueden operar sobre cualquier tipo que tenga una implementación de la interfaz requerida en el contexto.
-
-- **Resolución en Tiempo de Compilación**: El compilador verifica que el contexto adecuado esté disponible y resuelve las implementaciones en tiempo de compilación.
-
-#### Ejemplo Revisitado:
-
-```kotlin showLineNumbers title="Semigroup.kt"
-interface Semigroup<T> {
-    fun combine(a: T, b: T): T
-}
-```
-
-- **Semigroup** actúa como nuestra typeclass, definiendo la operación `combine`.
-
-```kotlin showLineNumbers title="IntSemigroup.kt"
-object IntSemigroup : Semigroup<Int> {
-    override fun combine(a: Int, b: Int): Int = a + b
-}
-```
-
-- **IntSemigroup** es una instancia de la typeclass para el tipo `Int`.
-
-```kotlin showLineNumbers title="CombineAll.kt"
-context(Semigroup<T>)
-fun <T> combineAll(elements: List<T>): T {
-    require(elements.isNotEmpty()) { "The list must not be empty" }
-    return elements.reduce { acc, e -> combine(acc, e) }
-}
-```
-
-- La función `combineAll` requiere un `Semigroup<T>` en su contexto, emulando así el comportamiento de una función que depende de una typeclass.
-
-### Ventajas de Este Enfoque en Kotlin:
-
-- **Flexibilidad**: Podemos definir comportamientos genéricos sin modificar los tipos originales.
-
-- **Reutilización de Código**: Las mismas funciones genéricas pueden aplicarse a diferentes tipos siempre que exista una implementación adecuada en el contexto.
-
-- **Claridad y Seguridad**: El uso de context receivers hace explícitas las dependencias de las funciones, mejorando la legibilidad y permitiendo al compilador verificar que se cumplen los contratos.
-
-## Conclusión
-
-Las **typeclasses** proporcionan una forma poderosa de lograr polimorfismo ad-hoc y definir comportamientos genéricos en programación funcional. Aunque Kotlin no las soporta de manera nativa, podemos emular su funcionalidad utilizando **context receivers** e **interfaces**. Este enfoque nos permite escribir código más abstracto y reutilizable, aprovechando las capacidades del lenguaje para acercarnos a patrones avanzados de programación funcional.
 
 ## Relación entre Context Receivers y Typeclasses
 
@@ -175,11 +123,89 @@ Los context receivers pueden utilizarse para emular el comportamiento de las typ
 
 ## Ejemplo: Definiendo una Typeclass para Semigrupo
 
-Un **semigrupo** es una estructura algebraica que consta de un conjunto y una operación binaria asociativa. Podemos definir una typeclass `Semigroup` que encapsula esta operación.
+<Definition title={"Semigrupo"}>
+
+    Un **semigrupo** es un conjunto $S$ acompañado de una operación binaria $\cdot$ que es **asociativa**. Esto significa que para todos los elementos $a, b, c \in S$, se cumple la siguiente igualdad:
+
+    $
+    (a \cdot b) \cdot c = a \cdot (b \cdot c)
+    $
+
+    Es decir, no importa cómo agrupemos los elementos al aplicar la operación, el resultado será el mismo.
+
+    **Ejemplo**: El conjunto de los números enteros $\mathbb{Z}$, junto con la operación de suma $+$, forma un semigrupo, ya que la suma es asociativa:
+
+    $
+    a + (b + c) = (a + b) + c
+    $
+
+</Definition>
+
+<details>
+    <summary>
+        Comencemos por crear un módulo para las typeclasses...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path 'typeclasses/src/main/kotlin' -ItemType 'Directory'
+            Set-Content -Path 'typeclasses/build.gradle.kts' -Value '// Intentionally left blank'
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            mkdir -p 'typeclasses/src/main/kotlin'
+            '// Intentionally left blank' > 'typeclasses/build.gradle.kts'
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            mkdir -p typeclasses/src/main/kotlin
+            touch typeclasses/build.gradle.kts
+            ```
+        </TabItem>
+    </Tabs>
+
+    Recuerda agregar el módulo al archivo ``settings.gradle.kts``.
+</details>
 
 ### Paso 1: Definir la Interfaz de la Typeclass
 
-```kotlin showLineNumbers title="Semigroup.kt"
+<details>
+    <summary>
+        Si quieres crear el archivo desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $BaseDir = 'com/github/username'
+            $SemigroupDir = "typeclasses/src/main/kotlin/$BaseDir/semigroup"
+            New-Item -Path "$SemigroupDir/SemiGroup.kt" -ItemType 'File' -Force
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            $BaseDir = 'com/github/username'
+            $SemigroupDir = "typeclasses/src/main/kotlin/$BaseDir/semigroup"
+            ni "$SemigroupDir/SemiGroup.kt" -i 'f' -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            BASE_DIR="com/github/username"
+            SEMIGROUP_DIR="typeclasses/src/main/kotlin/$BASE_DIR/semigroup"
+            mkdir -p "$SEMIGROUP_DIR"
+            touch "$SEMIGROUP_DIR/SemiGroup.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+```kotlin showLineNumbers title="typeclasses/src/main/kotlin/com/github/username/semigroup/SemiGroup.kt"
+package com.github.username.semigroup
+
 interface Semigroup<T> {
     fun combine(a: T, b: T): T
 }
@@ -189,15 +215,46 @@ Aquí, `Semigroup<T>` es una interfaz que define una operación `combine` para c
 
 ### Paso 2: Crear Implementaciones para Tipos Específicos
 
+<details>
+    <summary>
+        Si prefieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "$SemigroupDir/IntSemigroup.kt" -ItemType 'File' -Force
+            New-Item -Path "$SemigroupDir/StringSemigroup.kt" -ItemType 'File' -Force
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            ni "$SemigroupDir/IntSemigroup.kt" -i 'f' -f
+            ni "$SemigroupDir/StringSemigroup.kt" -i 'f' -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            touch "$SEMIGROUP_DIR/IntSemigroup.kt"
+            touch "$SEMIGROUP_DIR/StringSemigroup.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
 Implementemos `Semigroup` para algunos tipos comunes, como `Int` y `String`.
 
-```kotlin showLineNumbers title="IntSemigroup.kt"
+```kotlin showLineNumbers title="typeclasses/src/main/kotlin/com/github/username/semigroup/IntSemigroup.kt"
+package com.github.username.semigroup
+
 object IntSemigroup : Semigroup<Int> {
     override fun combine(a: Int, b: Int): Int = a + b
 }
 ```
 
-```kotlin showLineNumbers title="StringSemigroup.kt"
+```kotlin showLineNumbers title="typeclasses/src/main/kotlin/com/github/username/semigroup/StringSemigroup.kt"
+package com.github.username.semigroup
+
 object StringSemigroup : Semigroup<String> {
     override fun combine(a: String, b: String): String = a + b
 }
@@ -205,37 +262,88 @@ object StringSemigroup : Semigroup<String> {
 
 ### Paso 3: Utilizar Context Receivers para Funciones Genéricas
 
+<details>
+    <summary>
+        Si prefieres crear el archivo desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "$SemigroupDir/CombineAll.kt" -ItemType 'File' -Force
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            ni "$SemigroupDir/CombineAll.kt" -i 'f' -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            touch "$SEMIGROUP_DIR/CombineAll.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
 Ahora, definamos una función genérica que combine una lista de elementos utilizando el semigrupo adecuado.
 
-```kotlin showLineNumbers title="CombineAll.kt"
+```kotlin showLineNumbers title="typeclasses/src/main/kotlin/com/github/username/semigroup/CombineAll.kt"
+package cl.ravenhill.semigroup
+
 context(Semigroup<T>)
 fun <T> combineAll(elements: List<T>): T {
     require(elements.isNotEmpty()) { "The list must not be empty" }
-    return elements.reduce { acc, e -> combine(acc, e) }
+    if (elements.size == 1) return elements[0]
+    return combine(elements[0], combineAll(elements.drop(1)))
 }
 ```
 
 En esta función:
 
-- **[1]** Declaramos que la función requiere un `Semigroup<T>` en su contexto.
-- **[2]** Utilizamos `combine(acc, e)` para combinar los elementos de la lista, donde `combine` es la operación definida en el `Semigroup<T>` del contexto.
+- **[3]** Declaramos que la función requiere un `Semigroup<T>` en su contexto.
+- **[7]** Utilizamos `combine(acc, e)` para combinar los elementos de la lista, donde `combine` es la operación definida en el `Semigroup<T>` del contexto.
 
 ### Paso 4: Usar la Función con Diferentes Implementaciones
 
+<details>
+    <summary>
+        Si prefieres crear el archivo desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "$SemigroupDir/Main.kt" -ItemType 'File' -Force
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            ni "$SemigroupDir/Main.kt" -i 'f' -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            touch "$SEMIGROUP_DIR/Main.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
 Ahora podemos utilizar `combineAll` con diferentes tipos, proporcionando el semigrupo adecuado en el contexto.
 
-```kotlin showLineNumbers title="Main.kt"
+```kotlin showLineNumbers title="typeclasses/src/main/kotlin/com/github/username/Main.kt"
+package com.github.username
+
 fun main() {
     val intList = listOf(1, 2, 3, 4)
     val stringList = listOf("Hello, ", "World", "!")
 
-    // Uso con Int
     val intResult = with(IntSemigroup) {
         combineAll(intList)
     }
     println("Int result: $intResult") // Output: Int result: 10
 
-    // Uso con String
     val stringResult = with(StringSemigroup) {
         combineAll(stringList)
     }
@@ -243,6 +351,7 @@ fun main() {
 }
 ```
 
+:::info En este ejemplo:
 En este ejemplo:
 
 - Utilizamos `with(IntSemigroup)` para proporcionar el contexto `Semigroup<Int>` a la función `combineAll` cuando trabajamos con enteros.
@@ -261,66 +370,6 @@ Al usar `with(IntSemigroup)` o `with(StringSemigroup)`, estamos proporcionando e
 - **Abstracción**: Podemos escribir código genérico que funciona con cualquier tipo que tenga una implementación de `Semigroup`.
 - **Reutilización**: Evitamos duplicar código para cada tipo específico.
 - **Claridad**: El uso de context receivers hace que el requisito de contexto sea explícito en la declaración de la función.
-
-## Ejemplo Avanzado: Monoid
-
-Un **monoid** es una extensión de un semigrupo que incluye un elemento neutro. Podemos definir una typeclass `Monoid` que hereda de `Semigroup` e incluye el elemento neutro.
-
-### Definir la Interfaz de Monoid
-
-```kotlin showLineNumbers title="Monoid.kt"
-interface Monoid<T> : Semigroup<T> {
-    val empty: T
-}
-```
-
-### Implementaciones para Tipos Específicos
-
-```kotlin showLineNumbers title="IntMonoid.kt"
-object IntMonoid : Monoid<Int> {
-    override fun combine(a: Int, b: Int): Int = a + b
-    override val empty: Int = 0
-}
-```
-
-```kotlin showLineNumbers title="StringMonoid.kt"
-object StringMonoid : Monoid<String> {
-    override fun combine(a: String, b: String): String = a + b
-    override val empty: String = ""
-}
-```
-
-### Función Genérica con Context Receiver
-
-Podemos redefinir `combineAll` para utilizar el elemento neutro en caso de que la lista esté vacía.
-
-```kotlin showLineNumbers title="CombineAllMonoid.kt"
-context(Monoid<T>)
-fun <T> combineAll(elements: List<T>): T {
-    return elements.fold(empty) { acc, e -> combine(acc, e) }
-}
-```
-
-### Uso en `main`
-
-```kotlin showLineNumbers title="MainMonoid.kt"
-fun main() {
-    val intList = listOf<Int>()
-    val stringList = listOf<String>()
-
-    // Uso con Int
-    val intResult = with(IntMonoid) {
-        combineAll(intList)
-    }
-    println("Int result: $intResult") // Output: Int result: 0
-
-    // Uso con String
-    val stringResult = with(StringMonoid) {
-        combineAll(stringList)
-    }
-    println("String result: $stringResult") // Output: String result:
-}
-```
 
 ## Limitaciones y Consideraciones
 

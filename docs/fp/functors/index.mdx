@@ -1,0 +1,282 @@
+---
+title: Functores en Kotlin
+---
+
+import ReadingTime from '@site/src/components/ReadingTime';
+import References from "@site/src/components/ReferencesComponent";
+import TabItem from "@theme/TabItem";
+import Tabs from "@theme/Tabs";
+
+<ReadingTime/>
+
+En esta lección, exploraremos el concepto de **functores** en Kotlin y cómo implementarlos, basándonos en lo que aprendimos sobre **Higher-Kinded Types** en la lección anterior.
+
+## ¿Qué es un Functor?
+
+En programación funcional, un **functor** es una abstracción que representa tipos de datos que pueden ser mapeados. Es decir, un functor es una estructura que soporta una operación que aplica una función a los valores que contiene sin alterar su estructura.
+
+### Intuición Básica
+
+Si tienes una estructura de datos como una lista, un árbol o un `Box`, y puedes aplicar una función a cada elemento dentro de esa estructura sin modificar la forma de la estructura, entonces esa estructura es un functor.
+
+### Leyes de los Functores
+
+Para que una estructura sea considerada un functor, debe cumplir dos leyes:
+
+1. **Ley de Identidad**: Aplicar la función identidad no debe cambiar el functor.
+
+    $
+    \text{map}(\text{id}) = \text{id}
+    $
+
+2. **Ley de Composición**: Mapear la composición de dos funciones es lo mismo que mapear una función y luego mapear la otra.
+    $
+    \text{map}(f \circ g) = \text{map}(f) \circ \text{map}(g)
+    $
+
+## Implementando Functores en Kotlin
+
+<details>
+    <summary>
+        Comencemos por crear un módulo para la lección...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path 'functors\src\main\kotlin' -ItemType Directory -Force
+            New-Item -Path 'functors\build.gradle.kts' -ItemType File -Force
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            mkdir -p 'functors\src\main\kotlin'
+            ni 'functors\build.gradle.kts' -i 'f' -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            mkdir -p functors/src/main/kotlin
+            touch functors/build.gradle.kts
+            ```
+        </TabItem>
+    </Tabs>
+
+    También necesitaremos añadir el módulo ``hkt`` al archivo ``build.gradle.kts`` del módulo ``functors``:
+
+    ```kotlin showLineNumbers title="functors/build.gradle.kts"
+    dependencies {
+        implementation(project(":hkt"))
+    }
+    ```
+</details>
+
+Como vimos en la lección anterior, Kotlin no soporta **Higher-Kinded Types** de forma nativa. Sin embargo, podemos simular este comportamiento utilizando el patrón `Kind`.
+
+### Definición de la Interfaz `Functor`
+
+<details>
+    <summary>
+        Si prefieres crear el archivo desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $BaseDir = 'com\github\username'
+            $FunctorsDir = "functors\src\main\kotlin\$BaseDir"
+            New-Item -Path "$FunctorsDir\functor\Functor.kt" -ItemType 'File' -Force
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            $BaseDir = 'com\github\username'
+            $FunctorsDir = "functors\src\main\kotlin\$BaseDir"
+            ni "$FunctorsDir\functor\Functor.kt" -i 'f' -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            BASE_DIR="com/github/username"
+            FUNCTORS_DIR="functors/src/main/kotlin/$BASE_DIR"
+            touch "$FUNCTORS_DIR/functor/Functor.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+Primero, definamos una interfaz `Functor` que trabaja sobre un constructor de tipos `F`.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="functors/src/main/kotlin/com/github/username/functors/Functor.kt"
+        interface Functor<F> {
+            fun <A, B> Kind<F, A>.map(f: (A) -> B): Kind<F, B>
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="functors/src/main/kotlin/com/github/username/functors/Functor.kt"
+        package com.github.username.functors
+
+        import com.github.username.kinds.Kind
+
+        interface Functor<F> {
+            fun <A, B> Kind<F, A>.map(f: (A) -> B): Kind<F, B>
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del Código
+
+- **`F`**: Representa el constructor de tipos (como `List`, `Box`, etc.).
+- **`map`**: Es una extensión sobre `Kind<F, A>` que aplica una función `f` al valor contenido y devuelve un `Kind<F, B>`.
+
+:::
+
+### Nuestra Clase `Box` como Functor
+
+Usaremos la clase `Box` que definimos anteriormente.
+
+```kotlin showLineNumbers title="hkt/src/main/kotlin/com/github/username/kinds/Box.kt"
+package com.github.username.kinds
+
+data class Box<out A>(val value: A) : Kind<Box.Of, A> {
+    object Of
+}
+```
+
+### Implementando el Functor para `Box`
+
+Ahora, crearemos una instancia de `Functor` para `Box`.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        object MySingleton {
+        var name = "Singleton"
+        fun greet() = "Hello, $name"
+    }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        object MySingleton {
+        var name = "Singleton"
+        fun greet() = "Hello, $name"
+    }
+
+        fun main() {
+        println(MySingleton.greet())    // Hello, Singleton
+        MySingleton.name = "Deku"
+        println(MySingleton.greet())    // Hello, Deku
+    }
+        ```
+    </TabItem>
+</Tabs>
+
+```kotlin showLineNumbers title="BoxFunctor.kt"
+package com.github.username.functors
+
+import com.github.username.kinds.Box
+import com.github.username.kinds.Kind
+
+object BoxFunctor : Functor<Box.Of> {
+    override fun <A, B> Kind<Box.Of, A>.map(f: (A) -> B): Kind<Box.Of, B> {
+        val box = this as Box<A>
+        return Box(f(box.value))
+    }
+}
+```
+
+- **Línea 6**: Realizamos un cast seguro de `this` a `Box<A>`.
+- **Línea 7**: Aplicamos la función `f` al valor contenido y lo envolvemos en un nuevo `Box`.
+
+### Uso del Functor `BoxFunctor`
+
+Veamos cómo utilizar nuestro functor en código.
+
+```kotlin showLineNumbers title="Main.kt"
+package com.github.username.main
+
+import com.github.username.kinds.Box
+import com.github.username.kinds.Kind
+import com.github.username.functors.BoxFunctor
+
+fun main() {
+    val box: Kind<Box.Of, Int> = Box(42)
+
+    val result = with(BoxFunctor) {
+        box.map { it * 2 }
+    }
+
+    println(result) // Debería imprimir: Box(value=84)
+}
+```
+
+- **Línea 8**: Creamos un `Box` que contiene el número `42`.
+- **Línea 10**: Usamos `with(BoxFunctor)` para acceder a la función `map`.
+- **Línea 11**: Aplicamos una función que duplica el valor contenido.
+
+## Generalizando con Otros Tipos
+
+Podemos definir otros functors implementando la interfaz `Functor<F>`.
+
+### Ejemplo con `List`
+
+```kotlin showLineNumbers title="ListFunctor.kt"
+package com.github.username.functors
+
+import com.github.username.kinds.Kind
+
+object ListFunctor : Functor<List<*>> {
+    override fun <A, B> Kind<List<*>, A>.map(f: (A) -> B): Kind<List<*>, B> {
+        val list = this as List<A>
+        return list.map(f)
+    }
+}
+```
+
+Sin embargo, debido a las limitaciones de Kotlin con los genéricos y los tipos de alto orden, esta implementación es menos segura y puede requerir más trabajo para garantizar la seguridad de tipos.
+
+## Limitaciones y Consideraciones
+
+Al implementar functores en Kotlin usando este enfoque, enfrentamos las siguientes limitaciones:
+
+- **Casting Explícito**: Necesitamos castear `Kind<F, A>` al tipo específico (como `Box<A>`), lo cual puede ser propenso a errores si no se maneja correctamente.
+- **Menor Seguridad de Tipos**: El compilador no puede garantizar al 100% la seguridad de tipos, lo que puede llevar a excepciones en tiempo de ejecución.
+- **Verboso**: El código puede volverse más complejo y menos legible en comparación con lenguajes que soportan higher-kinded types nativamente.
+
+## Resumen
+
+En esta lección, hemos:
+
+- Definido qué es un **functor** y cuáles son sus propiedades.
+- Visto cómo implementar la interfaz `Functor` en Kotlin utilizando el patrón `Kind`.
+- Implementado un functor para nuestra clase `Box` y aprendido cómo utilizarlo.
+- Discutido las limitaciones y consideraciones al trabajar con functores en Kotlin.
+
+A pesar de las limitaciones, este enfoque nos permite aplicar principios de programación funcional en Kotlin y escribir código más genérico y reutilizable.
+
+<References references={[
+    {
+        title: "Functors in Kotlin",
+        author: "John Doe",
+        url: "https://example.com/functors-in-kotlin",
+        type: "webpage",
+        accessed: "2023-10-05",
+    },
+    {
+        title: "Functional Programming in Kotlin",
+        bookTitle: "Functional Programming in Kotlin",
+        pages: "467–475",
+        location: "Shelter Island, NY",
+        publisher: "Manning Publications Co. LLC",
+        year: "2021",
+        type: "book",
+        author: 'Marco Vermeulen, Rúnar Bjarnason, and Paul Chiusano',
+    },
+]}/>
+
+---

@@ -198,9 +198,9 @@ const sidebars: SidebarsConfig = {
                         'fp/recursion-optimization/trampoline',
                     ],
                 },
-                'fp/ad-hoc/kt',
+                // 'fp/ad-hoc/kt',
                 'fp/kinds/higher-kinded-types-kt',
-                'fp/typeclass/kt',
+                // 'fp/typeclass/kt',
                 {
                     type: 'category',
                     label: 'Functores',
