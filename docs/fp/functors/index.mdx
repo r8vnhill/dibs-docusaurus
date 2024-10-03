@@ -149,134 +149,116 @@ data class Box<out A>(val value: A) : Kind<Box.Of, A> {
 
 ### Implementando el Functor para `Box`
 
+    <details>
+        <summary>
+            Si prefieres crear el archivo desde la terminal...
+        </summary>
+
+        <Tabs groupId={"os"}>
+            <TabItem value="Windows" label="Windows">
+                ```powershell
+                New-Item -Path "$FunctorsDir\functor\Bo
+                ```
+            </TabItem>
+            <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+                ```powershell
+                ni "$FunctorsDir\functor\Functor.kt" -i 'f' -f
+                ```
+            </TabItem>
+            <TabItem value="Linux/Mac" label="Linux/Mac">
+                ```bash
+                touch "$FUNCTORS_DIR/functor/Functor.kt"
+                ```
+            </TabItem>
+        </Tabs>
+    </details>
+
 Ahora, crearemos una instancia de `Functor` para `Box`.
 
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers
-        object MySingleton {
-        var name = "Singleton"
-        fun greet() = "Hello, $name"
-    }
+        ```kotlin showLineNumbers title="functors/src/main/kotlin/com/github/username/functors/BoxFunctor.kt"
+        class BoxFunctor : Functor<Box.Of> {
+            override fun <A, B> Kind<Box.Of, A>.map(f: (A) -> B): Kind<Box.Of, B> {
+                require(this is Box<A>) { "Invalid Box" }
+                return Box(f(this.value))
+            }
+        }
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers
-        object MySingleton {
-        var name = "Singleton"
-        fun greet() = "Hello, $name"
-    }
+        ```kotlin showLineNumbers title="functors/src/main/kotlin/com/github/username/functors/BoxFunctor.kt"
+        package com.github.username.functors
 
-        fun main() {
-        println(MySingleton.greet())    // Hello, Singleton
-        MySingleton.name = "Deku"
-        println(MySingleton.greet())    // Hello, Deku
-    }
+        import com.github.username.kinds.Box
+        import com.github.username.kinds.Kind
+
+        object BoxFunctor : Functor<Box.Of> {
+            override fun <A, B> Kind<Box.Of, A>.map(f: (A) -> B): Kind<Box.Of, B> {
+                require(this is Box<A>) { "Invalid Box" }
+                return Box(f(this.value))
+            }
+        }
         ```
     </TabItem>
 </Tabs>
 
-```kotlin showLineNumbers title="BoxFunctor.kt"
-package com.github.username.functors
+:::info Explicación del Código
 
-import com.github.username.kinds.Box
-import com.github.username.kinds.Kind
+- **[3]** Verificamos que `this` sea una instancia de `Box<A>`.
+- **[4]**: Aplicamos la función `f` al valor contenido y lo envolvemos en un nuevo `Box`.
 
-object BoxFunctor : Functor<Box.Of> {
-    override fun <A, B> Kind<Box.Of, A>.map(f: (A) -> B): Kind<Box.Of, B> {
-        val box = this as Box<A>
-        return Box(f(box.value))
-    }
-}
-```
-
-- **Línea 6**: Realizamos un cast seguro de `this` a `Box<A>`.
-- **Línea 7**: Aplicamos la función `f` al valor contenido y lo envolvemos en un nuevo `Box`.
+:::
 
 ### Uso del Functor `BoxFunctor`
 
 Veamos cómo utilizar nuestro functor en código.
 
-```kotlin showLineNumbers title="Main.kt"
-package com.github.username.main
+<Tabs>
+    <TabItem value={"Código esencial"} label={"Código esencial"}>
+        ```kotlin showLineNumbers title="Main.kt"
+        val box: Kind<Box.Of, Int> = Box(420)
+        val result = with(BoxFunctor) {
+            box.map { it * 2 }
+        }
+        println(result) // Debería imprimir: Box(value=840)
+        ```
+    </TabItem>
+    <TabItem value={"Código completo"} label={"Código completo"}>
+        ```kotlin showLineNumbers title="Main.kt"
+        package com.github.username.main
 
-import com.github.username.kinds.Box
-import com.github.username.kinds.Kind
-import com.github.username.functors.BoxFunctor
+        import com.github.username.kinds.Box
+        import com.github.username.kinds.Kind
+        import com.github.username.functors.BoxFunctor
 
-fun main() {
-    val box: Kind<Box.Of, Int> = Box(42)
+        fun main() {
+            val box: Kind<Box.Of, Int> = Box(420)
 
-    val result = with(BoxFunctor) {
-        box.map { it * 2 }
-    }
+            val result = with(BoxFunctor) {
+                box.map { it * 2 }
+            }
 
-    println(result) // Debería imprimir: Box(value=84)
-}
-```
+            println(result) // Debería imprimir: Box(value=840)
+        }
+        ```
+    </TabItem>
+</Tabs>
 
-- **Línea 8**: Creamos un `Box` que contiene el número `42`.
-- **Línea 10**: Usamos `with(BoxFunctor)` para acceder a la función `map`.
-- **Línea 11**: Aplicamos una función que duplica el valor contenido.
+:::info Explicación del Código
 
-## Generalizando con Otros Tipos
+- **[1]**: Creamos un `Box` que contiene el número `420`.
+- **[2-4]**: Usamos `with(BoxFunctor)` para acceder a la función `map`.
+- **[5]**: Aplicamos una función que duplica el valor contenido.
 
-Podemos definir otros functors implementando la interfaz `Functor<F>`.
+:::
 
-### Ejemplo con `List`
-
-```kotlin showLineNumbers title="ListFunctor.kt"
-package com.github.username.functors
-
-import com.github.username.kinds.Kind
-
-object ListFunctor : Functor<List<*>> {
-    override fun <A, B> Kind<List<*>, A>.map(f: (A) -> B): Kind<List<*>, B> {
-        val list = this as List<A>
-        return list.map(f)
-    }
-}
-```
-
-Sin embargo, debido a las limitaciones de Kotlin con los genéricos y los tipos de alto orden, esta implementación es menos segura y puede requerir más trabajo para garantizar la seguridad de tipos.
-
-## Limitaciones y Consideraciones
+:::warning Limitaciones y Consideraciones
 
 Al implementar functores en Kotlin usando este enfoque, enfrentamos las siguientes limitaciones:
 
-- **Casting Explícito**: Necesitamos castear `Kind<F, A>` al tipo específico (como `Box<A>`), lo cual puede ser propenso a errores si no se maneja correctamente.
+- **Verificación Manual**: La verificación de tipos y la conversión de tipos deben hacerse manualmente.
 - **Menor Seguridad de Tipos**: El compilador no puede garantizar al 100% la seguridad de tipos, lo que puede llevar a excepciones en tiempo de ejecución.
 - **Verboso**: El código puede volverse más complejo y menos legible en comparación con lenguajes que soportan higher-kinded types nativamente.
 
-## Resumen
-
-En esta lección, hemos:
-
-- Definido qué es un **functor** y cuáles son sus propiedades.
-- Visto cómo implementar la interfaz `Functor` en Kotlin utilizando el patrón `Kind`.
-- Implementado un functor para nuestra clase `Box` y aprendido cómo utilizarlo.
-- Discutido las limitaciones y consideraciones al trabajar con functores en Kotlin.
-
-A pesar de las limitaciones, este enfoque nos permite aplicar principios de programación funcional en Kotlin y escribir código más genérico y reutilizable.
-
-<References references={[
-    {
-        title: "Functors in Kotlin",
-        author: "John Doe",
-        url: "https://example.com/functors-in-kotlin",
-        type: "webpage",
-        accessed: "2023-10-05",
-    },
-    {
-        title: "Functional Programming in Kotlin",
-        bookTitle: "Functional Programming in Kotlin",
-        pages: "467–475",
-        location: "Shelter Island, NY",
-        publisher: "Manning Publications Co. LLC",
-        year: "2021",
-        type: "book",
-        author: 'Marco Vermeulen, Rúnar Bjarnason, and Paul Chiusano',
-    },
-]}/>
-
----
+:::
