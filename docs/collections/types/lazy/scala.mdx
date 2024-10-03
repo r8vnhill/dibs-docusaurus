@@ -1,0 +1,110 @@
+---
+title: Colecciones Perezosas en Scala
+---
+
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<ReadingTime/>
+
+Scala también ofrece un enfoque perezoso para trabajar con colecciones mediante su clase `Stream` (en Scala 2) y su sustituto `LazyList` (en Scala 3). Estos permiten generar secuencias de datos bajo demanda, de manera similar a las **secuencias** en Kotlin.
+
+## Evaluación Perezosa en Scala
+
+En Scala, las colecciones perezosas son aquellas donde los elementos se calculan solo cuando son requeridos. Esto permite ahorrar recursos y evitar la creación de colecciones intermedias. El procesamiento de estas colecciones sigue siendo **diferido** hasta que se consume una operación terminal, como `foreach` o `take`.
+
+### `LazyList` (Scala 3)
+
+En Scala 3, la clase `LazyList` es la implementación perezosa por defecto. Al igual que las secuencias de Kotlin, `LazyList` permite operaciones como `map`, `filter` y `take`, sin materializar completamente la lista en memoria. **`LazyList` realiza memoización**, es decir, almacena los valores ya calculados para evitar recomputarlos en futuras iteraciones, lo que garantiza que cada valor se compute solo una vez, a costa de utilizar más memoria.
+
+Además, la diferencia clave entre `LazyList` y `Stream` es que en `LazyList` **tanto la cabeza como la cola son perezosas**, mientras que en `Stream` solo la cola es perezosa y la cabeza se evalúa inmediatamente.
+
+```scala showLineNumbers
+val evenNumbers: LazyList[Int] = LazyList.from(0)
+    .filter(_ % 2 == 0)
+val firstTenEvens = evenNumbers.take(10).toList
+```
+
+En este ejemplo:
+
+- **[1]** `LazyList.from(0)` genera una secuencia infinita de enteros, comenzando desde 0.
+- **[2]** `filter(_ % 2 == 0)` mantiene solo los números pares.
+- **[3]** `take(10)` limita la secuencia a los primeros 10 elementos.
+- Los valores calculados se memorizan, por lo que si accedemos nuevamente a `evenNumbers`, los valores ya evaluados no se volverán a calcular.
+
+### `Stream` (Scala 2)
+
+En Scala 2, la clase `Stream` era la equivalente a `LazyList`. Funciona de manera similar y sigue un patrón de evaluación perezosa. Sin embargo, en `Stream`, **solo la cola es perezosa**, mientras que la cabeza se evalúa inmediatamente al crear el `Stream`. Al igual que `LazyList`, **`Stream` también realiza memoización**, almacenando los valores evaluados.
+
+```scala showLineNumbers
+val evenNumbers: Stream[Int] = Stream.from(0)
+    .filter(_ % 2 == 0)
+val firstTenEvens = evenNumbers.take(10).toList
+```
+
+La diferencia con `LazyList` es que en `Stream`, al evaluarse la cabeza inmediatamente, puede provocar una evaluación prematura, especialmente cuando se trabaja con secuencias infinitas o cálculos costosos. Con `LazyList`, al ser tanto la cabeza como la cola perezosas, se evita este problema, permitiendo un manejo más eficiente de secuencias infinitas.
+
+## Operaciones Intermedias y Terminales en Scala
+
+En Scala, las operaciones sobre `LazyList` o `Stream` son **perezosas**, lo que significa que las operaciones no se ejecutan inmediatamente hasta que se invoca una operación terminal.
+
+- **Operaciones Intermedias**:
+  - `filter`: Filtra elementos que cumplan un predicado.
+  - `map`: Transforma los elementos.
+  - `take`: Toma los primeros `n` elementos.
+- **Operaciones Terminales**:
+  - `foreach`: Itera sobre los elementos.
+  - `toList`: Convierte la secuencia en una lista.
+
+## Ejemplo: Generación de Secuencias Infinitas
+
+Al igual que en Kotlin, es posible generar secuencias infinitas de números y consumir solo los necesarios utilizando `LazyList` en Scala 3:
+
+```scala showLineNumbers
+val infiniteNumbers: LazyList[Int] = LazyList.iterate(0)(_ + 1)
+val firstTenNumbers = infiniteNumbers.take(10).toList
+```
+
+En este ejemplo:
+
+- **[1]** `LazyList.iterate(0)(_ + 1)` genera una secuencia infinita que comienza en 0 y suma 1 en cada paso.
+- **[2]** `take(10)` limita la secuencia a los primeros 10 elementos.
+- Gracias a la memoización, los valores calculados se almacenan, evitando recomputaciones si se accede nuevamente a ellos.
+
+## Comparación entre Kotlin y Scala
+
+| **Característica**                 | **Secuencias en Kotlin**                    | **LazyList en Scala**                                     |
+|------------------------------------|---------------------------------------------|-----------------------------------------------------------|
+| **Evaluación**                     | Perezosa                                    | Perezosa                                                  |
+| **Soporte para Flujos Infinitos**  | Sí, con `sequence {}`                       | Sí, con `LazyList.iterate()`                              |
+| **Mutabilidad**                    | Inmutables por defecto                      | Inmutables                                                |
+| **Memoización**                    | No soportada                                | Soportada; almacena los valores evaluados                 |
+| **Operaciones Terminales**         | `toList()`, `forEach()`, `reduce()`         | `toList`, `foreach`, `reduce`                             |
+| **Uso de Memoria**                 | Eficiente sin memoización                   | Mayor uso de memoria debido a la memoización              |
+| **Evaluación de Cabeza y Cola**    | Cabeza evaluada inmediatamente, cola perezosa | Cabeza y cola son perezosas (LazyList), solo cola perezosa (Stream) |
+
+## ¿Qué Aprendimos?
+
+En esta lección, vimos cómo Scala maneja las **colecciones perezosas** con **`LazyList`** en Scala 3 y **`Stream`** en Scala 2. Ambas permiten generar secuencias bajo demanda, similares a las **secuencias** de Kotlin, procesando solo cuando es necesario.
+
+### Puntos clave:
+
+1. **Evaluación perezosa**: Scala y Kotlin evitan el procesamiento anticipado, evaluando elementos solo cuando se necesitan.
+2. **Flujos infinitos**: Ambos lenguajes permiten crear secuencias infinitas, consumiendo solo los elementos necesarios con operaciones como `take`.
+3. **Operaciones intermedias y terminales**: En Scala y Kotlin, las operaciones como `map` o `filter` son diferidas hasta que se llama una operación terminal como `toList` o `foreach`.
+4. **Memoización**: Tanto **`LazyList`** en Scala 3 como **`Stream`** en Scala 2 soportan memoización, almacenando los valores ya evaluados para evitar recomputarlos, a costa de un mayor uso de memoria. En contraste, las secuencias en Kotlin no soportan memoización.
+5. **Diferencia entre `LazyList` y `Stream`**: La principal diferencia es que en `Stream` solo la cola es perezosa y la cabeza se evalúa inmediatamente, mientras que en `LazyList` tanto la cabeza como la cola son perezosas, evitando evaluaciones prematuras y permitiendo un manejo más eficiente de secuencias infinitas.
+
+Las colecciones perezosas en **Scala** permiten un manejo eficiente de secuencias y flujos infinitos, ofreciendo la ventaja de memoización para evitar recomputaciones, a costa de un mayor uso de memoria. En **Kotlin**, las secuencias son perezosas pero no soportan memoización, lo que puede resultar en un menor uso de memoria pero potencialmente más recomputaciones.
+
+<References references={[
+    {
+        accessedDate: '2 de octubre de 2024',
+        title: 'LazyList',
+        siteOrAuthor: 'Scala Standard Library API',
+        type: 'web',
+        url: 'https://www.scala-lang.org/api/current/scala/collection/immutable/LazyList.html',
+    },
+]}/>

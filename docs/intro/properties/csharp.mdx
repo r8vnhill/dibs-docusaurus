@@ -1,0 +1,145 @@
+---
+title: Propiedades y Accessors en C#
+---
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+En **C#**, las propiedades también combinan el comportamiento de campos y métodos, pero se gestionan a través de un sistema de **accessors**: `get` y `set`. Las propiedades proporcionan una forma más controlada de acceder y modificar los datos de una clase, similar a **Kotlin**.
+
+A diferencia de Kotlin, donde las propiedades son implícitamente generadas con sus respectivos *getters* y *setters*, en **C#**, las propiedades deben declararse explícitamente, aunque C# permite **auto-implemented properties**, que facilitan esta declaración.
+
+## Propiedad con Getter y Setter Automáticos
+
+Una **auto-implemented property** en **C#** se declara con `get` y `set`, y el compilador genera automáticamente el campo subyacente para almacenar el valor:
+
+```csharp showLineNumbers
+public class Person {
+    public string Name { get; set; } = "John";
+}
+```
+
+En este ejemplo, la propiedad `Name` tiene tanto un `get` como un `set` automáticos, lo que significa que C# generará el campo correspondiente para manejar el valor.
+
+## Propiedad con Getter y Setter Personalizados
+
+En **C#**, puedes personalizar los *getters* y *setters* para controlar el acceso o modificar el valor de la propiedad de una manera más precisa:
+
+```csharp showLineNumbers
+public class Person {
+    private string _name;
+
+    public string Name {
+        get {
+            return _name;
+        }
+        set {
+            _name = value;
+        }
+    }
+}
+```
+
+Aquí, se usa un campo privado `_name` para almacenar el valor de la propiedad, y tanto el `get` como el `set` son personalizados.
+
+## Propiedades Calculadas
+
+En **C#**, una **propiedad calculada** puede ser declarada con un *getter* que calcula su valor cada vez que se accede a ella:
+
+```csharp showLineNumbers
+public class Clock {
+    public DateTime CurrentTime => DateTime.Now;
+}
+```
+
+El valor de `CurrentTime` se calcula dinámicamente cada vez que es accedido, proporcionando una forma de obtener valores actualizados en tiempo real.
+
+## Propiedades de Solo Lectura
+
+Si deseas que una propiedad sea **solo de lectura** en **C#**, puedes definirla con solo un *getter*. Esto es útil para valores calculados o valores que no deberían ser modificados una vez establecidos:
+
+```csharp showLineNumbers
+public class Person {
+    public string Name { get; }
+
+    public Person(string name) {
+        Name = name;
+    }
+}
+```
+
+En este ejemplo, `Name` es solo de lectura: se establece en el constructor y no puede ser cambiado posteriormente.
+
+## Propiedades con Setters Privados
+
+Al igual que en **Kotlin**, puedes hacer que una propiedad en **C#** sea de solo escritura interna restringiendo el acceso al `set` a nivel privado:
+
+```csharp showLineNumbers
+public class Person {
+    public int Age { get; private set; }
+
+    public void Birthday() {
+        Age++;
+    }
+}
+```
+
+En este caso, la propiedad `Age` solo puede modificarse dentro de la clase, lo que proporciona un control adicional sobre cuándo y cómo se actualiza el valor.
+
+## Comparación final
+
+| Característica                    | Kotlin                                                      | C#                                                     |
+|-----------------------------------|-------------------------------------------------------------|--------------------------------------------------------|
+| **Declaración de propiedades**    | Propiedades se declaran con `val`/`var`.                    | Propiedades se declaran con `get`/`set`.               |
+| **Getter y Setter automáticos**   | Generados automáticamente para `val` y `var`.               | Se utilizan `get` y `set` automáticos.                 |
+| **Propiedades calculadas**        | Usando `get() = ...`                                        | Usando `=> ...` (expresión de cuerpo de flecha).       |
+| **Propiedades con Backing Field** | Uso explícito del campo `field`.                            | Uso opcional de un campo privado para almacenar datos. |
+| **Setter privado**                | Se puede declarar con `private set`.                        | Soporta `private set` de forma similar.                |
+| **Propiedad de solo lectura**     | Declarada con `val` (inmutable).                            | Declarada con `readonly` o usando solo `get`.          |
+| **Instantes actuales**            | Usar `Clock.System.now()` para calcular instantes actuales. | Usar `DateTime.Now` para instantes actuales.           |
+
+:::tip Ventajas de las Propiedades en C#
+
+1. **Expresividad**: La sintaxis de las propiedades en C# con la flecha (`=>`) para propiedades calculadas es concisa y expresiva, similar a las funciones lambda.
+2. **Compatibilidad**: C# es ampliamente utilizado y compatible con una amplia gama de herramientas y plataformas, lo que facilita su adopción.
+3. **Memorización Opcional**: Las propiedades en C# permiten el uso opcional de memorización a través de un campo privado para optimizar el rendimiento en propiedades calculadas.
+4. **Soporte para Interfaces**: Las propiedades en C# se pueden definir directamente en interfaces, lo que brinda mayor flexibilidad en la definición de APIs.
+
+:::
+
+:::danger Desventajas de las Propiedades en C#
+
+1. **Mayor verbosidad**: A pesar de las mejoras en la sintaxis, las propiedades en C# tienden a ser más verbosas que en Kotlin, especialmente al definir getters y setters personalizados.
+2. **Uso de Backing Fields**: El manejo manual de `backing fields` en propiedades calculadas puede aumentar la complejidad del código.
+3. **Menor inmutabilidad implícita**: A diferencia de Kotlin, donde `val` indica claramente la inmutabilidad, C# requiere especificar `readonly` o un getter sin setter para obtener el mismo comportamiento, lo que puede no ser tan evidente al leer el código.
+
+:::
+
+## ¿Qué Aprendimos?
+
+En esta sección, hemos explorado las **propiedades** y **accessors** en **C#**, comparándolos con su contraparte en **Kotlin**. Ambos lenguajes ofrecen mecanismos robustos para manejar el acceso a datos dentro de clases, aunque difieren en ciertos aspectos clave:
+
+1. **Declaración de propiedades**: En **Kotlin**, las propiedades se declaran con `val` y `var`, mientras que en **C#** se declaran con `get` y `set`, que pueden ser automáticos o personalizados.
+2. **Propiedades calculadas**: Tanto en **Kotlin** como en **C#**, es posible definir propiedades calculadas, aunque **C#** usa una sintaxis más concisa con `=>`.
+3. **Inmutabilidad**: **Kotlin** hace explícita la inmutabilidad con `val`, mientras que en **C#** se logra mediante `readonly` o propiedades con solo un `get`.
+4. **Privacidad en setters**: Ambos lenguajes permiten controlar el acceso a los setters mediante modificadores como `private set`, lo que otorga mayor control sobre la modificación de propiedades.
+5. **Flexibilidad y compatibilidad**: **C#** ofrece algunas ventajas adicionales, como la memorización opcional y la definición de propiedades en interfaces, que proporcionan flexibilidad adicional en entornos más grandes y complejos.
+
+En resumen, las propiedades en **C#** y **Kotlin** permiten gestionar datos de manera eficiente dentro de una clase, con varias opciones para controlar el acceso y modificar el comportamiento de las propiedades. Cada lenguaje ofrece características únicas que permiten un manejo flexible del estado de las clases en diferentes contextos de desarrollo.
+
+<References references={[
+    {
+        title: "8. Super-sleek properties and expression-bodied members",
+        bookTitle: "C# in depth",
+        pages: "235–251",
+        location: "Shelter Island, NY",
+        publisher: "Manning",
+        year: "2019",
+        type: "book",
+        author: 'Jon Skeet',
+        edition: 'Fourth edition',
+    },
+]}/>

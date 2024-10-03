@@ -1,0 +1,129 @@
+---
+title: Matchers Personalizados en Chai
+---
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+En **Chai**, un popular framework de aserciones para **JavaScript**, es posible crear **matchers personalizados** de manera similar a Kotest. Chai permite extender su funcionalidad agregando métodos de aserción personalizados a su conjunto de matchers, proporcionando flexibilidad al escribir pruebas.
+
+## Crear un Matcher Personalizado en Chai
+
+En Chai, los matchers personalizados se añaden a través de la función `chai.Assertion.addMethod()`, que permite definir nuevos métodos de aserción. Estos métodos pueden verificar condiciones específicas en los objetos de prueba, de manera similar a los matchers en Kotest.
+
+## Ejemplo de Matcher Personalizado
+
+A continuación, se muestra cómo crear un matcher personalizado en **Chai** para verificar si un número es par:
+
+<Tabs groupId={"js"}>
+    <TabItem value={"ts"} label={"TypeScript"}>
+        <Tabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```typescript showLineNumbers
+                chai.Assertion.addMethod('even', function() {
+                    const actual = this._obj;
+                    this.assert(
+                        actual % 2 === 0,
+                        'expected #{this} to be an even number',
+                        'expected #{this} to not be an even number'
+                    );
+                });
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```typescript showLineNumbers
+                import { expect } from 'chai';
+
+                chai.Assertion.addMethod('even', function() {
+                    const actual = this._obj;
+                    this.assert(
+                        actual % 2 === 0,
+                        'expected #{this} to be an even number',
+                        'expected #{this} to not be an even number'
+                    );
+                });
+
+                describe('Custom matcher: even', function() {
+                    it('should verify if a number is even', function() {
+                        expect(4).to.be.even;  // Pasa
+                        expect(5).to.not.be.even;  // Pasa
+                    });
+                });
+                ```
+            </TabItem>
+        </Tabs>
+    </TabItem>
+    <TabItem value={"js"} label={"JavaScript"}>
+        <Tabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```javascript showLineNumbers
+                chai.Assertion.addMethod('even', function() {
+                    const actual = this._obj;
+                    this.assert(
+                        actual % 2 === 0,
+                        'expected #{this} to be an even number',
+                        'expected #{this} to not be an even number'
+                    );
+                });
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```javascript showLineNumbers
+                const chai = require('chai');
+                const expect = chai.expect;
+
+                chai.Assertion.addMethod('even', function() {
+                    const actual = this._obj;
+                    this.assert(
+                        actual % 2 === 0,
+                        'expected #{this} to be an even number',
+                        'expected #{this} to not be an even number'
+                    );
+                });
+
+                describe('Custom matcher: even', function() {
+                    it('should verify if a number is even', function() {
+                        expect(4).to.be.even;  // Pasa
+                        expect(5).to.not.be.even;  // Pasa
+                    });
+                });
+                ```
+            </TabItem>
+        </Tabs>
+    </TabItem>
+</Tabs>
+
+:::info Explicación del Código
+
+- **[1]** `chai.Assertion.addMethod('even', ...)`: Agrega el matcher personalizado `even` a Chai.
+- **[2]** `this._obj`: Hace referencia al valor actual que está siendo evaluado.
+- **[3-7]** `this.assert`: Realiza la comprobación. Si `actual % 2 === 0`, la prueba pasa. Si no, falla con el mensaje definido.
+
+:::
+
+## Comparación entre Kotest y Chai
+
+| Característica               | **Kotest**                                          | **Chai**                                                       |
+|------------------------------|-----------------------------------------------------|----------------------------------------------------------------|
+| **Definición de matchers**   | Utiliza la interfaz `Matcher<T>` y `MatcherResult`. | Usa `chai.Assertion.addMethod()` para agregar nuevos matchers. |
+| **Estructura del resultado** | Devuelve `MatcherResult` con `passed()` y mensajes. | Usa `this.assert` para evaluar la condición.                   |
+| **Matchers negados**         | Implementado automáticamente con `shouldNot`.       | Negación automática con `.not`.                                |
+| **Flexibilidad**             | Gran personalización y reutilización.               | Flexible, aunque con menos estructura que Kotest.              |
+
+## ¿Qué Aprendimos?
+
+Hemos comparado cómo crear **matchers personalizados** en Kotest y Chai. Ambos frameworks permiten definir validaciones específicas que se ajustan a las necesidades de las pruebas, aunque Kotest sigue una estructura más formal con `Matcher<T>` y `MatcherResult`, mientras que Chai se basa en la extensión del objeto `Assertion` para agregar métodos personalizados.
+
+En ambas herramientas, los matchers personalizados permiten mejorar la legibilidad y reutilización de las pruebas, facilitando la creación de aserciones específicas.
+
+<References references={[
+    {
+        title: "Building a Helper—Chai",
+        type: "web",
+        accessedDate: "3 de octubre de 2024",
+        url: "https://www.chaijs.com/guide/helpers/"
+    }
+]}/>

@@ -1,14 +1,21 @@
 ---
 title: Funciones Puras y Efectos Secundarios
 ---
-
-import Tabs from "@theme/Tabs";
+import References from "/src/components/ReferencesComponent";
+import Hint from "/src/components/exercise/Hint";
+import Solution from "/src/components/exercise/Solution";
+import Corollary from "/src/components/Corollary";
+import Definition from "/src/components/Definition";
+import Exercise from "/src/components/exercise/Exercise";
+import ReadingTime from '/src/components/ReadingTime';
 import TabItem from "@theme/TabItem";
-import Definition from "../../src/components/Definition";
-import ReadingTime from '../../src/components/ReadingTime';
-import Corollary from "../../src/components/Corollary";
+import Tabs from "@theme/Tabs";
 
 <ReadingTime />
+
+En esta lección, abordaremos el concepto de **funciones puras** y su relación con los **efectos secundarios** en la programación. Las funciones puras, al no tener efectos secundarios, ofrecen numerosas ventajas, como una mayor facilidad para probarlas, una mejor previsibilidad de su comportamiento, y su uso en entornos como la programación funcional. Por otro lado, los efectos secundarios, aunque a menudo necesarios en aplicaciones del mundo real, pueden hacer que el código sea más difícil de mantener y depurar.
+
+A lo largo de este tema, aprenderás a identificar funciones puras e impuras, a refactorizar código para eliminar efectos secundarios y a comprender cómo utilizar las herramientas de Kotlin para manejar valores de forma segura, evitando modificaciones indeseadas en el estado del programa.
 
 ## Funciones Puras
 
@@ -24,7 +31,7 @@ import Corollary from "../../src/components/Corollary";
     Una función es pura si su único efecto observable dentro de la ejecución del programa es procesar el input para producir un output, sin causar ningún otro cambio en el estado del programa.
 </Corollary>
 
-### Efectos Secundarios
+## Efectos Secundarios
 
 También conocidos como **side-effects**, los efectos secundarios son cualquier operación que una función realice además de retornar un valor. Un efecto secundario puede ser modificar una variable global, escribir en un archivo, o interactuar con la interfaz de usuario. Cuando una función tiene efectos secundarios, se la considera **impura**.
 
@@ -36,41 +43,37 @@ También conocidos como **side-effects**, los efectos secundarios son cualquier 
 
 A continuación, analizamos algunos ejemplos para identificar funciones puras e impuras.
 
-:::tip Ejercicio: Identificar Funciones Puras
+<Exercise title={"Identificar Funciones Puras e Impuras"}>
+    Identifica si las siguientes funciones son puras o impuras:
 
-<Tabs>
-    <TabItem value="Ejercicio" label="Ejercicio">
-        Identifica si las siguientes funciones son puras o impuras:
-
-        1.
-        ```kotlin
+    1.
+        ```kotlin showLineNumbers
         fun add(a: Int, b: Int): Int = a + b
         ```
-        2.
-        ```kotlin
+    2.
+        ```kotlin showLineNumbers
         fun addCurried(): (Int) -> (Int) -> Int = { a -> { b -> a + b } }
         ```
-        3.
-        ```kotlin
+    3.
+        ```kotlin showLineNumbers
         fun greet(name: String): Unit = println("Hello, $name!")
         ```
-        4.
-        ```kotlin
+    4.
+        ```kotlin showLineNumbers
         fun incrementArray(array: Array<Int>): Unit {
             for (i in array.indices) {
                 array[i]++
             }
         }
         ```
-    </TabItem>
-    <TabItem value="Solución" label="Solución">
+
+    <Solution>
         1. **Pura**: No tiene efectos secundarios y solo realiza una operación matemática.
         2. **Pura**: Es una función currificada que no tiene efectos secundarios.
         3. **Impura**: Tiene un efecto secundario al imprimir en la consola.
         4. **Impura**: Modifica el array original, lo que implica un efecto secundario.
-    </TabItem>
-</Tabs>
-:::
+    </Solution>
+</Exercise>
 
 <Corollary>
     En general, si una función retorna `Unit`, es un indicio de que podría tener efectos secundarios.
@@ -82,7 +85,7 @@ Cuando una función es impura debido a que modifica el estado del programa, como
 
 ### Ejemplo de función impura:
 
-```kotlin
+```kotlin showLineNumbers
 fun incrementArray(array: Array<Int>): Unit {
     for (i in array.indices) {
         array[i]++
@@ -94,25 +97,29 @@ El código anterior es impuro porque **modifica directamente el arreglo** pasado
 
 Para hacer que la función sea pura, debemos **evitar modificar el arreglo original**. En su lugar, vamos a devolver un **nuevo arreglo** con los valores incrementados. A continuación, utilizamos recursión para lograr esto:
 
-```kotlin
+```kotlin showLineNumbers
 fun incrementArray(array: Array<Int>, index: Int = 0): Array<Int> =
     if (index >= array.size) {
-        arrayOf()   // (1)
+        arrayOf()
     } else {
-        arrayOf(array[index] + 1) + incrementArray(array, index + 1)    // (2)
+        arrayOf(array[index] + 1) + incrementArray(array, index + 1)
     }
 ```
 
-1. **Caso Base**: El caso base ocurre cuando el índice ha recorrido todos los elementos del arreglo (`index >= array.size`). En este caso, la función retorna un **arreglo vacío**, lo cual sirve como punto de finalización de la recursión.
-2. **Caso Recursivo**:
+:::info Explicación del Código
+
+- **[2]** Caso Base: El caso base ocurre cuando el índice ha recorrido todos los elementos del arreglo (`index >= array.size`). En este caso, la función retorna un **arreglo vacío**, lo cual sirve como punto de finalización de la recursión.
+2. **[5]** Caso Recursivo:
     - En cada paso de la recursión, se crea un **nuevo arreglo** que contiene el valor incrementado del elemento actual, y luego se concatena con el resultado de la llamada recursiva para los elementos restantes.
     - Esto genera un nuevo arreglo sin modificar el original.
+
+:::
 
 ### Ejemplo de Función Impura: Cálculo de Intereses Compuestos
 
 En el código original, el uso de `println` para mostrar los balances en cada iteración es un **efecto secundario** que lo hace impuro:
 
-```kotlin
+```kotlin showLineNumbers
 fun calculateCompoundInterest(
     principal: Double,
     rate: Double,
@@ -128,9 +135,9 @@ fun calculateCompoundInterest(
 }
 ```
 
-Para hacer la función **pura**, eliminamos los efectos secundarios (la impresión) y almacenamos el historial de balances en una lista que será parte del resultado. Utilizaremos **recursión** con parámetros por defecto para simplificar el diseño:
+Para hacer la función **pura**, eliminamos los efectos secundarios (la impresión) y almacenamos el historial de balances en una lista que será parte del resultado. Utilizaremos **recursión** con una función auxiliar para no tener una 💣explosión💥 en el número de parámetros:
 
-```kotlin
+```kotlin showLineNumbers
 fun calculateCompoundInterest(
     principal: Double,
     rate: Double,
@@ -152,36 +159,39 @@ fun calculateCompoundInterest(
 ```
 
 :::note
+
 Usamos una **función auxiliar** en lugar de parámetros por defecto para evitar sobrecargar la función principal con demasiados parámetros, lo que afectaría su claridad. La función auxiliar maneja el estado interno, manteniendo la **simplicidad** y **legibilidad**, mientras que la función principal se enfoca solo en los parámetros esenciales. Esto sigue el principio de mantener las funciones con la menor cantidad de parámetros posible.
+
 :::
 
-:::tip Ejercicio: Eliminar Efectos Secundarios
+<Exercise title={"Eliminar Efectos Secundarios"}>
+    En el siguiente ejemplo, la función `transferirFondos` tiene efectos secundarios, ya que modifica el estado de las cuentas y la base de datos:
 
-<Tabs>
-    <TabItem value="Ejercicio" label="Ejercicio">
-        En el siguiente ejemplo, la función `transferirFondos` tiene efectos secundarios, ya que modifica el estado de las cuentas y la base de datos:
+    ```kotlin showLineNumbers
+    object Database {
+        fun update(cuenta: Cuenta): Unit = TODO()
+    }
 
-        ```kotlin
-        object Database {
-            fun update(cuenta: Cuenta): Unit = TODO()
+    fun transferirFondos(cuentaOrigen: Cuenta, cuentaDestino: Cuenta, monto: Int) =
+        if (cuentaOrigen.saldo >= monto) {
+            cuentaOrigen.saldo -= monto
+            cuentaDestino.saldo += monto
+            database.update(cuentaOrigen)
+            database.update(cuentaDestino)
+            true
+        } else {
+            false
         }
+    ```
 
-        fun transferirFondos(cuentaOrigen: Cuenta, cuentaDestino: Cuenta, monto: Int) =
-            if (cuentaOrigen.saldo >= monto) {
-                cuentaOrigen.saldo -= monto
-                cuentaDestino.saldo += monto
-                database.update(cuentaOrigen)
-                database.update(cuentaDestino)
-                true
-            } else {
-                false
-            }
-        ```
+    Modifica la función `transferirFondos` para eliminar los efectos secundarios. En lugar de modificar directamente las cuentas, devuelve un objeto que describa el resultado de la operación.
 
-        Modifica la función `transferirFondos` para eliminar los efectos secundarios. En lugar de modificar directamente las cuentas, devuelve un objeto que describa el resultado de la operación. **Hint**: Utiliza una `data class` para representar el resultado de la transferencia.
-    </TabItem>
-    <TabItem value="Solución" label="Solución">
-        ```kotlin
+    <Hint hints={[
+        "Utiliza un registro para representar el resultado de la transferencia."
+    ]} />
+
+    <Solution>
+        ```kotlin showLineNumbers
         data class TransferenciaResultado(
             val cuentaOrigenActualizada: Cuenta,
             val cuentaDestinoActualizada: Cuenta,
@@ -189,7 +199,7 @@ Usamos una **función auxiliar** en lugar de parámetros por defecto para evitar
         )
         ```
 
-        ```kotlin
+        ```kotlin showLineNumbers
         fun transferirFondos(cuentaOrigen: Cuenta, cuentaDestino: Cuenta, monto: Int) =
             if (cuentaOrigen.saldo >= monto) {
                 val nuevaCuentaOrigen = cuentaOrigen.copy(saldo = cuentaOrigen.saldo - monto)
@@ -199,6 +209,29 @@ Usamos una **función auxiliar** en lugar de parámetros por defecto para evitar
                 TransferenciaResultado(cuentaOrigen, cuentaDestino, false)
             }
         ```
-    </TabItem>
-</Tabs>
-:::
+    </Solution>
+</Exercise>
+
+## ¿Qué Aprendimos?
+
+En esta lección, vimos:
+
+1. **Funciones Puras**: Producen el mismo resultado dado el mismo input y no tienen efectos secundarios, lo que las hace fáciles de probar y predecibles.
+2. **Efectos Secundarios**: Ocurren cuando una función modifica el estado externo o interactúa con el entorno, volviéndola impura y más difícil de mantener.
+3. **Mitigación**: Refactorizar para evitar modificaciones directas en el estado y devolver nuevos valores ayuda a mantener la pureza de las funciones.
+
+Las funciones puras mejoran la **predecibilidad**, **facilidad de prueba**, y **reutilización** en el código.
+
+<References references={[
+    {
+        title: "1. What is functional programming?",
+        bookTitle: "Functional Programming in Kotlin",
+        pages: "3–16",
+        location: "Manning Publications Co. LLC",
+        publisher: "Shelter Island, NY",
+        year: "2021",
+        type: "book",
+        author: 'M. Vermeulen, R. Bjarnason, & P. Chiusano',
+        edition: '1st',
+    },
+]} />

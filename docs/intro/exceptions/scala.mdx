@@ -1,0 +1,172 @@
+---
+title: Excepciones en Scala
+---
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+El manejo de **excepciones** en **Scala** es muy similar al de **Kotlin**, aunque con algunas diferencias en la sintaxis y el enfoque. Ambas utilizan `throw` para lanzar excepciones y bloques `try-catch` para capturarlas. Scala no tiene excepciones chequeadas, al igual que Kotlin, lo que significa que no es necesario declarar qué excepciones puede lanzar una función.
+
+## Lanzar Excepciones
+
+En **Scala**, puedes lanzar una excepción usando la palabra clave `throw`, tal como en Kotlin:
+
+<Tabs groupId={"scala"}>
+    <TabItem value={"3"} label={"Scala 3"}>
+        ```scala showLineNumbers
+        def divide(a: Int, b: Int): Int = if b == 0 then
+            throw new IllegalArgumentException("Cannot divide by zero")
+        else
+            a / b
+        ```
+    </TabItem>
+    <TabItem value={"2"} label={"Scala 2"}>
+        ```scala showLineNumbers
+        def divide(a: Int, b: Int): Int = if (b == 0) {
+            throw new IllegalArgumentException("Cannot divide by zero")
+        } else {
+            a / b
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+## Capturar Excepciones
+
+Para manejar excepciones, **Scala** utiliza `try-catch` de una manera muy similar a Kotlin. El bloque `catch` en Scala utiliza el patrón `case` para capturar excepciones específicas:
+
+<Tabs groupId={"scala"}>
+    <TabItem value={"3"} label={"Scala 3"}>
+        ```scala showLineNumbers
+        def safeDivide(a: Int, b: Int): Int = try
+            a / b
+        catch
+            case e: ArithmeticException =>
+                println(s"Error: ${e.getMessage}")
+                0
+        ```
+    </TabItem>
+    <TabItem value={"2"} label={"Scala 2"}>
+        ```scala showLineNumbers
+        def safeDivide(a: Int, b: Int): Int = try {
+            a / b
+        } catch {
+            case e: ArithmeticException => {
+                println(s"Error: ${e.getMessage}")
+                0
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+## Bloque `finally`
+
+Al igual que en Kotlin, en Scala puedes usar el bloque `finally` para ejecutar código después de que una excepción haya sido manejada o cuando no se ha lanzado ninguna excepción. Es útil para la liberación de recursos.
+
+<Tabs groupId={"scala"}>
+    <TabItem value={"3"} label={"Scala 3"}>
+        ```scala showLineNumbers
+        def readFile(path: String): String = try
+            "File content"  // Lógica de lectura de archivos
+        catch
+            case e: Exception => s"Error: ${e.getMessage}"
+        finally
+            println("Cleaning up resources")
+        ```
+    </TabItem>
+    <TabItem value={"2"} label={"Scala 2"}>
+        ```scala showLineNumbers
+        def readFile(path: String): String = try {
+            "File content"  // Lógica de lectura de archivos
+        } catch {
+            case e: Exception => s"Error: ${e.getMessage}"
+        } finally {
+            println("Cleaning up resources")
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+## Propagación de Excepciones
+
+Las excepciones en **Scala**, al igual que en **Kotlin**, se propagan automáticamente si no se capturan. No es necesario declarar qué excepciones lanza una función:
+
+<Tabs groupId={"scala"}>
+    <TabItem value={"3"} label={"Scala 3"}>
+        ```scala showLineNumbers
+        def riskyOperation(): Unit =
+            throw RuntimeException("Something went wrong")
+
+        riskyOperation() // Si no se captura, la excepción se propagará y finalizará el programa
+        ```
+    </TabItem>
+    <TabItem value={"2"} label={"Scala 2"}>
+        ```scala showLineNumbers
+        def riskyOperation(): Unit =
+            throw new RuntimeException("Something went wrong")
+
+        riskyOperation() // Si no se captura, la excepción se propagará y finalizará el programa
+        ```
+    </TabItem>
+</Tabs>
+
+## Excepciones Personalizadas
+
+Al igual que en **Kotlin**, puedes crear excepciones personalizadas en **Scala** heredando de `Exception`:
+
+<Tabs groupId={"scala"}>
+    <TabItem value="3" label="Scala 3">
+        ```scala showLineNumbers
+        class CustomException(message: String) extends Exception(message)
+
+        def validateAge(age: Int): Unit =
+            if age < 18 then throw CustomException("Age must be 18 or older")
+        ```
+    </TabItem>
+    <TabItem value="2" label="Scala 2">
+        ```scala showLineNumbers
+        class CustomException(message: String) extends Exception(message)
+
+        def validateAge(age: Int): Unit =
+            if (age < 18) throw new CustomException("Age must be 18 or older")
+        ```
+    </TabItem>
+</Tabs>
+
+## Comparación Final
+
+| Característica                 | Kotlin                                | Scala                                 |
+|--------------------------------|---------------------------------------|---------------------------------------|
+| **Lanzar excepciones**         | `throw`                               | `throw`                               |
+| **Capturar excepciones**       | `try-catch`                           | `try-catch-case`                      |
+| **Bloque `finally`**           | Opcional, se ejecuta siempre          | Igual que en Kotlin                   |
+| **Propagación de excepciones** | No chequeadas, propagación automática | No chequeadas, propagación automática |
+| **Excepciones personalizadas** | Heredando de `Exception`              | Heredando de `Exception`              |
+
+:::info Ventajas y Desventajas
+
+**No hay diferencias fundamentales**: Aunque ambos lenguajes manejan las excepciones de manera similar, las diferencias son menores, por lo que no hay una ventaja significativa en Scala frente a Kotlin en cuanto a excepciones.
+
+:::
+
+## ¿Qué Aprendimos?
+
+En esta lección, hemos visto cómo **Scala** y **Kotlin** manejan las excepciones de manera muy similar, usando `try-catch` y `throw`. Ambos lenguajes evitan las excepciones chequeadas y permiten la personalización de excepciones sin complicaciones adicionales.
+
+<References references={[
+    {
+        title: "7. Scala Exceptions",
+        bookTitle: "Mastering Scala: A Beginner’s Guide",
+        pages: "291–305",
+        location: "Boca Raton, FL",
+        publisher: "CRC Press",
+        year: "2024",
+        type: "book",
+        author: 'Sufyan bin Uzayr',
+        edition: '1st edition'
+    },
+]}/>

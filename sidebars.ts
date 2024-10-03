@@ -28,7 +28,6 @@ const sidebars: SidebarsConfig = {
                         'intro/basics',
                         'intro/types',
                         'intro/oop/oop',
-                        'intro/open-closed/open-closed-kt',
                         'intro/properties/properties-kt',
                         'intro/exceptions/exceptions-kt',
                         'intro/void/void-safety',
@@ -47,17 +46,7 @@ const sidebars: SidebarsConfig = {
                 'build-systems/gradle-init',
                 'build-systems/convention-plugins',
                 'build-systems/global',
-                {
-                    type: 'category',
-                    label: 'Configuraciones básicas',
-                    link: {
-                        type: 'doc',
-                        id: 'build-systems/basic-config/basic-config-gradle',
-                    },
-                    items: [
-                        'build-systems/basic-config/basic-config-langs',
-                    ],
-                },
+                'build-systems/basic-config/basic-config-gradle',
                 'build-systems/app/my-app',
                 {
                     label: 'Tareas',
@@ -132,6 +121,7 @@ const sidebars: SidebarsConfig = {
                 id: 'oop/index',
             },
             items: [
+                'oop/open-closed/open-closed-kt',
                 'oop/extension/kt',
                 'oop/operator-overload/kt',
                 'oop/infix',
