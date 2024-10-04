@@ -1,8 +1,10 @@
 ---
 title: Excepciones en Java
 ---
-import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import TabItem from "@theme/TabItem";
+import Tabs from "@theme/Tabs";
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
 
 <ReadingTime/>
 
@@ -12,59 +14,304 @@ Al igual que **Kotlin**, **Java** es conocido por su manejo de excepciones robus
 
 En ambos lenguajes, para lanzar una excepción se utiliza `throw`. En Java, al igual que en Kotlin, podemos lanzar cualquier subclase de `Throwable`, como `Exception` o `RuntimeException`.
 
-```java
-public int divide(int a, int b) {
-    if (b == 0) {
-        throw new IllegalArgumentException("Cannot divide by zero");
-    }
-    return a / b;
-}
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```java showLineNumbers
+        public static int divide(int a, int b) {
+            if (b == 0) {
+                throw new IllegalArgumentException("Cannot divide by zero");
+            }
+            return a / b;
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```java showLineNumbers
+        package cl.ravenhill;
+
+        public class Divide {
+
+            public static void main(String[] args) {
+                final int a = 10;
+                int b = 2;
+                int result = divide(a, b);
+                System.out.println("The result of " + a + " / " + b + " is " + result);
+                b = 0;
+                try {
+                    result = divide(a, b);
+                    System.out.println("The result of " + a + " / " + b + " is " + result);
+                } catch (IllegalArgumentException e) {
+                    System.out.println("An error occurred: " + e.getMessage());
+                }
+                /* Output:
+                The result of 10 / 2 is 5
+                An error occurred: Cannot divide by zero
+                 */
+            }
+
+            public static int divide(int a, int b) {
+                if (b == 0) {
+                    throw new IllegalArgumentException("Cannot divide by zero");
+                }
+                return a / b;
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
 
 ### Diferencia clave: Excepciones Chequeadas
 
 Una diferencia importante es que en Java existen **excepciones chequeadas** y **no chequeadas**. Las excepciones chequeadas (subclases de `Exception`, excepto `RuntimeException`) deben ser manejadas o declaradas explícitamente en la firma del método usando la palabra clave `throws`. En Kotlin, **no existen excepciones chequeadas**, lo que simplifica el manejo de excepciones.
 
-```java
-public void riskyOperation() throws IOException {
-    throw new IOException("Something went wrong");
-}
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```java showLineNumbers
+        public static void riskyOperation() throws IOException {
+            throw new IOException("Something went wrong");
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```java showLineNumbers
+        package cl.ravenhill;
+
+        import java.io.IOException;
+
+        public class RiskyOperation {
+
+            public static void main(String[] args) {
+                try {
+                    riskyOperation();
+                } catch (IOException e) {
+                    System.out.println("An error occurred: " + e.getMessage());
+                }
+                /* Output:
+                An error occurred: Something went wrong
+                 */
+            }
+
+            public static void riskyOperation() throws IOException {
+                throw new IOException("Something went wrong");
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
 
 ## Capturar Excepciones
 
 Ambos lenguajes utilizan bloques `try-catch` para manejar excepciones, pero la sintaxis de Kotlin es más compacta y puede devolver valores directamente dentro del bloque `try`.
 
-```java
-public Integer safeDivide(int a, int b) {
-    try {
-        return a / b;
-    } catch (ArithmeticException e) {
-        System.out.println("Error: " + e.getMessage());
-        return null;
-    }
-}
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```java showLineNumbers
+        public static Integer safeDivide(int a, int b) {
+            try {
+                return a / b;
+            } catch (ArithmeticException e) {
+                System.out.println("An error occurred: " + e.getMessage());
+                return null;
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```java showLineNumbers
+        package cl.ravenhill;
+
+        public class Divide {
+
+            public static void main(String[] args) {
+                final int a = 10;
+                int b = 2;
+                Integer result = safeDivide(a, b);
+                System.out.println("The result of " + a + " / " + b + " is " + result);
+
+                b = 0;
+                result = safeDivide(a, b);
+                System.out.println("The result of " + a + " / " + b + " is " + result);
+
+                /* Output:
+                The result of 10 / 2 is 5
+                An error occurred: / by zero
+                The result of 10 / 0 is null
+                */
+            }
+
+            public static Integer safeDivide(int a, int b) {
+                try {
+                    return a / b;
+                } catch (ArithmeticException e) {
+                    System.out.println("An error occurred: " + e.getMessage());
+                    return null;
+                }
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
 
 ### Bloque `finally`
 
 El comportamiento del bloque `finally` es idéntico en ambos lenguajes: se ejecuta siempre, tanto si ocurre una excepción como si no. Esto se utiliza normalmente para liberar recursos como conexiones a bases de datos o archivos.
 
-```java
-try {
-    // Código que puede lanzar una excepción
-} catch (Exception e) {
-    // Manejo de la excepción
-} finally {
-    System.out.println("Cleaning up resources");
-}
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```java showLineNumbers
+        try {
+            // Operación que puede lanzar una excepción
+        } catch (FileNotFoundException e) {
+            // Manejar la excepción
+        } catch (IOException e) {
+            // Manejar la excepción
+        } finally {
+            // Liberar recursos
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```java showLineNumbers
+        package cl.ravenhill;
+
+        import java.io.File;
+
+        import java.io.*;
+
+        public class FileProcessor {
+
+            public static void main(String[] args) {
+                var fileName = "src/main/java/cl/ravenhill/FileProcessor.java";
+                var content = processFile(fileName);
+                System.out.println(content);
+                fileName = "src/main/java/cl/ravenhill/NonExistentFile.java";
+                content = processFile(fileName);
+                System.out.println(content);
+                /* Output:
+                package cl.ravenhill;
+
+                import java.io.File;
+
+                ...
+
+                The file was not found: src/main/java/cl/ravenhill/NonExistentFile.java
+                java.io.FileNotFoundException: src\main\java\cl\ravenhill\NonExistentFile.java (The system cannot find the file specified)
+                ...
+                */
+            }
+
+            public static String processFile(String fileName) {
+                BufferedReader reader = null;
+                var content = new StringBuilder();
+                try {
+                    var file = new File(fileName);
+                    reader = new BufferedReader(new FileReader(file));
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        content.append(line).append("\n");
+                    }
+                } catch (FileNotFoundException e) {
+                    System.err.println("The file was not found: " + fileName);
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    System.err.println("An error occurred while processing the file: " + fileName);
+                    e.printStackTrace();
+                } finally {
+                    // Cerrar el lector en el bloque finally
+                    if (reader != null) {
+                        try {
+                            reader.close();
+                        } catch (IOException e) {
+                            System.err.println("Error al cerrar el archivo: " + fileName);
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                return content.toString();
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+### Try-With-Resources en Java
+
+Java proporciona una sintaxis especial llamada `try-with-resources` para manejar recursos que implementan la interfaz `AutoCloseable`. Esto simplifica la liberación de recursos, ya que no es necesario cerrar explícitamente los recursos en el bloque `finally`.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```java showLineNumbers
+        try (BufferedReader reader = new BufferedReader(new FileReader("file.txt"))) {
+            // Operación que puede lanzar una excepción
+        } catch (FileNotFoundException e) {
+            // Manejar la excepción
+        } catch (IOException e) {
+            // Manejar la excepción
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```java showLineNumbers
+        package cl.ravenhill;
+
+        import java.io.BufferedReader;
+        import java.io.FileNotFoundException;
+        import java.io.FileReader;
+        import java.io.IOException;
+
+        public class FileProcessor {
+
+            public static void main(String[] args) {
+                var fileName = "src/main/java/cl/ravenhill/FileProcessor.java";
+                var content = processFile(fileName);
+                System.out.println(content);
+                fileName = "src/main/java/cl/ravenhill/NonExistentFile.java";
+                content = processFile(fileName);
+                System.out.println(content);
+                /* Output:
+                package cl.ravenhill;
+
+                import java.io.BufferedReader;
+                import java.io.FileNotFoundException;
+                import java.io.FileReader;
+                import java.io.IOException;
+
+                ...
+
+                The file was not found: src/main/java/cl/ravenhill/NonExistentFile.java
+                java.io.FileNotFoundException: src/main/java/cl/ravenhill/NonExistentFile.java (The system cannot find the file specified)
+                ...
+                */
+            }
+
+            public static String processFile(String fileName) {
+                var content = new StringBuilder();
+                try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        content.append(line).append("\n");
+                    }
+                } catch (FileNotFoundException e) {
+                    System.err.println("The file was not found: " + fileName);
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    System.err.println("An error occurred while processing the file: " + fileName);
+                    e.printStackTrace();
+                }
+                return content.toString();
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
 
 ## Excepciones Personalizadas
 
 En ambos lenguajes, puedes crear excepciones personalizadas heredando de `Exception`. El proceso en Java es prácticamente idéntico a Kotlin:
 
-```java
+```java showLineNumbers
+package cl.ravenhill;
+
 public class CustomException extends Exception {
     public CustomException(String message) {
         super(message);
@@ -84,9 +331,43 @@ public class CustomException extends Exception {
 | **Propagación de Excepciones** | Se propagan sin necesidad de declararlas explícitamente.            | Las excepciones chequeadas deben declararse con `throws`.            |
 | **Optimización Funcional**     | Puede usar tipos anulables o `Result` para un manejo más funcional. | Principalmente usa excepciones para manejar errores.                 |
 
-## Resumen
+:::tip Ventajas de Java
 
-Si vienes de Java, verás que el manejo de excepciones en Kotlin es muy similar, con algunas simplificaciones notables como la **ausencia de excepciones chequeadas** y la posibilidad de devolver valores directamente en bloques `try-catch`. Además, en Kotlin es común preferir estructuras funcionales como `Result` o tipos anulables para manejar errores, reduciendo la necesidad de excepciones en muchos casos.
+1. **Chequeo en Tiempo de Compilación**: Las excepciones chequeadas en Java obligan a los desarrolladores a manejar o declarar las excepciones, lo que mejora la seguridad del código al prevenir errores no manejados en tiempo de compilación.
+2. **Flexibilidad con Try-With-Resources**: Java proporciona el bloque `try-with-resources`, lo que simplifica la gestión de recursos como archivos o conexiones, al garantizar su liberación automática.
+
+:::
+
+:::danger Desventajas de Java
+
+1. **Verbosidad**: La necesidad de declarar excepciones chequeadas en la firma del método y de usar bloques `try-catch` adicionales puede hacer que el código sea más verboso y difícil de leer en comparación con lenguajes que no requieren esto, como Kotlin.
+2. **Sobrecarga de Excepciones Chequeadas**: Aunque las excepciones chequeadas mejoran la seguridad, en algunos casos pueden ser innecesariamente restrictivas, forzando a los desarrolladores a manejarlas incluso cuando no es realmente necesario, lo que añade complejidad y sobrecarga en el código.
+3. **Menor Soporte Funcional**: A diferencia de Kotlin, que permite usar `Result` o tipos anulables para un manejo más funcional de errores, Java depende principalmente de excepciones para el control de flujo de errores, lo que puede limitar la flexibilidad en algunos patrones funcionales.
+4. **Restricciones en Expresiones Lambda**: En Java, no se pueden lanzar **excepciones chequeadas** directamente dentro de expresiones lambda sin encapsularlas en una construcción `try-catch` o propagarlas mediante una excepción no chequeada. Esto puede hacer que el manejo de errores en código funcional sea más complicado y menos elegante.
+    ```java
+     // Esto genera un error en Java si `throws IOException` no es manejada
+    Runnable task = () -> {
+        throw new IOException("Error");
+    };
+    ```
+    Para corregirlo, debes manejar la excepción chequeada en el lambda o lanzar una excepción no chequeada.
+
+:::
+
+## ¿Qué Hemos Aprendido?
+
+En esta lección, hemos explorado el manejo de excepciones en Java, comparándolo con Kotlin para entender las similitudes y diferencias clave. Esto incluye cómo ambos lenguajes permiten lanzar y capturar excepciones, el uso del bloque `finally`, la diferencia importante entre excepciones chequeadas y no chequeadas en Java, y cómo Java ofrece `try-with-resources` para un manejo más eficiente de recursos.
+
+En resumen:
+
+1. **Lanzar Excepciones**: Java y Kotlin comparten la misma sintaxis para lanzar excepciones con `throw`, pero Java requiere manejar o declarar excepciones chequeadas.
+2. **Excepciones Chequeadas**: Esta es una distinción clave entre Java y Kotlin. Java tiene excepciones chequeadas, que deben ser gestionadas o declaradas explícitamente en la firma del método usando `throws`, mientras que Kotlin no impone este requisito.
+3. **Capturar Excepciones**: Ambos lenguajes utilizan bloques `try-catch`, pero Kotlin permite devolver valores directamente dentro del bloque `try`.
+4. **Bloque `finally`**: Este bloque es idéntico en ambos lenguajes y se utiliza para liberar recursos, garantizando que siempre se ejecuta, sin importar si ocurrió o no una excepción.
+5. **Try-With-Resources en Java**: Java introduce `try-with-resources` para simplificar la gestión de recursos como archivos o conexiones, cerrándolos automáticamente al finalizar el bloque `try`.
+6. **Excepciones Personalizadas**: Ambos lenguajes permiten la creación de excepciones personalizadas heredando de `Exception` o `RuntimeException`.
+
+Esta lección también demuestra cómo el uso de excepciones en Java puede ser más detallado y explícito debido a las excepciones chequeadas, mientras que Kotlin adopta un enfoque más simplificado.
 
 <References references={[
     {

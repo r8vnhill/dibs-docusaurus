@@ -1,38 +1,50 @@
 ---
 title: Functores en Kotlin
 ---
-
-import ReadingTime from '@site/src/components/ReadingTime';
-import References from "@site/src/components/ReferencesComponent";
+import Corollary from "../../../src/components/Corollary";
+import Definition from "/src/components/Definition";
+import Solution from "/src/components/exercise/Solution";
+import ReadingTime from '/src/components/ReadingTime';
+import Exercise from "/src/components/exercise/Exercise";
+import References from "/src/components/ReferencesComponent";
 import TabItem from "@theme/TabItem";
 import Tabs from "@theme/Tabs";
 
 <ReadingTime/>
 
-En esta lección, exploraremos el concepto de **functores** en Kotlin y cómo implementarlos, basándonos en lo que aprendimos sobre **Higher-Kinded Types** en la lección anterior.
+<Definition title={"Functor"}>
+    Un **Functor** es una abstracción matemática que aparece en la teoría de categorías, y se aplica en programación funcional como una estructura que puede ser mapeada sobre. Formalmente, un functor es un tipo que implementa el comportamiento de la función $\textrm{map}$, la cual aplica una función a los elementos que contiene, preservando la estructura del contenedor.
+</Definition>
 
-## ¿Qué es un Functor?
-
-En programación funcional, un **functor** es una abstracción que representa tipos de datos que pueden ser mapeados. Es decir, un functor es una estructura que soporta una operación que aplica una función a los valores que contiene sin alterar su estructura.
-
-### Intuición Básica
-
-Si tienes una estructura de datos como una lista, un árbol o un `Box`, y puedes aplicar una función a cada elemento dentro de esa estructura sin modificar la forma de la estructura, entonces esa estructura es un functor.
+<Corollary>
+    Si tienes una estructura de datos como una lista, un árbol o una caja, y puedes aplicar una función a cada elemento dentro de esa estructura sin modificar la forma de la estructura, entonces esa estructura es un functor.
+</Corollary>
 
 ### Leyes de los Functores
 
-Para que una estructura sea considerada un functor, debe cumplir dos leyes:
+Para que una estructura sea considerada un **functor**, debe cumplir con las siguientes dos leyes fundamentales:
 
-1. **Ley de Identidad**: Aplicar la función identidad no debe cambiar el functor.
+1. **Ley de Identidad**: Al aplicar la función identidad ($\textrm{id}$), el functor no debe cambiar. Esto significa que mapear con la identidad debe producir el mismo functor con los mismos valores.
 
-    $
-    \text{map}(\text{id}) = \text{id}
-    $
+    <center>
+        $
+        \text{map}(\text{id}) = \text{id}
+        $
+    </center>
 
-2. **Ley de Composición**: Mapear la composición de dos funciones es lo mismo que mapear una función y luego mapear la otra.
-    $
-    \text{map}(f \circ g) = \text{map}(f) \circ \text{map}(g)
-    $
+    **Intuición**: Si no estamos transformando los valores dentro del functor, la estructura debe quedar intacta.
+
+2. **Ley de Composición**: Aplicar la composición de dos funciones en un solo paso debe ser equivalente a aplicar cada función por separado, una tras otra, dentro del functor. Es decir, el resultado de mapear la composición de funciones debe ser el mismo que mapear las funciones individualmente, en el mismo orden.
+
+    <center>
+        $
+        \text{map}(f \circ g) = \text{map}(f) \circ \text{map}(g)
+        $
+    </center>
+
+    **Intuición**: Primero mapear `g` y luego mapear `f` debe ser equivalente a mapear la composición de `f` y `g` en un solo paso.
+
+Estas leyes garantizan que un functor preserve la estructura de las transformaciones aplicadas a sus valores, asegurando consistencia y previsibilidad en su comportamiento.
 
 ## Implementando Functores en Kotlin
 
@@ -61,19 +73,9 @@ Para que una estructura sea considerada un functor, debe cumplir dos leyes:
             ```
         </TabItem>
     </Tabs>
-
-    También necesitaremos añadir el módulo ``hkt`` al archivo ``build.gradle.kts`` del módulo ``functors``:
-
-    ```kotlin showLineNumbers title="functors/build.gradle.kts"
-    dependencies {
-        implementation(project(":hkt"))
-    }
-    ```
 </details>
 
-Como vimos en la lección anterior, Kotlin no soporta **Higher-Kinded Types** de forma nativa. Sin embargo, podemos simular este comportamiento utilizando el patrón `Kind`.
-
-### Definición de la Interfaz `Functor`
+### Creando la Clase ``Box``
 
 <details>
     <summary>
@@ -83,182 +85,187 @@ Como vimos en la lección anterior, Kotlin no soporta **Higher-Kinded Types** de
     <Tabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell
-            $BaseDir = 'com\github\username'
-            $FunctorsDir = "functors\src\main\kotlin\$BaseDir"
-            New-Item -Path "$FunctorsDir\functor\Functor.kt" -ItemType 'File' -Force
+            $Group = 'com\github\username'
+            $FunctorsDir = "functors\src\main\kotlin\$Group\functors"
+            New-Item -Path "$FunctorsDir\Box.kt" -ItemType File -Force
             ```
         </TabItem>
         <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
             ```powershell
-            $BaseDir = 'com\github\username'
-            $FunctorsDir = "functors\src\main\kotlin\$BaseDir"
-            ni "$FunctorsDir\functor\Functor.kt" -i 'f' -f
+            $Group = 'com\github\username'
+            $FunctorsDir = "functors\src\main\kotlin\$Group\functors"
+            ni "$FunctorsDir\Box.kt" -i 'f' -f
             ```
         </TabItem>
         <TabItem value="Linux/Mac" label="Linux/Mac">
             ```bash
-            BASE_DIR="com/github/username"
-            FUNCTORS_DIR="functors/src/main/kotlin/$BASE_DIR"
-            touch "$FUNCTORS_DIR/functor/Functor.kt"
+            GROUP="com/github/username"
+            FUNCTORS_DIR="functors/src/main/kotlin/$GROUP/functors"
+            mkdir -p "$FUNCTORS_DIR"
+            touch "$FUNCTORS_DIR/Box.kt"
             ```
         </TabItem>
     </Tabs>
 </details>
 
-Primero, definamos una interfaz `Functor` que trabaja sobre un constructor de tipos `F`.
+Consideremos la siguiente implementación de una caja (`Box`) en Kotlin.
 
-<Tabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers title="functors/src/main/kotlin/com/github/username/functors/Functor.kt"
-        interface Functor<F> {
-            fun <A, B> Kind<F, A>.map(f: (A) -> B): Kind<F, B>
-        }
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="functors/src/main/kotlin/com/github/username/functors/Functor.kt"
-        package com.github.username.functors
+```kotlin showLineNumbers title="functors/src/main/kotlin/com/github/username/functors/Box.kt"
+package com.github.username.functors
 
-        import com.github.username.kinds.Kind
-
-        interface Functor<F> {
-            fun <A, B> Kind<F, A>.map(f: (A) -> B): Kind<F, B>
-        }
-        ```
-    </TabItem>
-</Tabs>
-
-:::info Explicación del Código
-
-- **`F`**: Representa el constructor de tipos (como `List`, `Box`, etc.).
-- **`map`**: Es una extensión sobre `Kind<F, A>` que aplica una función `f` al valor contenido y devuelve un `Kind<F, B>`.
-
-:::
-
-### Nuestra Clase `Box` como Functor
-
-Usaremos la clase `Box` que definimos anteriormente.
-
-```kotlin showLineNumbers title="hkt/src/main/kotlin/com/github/username/kinds/Box.kt"
-package com.github.username.kinds
-
-data class Box<out A>(val value: A) : Kind<Box.Of, A> {
-    object Of
-}
+data class Box<out A>(val value: A)
 ```
 
 ### Implementando el Functor para `Box`
 
-    <details>
-        <summary>
-            Si prefieres crear el archivo desde la terminal...
-        </summary>
+<details>
+    <summary>
+        Si prefieres crear el archivo desde la terminal...
+    </summary>
 
-        <Tabs groupId={"os"}>
-            <TabItem value="Windows" label="Windows">
-                ```powershell
-                New-Item -Path "$FunctorsDir\functor\Bo
-                ```
-            </TabItem>
-            <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-                ```powershell
-                ni "$FunctorsDir\functor\Functor.kt" -i 'f' -f
-                ```
-            </TabItem>
-            <TabItem value="Linux/Mac" label="Linux/Mac">
-                ```bash
-                touch "$FUNCTORS_DIR/functor/Functor.kt"
-                ```
-            </TabItem>
-        </Tabs>
-    </details>
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "$FunctorsDir\BoxFunctor.kt" -ItemType File -Force
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            ni "$FunctorsDir\BoxFunctor.kt" -i 'f' -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            touch "$FUNCTORS_DIR/BoxFunctor.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
 
-Ahora, crearemos una instancia de `Functor` para `Box`.
+Ahora, crearemos una clase para representar un functor para la caja (`Box`).
 
-<Tabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers title="functors/src/main/kotlin/com/github/username/functors/BoxFunctor.kt"
-        class BoxFunctor : Functor<Box.Of> {
-            override fun <A, B> Kind<Box.Of, A>.map(f: (A) -> B): Kind<Box.Of, B> {
-                require(this is Box<A>) { "Invalid Box" }
-                return Box(f(this.value))
-            }
-        }
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="functors/src/main/kotlin/com/github/username/functors/BoxFunctor.kt"
-        package com.github.username.functors
+```kotlin showLineNumbers title="functors/src/main/kotlin/com/github/username/functors/BoxFunctor.kt"
+package cl.ravenhill.functors
 
-        import com.github.username.kinds.Box
-        import com.github.username.kinds.Kind
-
-        object BoxFunctor : Functor<Box.Of> {
-            override fun <A, B> Kind<Box.Of, A>.map(f: (A) -> B): Kind<Box.Of, B> {
-                require(this is Box<A>) { "Invalid Box" }
-                return Box(f(this.value))
-            }
-        }
-        ```
-    </TabItem>
-</Tabs>
-
+class BoxFunctor {
+    fun <A, B> Box<A>.map(f: (A) -> B) = Box(f(this.value))
+}
+```
 :::info Explicación del Código
 
-- **[3]** Verificamos que `this` sea una instancia de `Box<A>`.
-- **[4]**: Aplicamos la función `f` al valor contenido y lo envolvemos en un nuevo `Box`.
+- **[4]** `map`: Es un método de extensión que toma una función `f` y la aplica al valor contenido en la caja, devolviendo una nueva caja con el resultado de la función aplicada al valor original.
 
 :::
 
-### Uso del Functor `BoxFunctor`
+### Verificando las Leyes de los Functores
 
-Veamos cómo utilizar nuestro functor en código.
+Veamos que nuestro functor cumple con las leyes de los functores. Primero, verificaremos la **Ley de Identidad**.
 
-<Tabs>
-    <TabItem value={"Código esencial"} label={"Código esencial"}>
-        ```kotlin showLineNumbers title="Main.kt"
-        val box: Kind<Box.Of, Int> = Box(420)
-        val result = with(BoxFunctor) {
-            box.map { it * 2 }
+```kotlin showLineNumbers
+val box: Box<Int> = Box(420)
+val identity = with(BoxFunctor) {
+    box.map { it }
+}
+println("Functor adheres to the identity law: ${identity == box}")
+```
+
+Ahora, verificaremos la **Ley de Composición**.
+
+```kotlin showLineNumbers
+val composition = with(BoxFunctor) {
+    box.map { it + 1 }.map { it * 2 }
+}
+val composed = with(BoxFunctor) {
+    box.map { (it + 1) * 2 }
+}
+println("Functor adheres to the composition law: ${composition == composed}")
+```
+
+<details>
+    <summary>
+        Higher-Kinded Types
+    </summary>
+
+    En lenguajes como Haskell o Scala, es común utilizar **higher-kinded types (HKT)** para definir abstracciones genéricas como los functores. Los HKT permiten definir interfaces que operan sobre **constructores de tipos**, proporcionando una gran flexibilidad y reutilización de código.
+
+    Por ejemplo, en Haskell, un functor se define así:
+
+    ```haskell
+    class Functor f where
+        fmap :: (a -> b) -> f a -> f b
+    ```
+
+    Aquí, `f` es un constructor de tipos que puede ser aplicado a un tipo concreto `a` para formar un nuevo tipo `f a`.
+
+    Sin embargo, **Kotlin no soporta higher-kinded types de forma nativa**. Esto significa que no podemos directamente definir una interfaz `Functor` que sea genérica sobre un constructor de tipos `F`.
+
+    Para intentar superar esta limitación, algunos desarrolladores utilizan patrones para simular HKT, como crear una interfaz `Kind<F, A>` que actúa como un contenedor genérico:
+
+    ```kotlin
+    interface Kind<F, A>
+    ```
+
+    Y luego definir el functor de la siguiente manera:
+
+    ```kotlin
+    interface Functor<F> {
+        fun <A, B> Kind<F, A>.map(f: (A) -> B): Kind<F, B>
+    }
+    ```
+
+    :::warning Limitaciones
+
+    1. **Complejidad Adicional**: Introduce una capa extra de abstracción que puede hacer el código más difícil de entender y mantener.
+    2. **Seguridad de Tipos Reducida**: El compilador de Kotlin no puede verificar completamente los tipos en estas estructuras simuladas, lo que puede llevar a errores en tiempo de ejecución.
+    3. **Código Verboso**: Requiere escribir código adicional para cada tipo que se quiera usar con el functor, incluyendo conversiones y comprobaciones de tipos manuales.
+
+    :::
+
+    ### Relación con la Implementación sin Higher-Kinded Types
+
+    Dado que la simulación de HKT en Kotlin introduce complejidad y reduce la seguridad de tipos, optamos por una **implementación sin higher-kinded types**, definiendo funciones `map` específicas para cada estructura de datos que queremos tratar como functor.
+
+    En lugar de intentar crear una interfaz genérica para todos los tipos, podemos definir funciones de extensión `map` directamente sobre nuestras clases. Por ejemplo, para nuestra clase `Box`:
+
+    ```kotlin
+    data class Box<out A>(val value: A)
+
+    fun <A, B> Box<A>.map(f: (A) -> B): Box<B> {
+        return Box(f(this.value))
+    }
+    ```
+
+    Este enfoque presenta varias mejoras sobre el diseño original que intentaba simular HKT:
+
+    - **Simplicidad**: El código es más simple y fácil de leer, ya que no necesitamos introducir abstracciones adicionales como `Kind`.
+    - **Seguridad de Tipos Mejorada**: Aprovechamos al máximo el sistema de tipos de Kotlin, evitando casting y comprobaciones manuales.
+    - **Facilidad de Uso**: Los desarrolladores pueden utilizar la función `map` directamente sobre las instancias de `Box`, sin necesidad de envolver o desempaquetar los valores.
+
+    Al implementar los functores sin HKT, mantenemos la capacidad de mapear funciones sobre nuestras estructuras de datos, cumpliendo con las leyes de los functores y aprovechando las características del lenguaje de manera más eficiente.
+</details>
+
+<Exercise title="Functor para Pares">
+    Implementa un functor para la clase `Pair` en Kotlin que mapee la función solo sobre el segundo elemento del par.
+
+    <Solution>
+        ```kotlin
+        object PairFunctor {
+            fun <A, B, C> Pair<A, B>.map(f: (B) -> C) =
+                this.first to f(this.second)
         }
-        println(result) // Debería imprimir: Box(value=840)
         ```
-    </TabItem>
-    <TabItem value={"Código completo"} label={"Código completo"}>
-        ```kotlin showLineNumbers title="Main.kt"
-        package com.github.username.main
+    </Solution>
+</Exercise>
 
-        import com.github.username.kinds.Box
-        import com.github.username.kinds.Kind
-        import com.github.username.functors.BoxFunctor
-
-        fun main() {
-            val box: Kind<Box.Of, Int> = Box(420)
-
-            val result = with(BoxFunctor) {
-                box.map { it * 2 }
-            }
-
-            println(result) // Debería imprimir: Box(value=840)
-        }
-        ```
-    </TabItem>
-</Tabs>
-
-:::info Explicación del Código
-
-- **[1]**: Creamos un `Box` que contiene el número `420`.
-- **[2-4]**: Usamos `with(BoxFunctor)` para acceder a la función `map`.
-- **[5]**: Aplicamos una función que duplica el valor contenido.
-
-:::
-
-:::warning Limitaciones y Consideraciones
-
-Al implementar functores en Kotlin usando este enfoque, enfrentamos las siguientes limitaciones:
-
-- **Verificación Manual**: La verificación de tipos y la conversión de tipos deben hacerse manualmente.
-- **Menor Seguridad de Tipos**: El compilador no puede garantizar al 100% la seguridad de tipos, lo que puede llevar a excepciones en tiempo de ejecución.
-- **Verboso**: El código puede volverse más complejo y menos legible en comparación con lenguajes que soportan higher-kinded types nativamente.
-
-:::
+<References references={[
+    {
+        title: "11. Monads and Functors",
+        bookTitle: "Functional Programming in Kotlin",
+        pages: "231-257",
+        location: "Shelter Island, NY",
+        publisher: "Manning Publications Co. LLC",
+        year: "2021",
+        type: "book",
+        author: 'M. Vermeulen, R. Bjarnason, & P. Chiusano',
+    },
+]}/>

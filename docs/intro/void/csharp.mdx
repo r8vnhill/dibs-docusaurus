@@ -1,8 +1,10 @@
 ---
 title: Void-Safety en C#
 ---
-import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
 
 <ReadingTime/>
 
@@ -11,46 +13,105 @@ En lenguajes como **C#**, la **seguridad ante valores nulos** (o **null safety**
 ## Tipos Anulables
 
 En C#, las referencias son no anulables por defecto a partir de C# 8.0, pero se puede optar por hacerlas anulables mediante la sintaxis `?`:
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```csharp
+        string? nullableString = null;  // Anulable
+        string nonNullableString = "Hello";  // No anulable
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```csharp
+        string? nullableString = null;  // Anulable
+        string nonNullableString = "Hello";  // No anulable
+        Console.WriteLine(nullableString == null ? "null" : nullableString);  // null
+        Console.WriteLine(nonNullableString == null ? "null" : nonNullableString);  // Hello
+        ```
+    </TabItem>
+</Tabs>
 
-```csharp showLineNumbers
-string? nullableString = null;  // Anulable
-string nonNullableString = "Hello";  // No anulable
-```
-
-Esto se parece al enfoque de Kotlin, donde las variables son no anulables por defecto, y debes declarar explícitamente si un valor puede ser `null` utilizando `?`. Si intentas asignar un valor nulo a una variable no anulable en C#, obtendrás una advertencia en tiempo de compilación, similar a Kotlin.
+Esto se parece al enfoque de Kotlin, donde las variables son no anulables por defecto, y debes declarar explícitamente si un valor puede ser `null` utilizando `?`. Si intentas asignar un valor nulo a una variable no anulable en C#, obtendrás una advertencia en tiempo de compilación, mientras que en Kotlin, obtendrás un error de compilación.
 
 ## Operadores condicionales NULL ``?.`` y ``?[]``
 
 C# también introduce operadores condicionales para acceso a miembros ``?.`` y acceso a elementos de colección ``?[]`` que permiten acceder a propiedades y métodos de un objeto solo si no es nulo:
 
-```csharp showLineNumbers
-int? length = nullableString?.Length;  // Si es nulo, no lanza excepción, sino que devuelve null
-int? firstElement = nullableString?[0];  // Si es nulo o la cadena está vacía, devuelve null
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```csharp
+        int? length = nullableString?.Length;
+        int? firstElement = nullableString?[0];
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```csharp
+        string? nullableString = null;
+        int? length = nullableString?.Length;
+        int? firstElement = nullableString?[0];
+        Console.WriteLine(length == null ? "null" : length.ToString());  // null
+        Console.WriteLine(firstElement == null ? "null" : firstElement.ToString());  // null
+        ```
+    </TabItem>
+</Tabs>
 
+:::info Explicación del Código
+
+- **[1]** ``nullableString?.Length``: Si `nullableString` es `null`, `length` será `null` en lugar de lanzar una excepción.
+- **[2]** ``nullableString?[0]``: Si `nullableString` es `null` o está vacío, `firstElement` será `null` en lugar de lanzar una excepción.
+
+:::
 
 ## Null Coalescing Operator
 
 El **operador Elvis** (`?:`) en Kotlin tiene su equivalente en C# con el operador de null coalescing (`??`), que proporciona un valor por defecto si una expresión es nula:
 
-```csharp showLineNumbers
-int length = nullableString?.Length ?? -1;  // Si es nulo, devuelve -1
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```csharp showLineNumbers
+        int length = nullableString?.Length ?? -1;
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```csharp showLineNumbers
+        string? nullableString = null;
+        int length = nullableString?.Length ?? -1;
+        Console.WriteLine(length);  // -1
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del Código
+
+- **[1]** ``nullableString?.Length ?? -1``: Si `nullableString` es `null`, `length` será `-1` en lugar de `null`.
+
+:::
 
 ## Funciones Similares a `let`
 
 En C#, puedes usar una combinación de condicionales y expresiones lambda para lograr un comportamiento similar al de `let` en Kotlin. Aunque no hay un equivalente directo en C#, las comprobaciones de nulabilidad, los métodos de extensión y las expresiones lambda permiten un enfoque similar:
 
 ```csharp showLineNumbers
+namespace VoidSafe;
+
 public static class Extensions
 {
     public static TResult? Let<T, TResult>(
         this T? value,
         Func<T, TResult> func
-    ) where T : class where TResult : class => value != null ? func(value) : null;
+    ) where T : class where TResult : class =>
+        value != null ? func(value) : null;
 }
+```
 
-nullableString?.Let(s => Console.WriteLine(s.ToUpper()));
+```csharp showLineNumbers
+using VoidSafe;
+
+string? nullableString = null;
+nullableString?.Let<string, string>(s =>
+{
+    Console.WriteLine(s.ToUpper());
+    return "Success";
+});
 ```
 
 ### Comparación Final
@@ -83,7 +144,6 @@ nullableString?.Let(s => Console.WriteLine(s.ToUpper()));
 En esta sección, hemos comparado cómo Kotlin y C# manejan la seguridad ante valores nulos (void-safety). Ambos lenguajes han evolucionado para ofrecer mecanismos que ayudan a prevenir errores de nulabilidad, pero con enfoques diferentes:
 
 - **Kotlin** está diseñado con un sistema de tipos que previene referencias nulas desde el principio, lo que garantiza que los errores de `NullPointerException` se eviten en tiempo de compilación, siempre que lx desarrolladorx siga las reglas del sistema de tipos anulables y no anulables.
-
 - **C#**, por otro lado, ha integrado null safety a partir de la versión 8.0, ofreciendo un sistema que es **opt-in**, lo que significa que es opcional y se puede integrar de manera gradual. Aunque esto permite una transición más suave en proyectos existentes, puede resultar en menos consistencia en comparación con Kotlin, ya que el soporte no es obligatorio.
 
 En ambos lenguajes, los operadores condicionales y los mecanismos de verificación en tiempo de compilación ayudan a manejar los valores nulos de manera más segura y eficiente, pero C# puede ser más verboso en algunos casos. Sin embargo, la flexibilidad de C# para trabajar con código legado es una ventaja significativa para proyectos a largo plazo o sistemas grandes.

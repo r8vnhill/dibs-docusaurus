@@ -56,17 +56,7 @@ const sidebars: SidebarsConfig = {
                         id: 'build-systems/tasks/index',
                     },
                     items: [
-                        {
-                            label: 'Tareas predefinidas',
-                            type: 'category',
-                            link: {
-                                type: 'doc',
-                                id: 'build-systems/tasks/default/default-gradle',
-                            },
-                            items: [
-                                'build-systems/tasks/default/default-langs',
-                            ],
-                        },
+                        'build-systems/tasks/default/default-gradle',
                         'build-systems/tasks/custom/custom-kt',
                         'build-systems/tasks/classes-kt'
                     ],
@@ -199,7 +189,7 @@ const sidebars: SidebarsConfig = {
                     ],
                 },
                 // 'fp/ad-hoc/kt',
-                'fp/kinds/higher-kinded-types-kt',
+                // 'fp/kinds/higher-kinded-types-kt',
                 // 'fp/typeclass/kt',
                 {
                     type: 'category',
@@ -217,7 +207,10 @@ const sidebars: SidebarsConfig = {
                                 title: 'Ejemplos comunes de functores',
                                 description: 'Los functores son un concepto fundamental en programación funcional. Aquí se presentan algunos ejemplos comunes',
                             },
-                            items: [],
+                            items: [
+                                // 'fp/functors/const/kt',
+                                'fp/functors/list/kt',
+                            ],
                         },
                     ]
                 },

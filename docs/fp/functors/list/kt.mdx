@@ -1,0 +1,132 @@
+---
+title: Functor List
+---
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+El **functor `List`** es uno de los ejemplos más conocidos y utilizados en la programación funcional. Aunque la idea de los functores puede parecer abstracta, el functor `List` es bastante intuitivo, ya que la lista es una estructura que todxs conocemos bien.
+
+En esta lección, veremos cómo **`List`** cumple con las leyes de los functores, qué significa que sea un functor en la práctica, y cómo podemos usarlo para transformar listas en Kotlin.
+
+## Definición del Functor `List`
+
+En términos funcionales, un **functor** es una estructura que nos permite aplicar una función a los elementos que contiene sin alterar su estructura. En el caso de una lista, esto significa que podemos transformar cada uno de los elementos de la lista usando una función, pero la lista en sí (su tamaño y orden) se mantiene intacta.
+
+Kotlin ya proporciona la función `map` para las listas, lo que hace que `List` se comporte como un functor. La función `map` toma una función que transforma los elementos y devuelve una nueva lista con los resultados de aplicar esa función a cada elemento de la lista original.
+
+Veamos un ejemplo básico:
+
+```kotlin showLineNumbers
+val numbers = listOf(1, 2, 3, 4, 5)
+val doubled = numbers.map { it * 2 }
+println(doubled) // Output: [2, 4, 6, 8, 10]
+```
+
+En este caso, la lista original `[1, 2, 3, 4, 5]` es mapeada a una nueva lista `[2, 4, 6, 8, 10]` al multiplicar cada elemento por 2. El tamaño y el orden de la lista no cambian, lo que respeta las leyes de los functores.
+
+## Cumplimiento de las Leyes de los Functores
+
+### 1. **Ley de Identidad**
+
+La **ley de identidad** establece que si aplicamos la función identidad (`id(x) = x`) sobre los elementos de una lista, el resultado debe ser la misma lista original.
+
+En Kotlin, la función identidad se puede expresar como `{ it }`. Veamos cómo se cumple esta ley con `List`:
+
+```kotlin showLineNumbers
+val numbers = listOf(1, 2, 3, 4, 5)
+val identity = numbers.map { it }
+println(identity == numbers) // Output: true
+```
+
+La función `map { it }` no cambia los elementos de la lista, por lo que la lista resultante es igual a la lista original. Esto demuestra que `List` cumple con la ley de identidad.
+
+### 2. **Ley de Composición**
+
+La **ley de composición** establece que mapear dos funciones de forma secuencial debería ser lo mismo que mapear la composición de esas funciones.
+
+Esto significa que si tenemos dos funciones `f` y `g`, entonces:
+
+```kotlin
+list.map(f).map(g) == list.map { g(f(it)) }
+```
+
+Veamos un ejemplo en Kotlin:
+
+```kotlin showLineNumbers
+val numbers = listOf(1, 2, 3)
+val f: (Int) -> Int = { it + 1 }
+val g: (Int) -> Int = { it * 2 }
+
+val composedMap = numbers.map(f).map(g)
+val directComposition = numbers.map { g(f(it)) }
+
+println(composedMap == directComposition) // Output: true
+```
+
+Aquí aplicamos primero `f` (que incrementa cada número en 1) y luego `g` (que multiplica el resultado por 2) usando dos `map`. La lista resultante es la misma que si hubiéramos compuesto las funciones directamente dentro de un solo `map`. Esto demuestra que `List` cumple con la ley de composición.
+
+## Aplicaciones del Functor `List`
+
+### 1. **Transformación de Datos**
+
+El uso más común del functor `List` es la **transformación de datos**. Imagina que tienes una lista de objetos y necesitas transformarlos. Por ejemplo, tienes una lista de nombres y necesitas convertirlos todos a mayúsculas.
+
+```kotlin showLineNumbers
+val names = listOf("alice", "bob", "charlie")
+val upperNames = names.map { it.uppercase() }
+println(upperNames) // Output: [ALICE, BOB, CHARLIE]
+```
+
+En este caso, aplicamos la función `uppercase` a cada elemento de la lista, manteniendo la estructura de la lista, pero transformando su contenido.
+
+### 2. **Uso de Listas Vacías**
+
+Un aspecto interesante de las listas es cómo las listas vacías también siguen las leyes de los functores. Si tienes una lista vacía y aplicas `map`, el resultado seguirá siendo una lista vacía.
+
+```kotlin showLineNumbers
+val emptyList = emptyList<Int>()
+val transformedEmptyList = emptyList.map { it * 2 }
+println(transformedEmptyList) // Output: []
+```
+
+Incluso con una lista vacía, la estructura no cambia y sigue siendo una lista vacía después de aplicar `map`.
+
+### 3. **Procesamiento Condicional**
+
+Podemos usar `map` para aplicar funciones condicionalmente a los elementos de una lista. Por ejemplo, si queremos multiplicar solo los números pares por 2, podemos hacerlo fácilmente con `map`:
+
+```kotlin showLineNumbers
+val numbers = listOf(1, 2, 3, 4, 5)
+val transformed = numbers.map { if (it % 2 == 0) it * 2 else it }
+println(transformed) // Output: [1, 4, 3, 8, 5]
+```
+
+### 4. **Uso con Functores Anidados**
+
+El functor `List` también se puede componer con otros functores, como listas anidadas. Supongamos que tenemos una lista de listas y queremos aplicar una transformación a los elementos en las listas anidadas:
+
+```kotlin showLineNumbers
+val nestedLists = listOf(listOf(1, 2, 3), listOf(4, 5, 6))
+val doubled = nestedLists.map { it.map { x -> x * 2 } }
+println(doubled) // Output: [[2, 4, 6], [8, 10, 12]]
+```
+
+Aquí estamos mapeando sobre una lista de listas, aplicando la misma transformación en todos los niveles. Esto demuestra cómo los functores pueden ser utilizados de manera anidada para procesar estructuras de datos complejas.
+
+## Resumen
+
+El functor **`List`** es una de las implementaciones más simples y prácticas de un functor en programación funcional. Permite transformar los elementos de una lista sin cambiar la estructura de la lista, y cumple con las leyes de identidad y composición.
+
+### Puntos clave:
+
+1. **Ley de Identidad**: Aplicar la función identidad a una lista no cambia su contenido.
+2. **Ley de Composición**: Componer dos funciones dentro de `map` es lo mismo que aplicar esas funciones secuencialmente.
+3. **Transformación de Datos**: `List` es una herramienta poderosa para transformar datos de manera declarativa.
+4. **Uso con Listas Vacías**: `map` sobre listas vacías devuelve listas vacías, manteniendo la consistencia.
+5. **Functores Anidados**: Se pueden aplicar `map` sobre estructuras anidadas, lo que permite transformar datos en varios niveles de profundidad.
+
+El functor `List` es fundamental para entender cómo funcionan las transformaciones en la programación funcional y es una herramienta clave en Kotlin para trabajar con colecciones de manera declarativa y funcional.

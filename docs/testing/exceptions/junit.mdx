@@ -1,0 +1,145 @@
+---
+title: Testing de Excepciones con JUnit 5
+---
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+Aunque **Kotest** es una opción poderosa para realizar pruebas en Kotlin, **JUnit 5** sigue siendo uno de los frameworks más populares en la JVM. En esta sección, compararemos cómo ambos frameworks abordan el **testing de excepciones**.
+
+## JUnit 5: Testing de Excepciones
+
+En **JUnit 5**, las excepciones se prueban utilizando el método `assertThrows`. Este método es bastante flexible y permite verificar que una excepción específica haya sido lanzada en un bloque de código.
+
+### Ejemplo con JUnit 5
+
+El siguiente ejemplo demuestra cómo verificar que se lance una excepción al intentar asignar un valor no válido a los puntos de salud actuales de un Bakémon.
+
+<Tabs>
+    <TabItem label={"Kotlin"} value={"Kotlin"}>
+        <Tabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```kotlin showLineNumbers
+                @Test
+                fun `should throw exception for negative health points`() {
+                    val bigachu = createBakemon("Bigachu", 100)
+                    val exception = assertThrows<IllegalArgumentException> {
+                        bigachu.currentHealthPoints = -1
+                    }
+                    assertEquals("Current health points is not in [0, 100]: -1", exception.message)
+                }
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```kotlin showLineNumbers
+                import org.junit.jupiter.api.Assertions.*
+                import org.junit.jupiter.api.Test
+
+                class BakemonHpTest {
+
+                    @Test
+                    fun `should throw exception for negative health points`() {
+                        val bigachu = createBakemon("Bigachu", 100)
+                        val exception = assertThrows<IllegalArgumentException> {
+                            bigachu.currentHealthPoints = -1
+                        }
+                        assertEquals("Current health points is not in [0, 100]: -1", exception.message)
+                    }
+
+                    @Test
+                    fun `should throw exception for health points exceeding maximum`() {
+                        val bigachu = createBakemon("Bigachu", 100)
+                        val exception = assertThrows<IllegalArgumentException> {
+                            bigachu.currentHealthPoints = 101
+                        }
+                        assertEquals("Current health points is not in [0, 100]: 101", exception.message)
+                    }
+                }
+                ```
+            </TabItem>
+        </Tabs>
+    </TabItem>
+    <TabItem value={"Java"} label={"Java"}>
+        <Tabs>
+            <TabItem value={"Código esencial"} label={"Código esencial"}>
+                ```java showLineNumbers
+                @Test
+                @DisplayName("should throw exception for negative health points")
+                void shouldThrowExceptionForNegativeHealthPoints() {
+                    Bakemon bigachu = createBakemon("Bigachu", 100);
+                    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+                        bigachu.setCurrentHealthPoints(-1);
+                    });
+                    assertEquals("Current health points is not in [0, 100]: -1", exception.getMessage());
+                }
+                ```
+            </TabItem>
+            <TabItem value={"Código completo"} label={"Código completo"}>
+                ```java showLineNumbers
+                import org.junit.jupiter.api.Test;
+                import static org.junit.jupiter.api.Assertions.*;
+
+                class BakemonHpTest {
+
+                    @Test
+                    @DisplayName("should throw exception for negative health points")
+                    void shouldThrowExceptionForNegativeHealthPoints() {
+                        Bakemon bigachu = createBakemon("Bigachu", 100);
+                        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+                            bigachu.setCurrentHealthPoints(-1);
+                        });
+                        assertEquals("Current health points is not in [0, 100]: -1", exception.getMessage());
+                    }
+
+                    @Test
+                    @DisplayName("should throw exception for health points exceeding maximum")
+                    void shouldThrowExceptionForHealthPointsExceedingMaximum() {
+                        Bakemon bigachu = createBakemon("Bigachu", 100);
+                        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+                            bigachu.setCurrentHealthPoints(101);
+                        });
+                        assertEquals("Current health points is not in [0, 100]: 101", exception.getMessage());
+                    }
+                }
+                ```
+            </TabItem>
+        </Tabs>
+    </TabItem>
+</Tabs>
+
+## Comparación entre Kotest y JUnit 5
+
+| Característica                           | Kotest                                                        | JUnit 5                                                       |
+|------------------------------------------|---------------------------------------------------------------|---------------------------------------------------------------|
+| **Método para probar excepciones**       | `shouldThrow`, `shouldThrowUnit`, entre otros | `assertThrows`                                                |
+| **Verificación de mensaje de excepción** | Se verifica directamente en la expresión `shouldThrow {...}`   | `assertEquals` se utiliza para verificar el mensaje            |
+| **API de pruebas**                       | Kotest usa una sintaxis DSL más fluida y expresiva             | JUnit sigue un estilo más clásico con anotaciones y métodos    |
+| **Soporte para pruebas**                 | Ofrece una amplia gama de herramientas, como el estilo FreeSpec | Basado principalmente en anotaciones como `@Test`              |
+| **Aproximación a la composición**        | Kotest permite la combinación de assertions de forma más directa| JUnit requiere composiciones más manuales de métodos           |
+
+:::tip Ventajas de JUnit 5
+
+- **Integración amplísima**: Debido a su antigüedad y adopción, **JUnit 5** cuenta con una integración extensa en la mayoría de entornos de desarrollo y CI/CD.
+- **Estándar en el ecosistema JVM**: JUnit sigue siendo el estándar en pruebas para la mayoría de aplicaciones basadas en la JVM, lo que significa que tiene soporte nativo en muchas herramientas y frameworks.
+
+:::
+
+:::danger Desventajas de JUnit 5
+
+- **Menos expresivo**: Comparado con Kotest, JUnit puede resultar más verboso y menos expresivo, especialmente cuando se trata de pruebas más complejas como el testing de excepciones.
+- **Menos flexible**: JUnit 5 se basa principalmente en anotaciones como `@Test` y `@BeforeEach`, lo que puede ser menos flexible para usuarios que prefieren un DSL de pruebas.
+
+:::
+
+<References references={[
+    {
+        title: "Assert an Exception Is Thrown in JUnit 4 and 5",
+        url: "https://www.baeldung.com/junit-assert-exception",
+        type: "article",
+        author: "Baeldung",
+        publishedDate: "29 de junio de 2024",
+    },
+]}/>

@@ -1,0 +1,107 @@
+---
+title: maven
+---
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+## JVM: Maven
+
+Al igual que **Gradle**, **Maven** ofrece un conjunto de **fases del ciclo de vida** predefinidas que facilitan la automatización de tareas comunes como la compilación, empaquetado, y ejecución de pruebas. Mientras que Gradle se destaca por su flexibilidad, permitiendo la definición de tareas mediante scripts en Groovy o Kotlin, Maven sigue un enfoque más estructurado basado en XML a través del archivo `pom.xml`. Esto lo hace más rígido en algunos aspectos, pero facilita su uso con convenciones claras.
+
+### Fases Principales del Ciclo de Vida en Maven
+
+Maven organiza su ciclo de vida en varias fases predefinidas, entre las cuales las más utilizadas son:
+
+### `clean`
+
+La fase `clean` en Maven elimina los archivos generados por compilaciones anteriores, similar a la tarea `clean` en Gradle.
+
+```bash
+mvn clean
+```
+
+Al ejecutar esta fase, se eliminarán directorios como `target/` y otros archivos temporales que se hayan generado.
+
+### `compile`
+
+La fase `compile` compila el código fuente del proyecto, generando los archivos de clase en el directorio `target/`.
+
+```bash
+mvn compile
+```
+
+Esta fase deja los artefactos compilados en `target/classes`, listos para ser empaquetados o ejecutados.
+
+### `test`
+
+La fase `test` ejecuta las pruebas unitarias utilizando frameworks como **JUnit** o **TestNG**. Se puede personalizar mediante el uso de plugins en el archivo `pom.xml`.
+
+```bash
+mvn test
+```
+
+Maven ejecutará todas las pruebas unitarias definidas, mostrando los resultados en la consola.
+
+### `package`
+
+La fase `package` empaqueta el código compilado en un archivo distribuible como un JAR o WAR, listo para ser distribuido o implementado.
+
+```bash
+mvn package
+```
+
+El archivo empaquetado se ubicará en el directorio `target/` después de la ejecución.
+
+### `verify`
+
+La fase `verify` asegura que el proyecto cumple con ciertos criterios de calidad y validez antes de ser empaquetado o implementado.
+
+```bash
+mvn verify
+```
+
+Esta fase ejecuta pruebas de verificación adicionales, asegurando la integridad del proyecto.
+
+### Configuración de Tareas Predefinidas en Maven
+
+Si bien Maven es menos flexible que Gradle en la definición de tareas personalizadas, permite ajustar tareas predefinidas mediante el uso de plugins. Un ejemplo común es la personalización de la fase `test` utilizando el plugin **maven-surefire-plugin**.
+
+```xml title="pom.xml"
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>3.0.0-M5</version>
+            <configuration>
+                <includes>
+                    <include>**/*Test.java</include>
+                </includes>
+                <testFailureIgnore>false</testFailureIgnore>
+                <forkCount>1</forkCount>
+                <reuseForks>true</reuseForks>
+                <reportFormat>brief</reportFormat>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+```
+
+En este ejemplo:
+- El plugin `maven-surefire-plugin` se configura para ejecutar pruebas unitarias.
+- La opción `forkCount` controla la cantidad de procesos paralelos en la ejecución de pruebas.
+- El formato del reporte (`reportFormat`) se define como "brief" para mostrar un resumen de los resultados.
+
+### Comparación con Gradle
+
+| Característica             | Maven                                             | Gradle                                         |
+|----------------------------|---------------------------------------------------|------------------------------------------------|
+| Lenguaje de configuración  | XML (pom.xml)                                     | Groovy/Kotlin DSL                              |
+| Tareas predefinidas        | Fases de ciclo de vida (e.g., `clean`, `package`) | Tareas predefinidas (e.g., `clean`, `build`)   |
+| Flexibilidad               | Limitada, basado en convenciones                  | Alta, permite definición flexible de tareas    |
+| Extensibilidad             | Extensible mediante plugins (XML)                 | Extensible mediante scripts y plugins (DSL)    |
+| Velocidad de configuración | Menos flexible, más riguroso                      | Más rápido para configuraciones personalizadas |

@@ -1,5 +1,5 @@
 ---
-title: Funciones de Extensión
+title: Métodos de Extensión
 ---
 
 import Tabs from '@theme/Tabs';
@@ -8,147 +8,206 @@ import ReadingTime from '@site/src/components/ReadingTime';
 
 <ReadingTime />
 
-Las **funciones de extensión** te permiten añadir nuevas funcionalidades a clases existentes sin necesidad de herencia o modificar el código original. Estas extensiones son resueltas de manera estática, lo que significa que no alteran la clase en sí.
+En Kotlin, los **métodos de extensión** (o funciones de extensión) son una característica poderosa que te permite añadir nuevas funciones a clases existentes sin modificar su código fuente o utilizar herencia. Esto es especialmente útil cuando quieres extender clases de librerías o APIs que no puedes cambiar directamente.
 
-```kotlin
-fun String.replaceSpaces(replacement: String): String {
-    return this.replace(" ", replacement)
+## Definición de Método de Extensión
+
+Un **método de extensión** es una función que añade comportamiento adicional a una clase ya existente. Aunque parece que estás añadiendo un nuevo método a la clase, en realidad estás definiendo una función que opera sobre una instancia de esa clase. La sintaxis te permite llamar a esta función como si fuera un método miembro de la clase.
+
+## Sintaxis de Métodos de Extensión en Kotlin
+
+La sintaxis básica para definir una función de extensión es la siguiente:
+
+```kotlin showLineNumbers
+fun ClassName.methodName(parameters): ReturnType {
+    // Implementación de la función
 }
 ```
 
-En este caso, extendemos la clase `String` con un método para reemplazar espacios por un carácter especificado.
+Donde:
 
-### Funciones de Extensión en Scala 3
+- **`ClassName`** es la clase que estás extendiendo.
+- **`methodName`** es el nombre de la nueva función.
+- **`parameters`** son los parámetros que la función acepta.
+- **`ReturnType`** es el tipo de dato que la función devuelve.
 
-En **Scala 3**, las funciones de extensión han sido introducidas como una forma más clara de extender clases. Ya no es necesario utilizar `implicits` como en Scala 2.
+### Ejemplo sencillo
 
-#### Ejemplo en Scala 3
+```kotlin showLineNumbers
+fun String.isPalindrome() = this == this.reversed()
 
-```scala
-extension (s: String)
-  def replaceSpaces(replacement: String): String = s.replace(" ", replacement)
+val word = "radar"
+println(word.isPalindrome()) // Output: true
 ```
 
-Aquí estamos definiendo una función de extensión para la clase `String` que reemplaza los espacios con un carácter o cadena de texto que se pasa como argumento.
+En este ejemplo, hemos añadido una función `isPalindrome` a la clase `String` que verifica si una cadena es un palíndromo.
 
-#### Uso en Scala 3
+## Extender una Clase de la Librería Estándar
 
-```scala
-@main def main() =
-  val text = "Hello World"
-  println(text.replaceSpaces("_")) // Output: Hello_World
-```
+Puedes extender cualquier clase, incluyendo las de la librería estándar de Kotlin o Java.
 
-Al igual que en Kotlin, una vez definida, puedes usar la función de extensión como si fuera parte de la clase original.
+### Ejemplo: Añadiendo una Función a `List`
 
-### Funciones de Extensión en Scala 2 (con `implicits`)
+Supongamos que queremos añadir una función `second()` a las listas, que devuelve el segundo elemento o lanza una excepción si la lista tiene menos de dos elementos.
 
-En **Scala 2**, se utilizaban los `implicits` para lograr algo similar a las funciones de extensión. Aunque el concepto es un poco más complejo, lograba el mismo resultado.
-
-#### Ejemplo en Scala 2
-
-```scala
-implicit class StringOps(s: String) {
-  def replaceSpaces(replacement: String): String = s.replace(" ", replacement)
+```kotlin showLineNumbers
+fun <T> List<T>.second(): T {
+    if (size < 2) throw NoSuchElementException("La lista tiene menos de dos elementos")
+    return this[1]
 }
+
+val numbers = listOf(10, 20, 30)
+println(numbers.second()) // Output: 20
 ```
 
-El uso de `implicit class` es la clave aquí. Define una clase que extiende la funcionalidad de `String`.
+:::info Explicación del Código
 
-#### Uso en Scala 2
+- **[1]** Definimos una función de extensión `second()` para `List<T>`.
+- **[2]** Verificamos si la lista tiene al menos dos elementos.
+- **[3]** Devolvemos el segundo elemento usando `this[1]`.
 
-```scala
-object Main extends App {
-  val text = "Hello World"
-  println(text.replaceSpaces("_"))  // Output: Hello_World
-}
-```
+:::
 
-### Funciones de Extensión en C#
+## Extender una Clase Genérica
 
-En **C#**, las funciones de extensión son comunes y se usan para agregar métodos a tipos existentes. Estas funciones están definidas como métodos estáticos en una clase estática, pero se invocan como si fueran métodos de instancia.
+Los métodos de extensión pueden ser genéricos, lo que te permite trabajar con clases genéricas.
 
-#### Ejemplo en C#
+### Ejemplo: Transponer una Lista de Listas
 
-```csharp
-public static class StringExtensions {
-    public static string ReplaceSpaces(this string s, string replacement) {
-        return s.Replace(" ", replacement);
-    }
-}
-```
+Queremos crear una función de extensión que transponga una lista de listas (matriz), es decir, intercambiar filas por columnas.
 
-La palabra clave `this` en el primer parámetro indica que esta es una función de extensión para la clase `string`.
+```kotlin showLineNumbers
+fun <T> List<List<T>>.transpose(): List<List<T>> {
+    if (isEmpty() || this[0].isEmpty()) return emptyList()
 
-#### Uso en C#
+    val rowCount = this.size
+    val columnCount = this[0].size
+    val result = MutableList(columnCount) { MutableList<T>(rowCount) { this[0][0] } }
 
-```csharp
-class Program {
-    static void Main() {
-        string text = "Hello World";
-        Console.WriteLine(text.ReplaceSpaces("_"));  // Output: Hello_World
-    }
-}
-```
-
-Al igual que en Kotlin y Scala, la función se invoca como si fuera un método de instancia de la clase `string`.
-
-### Operadores de Extensión
-
-Kotlin y Scala también permiten sobrecargar operadores a través de funciones de extensión. Esto puede ser útil para definir comportamientos personalizados.
-
-#### Kotlin: Definición de Operador de Extensión
-
-```kotlin
-operator fun String.times(n: Int): String = this.repeat(n)
-```
-
-#### Scala 3: Operador de Extensión
-
-En Scala 3, también puedes sobrecargar operadores de forma similar:
-
-```scala
-extension (s: String)
-  def *(n: Int): String = s * n
-```
-
-### Propiedades de Extensión
-
-Kotlin permite definir **propiedades de extensión**. Aunque estas propiedades funcionan como getters y setters, no almacenan estado, sino que se calculan dinámicamente.
-
-#### Kotlin: Propiedad de Extensión
-
-```kotlin
-val String.wordCount: Int
-    get() = this.split("""\s+""".toRegex()).size
-```
-
-:::tip Ejercicio: Contar Vocales
-
-<Tabs>
-  <TabItem value="Ejercicio" label="Ejercicio">
-    Desarrolla una función de extensión countVowels que cuente y devuelva el número de vocales en un String
-  </TabItem>
-  
-  <TabItem value="Solución" label="Solución">
-```kotlin
-fun String.countVowels(): Int {
-    val vowels = setOf('a', 'e', 'i', 'o', 'u')
-    var count = 0
-    for (char in this) {
-        if (char.lowercaseChar() in vowels) {
-            count++
+    for (rowIndex in 0..<rowCount) {
+        for (columnIndex in 0..<columnCount) {
+            result[columnIndex][rowIndex] = this[rowIndex][columnIndex]
         }
     }
-    return count
+
+    return result
+}
+
+val matrix = listOf(
+    listOf(1, 2, 3),
+    listOf(4, 5, 6)
+)
+
+val transposed = matrix.transpose()
+println(transposed) // Output: [[1, 4], [2, 5], [3, 6]]
+```
+
+:::info Explicación del Código
+
+- **[2]** Verificamos si la lista o sus sublistas están vacías.
+- **[4-5]** Calculamos el número de filas y columnas.
+- **[6]** Creamos una matriz mutable con las dimensiones intercambiadas.
+- **[8-12]** Iteramos sobre la matriz original y transponemos los elementos.
+
+:::
+
+## Funciones de Extensión Dentro de una Clase
+
+Puedes definir funciones de extensión dentro de una clase. Estas funciones de extensión pueden acceder a los miembros de la clase externa, incluso si son privados.
+
+### Ejemplo: Función de Extensión en una Clase
+
+```kotlin showLineNumbers
+class Host(val hostname: String) {
+    fun printConnectionString(port: Int) {
+        fun Int.formatPort() = "Port: $this"
+        println("$hostname connects to ${port.formatPort()}")
+    }
+}
+
+val host = Host("localhost")
+host.printConnectionString(8080)
+// Output: localhost connects to Port: 8080
+```
+
+**Explicación**:
+
+- **[1]** Dentro de `printConnectionString`, definimos una función de extensión `formatPort()` para `Int`.
+- **[2]** `formatPort()` puede acceder a `this` (el `Int` al que se aplica) y a los miembros de `Host`.
+- **[3]** Llamamos a `formatPort()` en `port` para formatear el número.
+
+### Uso de `with` y Extensiones de Receptores
+
+En Kotlin, la función `with` cambia temporalmente el contexto de un objeto, permitiendo que las funciones y propiedades se apliquen directamente dentro de ese contexto. Esto es útil para agrupar varias operaciones que se realizan sobre un mismo objeto sin necesidad de referenciarlo repetidamente. Cuando usamos `with`, el objeto se convierte en el receptor de las funciones dentro del bloque.
+
+#### Sintaxis de `with`
+
+```kotlin
+with(receiver) {
+    // Código que se ejecuta en el contexto del receptor
 }
 ```
-  </TabItem>
 
-  <TabItem value="Solución (más corta)" label="Solución (más corta)">
-```kotlin
-fun String.countVowels() = count { it in "aeiou" }
+Donde `receiver` es el objeto cuyo contexto se usará dentro del bloque de código. Todo lo que esté dentro del bloque de `with` usará ese objeto como referencia para acceder a sus métodos y propiedades.
+
+#### Ejemplo con Métodos de Extensión de Receptores
+
+Kotlin permite definir **métodos de extensión** que actúan como si estuvieran definidos dentro de otra clase o tipo, llamados **receptores**. Puedes combinar `with` con funciones de extensión para ejecutar fácilmente funciones que usan un contexto de receptor específico.
+
+```kotlin showLineNumbers
+class Greeter {
+    fun String.greet() = println("Hello, $this!")
+}
+
+val greeter = Greeter()
+with(greeter) {
+    "Kotlin".greet()
+}
+// Output: Hello, Kotlin!
 ```
-  </TabItem>
-</Tabs>
+
+:::info Explicación del Ejemplo
+
+- **[2]** Se define una función de extensión `greet()` para `String` dentro de la clase `Greeter`. En este caso, `greet` imprime un saludo utilizando `this`, que dentro de la extensión se refiere al objeto `String` en el que la función se llama.
+- **[6]** El contexto de `with(greeter)` establece a `greeter` como el receptor del bloque de código.
+- **[7]** Dentro del bloque, `"Kotlin".greet()` se refiere a la función de extensión `greet` que fue definida dentro de `Greeter`. Aquí, `"Kotlin"` es el valor de `this` para la función de extensión.
+
 :::
+
+## Propiedades de Extensión
+
+Al igual que los métodos de extensión, **las propiedades de extensión** te permiten añadir nuevas propiedades a una clase existente sin modificar su código fuente o utilizar herencia. Aunque parece que estás añadiendo una nueva propiedad a la clase, en realidad estás creando una función que se comporta como si fuera una propiedad.
+
+### Definición de Propiedad de Extensión
+
+Una **propiedad de extensión** sigue la misma sintaxis que una propiedad normal, pero debe definirse como una función getter, ya que no es posible almacenar datos adicionales en la instancia de la clase que estás extendiendo.
+
+#### Sintaxis de una Propiedad de Extensión
+
+```kotlin showLineNumbers
+val ClassName.propertyName: PropertyType
+    get() = // Implementación que devuelve el valor de la propiedad
+    set(value) {
+        // Implementación opcional para propiedades de escritura
+    }
+```
+
+Donde:
+
+- **`ClassName`** es la clase que estás extendiendo.
+- **`propertyName`** es el nombre de la nueva propiedad.
+- **`PropertyType`** es el tipo de la propiedad.
+- **`get()`** es la función que devuelve el valor de la propiedad.
+- **`set(value)`** es la función opcional que establece el valor de la propiedad.
+
+### Ejemplo: Propiedad de Extensión para `String`
+
+Supongamos que queremos añadir una propiedad de extensión a la clase `String` para obtener la primera palabra de una cadena.
+
+```kotlin showLineNumbers
+val String.firstWord: String
+    get() = this.split(" ").first()
+
+val sentence = "Kotlin is fun"
+println(sentence.firstWord) // Output: Kotlin
+```

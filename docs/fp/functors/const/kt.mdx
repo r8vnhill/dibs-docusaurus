@@ -1,0 +1,225 @@
+---
+title: Functor Constante
+---
+
+import Solution from "/src/components/exercise/Solution";
+import Hint from "/src/components/exercise/Hint";
+import Exercise from "/src/components/exercise/Exercise";
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+Ahora que ya hemos explorado los **functores** en Kotlin, vamos a profundizar en un caso especial de functor: **`Const`**. Aunque en otros functores se aplican transformaciones a los valores contenidos, el functor `Const` es peculiar porque **ignora cualquier función de transformación** y simplemente **mantiene un valor constante**. Esto es útil en muchos contextos donde no se quiere alterar un valor, sino **acumular información** o **extraer datos**. En esta lección, veremos cómo funciona `Const` y exploraremos su uso práctico utilizando el concepto de **lentes** (o **lens**) en programación funcional.
+
+## Definición de `Const`
+
+El functor **`Const`** encapsula dos tipos:
+
+- **`A`**: Es el valor constante que **no** se ve afectado por la función de mapeo.
+- **`B`**: Es el tipo sobre el cual normalmente se aplicaría una transformación con `map`, pero que en `Const` será ignorado.
+
+El propósito de **`Const`** es actuar como un contenedor que **mantiene inalterado** el valor de tipo `A`, mientras ignora el tipo `B`. Así podemos enfocarnos en operaciones que **acumulan o extraen información**, como veremos a continuación con **Lens**.
+
+### Implementación del functor `Const`
+
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $Group = 'com\github\username'
+            $FunctorsPath = "functors\src\main\kotlin\$Group\functors"
+            New-Item -Path "$FunctorsPath\Const.kt" -ItemType File -Force
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            $Group = 'com\github\username'
+            $FunctorsPath = "functors\src\main\kotlin\$Group\functors"
+            ni "$FunctorsPath\Const.kt" -i f -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            GROUP='com/github/username'
+            FUNCTIONS_PATH="functors/src/main/kotlin/$GROUP/functors"
+            touch "$FUNCTIONS_PATH/Const.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+
+Veamos cómo se define el functor `Const` en Kotlin:
+
+```kotlin showLineNumbers title=
+package cl.ravenhill.functors.constant
+
+data class Const<out A, out B>(val value: A)
+```
+
+En esta implementación, `Const` almacena un valor de tipo `A` (el valor constante) y un tipo `B` que nunca será utilizado en las operaciones de mapeo.
+
+### Implementación de `map` en `Const`
+
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "$FunctorsPath\ConstFunctor.kt" -ItemType File -Force
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            ni "$FunctorsPath\ConstFunctor.kt" -i f -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            touch "$FUNCTIONS_PATH/ConstFunctor.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+El método `map` para el functor `Const` sigue la misma idea que cualquier otro functor, excepto que, en este caso, el valor de tipo `A` se mantiene constante, sin importar la función de transformación aplicada.
+
+```kotlin showLineNumbers
+class ConstFunctor<A> {
+    fun <B, C> Const<A, B>.map(f: (B) -> C): Const<A, C> = Const(this.value)
+}
+```
+
+Aquí, el método `map` toma una función `f` que en un caso típico aplicaría una transformación al tipo `B`. Sin embargo, dado que `Const` ignora `B`, simplemente devuelve un nuevo `Const` con el valor constante original `A`.
+
+## Uso de `Const` en Lens
+
+Una de las aplicaciones más interesantes del functor `Const` es su uso en la implementación de **Lens**. Un **Lens** es un concepto en programación funcional que nos permite **enfocar** una parte de una estructura de datos inmutable para **accederla** o **modificarla** de manera eficiente.
+
+### ¿Qué es un Lens?
+
+Un **Lens** permite:
+
+1. **Obtener** una parte específica de una estructura (por ejemplo, acceder a un campo dentro de un objeto).
+2. **Modificar** esa parte de la estructura, devolviendo una nueva versión de la estructura con el cambio aplicado.
+
+Un Lens generalmente se define como una clase con dos funciones:
+
+- **`get`**: Para extraer un valor de la estructura.
+- **`set`**: Para modificar un valor dentro de la estructura.
+
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $LensPath = "functors\src\main\kotlin\$Group\lens"
+            New-Item -Path "$LensPath\Lens.kt" -ItemType File -Force
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            $LensPath = "functors\src\main\kotlin\$Group\lens"
+            ni "$LensPath\Lens.kt" -i f -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            LENS_PATH="functors/src/main/kotlin/$GROUP/lens"
+            touch "$LENS_PATH/Lens.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+En Kotlin, un Lens podría verse así:
+
+```kotlin showLineNumbers
+package com.github.username.lens
+
+data class Lens<S, A>(
+    val get: (S) -> A,
+    val set: (S, A) -> S
+)
+```
+
+### Usando `Const` en un Lens para lectura
+
+Cuando usamos un **Lens** para **leer** un valor de una estructura de datos, no queremos alterar la estructura, solo extraer un valor. Aquí es donde entra en juego **`Const`**. Podemos utilizar el functor `Const` para enfocarnos en una parte de la estructura y extraer ese valor sin cambiar el resto.
+
+Veamos cómo podemos usar `Const` para implementar la parte de **lectura** de un Lens.
+
+### Ejemplo de Lens
+
+Supongamos que tenemos una clase `Person` con dos campos, `name` y `age`:
+
+```kotlin showLineNumbers
+data class Person(val name: String, val age: Int)
+```
+
+Podemos crear un Lens para acceder al campo `name` de `Person`:
+
+```kotlin showLineNumbers
+val nameLens = Lens<Person, String>(
+    get = { person -> person.name },
+    set = { person, newName -> person.copy(name = newName) }
+)
+```
+
+Ahora, podemos usar el Lens para **leer** el nombre de una persona sin alterar la estructura, usando **`Const`**.
+
+### Uso de `Const` para la lectura
+
+Definimos una función de lectura `view` usando `Const` para extraer el valor del campo `name` sin modificar el objeto `Person`:
+
+```kotlin showLineNumbers
+fun <S, A> Lens<S, A>.view(s: S): A {
+    return ConstFunctor<A>().run {
+        Const(get(s)).value
+    }
+}
+```
+
+Esta función usa el `get` del Lens para extraer el valor del campo y lo devuelve envuelto en un `Const`, asegurando que el valor se mantiene inmutable.
+
+### Ejemplo en acción
+
+Supongamos que tenemos una instancia de `Person` y queremos acceder a su campo `name`:
+
+```kotlin showLineNumbers
+val person = Person("John", 30)
+
+val name = nameLens.view(person)
+println(name)  // Output: John
+```
+
+En este ejemplo, `Const` nos permite extraer el valor del campo `name` sin modificar el objeto `Person`.
+
+### ¿Por qué no se usa `ConstFunctor` directamente?
+
+En el caso de los lenses, aunque **`ConstFunctor`** implementa el `map`, no se utiliza para aplicar transformaciones porque la función `map` en `Const` siempre ignora cualquier transformación. El propósito de **`Const`** en este contexto es mantener un valor constante, por lo que el foco está en la extracción o acumulación de información, no en la transformación.
+
+En resumen, `Const` es usado para **lecturas inmutables** o para **acumular información** sin necesidad de modificar el valor contenido. Este comportamiento es fundamental en operaciones que se centran en **extraer** datos, como en el caso de los lenses.
+
+## ¿Qué Aprendimos?
+
+En esta lección, vimos cómo el functor **`Const`** se usa para **acumular información** o **extraer valores** sin aplicar transformaciones. Usamos `Const` en la implementación de un Lens para mostrar cómo se puede acceder a partes específicas de una estructura de datos sin modificarla. La propiedad de **mantener inmutable** el valor hace que `Const` sea útil en situaciones donde solo necesitamos **leer** o **acumular** datos.
+
+### Puntos clave:
+
+1. **`Const` como Functor**: Permite mantener un valor constante ignorando cualquier función de transformación.
+2. **Uso en Lens**: `Const` se usa en la lectura de lentes para extraer valores de estructuras de datos inmutables.
+3. **Aplicaciones en validaciones**: `Const` también es útil para acumular errores o mensajes sin transformar el valor original.
