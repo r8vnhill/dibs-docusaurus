@@ -1,0 +1,133 @@
+---
+title: Enumeraciones en Python
+---
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+Al igual que en **Kotlin**, **Python** también permite definir enumeraciones para representar un conjunto finito de valores predefinidos. Aunque ambos lenguajes comparten la idea de las enumeraciones, existen algunas diferencias notables en su implementación y características.
+
+## Definición de Enumeraciones
+
+En **Python**, las enumeraciones se definen utilizando el módulo `enum`. A diferencia de Kotlin, donde se utiliza `enum class`, en Python se hereda de la clase `Enum`:
+
+```python showLineNumbers
+from enum import Enum
+
+class DeliveryState(Enum):
+    PENDING = 1
+    PAID = 2
+    SHIPPED = 3
+    DELIVERED = 4
+    CANCELLED = 5
+```
+
+## Uso en Sentencias Condicionales: Exhaustividad en Kotlin vs Python
+
+Una de las diferencias clave entre **Kotlin** y **Python** es el manejo de las enumeraciones en sentencias condicionales, particularmente en términos de **exhaustividad**.
+
+En **Kotlin**, la estructura `when` es **exhaustiva** cuando se trabaja con enumeraciones. Esto significa que, si se cubren todos los casos posibles de una enumeración, no es necesario proporcionar un bloque `else`. Kotlin fuerza al compilador a asegurarse de que todos los valores de la enumeración estén cubiertos, lo que ayuda a prevenir errores al agregar nuevos valores en el futuro.
+
+En **Python**, la estructura equivalente para manejar múltiples condiciones es el bloque `if-elif`. Sin embargo, a diferencia de Kotlin, Python **no garantiza la exhaustividad** cuando se trabaja con enumeraciones. No hay advertencias si se omiten valores de la enumeración, y no es obligatorio manejar todos los casos.
+
+```python showLineNumbers
+def handle_order_state(state):
+    if state == DeliveryState.PENDING:
+        return "Order is pending"
+    elif state == DeliveryState.PAID:
+        return "Order is paid"
+    elif state == DeliveryState.SHIPPED:
+        return "Order is shipped"
+    elif state == DeliveryState.DELIVERED:
+        return "Order is delivered"
+    elif state == DeliveryState.CANCELLED:
+        return "Order is cancelled"
+```
+
+En Python, si se agrega un nuevo valor a la enumeración `DeliveryState`, no hay ninguna advertencia automática para actualizar el bloque `if-elif`. Si el código no se ajusta manualmente para manejar el nuevo valor, el flujo de control ignorará silenciosamente el nuevo estado, lo que podría conducir a errores en tiempo de ejecución si no se incluye un caso `else` o alguna lógica adicional para manejar valores no esperados.
+
+## Métodos en Enumeraciones
+
+A diferencia de Kotlin, en **Python** no es posible definir directamente métodos en una enumeración de la misma forma, pero sí puedes agregar métodos a la clase de enumeración que afecten a los miembros. Veamos un ejemplo similar al método `signal` en Kotlin:
+
+```python showLineNumbers
+class DeliveryState(Enum):
+    PENDING = 1
+    PAID = 2
+    SHIPPED = 3
+    DELIVERED = 4
+    CANCELLED = 5
+
+    def signal(self):
+        if self == DeliveryState.PENDING:
+            return "Order is pending"
+        elif self == DeliveryState.PAID:
+            return "Order is paid"
+        elif self == DeliveryState.SHIPPED:
+            return "Order is shipped"
+        elif self == DeliveryState.DELIVERED:
+            return "Order is delivered"
+        elif self == DeliveryState.CANCELLED:
+            return "Order is cancelled"
+```
+
+En este ejemplo, cada valor de la enumeración puede llamar al método `signal`, lo que permite asociar un comportamiento específico a cada valor.
+
+## Utilidades para Enumeraciones en Python
+
+Python ofrece varias utilidades integradas para facilitar el trabajo con enumeraciones, como obtener nombres o valores, así como iterar sobre todos los miembros de la enumeración. A continuación, exploramos algunas de las funcionalidades más comunes.
+
+### Obtener el Nombre desde el Valor
+
+Puedes obtener el nombre de un miembro de la enumeración a partir de su valor, lo cual es útil cuando solo tienes el valor y necesitas encontrar el nombre asociado.
+
+```python showLineNumbers
+state = DeliveryState(1)
+print(state.name)  # Salida: 'PENDING'
+```
+
+### Obtener el Valor desde el Nombre
+
+Del mismo modo, puedes obtener el valor numérico asociado a un miembro de la enumeración. Esto te permite acceder directamente al valor que representa ese miembro.
+
+```python showLineNumbers
+state = DeliveryState.PAID
+print(state.value)  # Salida: 2
+```
+
+### Iterar sobre los Miembros de la Enumeración
+
+Python facilita la iteración sobre todos los miembros de una enumeración. Esto es útil si necesitas recorrer los posibles valores de la enumeración o generar listas basadas en los miembros.
+
+```python showLineNumbers
+for state in DeliveryState:
+    print(state)
+```
+
+## Comparación Final
+
+| Característica                     | Kotlin                                          | Python                                                     |
+|------------------------------------|-------------------------------------------------|------------------------------------------------------------|
+| **Definición de Enumeraciones**    | `enum class`                                    | Herencia de la clase `Enum`                                |
+| **Asignación de Valores**          | Valores constantes sin asociación numérica      | Se pueden asignar valores numéricos explícitos             |
+| **Acceso a Valores**               | Acceso directo por nombre                       | Se accede con `.name` y `.value`                           |
+| **Exhaustividad en Condicionales** | `when` exhaustivo                               | No hay exhaustividad en `if-elif`                          |
+| **Métodos en Enumeraciones**       | Se pueden definir métodos específicos y comunes | Métodos agregados a la clase, no directamente a cada valor |
+| **Iteración sobre Miembros**       | Iteración simple con `.values()`                | Iteración simple con `for`                                 |
+
+:::tip Ventajas de Python
+
+- **Simplicidad**: La definición de enumeraciones en Python es fácil de usar y comprender. La sintaxis es clara y no requiere una sintaxis especial como en otros lenguajes.
+- **Flexibilidad**: Python permite asignar valores numéricos a los miembros de las enumeraciones, lo que es útil en muchos casos de uso.
+
+:::
+
+:::danger Desventajas de Python
+
+- **Falta de Exhaustividad**: A diferencia de Kotlin, Python no garantiza la exhaustividad en los bloques `if-elif`, lo que puede conducir a errores si se agregan nuevos valores a la enumeración y no se actualizan los bloques condicionales.
+- **No es estrictamente tipado**: Python no tiene el mismo nivel de verificación en tiempo de compilación que Kotlin, lo que puede dar lugar a más errores en tiempo de ejecución.
+
+:::

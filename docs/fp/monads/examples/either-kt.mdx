@@ -1,15 +1,16 @@
 ---
-title: Either
+title: Mónada Either
 ---
-import LanguageCard from "../../../../src/components/cards/LanguageCard";
-import Exercise from "../../../../src/components/exercise/Exercise";
-import GitHubRepoLink from "../../../../src/components/GithubRepoLink";
-import ReadingTime from "../../../../src/components/ReadingTime";
-import References from "../../../../src/components/ReferencesComponent";
-import Solution from "../../../../src/components/exercise/Solution";
-import CheckedExceptions from "../../../../src/pages/fp/monads/examples/checked-exceptions.mdx";
-import LInvariance from "../../../../src/pages/fp/monads/examples/l-invariance.mdx";
-import Tooltip from "../../../../src/components/Tooltip";
+import TabItem from "@theme/TabItem";
+import Tabs from "@theme/Tabs";
+import LanguageCard from "/src/components/cards/LanguageCard";
+import Exercise from "/src/components/exercise/Exercise";
+import GitHubRepoLink from "/src/components/GithubRepoLink";
+import ReadingTime from "/src/components/ReadingTime";
+import References from "/src/components/ReferencesComponent";
+import Solution from "/src/components/exercise/Solution";
+import LInvariance from "/src/pages/fp/monads/examples/l-invariance.mdx";
+import Tooltip from "/src/components/Tooltip";
 
 <ReadingTime/>
 <GitHubRepoLink repo={"functional-programming-kt"} user={"r8vnhill"}/>
@@ -28,7 +29,7 @@ Como vimos en la lección sobre [tipos suma](docs/fp/adt/sum/index.mdx), **Eithe
 El <Tooltip text={"Al menos desde una perspectiva de programación funcional."} highlight={true}>problema con las excepciones</Tooltip> radica en que no son **referencialmente transparentes**. Esto significa que no se pueden reemplazar por su valor sin alterar el comportamiento del programa. Veamos un ejemplo:
 
 ```kotlin showLineNumbers
-fun failingFn(i: Int): Int {
+fun failingFn(): Int {
     val y: Int = throw Exception("boom")
     return try {
         val x = 420
@@ -41,52 +42,126 @@ fun failingFn(i: Int): Int {
 
 En este caso, `y` no es referencialmente transparente, porque no podemos sustituir su valor por `throw Exception("boom")` dentro de la expresión `x + y` sin modificar el resultado del programa. Si lo hacemos, la excepción se lanzará inmediatamente dentro del bloque `try-catch`, cambiando el flujo de ejecución y, por ende, el comportamiento del código.
 
-## Beneficios de `Either`
-
-- **Manejo explícito de errores**: `Either` proporciona un enfoque más seguro y estructurado para el manejo de errores que las excepciones tipadas. Al incluir explícitamente el caso de éxito o error en el tipo, se fuerza a lxs desarrolladorxs a manejar ambos casos, evitando que los errores se "pierdan" o sean ignorados accidentalmente.
-- **Facilidad de composición**: `Either` permite componer funciones que pueden fallar sin necesidad de capturar excepciones. En lugar de lanzar una excepción, las funciones pueden devolver un valor de tipo `Either`, lo que facilita el encadenamiento de operaciones sin necesidad de un manejo de errores explícito en cada paso.
-- **Código más claro**: Utilizar `Either` hace que el flujo de datos sea más legible y el manejo de errores más evidente, en comparación con las excepciones, donde el flujo de errores puede ser implícito y difícil de seguir.
-
 <details>
     <summary>Comparación con checked exceptions en Java</summary>
 
-    <CheckedExceptions/>
+    En **Java**, las **checked exceptions** imponen que cualquier función que pueda lanzar una excepción verificada debe manejarse explícitamente con un bloque `try-catch` o declararla en la firma del método usando `throws`. Este enfoque introduce complicaciones cuando se utilizan **funciones de orden superior**, ya que no es posible determinar si estas funciones, que pueden aceptar otras funciones como parámetros o devolverlas, lanzarán una excepción verificada. Esto se debe a que el contexto donde se llama a la función no puede prever ni manejar las excepciones que podrían ser arrojadas. A continuación, un ejemplo típico de **checked exceptions** en Java:
+
+    ```java showLineNumbers
+    public String readFile(String path) throws IOException {
+        if (path == null) {
+            throw new IOException("Invalid file path");
+        }
+        return "File content";
+    }
+
+    public void processFile(String path) {
+        try {
+            String content = readFile(path);
+            System.out.println(content);
+        } catch (IOException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+    ```
+
+    En este ejemplo, el método `readFile` lanza una `IOException`, que es una excepción verificada, y el llamador de este método, `processFile`, debe manejar explícitamente la excepción con `try-catch`.
+
+    #### Problema con las Funciones de Orden Superior
+
+    El uso de **checked exceptions** en combinación con funciones de orden superior se vuelve problemático porque no es posible saber si una función pasará una excepción verificada cuando se llame desde un contexto distinto. Por ejemplo, si intentamos pasar una función que arroja una excepción verificada a un método de orden superior, el compilador no puede inferir si ese método debe declarar la excepción o manejarla. Esto limita la flexibilidad de la programación funcional en Java y otros lenguajes con excepciones verificadas.
+
+    ```java showLineNumbers
+    @FunctionalInterface
+    interface FileProcessor {
+        void process(String path) throws IOException;
+    }
+
+    public void handleFile(FileProcessor processor) {
+        // How does the compiler know that "processor" throws a checked exception?
+    }
+    ```
+
+    El compilador no puede verificar si `FileProcessor` lanzará una excepción verificada, lo que obliga a manejar manualmente las excepciones, lo que rompe la fluidez de la composición de funciones.
+
+    #### Alternativa en Kotlin sin Excepciones Verificadas
+
+    En **Kotlin**, no existen **checked exceptions**, lo que permite un enfoque más flexible y funcional. Sin embargo, esto significa que se deben manejar las excepciones de manera explícita, por ejemplo, usando patrones de error como `Either`.
 </details>
 
 ## Implementación
 
-Para implementar **Either** en Kotlin podemos utilizar una clase sellada para representar los dos posibles casos (`Left` y `Right`):
-
-```kotlin
-sealed class Either<L, out R> {
-    inline fun <T> flatMap(f: (R) -> Either<L, T>): Either<L, T> = when (this) {
-        is Left -> this
-        is Right -> f(value)
-    }
-
-    companion object {
-        fun <L, R> pure(value: R): Either<L, R> = Right(value)
-    }
-}
-```
+### Implementando Either
 
 <details>
-    <summary>¿Por qué `L` es invariante?</summary>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
 
-    <LInvariance/>
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $Group = 'com\github\username'
+            $EitherDir = "monads\src\main\kotlin\$Group\either"
+            New-Item -Path "$EitherDir\Either.kt" -ItemType File -Force
+            New-Item -Path "$EitherDir\Left.kt" -ItemType File
+            New-Item -Path "$EitherDir\Right.kt" -ItemType File
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            $Group = 'com\github\username'
+            $EitherDir = "monads\src\main\kotlin\$Group\either"
+            ni "$EitherDir\Either.kt" -i f -f
+            ni "$EitherDir\Left.kt" -i f
+            ni "$EitherDir\Right.kt" -i f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            GROUP='com/github/username'
+            EITHER_DIR="monads/src/main/kotlin/$GROUP/either"
+            mkdir -p "$EITHER_DIR"
+            touch "$EITHER_DIR/Either.kt"
+            touch "$EITHER_DIR/Left.kt"
+            touch "$EITHER_DIR/Right.kt"
+            ```
+        </TabItem>
+    </Tabs>
 </details>
 
-### Clases `Left` y `Right`
+Para implementar **Either** en Kotlin podemos utilizar una clase sellada para representar los dos posibles casos (`Left` y `Right`):
 
-- **Left**: Representa el caso fallido o un error. Contiene un valor de tipo`L`.
-    ```kotlin
-    data class Left<L>(val value: L) : Either<L, Nothing>()
-    ```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        sealed class Either<out L, out R>
 
-- **Right**: Representa el caso exitoso. Contiene un valor de tipo`R`.
-    ```kotlin
-    data class Right<R>(val value: R) : Either<Nothing, R>()
-    ```
+        data class Left<L>(val value: L) : Either<L, Nothing>()
+
+        data class Right<R>(val value: R) : Either<Nothing, R>()
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="monads/src/main/kotlin/com/github/username/either/Either.kt"
+        package com.github.username.either
+
+        sealed class Either<out L, out R>
+        ```
+
+        ```kotlin showLineNumbers title="monads/src/main/kotlin/com/github/username/either/Left.kt"
+        package com.github.username.either
+
+        data class Left<L>(val value: L) : Either<L, Nothing>()
+        ```
+
+        ```kotlin showLineNumbers title="monads/src/main/kotlin/com/github/username/either/Right.kt"
+        package com.github.username.either
+
+        data class Right<R>(val value: R) : Either<Nothing, R>()
+        ```
+    </TabItem>
+</Tabs>
 
 <Exercise title={`Uso de Nothing`}>
     ¿Por qué el primero y segundo parámetro de de ``Right`` y ``Left`` respectivamente son de tipo `Nothing`?
@@ -96,36 +171,142 @@ sealed class Either<L, out R> {
     </Solution>
 </Exercise>
 
-## Ejemplo de Uso
+### Implementando la Monada Either
 
-Supongamos que estamos trabajando con una operación que puede fallar. Queremos encapsular el éxito con `Right` y el error con `Left`:
+<details>
+    <summary>
+        Si quieres crear el archivo desde la terminal...
+    </summary>
 
-```kotlin
-fun readFileEither(path: String?): Either<Exception, String> = path?.let {
-    Right("File content") // Simulando el contenido del archivo
-} ?: Left(Exception("Invalid file path"))
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "$EitherDir\EitherMonad.kt" -ItemType File
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            ni "$EitherDir\EitherMonad.kt" -i f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            touch "$EITHER_DIR/EitherMonad.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
 
-fun processFile(path: String?) {
-    val result = readFileEither(path)
+```kotlin showLineNumbers title="monads/src/main/kotlin/com/github/username/either/EitherMonad.kt"
+package com.github.username.either
 
-    when (result) {
-        is Left -> println("Error: ${result.value.message}")
-        is Right -> println(result.value)
+object EitherMonad {
+    fun <L, R> pure(r: R): Either<L, R> = Right(r)
+    fun <L, R, T> Either<L, R>.flatMap(f: (R) -> Either<L, T>): Either<L, T> = when (this) {
+        is Left -> this
+        is Right -> f(value)
     }
 }
-
-// Uso
-processFile(null) // Error: Invalid file path
-processFile("validPath.txt") // File content
 ```
 
-En este ejemplo:
-- Si el `path` es `null`, `readFileEither` devuelve un `Left` con un mensaje de error.
-- Si el `path` no es `null`, `readFileEither` devuelve un `Right` con el contenido del archivo.
+## Ejemplo de Uso
 
-:::note Uso de ``Exception``
-En este caso, estamos utilizando `Exception` como tipo de error. En un escenario real, se recomienda definir un tipo de error más específico que proporcione más contexto sobre el fallo.
+<details>
+    <summary>
+        Si quieres crear el archivo desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $PasswordDir = "monads\src\main\kotlin\$Group\password"
+            New-Item -Path "$PasswordDir\PasswordValidator.kt" -ItemType File -Force
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            $PasswordDir = "monads\src\main\kotlin\$Group\password"
+            ni "$PasswordDir\PasswordValidator.kt" -i f -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            PASSWORD_DIR="monads/src/main/kotlin/$GROUP/password"
+            mkdir -p "$PASSWORD_DIR"
+            touch "$PASSWORD_DIR/PasswordValidator.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+En este ejemplo, vamos a implementar un caso sencillo de **`Either`** para manejar operaciones que pueden fallar, utilizando las funciones **`pure`** y **`flatMap`** para trabajar con la mónada **`Either`**.
+
+Imaginemos que tenemos dos funciones de validación: una que verifica la longitud de una contraseña y otra que valida si la contraseña contiene al menos un número. Nuestro objetivo es encadenar estas validaciones de manera que, si una falla, la otra no se ejecute. En este caso, devolveremos un `Left` con el mensaje de error apropiado. Si todas las validaciones se superan, obtendremos un `Right` con la contraseña válida.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        private fun validateLength(password: String) =
+        if (password.length >= 8) Right(password)
+        else Left("Password is too short")
+
+        private fun validateContainsNumber(password: String) =
+        if (password.any { it.isDigit() }) Right(password)
+        else Left("Password must contain a number")
+
+        fun validatePassword(password: String) = with(EitherMonad) {
+        pure<String, _>(password)
+        .flatMap(::validateLength)
+        .flatMap(::validateContainsNumber)
+    }
+        ```
+    </TabItem>
+
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        package com.github.username.password
+
+        import cl.ravenhill.either.EitherMonad
+        import cl.ravenhill.either.Left
+        import cl.ravenhill.either.Right
+
+        private fun validateLength(password: String) =
+        if (password.length >= 8) Right(password)
+        else Left("Password is too short")
+
+        private fun validateContainsNumber(password: String) =
+        if (password.any { it.isDigit() }) Right(password)
+        else Left("Password must contain a number")
+
+        fun validatePassword(password: String) = with(EitherMonad) {
+        pure<String, _>(password)
+        .flatMap(::validateLength)
+        .flatMap(::validateContainsNumber)
+    }
+
+        fun main() {
+        println(validatePassword("1234567"))  // Left(value=Password is too short)
+        println(validatePassword("12345678")) // Right(value=12345678)
+    }
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del código
+
+- **[1-7]**: Definimos dos funciones de validación:
+- `validateLength` verifica si la contraseña tiene al menos 8 caracteres. Si es válida, retorna un `Right` con la contraseña; si no, devuelve un `Left` con un mensaje de error.
+- `validateContainsNumber` comprueba si la contraseña contiene al menos un número. Si lo contiene, retorna un `Right`; si no, un `Left` con el error correspondiente.
+
+- **[9]** `with(EitherMonad)`: Utilizamos el contexto de la mónada `Either` para acceder a sus funciones, como `pure` y `flatMap`, sin necesidad de referenciar el objeto cada vez.
+
+- **[10]** `pure<String, _>(password)`: Esta función convierte el valor inicial (la contraseña) en un `Right`, permitiéndonos iniciar la secuencia de validaciones. El parámetro `_` infiere automáticamente el tipo de `Right`.
+
+- **[11-12]** `flatMap`: Encadenamos las validaciones con `flatMap`, de forma que si alguna falla, devolvemos inmediatamente el `Left` con el error y no ejecutamos el resto de validaciones.
+
 :::
+
+Este patrón es particularmente útil cuando queremos manejar flujos de operaciones secuenciales que pueden fallar, como validaciones, operaciones de entrada/salida, o cualquier proceso en el que preferimos evitar el uso de excepciones. Con **`Either`**, podemos modelar el éxito o el fracaso de cada paso de forma segura y estructurada.
 
 ## Comparación con `Option`
 
@@ -157,6 +338,12 @@ En este caso, estamos utilizando `Exception` como tipo de error. En un escenario
         ```
     </Solution>
 </Exercise>
+
+## Beneficios de `Either`
+
+- **Manejo explícito de errores**: `Either` proporciona un enfoque más seguro y estructurado para el manejo de errores que las excepciones tipadas. Al incluir explícitamente el caso de éxito o error en el tipo, se fuerza a lxs desarrolladorxs a manejar ambos casos, evitando que los errores se "pierdan" o sean ignorados accidentalmente.
+- **Facilidad de composición**: `Either` permite componer funciones que pueden fallar sin necesidad de capturar excepciones. En lugar de lanzar una excepción, las funciones pueden devolver un valor de tipo `Either`, lo que facilita el encadenamiento de operaciones sin necesidad de un manejo de errores explícito en cada paso.
+- **Código más claro**: Utilizar `Either` hace que el flujo de datos sea más legible y el manejo de errores más evidente, en comparación con las excepciones, donde el flujo de errores puede ser implícito y difícil de seguir.
 
 ## ¿Qué hemos aprendido?
 

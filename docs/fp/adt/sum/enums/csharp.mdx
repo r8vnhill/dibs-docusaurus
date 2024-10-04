@@ -1,0 +1,157 @@
+---
+title: csharp
+---
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+
+## C\#
+
+En **C#**, las enumeraciones (`enum`) son tipos de valor que representan un conjunto de constantes nombradas. A diferencia de Kotlin y otros lenguajes como Swift o Rust, las enumeraciones en C# son más limitadas y no pueden contener métodos ni propiedades adicionales, excepto en versiones más recientes del lenguaje que permiten ciertas extensiones.
+
+### Definición de la Enumeración
+
+```csharp
+public enum DeliveryState
+{
+    Pending,
+    Paid,
+    Shipped,
+    Delivered,
+    Cancelled
+}
+```
+
+### Uso de la Enumeración
+
+Puedes utilizar la enumeración `DeliveryState` para representar el estado de una entrega en tu aplicación:
+
+```csharp
+public void HandleOrderState(DeliveryState state)
+{
+    switch (state)
+    {
+        case DeliveryState.Pending:
+            Console.WriteLine("Order is pending");
+            break;
+        case DeliveryState.Paid:
+            Console.WriteLine("Order is paid");
+            break;
+        case DeliveryState.Shipped:
+            Console.WriteLine("Order is shipped");
+            break;
+        case DeliveryState.Delivered:
+            Console.WriteLine("Order is delivered");
+            break;
+        case DeliveryState.Cancelled:
+            Console.WriteLine("Order is cancelled");
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(state), state, null);
+    }
+}
+```
+
+En este ejemplo:
+
+- Se utiliza un `switch` para manejar cada posible valor de la enumeración.
+- El `default` maneja cualquier valor fuera del rango esperado, aunque en este caso no debería ser necesario si todos los casos están cubiertos.
+
+### Similitudes con Kotlin
+
+- **Definición de Valores Nombrados**: Tanto en C# como en Kotlin, las enumeraciones permiten definir un conjunto de constantes nombradas que representan estados o valores predefinidos.
+- **Uso en Estructuras de Control**: Ambos lenguajes permiten usar las enumeraciones en estructuras de control como `switch`/`when` para tomar decisiones basadas en el valor actual.
+
+### Diferencias con Kotlin
+
+- **Capacidad de Extensión**: En Kotlin, las enumeraciones pueden contener propiedades, métodos e incluso implementar interfaces. En C#, las enumeraciones tradicionales no pueden contener métodos ni propiedades. Sin embargo, desde C# 8.0 y versiones posteriores, es posible agregar métodos a enums utilizando métodos de extensión.
+- **Exhaustividad**: El `switch` en C# no es exhaustivo por defecto, esto introduce posibles errores si se agregan más valores a las enumeraciones. En Kotlin, el `when` puede ser exhaustivo, y el compilador fuerza que se manejen todos los casos.
+- **Valores Subyacentes**: En C#, cada miembro de una enumeración tiene un valor numérico subyacente (por defecto `int`), y es posible asignar valores específicos a cada miembro.
+
+### Agregando Funcionalidad con Métodos de Extensión
+
+Para agregar métodos a una enumeración en C#, puedes utilizar **métodos de extensión**:
+
+```csharp
+public static class DeliveryStateExtensions
+{
+    public static bool IsFinalState(this DeliveryState state)
+    {
+        return state == DeliveryState.Delivered || state == DeliveryState.Cancelled;
+    }
+
+    public static string Signal(this DeliveryState state)
+    {
+        return state switch
+        {
+            DeliveryState.Pending => "Order is pending",
+            DeliveryState.Paid => "Order is paid",
+            DeliveryState.Shipped => "Order is shipped",
+            DeliveryState.Delivered => "Order is delivered",
+            DeliveryState.Cancelled => "Order is cancelled",
+            _ => throw new ArgumentOutOfRangeException(nameof(state), state, null)
+        };
+    }
+}
+```
+
+Ahora puedes utilizar estos métodos como si fueran parte de la enumeración:
+
+```csharp
+public void HandleOrderState(DeliveryState state)
+{
+    if (state.IsFinalState())
+    {
+        Console.WriteLine("Final state: " + state.Signal());
+    }
+    else
+    {
+        Console.WriteLine("Non-final state: " + state.Signal());
+    }
+}
+```
+
+### Similitudes y Diferencias en este Contexto
+
+- **Similitud**: Al igual que en Kotlin, puedes asociar comportamiento a los valores de la enumeración mediante métodos (aunque en C# se logra con métodos de extensión).
+- **Diferencia**: En Kotlin, los métodos y propiedades pueden definirse directamente dentro de la enumeración, mientras que en C# necesitas utilizar métodos de extensión externos.
+
+### Limitaciones de las Enumeraciones en C#
+
+1. **No Pueden Contener Estado o Datos Asociados**: Las enumeraciones en C# no pueden tener propiedades o campos para almacenar datos adicionales por defecto.
+2. **No Soportan Herencia**: Las enumeraciones en C# no pueden heredar de otras enumeraciones o clases.
+3. **Valores Numéricos Subyacentes**: Cada miembro de una enumeración en C# tiene un valor numérico, lo que puede llevar a usos no intencionales si se manipulan como enteros.
+
+### Ventajas de las Enumeraciones en C#
+
+1. **Simplicidad**: Son sencillas de definir y utilizar para representar un conjunto fijo de constantes.
+2. **Interoperabilidad**: Los enums de C# son ampliamente soportados y se integran bien con otras partes del ecosistema .NET.
+3. **Bit Flags**: Puedes utilizar atributos como `[Flags]` para representar combinaciones de valores mediante operaciones bit a bit.
+
+### Ejemplo con el Atributo `[Flags]`
+
+```csharp
+[Flags]
+public enum FileAccess
+{
+    Read = 1,
+    Write = 2,
+    Execute = 4
+}
+
+// Uso:
+var access = FileAccess.Read | FileAccess.Write;
+if ((access & FileAccess.Read) == FileAccess.Read)
+{
+    Console.WriteLine("Read access granted.");
+}
+```
+
+### Comparación con Kotlin
+
+- **Operaciones Bit a Bit**: En C#, es común utilizar enums con el atributo `[Flags]` para manejar combinaciones de valores, lo cual no es directamente soportado en las enumeraciones de Kotlin.
+- **Capacidad de Extensión Limitada**: Aunque es posible agregar métodos de extensión, las enumeraciones en C# son menos flexibles que en Kotlin en cuanto a la capacidad de contener lógica y estado adicional.

@@ -1,0 +1,220 @@
+---
+title: swift
+---
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+## Swift
+
+En **Swift**, las enumeraciones (`enum`) son más potentes y flexibles que en muchos otros lenguajes. No solo definen un conjunto de casos relacionados, sino que también pueden almacenar **valores asociados** y **propiedades**, y pueden definir **métodos**, lo que las hace comparables a las **enumeraciones** y **clases selladas** en Kotlin.
+
+### Definición Básica de Enumeraciones en Swift
+
+Una enumeración básica en Swift se define utilizando la palabra clave `enum`. Aquí hay un ejemplo que representa los estados de entrega, similar al ejemplo en Kotlin:
+
+```swift
+enum DeliveryState {
+    case pending
+    case paid
+    case shipped
+    case delivered
+    case cancelled
+}
+```
+
+**Uso:**
+
+```swift
+func handleOrderState(state: DeliveryState) {
+    switch state {
+    case .pending:
+        print("Order is pending")
+    case .paid:
+        print("Order is paid")
+    case .shipped:
+        print("Order is shipped")
+    case .delivered:
+        print("Order is delivered")
+    case .cancelled:
+        print("Order is cancelled")
+    }
+}
+
+handleOrderState(state: .pending)
+handleOrderState(state: .paid)
+```
+
+### Similitudes con Kotlin
+
+- **Definición de Casos**: Ambos lenguajes permiten definir enumeraciones con un conjunto fijo de casos.
+
+- **Exhaustividad en Switch/When**: Tanto en Swift como en Kotlin, los bloques `switch` (Swift) y `when` (Kotlin) deben ser exhaustivos, es decir, deben manejar todos los posibles casos de la enumeración, o de lo contrario se debe proporcionar un caso `default` o `else`.
+
+- **Métodos Asociados**: Las enumeraciones en ambos lenguajes pueden contener métodos y propiedades.
+
+### Diferencias con Kotlin
+
+- **Valores Asociados**: Swift permite que cada caso de una enumeración tenga **valores asociados**, lo que permite almacenar datos adicionales con cada caso. En Kotlin, para lograr algo similar, se utilizan **clases selladas** o se agregan propiedades constantes a cada caso de la enumeración.
+
+- **Raw Values vs. Associated Values**: En Swift, las enumeraciones pueden tener **raw values** (valores crudos) que son iguales para todos los casos (como enteros o strings), o **valores asociados** que pueden variar para cada instancia de un caso.
+
+- **No Necesita Métodos Abstractos**: A diferencia de Kotlin, donde puedes tener métodos abstractos en una enumeración que cada caso debe implementar, en Swift generalmente se utiliza un `switch` dentro de un método para manejar la lógica específica de cada caso.
+
+### Ejemplo con Métodos y Valores Asociados
+
+Supongamos que queremos que cada estado de entrega proporcione un mensaje específico y también indique si es un estado final.
+
+```swift
+enum DeliveryState {
+    case pending
+    case paid
+    case shipped
+    case delivered
+    case cancelled
+
+    func signal() -> String {
+        switch self {
+        case .pending:
+            return "Order is pending"
+        case .paid:
+            return "Order is paid"
+        case .shipped:
+            return "Order is shipped"
+        case .delivered:
+            return "Order is delivered"
+        case .cancelled:
+            return "Order is cancelled"
+        }
+    }
+
+    func isFinalState() -> Bool {
+        return self == .delivered || self == .cancelled
+    }
+}
+```
+
+**Uso:**
+
+```swift
+func handleOrderState(state: DeliveryState) {
+    if state.isFinalState() {
+        print("Final state: \(state.signal())")
+    } else {
+        print("Non-final state: \(state.signal())")
+    }
+}
+
+handleOrderState(state: .shipped)
+handleOrderState(state: .delivered)
+```
+
+### Valores Asociados en Swift
+
+A diferencia de Kotlin, Swift permite que cada caso tenga valores asociados diferentes. Esto es útil para casos donde cada estado puede llevar información adicional.
+
+**Ejemplo:**
+
+```swift
+enum GameEvent {
+    case healthBoost(amount: Int)
+    case manaDrain(amount: Int)
+    case poison(duration: Int)
+    case energySurge(amount: Int)
+}
+
+class Player {
+    var health: Int
+    var mana: Int
+
+    init(health: Int, mana: Int) {
+        self.health = health
+        self.mana = mana
+    }
+
+    func apply(event: GameEvent) {
+        switch event {
+        case .healthBoost(let amount):
+            increaseHealth(by: amount)
+        case .manaDrain(let amount):
+            decreaseMana(by: amount)
+        case .poison(let duration):
+            decreaseHealth(by: duration * 5) // Por ejemplo, resta 5 de salud por cada unidad de duración
+        case .energySurge(let amount):
+            increaseMana(by: amount)
+        }
+    }
+
+    func increaseHealth(by amount: Int) {
+        health += amount
+    }
+
+    func decreaseHealth(by amount: Int) {
+        health -= amount
+    }
+
+    func increaseMana(by amount: Int) {
+        mana += amount
+    }
+
+    func decreaseMana(by amount: Int) {
+        mana -= amount
+    }
+}
+```
+
+**Uso:**
+
+```swift
+let player = Player(health: 100, mana: 50)
+player.apply(event: .healthBoost(amount: 20))
+player.apply(event: .manaDrain(amount: 15))
+```
+
+### Similitudes y Diferencias en este Contexto
+
+- **Similitud**: Ambos lenguajes permiten que las enumeraciones contengan métodos y se utilicen para representar eventos o estados en un juego.
+
+- **Diferencia**: En Swift, los valores asociados permiten pasar información directamente con cada caso, sin necesidad de implementar métodos abstractos o concretos en cada caso como en Kotlin.
+
+### Funciones Útiles en Enumeraciones de Swift
+
+1. **`allCases`**: Si la enumeración conforma al protocolo `CaseIterable`, puedes obtener una colección de todos los casos.
+
+ ```swift
+ enum Direction: CaseIterable {
+     case north, south, east, west
+ }
+
+ for direction in Direction.allCases {
+     print(direction)
+ }
+    ```
+
+2. **Inicialización con Raw Values**: Si la enumeración tiene raw values, puedes crear una instancia a partir de ese valor.
+
+ ```swift
+ enum Planet: Int {
+     case mercury = 1, venus, earth, mars, jupiter, saturn, uranus, neptune
+ }
+
+ let planet = Planet(rawValue: 3) // earth
+    ```
+
+### Limitaciones de las Enumeraciones en Swift
+
+1. **No Soportan Herencia**: A diferencia de las clases, las enumeraciones en Swift no pueden heredar de otras enumeraciones o clases.
+
+2. **No Pueden Añadir Casos en Extensiones**: No es posible añadir nuevos casos a una enumeración utilizando extensiones.
+
+### Comparación con Kotlin
+
+- **Herencia y Clases Selladas**: En Kotlin, si necesitas más flexibilidad y comportamiento polimórfico, puedes usar **clases selladas**, que permiten herencia y pueden contener estados más complejos. En Swift, las enumeraciones con valores asociados y protocolos pueden cubrir muchos casos donde en Kotlin se usarían clases selladas.
+
+- **Exhaustividad**: Tanto Swift como Kotlin requieren que los `switch`/`when` sean exhaustivos, lo que mejora la seguridad del código al obligar a manejar todos los casos posibles.
+
+- **Valores Asociados vs. Data Classes**: En Kotlin, para asociar datos con un caso específico, a menudo se usan **data classes** dentro de una **clase sellada**. En Swift, los valores asociados en las enumeraciones permiten lograr esto de manera más directa.
+

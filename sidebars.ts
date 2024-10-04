@@ -155,17 +155,7 @@ const sidebars: SidebarsConfig = {
                                 id: 'fp/adt/sum/index',
                             },
                             items: [
-                                {
-                                    type: 'category',
-                                    label: 'Enumeraciones',
-                                    link: {
-                                        type: 'doc',
-                                        id: 'fp/adt/sum/enums',
-                                    },
-                                    items: [
-                                        "fp/adt/sum/enums-langs",
-                                    ]
-                                },
+                                'fp/adt/sum/enums/kt',
                                 'fp/adt/sum/sealed/sealed'
                             ],
                         },
@@ -209,7 +199,7 @@ const sidebars: SidebarsConfig = {
                             },
                             items: [
                                 // 'fp/functors/const/kt',
-                                'fp/functors/list/kt',
+                                // 'fp/functors/list/kt',
                             ],
                         },
                     ]
@@ -243,7 +233,7 @@ const sidebars: SidebarsConfig = {
                                     ],
                                 },
                                 'fp/monads/examples/either-kt',
-                                'fp/monads/examples/result/result-kt'
+                                // 'fp/monads/examples/result/result-kt'
                             ],
                         },
                     ]
