@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import '../css/tooltip.css';
 
 type TooltipProps = {
-    text: string;
+    text: string | React.ReactNode;
     children: React.ReactNode;
     highlight?: boolean;
 };

@@ -10,7 +10,9 @@ interface LanguageCardProps {
 const LanguageCard: React.FC<LanguageCardProps> = ({ logoSrc, language, link }) => {
     return (
         <a href={link} target="_blank" rel="noopener noreferrer" className="language-card">
-            <img src={logoSrc} alt={`${language} logo`} className="language-card-logo" />
+            <div className="language-card-logo-container">
+                <img src={logoSrc} alt={`${language} logo`} className="language-card-logo" />
+            </div>
             <span className="language-card-name">{language}</span>
         </a>
     );

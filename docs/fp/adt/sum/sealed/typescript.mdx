@@ -1,0 +1,94 @@
+---
+title: Uniones Discriminadas en Typescript
+---
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+**Typescript** ofrece una funcionalidad similar a las clases selladas de **Kotlin** mediante el uso de **uniones discriminadas** o **uniones etiquetadas**. Aunque Typescript no tiene clases selladas como tal, las uniones discriminadas permiten definir un conjunto limitado de opciones en un tipo de unión, similar a cómo las clases selladas controlan las subclases permitidas.
+
+En **Typescript**, puedes usar tipos de unión para representar un conjunto limitado de estados, y cada estado está etiquetado con una propiedad discriminante que permite al compilador hacer inferencias de tipo exhaustivas.
+
+### Ejemplo: Sistema de Pagos
+
+```typescript showLineNumbers
+type Payment =
+  | { type: "CreditCard"; number: string }
+  | { type: "Cash"; amount: number }
+  | { type: "Unpaid" };
+```
+
+Aquí, `Payment` es un tipo de unión que solo permite tres variantes posibles: `CreditCard`, `Cash` y `Unpaid`. La propiedad `type` actúa como el discriminante que identifica el tipo específico de pago.
+
+### Ejemplo: Modelado de Estados
+
+Este es un ejemplo de cómo las uniones discriminadas pueden modelar los estados de un pedido en una tienda en línea:
+
+```typescript showLineNumbers
+type DeliveryState =
+  | { type: "Pending" }
+  | { type: "Paid" }
+  | { type: "Shipped"; trackingNumber: string }
+  | { type: "Delivered" }
+  | { type: "Cancelled"; reason: string };
+
+function handleOrderState(state: DeliveryState) {
+  switch (state.type) {
+    case "Pending":
+      console.log("Order is pending");
+      break;
+    case "Paid":
+      console.log("Order is paid");
+      break;
+    case "Shipped":
+      console.log(`Order is shipped with tracking number ${state.trackingNumber}`);
+      break;
+    case "Delivered":
+      console.log("Order is delivered");
+      break;
+    case "Cancelled":
+      console.log(`Order is cancelled because ${state.reason}`);
+      break;
+  }
+}
+```
+
+## Comparación entre Kotlin y Typescript
+
+| **Característica**             | **Kotlin (Clases Selladas)**                            | **Typescript (Uniones Discriminadas)**                    |
+|--------------------------------|---------------------------------------------------------|-----------------------------------------------------------|
+| **Restricción de Subtipos**    | Los subtipos deben definirse en el mismo archivo/módulo | Los tipos permitidos se definen en el mismo tipo de unión |
+| **Exhaustividad**              | `when` exhaustivo obliga a manejar todos los casos      | El `switch` exhaustivo es verificado por el compilador    |
+| **Instanciación de Subclases** | Usa clases e interfaces selladas                        | Usa tipos de unión etiquetados                            |
+| **Reflexión**                  | Soporte nativo para la reflexión de clases selladas     | No hay soporte nativo para la reflexión de tipos          |
+| **Legibilidad y Expresividad** | Sintaxis clara con patrones de herencia                 | Sintaxis más ligera usando tipos discriminados            |
+
+:::tip Ventajas de Typescript
+
+1. **Sintaxis Ligera**: Typescript permite definir uniones discriminadas de forma concisa y fácil de leer, sin necesidad de clases o interfaces formales.
+2. **Flexibilidad**: Los tipos de unión son más flexibles que las clases selladas, ya que no requieren un diseño de clases rígido y pueden modelar estados variados sin herencia.
+
+:::
+
+:::danger Desventajas de Typescript
+
+1. **Falta de Reflexión**: Typescript no ofrece reflexión en tiempo de ejecución, lo que dificulta listar todas las posibles variantes de un tipo de unión.
+2. **Control Menos Rígido**: A diferencia de Kotlin, Typescript no ofrece un mecanismo para restringir los tipos fuera de los tipos de unión en un archivo o módulo.
+
+:::
+
+## ¿Qué Aprendimos?
+
+En esta lección, vimos cómo **Typescript** implementa funcionalidades similares a las **clases selladas** de Kotlin usando **uniones discriminadas**. Aunque no existe una implementación directa de clases selladas, las uniones discriminadas permiten controlar las variantes de un tipo y verificar exhaustividad.
+
+### Puntos Clave:
+- **Uniones Discriminadas**: Definen variantes limitadas en un tipo, etiquetadas con una propiedad discriminante.
+- **Exhaustividad**: Typescript verifica la exhaustividad de `switch`, similar a Kotlin con `when`.
+- **Reflexión**: Kotlin soporta reflexión en clases selladas; Typescript no ofrece reflexión nativa en tiempo de ejecución.
+- **Flexibilidad**: Typescript es más flexible y ligero en la definición de tipos, mientras que Kotlin utiliza una estructura más formal.
+
+### Conclusión:
+Ambos lenguajes ofrecen enfoques robustos para modelar estados finitos, con diferentes ventajas en flexibilidad, legibilidad y seguridad en tiempo de compilación.

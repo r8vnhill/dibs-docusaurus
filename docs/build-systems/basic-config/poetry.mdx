@@ -1,0 +1,73 @@
+---
+title: poetry
+---
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+## Python: Poetry
+
+Cuando se trabaja con proyectos multi-módulo, tanto **Gradle** como **Poetry** ofrecen soluciones para gestionar múltiples módulos o subproyectos dentro de una misma estructura. A continuación, veremos cómo configurar proyectos multi-módulo en **Gradle** y **Poetry**, y compararemos sus diferencias y similitudes.
+
+### Proyectos Multi-Módulo
+
+En **Poetry**, los proyectos multi-módulo se organizan mediante el concepto de **workspaces** o módulos, donde cada uno puede tener su propio conjunto de dependencias, pero comparten un archivo `pyproject.toml` común.
+
+#### Estructura de un Proyecto Multi-Módulo en Poetry
+
+```plaintext
+my_project/
+├── app/
+│   └── __init__.py
+├── lib/
+│   └── __init__.py
+├── pyproject.toml
+└── poetry.lock
+```
+
+#### Configuración del Proyecto Raíz (`pyproject.toml`)
+
+El archivo `pyproject.toml` es el corazón del proyecto multi-módulo en **Poetry**, y gestiona las dependencias y las configuraciones globales.
+
+```toml title="pyproject.toml"
+[tool.poetry]
+name = "my_project"
+version = "0.1.0"
+description = "A multi-module Python project"
+authors = ["John Doe <john.doe@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.extras]
+app = ["lib"]
+```
+
+#### Configuración de un Módulo en Poetry
+
+En **Poetry**, las dependencias entre módulos se gestionan a través de rutas. Por ejemplo, el módulo `app` puede depender de `lib` utilizando una referencia local:
+
+```toml title="app/pyproject.toml"
+[dependencies]
+lib = { path = "../lib" }
+```
+
+### Similitudes entre Gradle y Poetry
+
+1. **Modularidad**: Ambos sistemas permiten dividir un proyecto en módulos, mejorando la organización y facilitando el mantenimiento del código.
+2. **Gestión de Dependencias**: Tanto Gradle como Poetry permiten compartir dependencias entre módulos y definir dependencias específicas para cada submódulo.
+3. **Configuración Centralizada**: Ambos utilizan un archivo de configuración en el proyecto raíz (`settings.gradle.kts` en Gradle y `pyproject.toml` en Poetry) para definir la estructura del proyecto y las dependencias compartidas.
+4. **Facilidad de Uso**: Ambos sistemas ofrecen comandos simplificados para instalar dependencias y construir los módulos (por ejemplo, `gradle build` y `poetry install`).
+
+### Diferencias entre Gradle y Poetry
+
+| **Aspecto**                       | **Gradle (JVM)**                                              | **Poetry (Python)**                                   |
+|-----------------------------------|---------------------------------------------------------------|-------------------------------------------------------|
+| **Formato de Configuración**      | Kotlin o Groovy (`build.gradle.kts` o `build.gradle`)         | TOML (`pyproject.toml`)                               |
+| **Enfoque de Modularidad**        | Utiliza el archivo `settings.gradle.kts` para definir módulos | Utiliza `pyproject.toml` y rutas de dependencia local |
+| **Lenguajes Soportados**          | Principalmente JVM (Java, Kotlin, Groovy)                     | Específico para Python                                |
+| **Flexibilidad en Configuración** | Gran flexibilidad en la configuración de tareas               | Simplificado, enfocado en dependencias                |
+| **Ejecución de Tareas**           | Tareas personalizables mediante `task`                        | Ciclo simplificado (`poetry install`, etc.)           |

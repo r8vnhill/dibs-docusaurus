@@ -1,0 +1,113 @@
+---
+title: Configuración Básica de Proyectos Multi-Módulo en SBT
+---
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+Si ya estás familiarizadx con la configuración de proyectos multi-módulo en **Gradle**, otro sistema de construcción que ofrece soporte para proyectos multi-módulo es **SBT** (*Simple Build Tool*), comúnmente utilizado en proyectos de **Scala** y **Java**. Aunque ambos sistemas tienen similitudes en la modularización, existen diferencias notables en la forma en que cada uno gestiona los proyectos.
+
+### Configuración en SBT
+
+En **SBT**, la configuración de un proyecto multi-módulo comienza con la definición de un archivo `build.sbt` y un archivo de configuración de módulos `project/Build.scala`.
+
+### Estructura de Directorios
+
+Un proyecto multi-módulo típico en **SBT** se organiza de la siguiente manera:
+
+```
+/my-multi-project
+├── moduleA
+│   ├── src
+│   │   ├── main
+│   │   │   └── scala
+│   │   └── test
+│   │       └── scala
+├── moduleB
+│   ├── src
+│   │   ├── main
+│   │   │   └── scala
+│   │   └── test
+│   │       └── scala
+├── project
+│   └── Build.scala
+└── build.sbt
+```
+
+### Archivo `build.sbt`
+
+En **SBT**, el archivo `build.sbt` es el punto de entrada principal para la configuración de un proyecto. Para un proyecto multi-módulo, puedes definir el proyecto raíz y luego incluir los módulos utilizando el método `dependsOn`.
+
+```scala showLineNumbers title="build.sbt"
+lazy val root = (project in file("."))
+    .aggregate(moduleA, moduleB)
+    .settings(
+        name := "my-multi-project",
+        version := "1.0",
+        scalaVersion := "3.5.1"
+    )
+
+lazy val moduleA = (project in file("moduleA"))
+    .settings(
+        name := "moduleA"
+    )
+
+lazy val moduleB = (project in file("moduleB"))
+    .dependsOn(moduleA)
+    .settings(
+        name := "moduleB"
+    )
+```
+
+### Archivo `project/Build.scala`
+
+Opcionalmente, puedes utilizar un archivo `Build.scala` para configurar los módulos en un proyecto más complejo:
+
+```scala showLineNumbers title="project/Build.scala"
+import sbt._
+import Keys._
+
+object Build extends Build {
+  lazy val root = project.in(file("."))
+    .aggregate(moduleA, moduleB)
+
+  lazy val moduleA = project.in(file("moduleA"))
+    .settings(
+      name := "moduleA"
+    )
+
+  lazy val moduleB = project.in(file("moduleB"))
+    .dependsOn(moduleA)
+    .settings(
+      name := "moduleB"
+    )
+}
+```
+
+### Comparación entre Gradle y SBT
+
+| Característica                | **Gradle**                                                | **SBT**                                               |
+|-------------------------------|-----------------------------------------------------------|-------------------------------------------------------|
+| **Definición de Módulos**      | Se configuran en `settings.gradle.kts` con `include`.      | Se definen en `build.sbt` o `Build.scala`.             |
+| **Referencia a Módulos**       | Referencia absoluta con `:` (`:app`, `:lib`).             | Referencia directa al módulo como variable (`moduleA`). |
+| **Compatibilidad de Lenguajes**| Optimizado para **Kotlin** y **Java**.                    | Nativamente soporta **Scala**, **Java** y **Kotlin**.  |
+| **Gestión de Dependencias**    | Integra repositorios como **Maven Central**.              | Soporta **Maven** y **Ivy**, enfocado en **Scala**.    |
+| **Ejecución de Tareas**        | Uso de `gradlew` para tareas predefinidas y personalizadas.| Tareas ejecutadas con `sbt compile`, `sbt test`, etc. |
+
+### Ventajas de SBT
+
+1. **Integración Nativa con Scala**: SBT es el sistema de construcción preferido para proyectos en **Scala**, con una integración nativa en el lenguaje y soporte para **incremental compilation**, acelerando el desarrollo.
+2. **Extensibilidad**: Al igual que **Gradle**, SBT ofrece un alto nivel de extensibilidad mediante la definición de tareas personalizadas.
+3. **Modularidad Simplificada**: Aunque menos declarativo que **Gradle**, la creación de proyectos multi-módulo en SBT sigue siendo simple y efectiva, facilitando la reutilización de módulos en diferentes proyectos.
+
+### Desventajas de SBT
+
+1. **Verboso en Proyectos Grandes**: Aunque su sintaxis es sencilla, la configuración de proyectos más complejos puede volverse verbosa y difícil de mantener.
+2. **Curva de Aprendizaje**: Para desarrolladores acostumbrados a sistemas de construcción como **Gradle** o **Maven**, la sintaxis de **SBT** puede parecer inusual al principio.
+
+## ¿Qué Aprendimos?
+
+En resumen, tanto **Gradle** como **SBT** permiten la creación de proyectos multi-módulo, aunque sus enfoques son ligeramente diferentes. **Gradle** se destaca por su flexibilidad y versatilidad, especialmente en proyectos de **Java** y **Kotlin**, mientras que **SBT** brilla en proyectos de **Scala** gracias a su integración nativa y manejo eficiente de compilaciones incrementales.
