@@ -1,6 +1,7 @@
 ---
 title: Matchers Personalizados en Jasmine
 ---
+import {Cons, ProCons, Pros} from "/src/components/cajitas/ProCons";
 import References from "/src/components/ReferencesComponent";
 import ReadingTime from '/src/components/ReadingTime';
 import Tabs from '@theme/Tabs'
@@ -21,46 +22,50 @@ A continuación, se muestra cómo crear un matcher personalizado en **Jasmine** 
 
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```javascript showLineNumbers
-        beforeEach(function() {
-            jasmine.addMatchers({
-                toBeEven: function() {
+        ```javascript showLineNumbers title="spec/parity-spec.js"
+        jasmine.addMatchers({
+            toBeEven: () => ({
+                compare: actual => {
                     return {
-                        compare: function(actual) {
-                            const result = {
-                                pass: actual % 2 === 0,
-                                message: actual + " is not an even number"
-                            };
-                            return result;
-                        }
+                        pass: actual % 2 === 0,
+                        message: actual + " is not an even number"
                     };
                 }
-            });
+            })
         });
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```javascript showLineNumbers
-        beforeEach(function() {
+        ```javascript showLineNumbers title="spec/parity-spec.js"
+        beforeEach(() => {
             jasmine.addMatchers({
-                toBeEven: function() {
-                    return {
-                        compare: function(actual) {
-                            const result = {
-                                pass: actual % 2 === 0,
-                                message: actual + " is not an even number"
-                            };
-                            return result;
-                        }
-                    };
-                }
+                toBeEven: () => ({
+                    compare: actual => {
+                        return {
+                            pass: actual % 2 === 0,
+                            message: actual + " is not an even number"
+                        };
+                    }
+                })
             });
         });
 
-        describe("Custom matcher: toBeEven", function() {
-            it("should verify if a number is even", function() {
-                expect(4).toBeEven();  // Passes
-                expect(5).not.toBeEven();  // Passes
+        describe("The parity of", () => {
+            const evenNumbers = [2, 4, 6, 8, 10];
+            const oddNumbers = [1, 3, 5, 7, 9];
+
+            evenNumbers.forEach(number => {
+                it(`${number} should be even`, () => {
+                    // noinspection JSUnresolvedReference
+                    expect(number).toBeEven();
+                });
+            });
+
+            oddNumbers.forEach(number => {
+                it(`${number} should not be even`, () => {
+                    // noinspection JSUnresolvedReference
+                    expect(number).not.toBeEven();
+                });
             });
         });
         ```
@@ -69,13 +74,13 @@ A continuación, se muestra cómo crear un matcher personalizado en **Jasmine** 
 
 :::info Explicación del Código
 
-- **[3-14]** `toBeEven`: Define un matcher que verifica si un número es par.
-- **[5-11]** `compare`: Esta función compara el valor actual (`actual`) con la condición esperada. Si la condición se cumple (el número es par), establece `pass` en `true`; de lo contrario, en `false`.
-- **[8]** `message`: Proporciona un mensaje de error cuando la prueba falla, que se mostrará en el reporte de pruebas.
+- **[2-9]** `toBeEven`: Define un matcher que verifica si un número es par.
+- **[3-8]** `compare`: Esta función compara el valor actual (`actual`) con la condición esperada. Si la condición se cumple (el número es par), establece `pass` en `true`; de lo contrario, en `false`.
+- **[6]** `message`: Proporciona un mensaje de error cuando la prueba falla, que se mostrará en el reporte de pruebas.
 
 :::
 
-## Comparación entre Kotest y Jasmine
+## Comparación con Kotest
 
 | Característica               | **Kotest**                                          | **Jasmine**                                               |
 |------------------------------|-----------------------------------------------------|-----------------------------------------------------------|
@@ -84,14 +89,32 @@ A continuación, se muestra cómo crear un matcher personalizado en **Jasmine** 
 | **Matchers negados**         | Implementado automáticamente con `shouldNot`.       | Se puede agregar con `negativeCompare`.                   |
 | **Flexibilidad**             | Permite gran personalización y reutilización.       | Sencillo y fácil de usar, pero menos flexible que Kotest. |
 
+### Ventajas y Desventajas de los Matchers Personalizados en Jasmine
+
+<ProCons>
+    <Pros>
+        - **Simplicidad en la implementación**: Jasmine ofrece una forma rápida y sencilla de agregar matchers personalizados utilizando `addMatchers()`. Esto permite extender las capacidades de Jasmine sin complicaciones.
+        - **Flexibilidad básica**: Aunque es más sencillo que otros frameworks, permite definir comportamientos específicos como matchers negados a través de `negativeCompare`, ofreciendo un nivel razonable de personalización.
+        - **Compatibilidad con JavaScript puro**: No es necesario utilizar TypeScript ni configuraciones complejas para definir matchers, lo que lo hace accesible para proyectos pequeños o medianos que utilicen solo JavaScript.
+        - **Uso en proyectos existentes**: Es fácil integrar matchers personalizados en proyectos que ya usan Jasmine sin necesidad de grandes refactorizaciones.
+    </Pros>
+    <Cons>
+        - **Menor flexibilidad avanzada**: Aunque es fácil de implementar, Jasmine no ofrece la misma capacidad de personalización y control detallado que otros frameworks como Kotest, lo que puede ser una desventaja para proyectos más complejos.
+        - **Negación manual**: Para agregar comportamiento negado (`not`), debes definir explícitamente `negativeCompare`, lo que puede ser menos eficiente comparado con frameworks que lo manejan automáticamente.
+        - **Interfaz menos fluida**: A diferencia de Kotest, que permite usar funciones de extensión (`shouldBeEven()`), Jasmine requiere añadir los matchers manualmente mediante `addMatchers`, lo que puede hacer el código más verboso.
+        - **Mensajes de error limitados**: Los mensajes de error personalizados en Jasmine son simples y no ofrecen la misma capacidad de personalización avanzada que otros frameworks de pruebas más robustos.
+    </Cons>
+</ProCons>
+
 ## ¿Qué Aprendimos?
 
-En esta sección, vimos cómo definir **matchers personalizados** en Jasmine, comparándolos con los de Kotest. Aprendimos que ambos frameworks permiten extender la funcionalidad de sus sistemas de aserciones para adaptarse a casos específicos:
+En esta sección, hemos aprendido cómo crear **matchers personalizados** en Jasmine, lo que nos permite extender el framework para cubrir necesidades específicas en nuestras pruebas.
 
-- **Jasmine** utiliza el método `jasmine.addMatchers()` para agregar matchers personalizados de manera sencilla, retornando un objeto con las funciones `compare` y opcionalmente `negativeCompare`.
-- **Kotest** ofrece una estructura más formal con la interfaz `Matcher<T>` y `MatcherResult`, proporcionando mayor flexibilidad y personalización, pero con un enfoque más estructurado.
+- **Simplicidad y flexibilidad básica**: Jasmine permite la creación de matchers personalizados con facilidad, proporcionando una estructura sencilla basada en funciones como `compare` y, opcionalmente, `negativeCompare` para manejar aserciones negadas.
+- **Limitaciones en proyectos complejos**: Aunque Jasmine ofrece una solución rápida y eficiente para proyectos pequeños o medianos, carece de la flexibilidad avanzada y la personalización más granular que frameworks como Kotest ofrecen. Esto incluye la necesidad de implementar manualmente la negación de los matchers y limitaciones en los mensajes de error.
+- **Comparación con Kotest**: Jasmine es más ligero y menos verboso para configuraciones rápidas, pero Kotest destaca por su enfoque más fluido y personalizado en las pruebas, con una mayor capacidad de reutilización y manejo automático de casos negados.
 
-Ambos enfoques permiten validar condiciones que los matchers predeterminados no cubren, lo que mejora la capacidad de escribir pruebas más específicas y robustas en proyectos.
+En conclusión, los matchers personalizados en Jasmine son una herramienta valiosa para quienes buscan una forma rápida de mejorar la precisión de sus aserciones, pero para proyectos que requieran mayor flexibilidad y personalización avanzada, otras herramientas como Kotest pueden ser más adecuadas.
 
 <References references={[
     {

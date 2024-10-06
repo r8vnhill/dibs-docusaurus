@@ -105,7 +105,7 @@ const sidebars: SidebarsConfig = {
         },
         {
             type: 'category',
-            label: 'Unidad 3: APIs Orientadas a Objetos',
+            label: 'Unidad 3: Programación Orientada a Objetos',
             link: {
                 type: 'doc',
                 id: 'oop/index',
@@ -114,13 +114,14 @@ const sidebars: SidebarsConfig = {
                 'oop/open-closed/open-closed-kt',
                 'oop/extension/kt',
                 'oop/operator-overload/kt',
+                'oop/anonymous/kt',
                 'oop/infix',
                 'oop/companion',
                 'oop/inheritance-2',
             ],
         },
         {
-            label: 'Unidad 4: Polimorfismo Paramétrico',
+            label: 'Unidad 4: Programación Genérica',
             type: 'category',
             link: {
                 type: 'doc',
@@ -131,7 +132,7 @@ const sidebars: SidebarsConfig = {
             ],
         },
         {
-            label: 'Unidad 5: APIs Funcionales',
+            label: 'Unidad 5: Programación Funcional',
             type: 'category',
             link: {
                 type: 'doc',
@@ -232,7 +233,7 @@ const sidebars: SidebarsConfig = {
                                         'fp/monads/examples/option-langs',
                                     ],
                                 },
-                                'fp/monads/examples/either-kt',
+                                'fp/monads/examples/either/kt',
                                 // 'fp/monads/examples/result/result-kt'
                             ],
                         },

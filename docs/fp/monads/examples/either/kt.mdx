@@ -200,7 +200,7 @@ Para implementar **Either** en Kotlin podemos utilizar una clase sellada para re
 package com.github.username.either
 
 object EitherMonad {
-    fun <L, R> pure(r: R): Either<L, R> = Right(r)
+    fun <L, R> unit(r: R): Either<L, R> = Right(r)
     fun <L, R, T> Either<L, R>.flatMap(f: (R) -> Either<L, T>): Either<L, T> = when (this) {
         is Left -> this
         is Right -> f(value)
@@ -238,7 +238,7 @@ object EitherMonad {
     </Tabs>
 </details>
 
-En este ejemplo, vamos a implementar un caso sencillo de **`Either`** para manejar operaciones que pueden fallar, utilizando las funciones **`pure`** y **`flatMap`** para trabajar con la mónada **`Either`**.
+En este ejemplo, vamos a implementar un caso sencillo de **`Either`** para manejar operaciones que pueden fallar, utilizando las funciones **`unit`** y **`flatMap`** para trabajar con la mónada **`Either`**.
 
 Imaginemos que tenemos dos funciones de validación: una que verifica la longitud de una contraseña y otra que valida si la contraseña contiene al menos un número. Nuestro objetivo es encadenar estas validaciones de manera que, si una falla, la otra no se ejecute. En este caso, devolveremos un `Left` con el mensaje de error apropiado. Si todas las validaciones se superan, obtendremos un `Right` con la contraseña válida.
 
@@ -246,18 +246,18 @@ Imaginemos que tenemos dos funciones de validación: una que verifica la longitu
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```kotlin showLineNumbers
         private fun validateLength(password: String) =
-        if (password.length >= 8) Right(password)
-        else Left("Password is too short")
+            if (password.length >= 8) Right(password)
+            else Left("Password is too short")
 
         private fun validateContainsNumber(password: String) =
-        if (password.any { it.isDigit() }) Right(password)
-        else Left("Password must contain a number")
+            if (password.any { it.isDigit() }) Right(password)
+            else Left("Password must contain a number")
 
         fun validatePassword(password: String) = with(EitherMonad) {
-        pure<String, _>(password)
-        .flatMap(::validateLength)
-        .flatMap(::validateContainsNumber)
-    }
+            unit<String, _>(password)
+                .flatMap(::validateLength)
+                .flatMap(::validateContainsNumber)
+        }
         ```
     </TabItem>
 
@@ -270,23 +270,23 @@ Imaginemos que tenemos dos funciones de validación: una que verifica la longitu
         import cl.ravenhill.either.Right
 
         private fun validateLength(password: String) =
-        if (password.length >= 8) Right(password)
-        else Left("Password is too short")
+            if (password.length >= 8) Right(password)
+            else Left("Password is too short")
 
         private fun validateContainsNumber(password: String) =
-        if (password.any { it.isDigit() }) Right(password)
-        else Left("Password must contain a number")
+            if (password.any { it.isDigit() }) Right(password)
+            else Left("Password must contain a number")
 
         fun validatePassword(password: String) = with(EitherMonad) {
-        pure<String, _>(password)
-        .flatMap(::validateLength)
-        .flatMap(::validateContainsNumber)
-    }
+            unit<String, _>(password)
+                .flatMap(::validateLength)
+                .flatMap(::validateContainsNumber)
+        }
 
         fun main() {
-        println(validatePassword("1234567"))  // Left(value=Password is too short)
-        println(validatePassword("12345678")) // Right(value=12345678)
-    }
+            println(validatePassword("1234567"))  // Left(value=Password is too short)
+            println(validatePassword("12345678")) // Right(value=12345678)
+        }
         ```
     </TabItem>
 </Tabs>
@@ -294,13 +294,10 @@ Imaginemos que tenemos dos funciones de validación: una que verifica la longitu
 :::info Explicación del código
 
 - **[1-7]**: Definimos dos funciones de validación:
-- `validateLength` verifica si la contraseña tiene al menos 8 caracteres. Si es válida, retorna un `Right` con la contraseña; si no, devuelve un `Left` con un mensaje de error.
-- `validateContainsNumber` comprueba si la contraseña contiene al menos un número. Si lo contiene, retorna un `Right`; si no, un `Left` con el error correspondiente.
-
-- **[9]** `with(EitherMonad)`: Utilizamos el contexto de la mónada `Either` para acceder a sus funciones, como `pure` y `flatMap`, sin necesidad de referenciar el objeto cada vez.
-
-- **[10]** `pure<String, _>(password)`: Esta función convierte el valor inicial (la contraseña) en un `Right`, permitiéndonos iniciar la secuencia de validaciones. El parámetro `_` infiere automáticamente el tipo de `Right`.
-
+    - `validateLength` verifica si la contraseña tiene al menos 8 caracteres. Si es válida, retorna un `Right` con la contraseña; si no, devuelve un `Left` con un mensaje de error.
+    - `validateContainsNumber` comprueba si la contraseña contiene al menos un número. Si lo contiene, retorna un `Right`; si no, un `Left` con el error correspondiente.
+- **[9]** `with(EitherMonad)`: Utilizamos el contexto de la mónada `Either` para acceder a sus funciones, como `unit` y `flatMap`, sin necesidad de referenciar el objeto cada vez.
+- **[10]** `unit<String, _>(password)`: Esta función convierte el valor inicial (la contraseña) en un `Right`, permitiéndonos iniciar la secuencia de validaciones. El parámetro `_` infiere automáticamente el tipo de `Right`.
 - **[11-12]** `flatMap`: Encadenamos las validaciones con `flatMap`, de forma que si alguna falla, devolvemos inmediatamente el `Left` con el error y no ejecutamos el resto de validaciones.
 
 :::
@@ -309,8 +306,31 @@ Este patrón es particularmente útil cuando queremos manejar flujos de operacio
 
 ## Comparación con `Option`
 
-- **Either** permite manejar más casos de uso al tener dos posibles resultados (`Left` y`Right`), mientras que`Option` solo modela la presencia o ausencia de un valor.
-- **Either** es preferido cuando es importante tener más contexto sobre el error o el resultado fallido, en lugar de solo saber si un valor está presente como en el caso de`Option`.
+Tanto **Either** como **Option** son tipos algebraicos de datos en Kotlin que nos permiten manejar de manera segura operaciones que pueden no devolver un resultado exitoso. Aunque ambos sirven para modelar la ausencia o presencia de un valor, **Either** se utiliza principalmente cuando queremos capturar más información sobre el fallo, mientras que **Option** es más simple y se usa cuando el error no importa tanto.
+
+### Option
+- **Propósito**: Modela la **presencia o ausencia** de un valor. Se usa en casos donde puede no haber un resultado, pero no nos importa mucho el por qué.
+- **Construcción**: Puede ser **`Some`** (cuando el valor está presente) o **`None`** (cuando no hay valor).
+- **Uso típico**: Se utiliza cuando el **fallo** o la **ausencia de valor** no es el punto central y no se necesita más información sobre por qué no se devolvió un valor.
+- **Manejo de la ausencia**: La falta de un valor en `Option` no contiene información adicional, simplemente indica que no hay nada.
+
+### Either
+- **Propósito**: Modela dos resultados posibles: un **éxito** o un **fallo**, representados por `Right` y `Left`, respectivamente.
+- **Construcción**: Se construye con dos variantes: **`Left`** para el fallo y **`Right`** para el éxito.
+- **Uso típico**: Se usa cuando es importante conocer la razón por la cual no se obtuvo un resultado exitoso, proporcionando un mensaje de error o un código que explique el fallo.
+- **Manejo del fallo**: El uso de `Left` permite contener información útil sobre el error, lo que lo convierte en una opción más poderosa para manejar fallos explícitamente.
+
+## Comparación con `Result`
+
+Al comparar **Either** y **Result**, encontramos que ambos tipos son útiles para modelar resultados que pueden tener éxito o fallar, pero existen diferencias clave en cuanto a su propósito, uso y cómo gestionan los errores.
+
+### Either
+- **Generalidad**: `Either` es un tipo genérico que puede representar cualquier tipo de resultado, no solo éxito o fallo. En el contexto de fallos, `Left` puede contener un error o una situación inesperada, mientras que `Right` contiene el resultado exitoso.
+- **Similitud con excepciones verificadas**: `Either` se puede comparar con las **excepciones verificadas** en lenguajes como Java, donde se requiere que los errores sean manejados explícitamente. Al usar `Either`, debes manejar tanto el caso de `Left` como el de `Right`, obligando al desarrollador a tratar los errores de manera explícita.
+
+### Result
+- **Especialización**: `Result` está diseñado específicamente para modelar operaciones que pueden tener éxito o fallo. Al usar `Result`, los errores se manejan mediante excepciones, lo que hace que sea más adecuado para capturar fallos inesperados, como errores de tiempo de ejecución o fallos no planeados.
+- **Similitud con excepciones no verificadas**: `Result` se asemeja a las **excepciones no verificadas** (unchecked exceptions) en lenguajes como Kotlin y Java, donde los errores pueden ser propagados sin ser manejados explícitamente. Esto permite que el código que usa `Result` sea más fluido, pero también significa que los errores pueden ser ignorados si no se manejan correctamente.
 
 <Exercise title="Extendiendo Either">
     Implementa las funciones:
@@ -361,22 +381,27 @@ Con estas ideas, ahora puedes aplicar **Either** en escenarios que requieran un 
     <LanguageCard
         logoSrc="https://upload.wikimedia.org/wikipedia/commons/6/66/F_Sharp_logo.svg"
         language="F#"
-        link="/fp/monads/examples/either/fsharp"
+        link="/docs/fp/monads/examples/either/fsharp"
     />
     <LanguageCard
         logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Haskell-Logo.svg/1200px-Haskell-Logo.svg.png"
         language="Haskell"
-        link="/fp/monads/examples/either/haskell"
+        link="/docs/fp/monads/examples/either/haskell"
+    />
+    <LanguageCard
+        logoSrc="https://www.svgssrepo.com/show/373945/ocaml.svg"
+        language="OCaml"
+        link="/docs/fp/monads/examples/either/ocaml"
     />
     <LanguageCard
         logoSrc="https://www.svgrepo.com/show/354313/scala.svg"
         language="Scala"
-        link="/fp/monads/examples/either/scala"
+        link="/docs/fp/monads/examples/either/scala"
     />
     <LanguageCard
         logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Typescript_logo_2020.svg/2048px-Typescript_logo_2020.svg.png"
         language="TypeScript"
-        link="/fp/monads/examples/either/typescript"
+        link="/docs/fp/monads/examples/either/ts"
     />
 </div>
 

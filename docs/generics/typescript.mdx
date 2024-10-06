@@ -6,188 +6,128 @@ import ReadingTime from '@site/src/components/ReadingTime';
 
 <ReadingTime/>
 
-## Upper Bounds (Cotas Superiores)
+Al igual que en Kotlin, **TypeScript** también soporta el polimorfismo paramétrico utilizando **tipos genéricos**. Esto permite definir funciones, clases e interfaces que pueden trabajar con cualquier tipo de dato sin especificarlo de antemano.
 
-En TypeScript, las **upper bounds** se implementan mediante la cláusula `extends` en la declaración de genéricos. Esto restringe los tipos que pueden ser pasados como argumentos, asegurando que cumplan con una interfaz o clase específica.
+### Función Genérica en TypeScript
+
+En TypeScript, la **función de identidad** se implementa con tipos genéricos de la siguiente manera:
 
 ```typescript
-function add<T extends number>(a: T, b: T): number {
-    return a + b;
+function identity<T>(value: T): T {
+    return value;
 }
 ```
 
-## Lower Bounds (Cotas Inferiores)
-
-TypeScript no soporta directamente **lower bounds** en la misma medida que Kotlin. Sin embargo, se puede lograr un comportamiento similar utilizando **tipos genéricos contravariantes** a través de funciones que aceptan parámetros genéricos con restricciones.
+#### Uso
 
 ```typescript
-function addStrings<T extends string>(list: Array<T>): void {
-    list.push("Hello");
-    list.push("World");
+const intIdentity = identity(420);       // The type of intIdentity is number
+const stringIdentity = identity("Hello"); // The type of stringIdentity is string
+```
+
+### Clases Genéricas en TypeScript
+
+TypeScript también soporta **clases genéricas**. Un ejemplo típico es la clase `Box` que puede almacenar un valor de cualquier tipo `T`:
+
+```typescript
+class Box<T> {
+    constructor(public value: T) {}
 }
 ```
 
-Aunque no es una implementación directa de lower bounds, permite restringir los tipos que se pueden pasar a la función.
+#### Uso
 
-## Varianza en el Sitio de Declaración
+```typescript
+const intBox = new Box(123);
+const stringBox = new Box("TypeScript");
 
-TypeScript no soporta **varianza** de manera explícita en la declaración de genéricos. Sin embargo, la **inferencia de tipos** y el **sistema estructural de tipos** permiten cierto grado de flexibilidad similar a la covarianza y contravarianza.
+console.log(intBox.value); // Prints: 123
+console.log(stringBox.value); // Prints: TypeScript
+```
 
-- **Covarianza Implícita**: TypeScript permite que tipos más específicos sean asignados a tipos más generales sin necesidad de anotaciones explícitas.
+### Interfaces Genéricas en TypeScript
 
-  ```typescript
-  interface Producer<T> {
-      produce(): T;
-  }
+Similar a Kotlin, **TypeScript** también permite definir **interfaces genéricas**. Aquí está un ejemplo de una interfaz `Repository` genérica para cualquier tipo `T`:
 
-  let stringProducer: Producer<string> = {
-      produce: () => "Hello, TypeScript!"
-  };
+```typescript
+interface Repository<T> {
+    save(item: T): void;
+    findById(id: number): T | undefined;
+}
 
-  let anyProducer: Producer<any> = stringProducer; // Covarianza implícita
-    ```
+class UserRepository implements Repository<User> {
+    private users: User[] = [];
 
-- **Contravarianza Implícita**: A través de tipos de parámetros de función, TypeScript permite que funciones con parámetros más generales sean asignadas a tipos más específicos.
+    save(item: User): void {
+        this.users.push(item);
+    }
 
-  ```typescript
-  interface Consumer<T> {
-      consume(item: T): void;
-  }
+    findById(id: number): User | undefined {
+        return this.users.find(user => user.id === id);
+    }
+}
 
-  let anyConsumer: Consumer<any> = {
-      consume: (item: any) => console.log(item)
-  };
+class User {
+    constructor(public id: number, public name: string) {}
+}
+```
 
-  let stringConsumer: Consumer<string> = anyConsumer; // Contravarianza implícita
-    ```
+#### Uso
 
-## Varianza en el Sitio de Uso
+```typescript
+const userRepository = new UserRepository();
+const user = new User(1, "John Doe");
 
-TypeScript maneja la **varianza en el sitio de uso** de manera implícita a través de su sistema de tipos. Las asignaciones y las inferencias de tipos permiten que los tipos genéricos se comporten de manera covariante o contravariante según el contexto sin necesidad de anotaciones explícitas.
+userRepository.save(user);
+console.log(userRepository.findById(1)); // Imprime: User { id: 1, name: 'John Doe' }
+```
 
-- **Uso de Tipos Covariantes**:
+### Comparación Final
 
-  ```typescript
-  interface Producer<T> {
-      produce(): T;
-  }
+| Característica                 | Kotlin                                     | TypeScript                                      |
+|--------------------------------|--------------------------------------------|-------------------------------------------------|
+| **Función Genérica**           | `fun <T> identity(value: T): T`            | `function identity<T>(value: T): T`             |
+| **Clases Genéricas**           | `class Box<T>(val value: T)`               | `class Box<T> { constructor(public value: T) }` |
+| **Interfaces Genéricas**       | `interface Repository<T> { ... }`          | `interface Repository<T> { ... }`               |
+| **Tipo de Parámetro Inferido** | Inferencia fuerte                          | Inferencia flexible                             |
+| **Sistema de Tipos**           | Estático y seguro en tiempo de compilación | Estático, pero más flexible                     |
 
-  function printAll(producer: Producer<any>) {
-      console.log(producer.produce());
-  }
+:::tip Ventajas de TypeScript
 
-  let stringProducer: Producer<string> = {
-      produce: () => "Hello, TypeScript!"
-  };
+1. **Flexibilidad**: TypeScript permite mayor flexibilidad en la inferencia de tipos, lo que puede hacer que sea más fácil de usar en proyectos donde el tipado rígido no es siempre necesario.
+2. **Integración con JavaScript**: Al ser un superconjunto de JavaScript, TypeScript facilita la adopción gradual de tipos en proyectos JavaScript existentes, lo que lo convierte en una excelente opción para proyectos que evolucionan.
+3. **Desarrollo web**: TypeScript es ampliamente utilizado en el desarrollo de aplicaciones web modernas, particularmente en frameworks como Angular, lo que lo hace relevante para desarrolladores web.
 
-  printAll(stringProducer); // Covarianza implícita
-    ```
+:::
 
-- **Uso de Tipos Contravariantes**:
+:::danger Desventajas de TypeScript
 
-  ```typescript
-  interface Consumer<T> {
-      consume(item: T): void;
-  }
+1. **Tipado menos estricto**: Aunque TypeScript tiene un sistema de tipos estáticos, es más flexible que el de Kotlin, lo que puede llevar a errores difíciles de detectar en aplicaciones grandes si no se aplica correctamente.
+2. **Menor seguridad de tipos**: Debido a que TypeScript permite el tipado opcional y es más permisivo, no siempre se garantiza la misma seguridad en tiempo de compilación que en Kotlin.
+3. **Complejidad añadida**: En proyectos grandes, la configuración y gestión de tipos en TypeScript puede volverse compleja, especialmente cuando se integran librerías de JavaScript que no tienen tipos definidos.
 
-  function addItem(consumer: Consumer<any>) {
-      consumer.consume("Hello, TypeScript!");
-  }
+:::
 
-  let stringConsumer: Consumer<string> = {
-      consume: (item: string) => console.log(item)
-  };
+## ¿Qué Aprendimos?
 
-  addItem(stringConsumer); // Contravarianza implícita
-    ```
+En esta lección, hemos explorado cómo **TypeScript** soporta el polimorfismo paramétrico de manera similar a **Kotlin** a través del uso de **tipos genéricos**. Ambos lenguajes permiten escribir código más flexible y reutilizable al permitir que funciones, clases e interfaces trabajen con cualquier tipo de dato. Sin embargo, también hemos visto algunas diferencias clave en sus enfoques, como la flexibilidad del sistema de tipos de TypeScript frente a la mayor rigidez y seguridad del sistema de tipos de Kotlin.
 
-## Resumen Comparativo
+### Puntos clave:
+- **TypeScript** ofrece un sistema de tipos más flexible, adecuado para proyectos que requieren integrarse con código JavaScript existente o aplicaciones web modernas.
+- **Kotlin**, por otro lado, proporciona un sistema de tipos más estricto y seguro, lo que garantiza una mayor seguridad en tiempo de compilación, evitando errores de tipo comunes.
+- Ambos lenguajes permiten la reutilización y generalización de código a través de **funciones genéricas**, **clases genéricas**, e **interfaces genéricas**, promoviendo buenas prácticas de programación como la abstracción y la seguridad de tipos.
 
-| **Característica**           | **Kotlin** (`List`, `Set`, `Map`, etc.)           | **TypeScript** (`Array`, `Set`, `Map`, etc.)        |
-|------------------------------|---------------------------------------------------|-----------------------------------------------------|
-| **Upper Bounds**             | Usando `:` en la declaración de genéricos         | Usando `extends` en la declaración de genéricos     |
-| **Lower Bounds**             | Usando `in` para contravarianza                   | No soportado directamente, uso de restricciones     |
-| **Varianza en Declaración**  | `out` para covarianza, `in` para contravarianza   | Varianza implícita mediante inferencia de tipos     |
-| **Varianza en Uso**          | Proyecciones `out` y `in`                         | Varianza implícita a través de asignaciones         |
-| **Flexibilidad**             | Alta, con control explícito sobre la varianza     | Alta, pero sin control explícito                    |
-| **Seguridad de Tipos**       | Fuerte, con verificación en tiempo de compilación | Fuerte, pero basado en un sistema estructural       |
-
-## Conclusión
-
-Tanto **Kotlin** como **TypeScript** ofrecen potentes mecanismos para implementar el polimorfismo paramétrico, permitiendo la creación de componentes genéricos y reutilizables. Sin embargo, **Kotlin** proporciona un control más explícito sobre la varianza y las cotas de los tipos genéricos mediante las palabras clave `out` y `in`, así como las proyecciones en el sitio de uso. **TypeScript**, por otro lado, se basa en su sistema de inferencia de tipos y estructura de tipos para manejar la varianza de manera implícita, lo que simplifica la sintaxis pero ofrece menos control explícito.
-
-Elegir entre Kotlin y TypeScript para trabajar con polimorfismo paramétrico dependerá de las necesidades específicas del proyecto y del lenguaje en el que se esté desarrollando. **Kotlin** es ideal para entornos donde se requiere un control fino sobre la varianza y una seguridad de tipos más estricta, mientras que **TypeScript** es excelente para proyectos que buscan una integración fluida con JavaScript y una sintaxis más flexible.
-
-## Referencias
+Con esto, puedes aplicar el polimorfismo paramétrico en ambos lenguajes para escribir código más flexible y robusto, adaptado a diferentes tipos de datos sin comprometer la seguridad del código.
 
 <References references={[
     {
-        accessedDate: '28 de septiembre de 2024',
-        siteOrAuthor: 'TypeScript Documentation',
-        title: 'Generics in TypeScript',
-        type: 'web',
-        url: 'https://www.typescriptlang.org/docs/handbook/generics.html',
-    },
-    {
-        accessedDate: '28 de septiembre de 2024',
-        siteOrAuthor: 'Effective TypeScript',
-        title: 'Effective TypeScript: 62 Specific Ways to Improve Your TypeScript',
-        type: 'book',
-        url: 'https://www.oreilly.com/library/view/effective-typescript/9781492053736/',
-        author: 'Dan Vanderkam',
-        publisher: 'O\'Reilly Media',
-        year: '2019',
+        publisher: "O'Reilly",
+        pages: "109–142",
+        type: "book",
+        title: "4. Generics",
+        author: "Baumgartner, S.",
+        year: "2023",
+        bookTitle: "Typescript Cookbook: Real world type-level programming",
+        location: "Sebastopol, CA",
     },
 ]}/>
-
-[//]: # (<References references={[)
-
-[//]: # (    {)
-
-[//]: # (        title: "",)
-
-[//]: # (        url: "",)
-
-[//]: # (        type: "article",)
-
-[//]: # (        author: "",)
-
-[//]: # (        publishedDate: "",)
-
-[//]: # (    },)
-
-[//]: # (    {)
-
-[//]: # (        accessedDate: '',)
-
-[//]: # (        siteOrAuthor: '',)
-
-[//]: # (        title: '',)
-
-[//]: # (        type: 'web',)
-
-[//]: # (        url: '',)
-
-[//]: # (    },)
-
-[//]: # (    {)
-
-[//]: # (        title: "",)
-
-[//]: # (        bookTitle: "",)
-
-[//]: # (        pages: "",)
-
-[//]: # (        location: "",)
-
-[//]: # (        publisher: "",)
-
-[//]: # (        year: "",)
-
-[//]: # (        type: "book",)
-
-[//]: # (        author: '')
-
-[//]: # (    },)
-
-[//]: # (]}/>)

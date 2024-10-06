@@ -1,0 +1,213 @@
+---
+title: Métodos de Extensión en Swift
+---
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+En **Swift**, también podemos encontrar una funcionalidad similar a los **métodos de extensión** de Kotlin, conocidos como **Extensions**. Estas permiten agregar nuevas funcionalidades a clases, estructuras o protocolos existentes, sin necesidad de modificar su código fuente original.
+
+## Sintaxis de Extensiones en Swift
+
+En **Swift**, una extensión se define utilizando la palabra clave `extension`, seguida por el nombre de la clase o estructura que se va a extender. Puedes añadir nuevos métodos, propiedades calculadas o incluso implementar nuevos protocolos en la clase extendida.
+
+### Ejemplo de Extensión en Swift
+
+```swift showLineNumbers
+extension String {
+    func isPalindrome() -> Bool {
+        return self == String(self.reversed())
+    }
+}
+
+let word = "radar"
+print(word.isPalindrome()) // Output: true
+```
+
+En este ejemplo, hemos añadido una función `isPalindrome()` a la clase `String`, muy similar a cómo se haría en Kotlin.
+
+## Extensión de Tipos Genéricos
+
+Ambos lenguajes permiten extender clases genéricas. A continuación, un ejemplo en **Swift** para agregar una funcionalidad similar al método `second()` que vimos en Kotlin:
+
+```swift showLineNumbers
+extension Array {
+    func second() -> Element? {
+        return self.count > 1 ? self[1] : nil
+    }
+}
+
+let numbers = [10, 20, 30]
+print(numbers.second()!) // Output: 20
+```
+
+## Uso de Propiedades de Extensión
+
+- **Kotlin**: Soporta propiedades de extensión, tanto de solo lectura como de escritura.
+- **Swift**: Permite propiedades de extensión, pero solo de **lectura**. Las propiedades de extensión en Swift no pueden almacenar datos.
+
+### Ejemplo de Propiedad de Extensión en Swift:
+
+```swift showLineNumbers
+extension String {
+    var firstWord: String {
+        return self.split(separator: " ").first.map(String.init) ?? ""
+    }
+}
+
+let sentence = "Swift is fun"
+print(sentence.firstWord) // Output: Swift
+```
+
+## Adopción de Protocolos Mediante Extensiones en Swift
+
+Una característica única de **Swift** es que las **extensiones** no solo permiten añadir métodos o propiedades a una clase o estructura existente, sino que también permiten que una clase adopte **nuevos protocolos** sin necesidad de modificar su código fuente. Esto es particularmente útil cuando se trabaja con clases en bibliotecas o APIs externas que no pueden modificarse directamente.
+
+Los **protocolos** en Swift actúan como interfaces que especifican métodos y propiedades que una clase debe implementar. A través de extensiones, es posible hacer que una clase implemente un protocolo sin alterar su definición original.
+
+### Ejemplo de Adopción de un Protocolo
+
+Supongamos que tenemos una clase `Car` y queremos que adopte el protocolo `Drivable` sin modificar su código original:
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```swift showLineNumbers
+        protocol Drivable {
+            func drive()
+        }
+
+        // Extendemos la clase Car para que implemente el protocolo Drivable
+        extension Car: Drivable {
+            func drive() {
+                print("Driving \(model)")
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```swift showLineNumbers
+        protocol Drivable {
+            func drive()
+        }
+
+        class Car {
+            let model: String
+            init(model: String) {
+                self.model = model
+            }
+        }
+
+        // Extendemos la clase Car para que implemente el protocolo Drivable
+        extension Car: Drivable {
+            func drive() {
+                print("Driving \(model)")
+            }
+        }
+
+        let car = Car(model: "Tesla")
+        car.drive() // Output: Driving Tesla
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del Ejemplo
+
+1. **[1-3]** Definimos el protocolo `Drivable` con el método `drive()`.
+2. **[6-10]** Extendemos la clase `Car` para que implemente el protocolo `Drivable`, añadiendo la implementación del método `drive()`.
+
+:::
+
+## Extensiones Condicionales con Tipos Genéricos
+
+Swift permite crear **extensiones condicionales**, es decir, extensiones que solo se aplican cuando el tipo genérico satisface ciertas condiciones o restricciones. Esto es útil cuando necesitas comportamientos diferentes dependiendo del tipo con el que estés trabajando.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```swift showLineNumbers
+        extension Array where Element: Equatable {
+            func containsDuplicates() -> Bool {
+                // Verifica si el array tiene elementos duplicados
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```swift showLineNumbers
+        extension Array where Element: Equatable {
+            func containsDuplicates() -> Bool {
+                var set = Set<Element>()
+                for value in self {
+                    if set.contains(value) {
+                        return true
+                    }
+                    set.insert(value)
+                }
+                return false
+            }
+        }
+
+        let numbers = [1, 2, 3, 2]
+        let names = ["Alice", "Bob", "Alice"]
+
+        print(numbers.containsDuplicates()) // Output: true
+        print(names.containsDuplicates())   // Output: true
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del Ejemplo
+
+- **[1]** La extensión solo se aplica a ``Array`` cuando el tipo genérico `Element` es ``Equatable``.
+- **[2]** La función `containsDuplicates()` verifica si el array tiene elementos duplicados, pero solo puede hacerlo para elementos que pueden compararse con `==`.
+
+:::
+
+| **Característica**                      | **Swift**                                                                                                                            | **Kotlin**                                                                                                   |
+|-----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
+| **Definición de métodos de extensión**  | Se definen utilizando `extension`, se pueden agregar métodos y propiedades calculadas.                                               | Se definen directamente con `fun`, sin necesidad de modificar la clase original.                             |
+| **Extensión de clases genéricas**       | Soportado, con sintaxis similar a los métodos normales.                                                                              | Soportado, similar a Swift, permite agregar métodos genéricos a clases ya existentes.                        |
+| **Propiedades de extensión**            | Solo propiedades calculadas de solo lectura.                                                                                         | Soporta propiedades de lectura y escritura usando `get` y `set`.                                             |
+| **Uso de extensiones dentro de clases** | No es posible, las extensiones deben definirse fuera de las clases.                                                                  | Puedes definir métodos de extensión dentro de otras clases y acceder a los miembros de la clase contenedora. |
+| **Modularidad y uso en bibliotecas**    | Es común en Swift definir extensiones para tipos estándar como `Array`, `String`, etc., permitiendo agregar funciones reutilizables. | Amplio uso en librerías, como Kotlin stdlib, donde se amplían clases sin modificar su código fuente.         |
+
+:::tip Ventajas de Swift
+
+1. **Modularidad y Flexibilidad**: Swift sobresale en cuanto a modularidad gracias a su uso de **protocolos** en extensiones. Las extensiones en Swift no solo permiten agregar métodos y propiedades, sino que también permiten que las clases existentes adopten nuevos **protocolos** sin modificar su código original. Esto proporciona una flexibilidad adicional que no está presente en Kotlin, donde no puedes hacer que una clase existente implemente una interfaz a través de una extensión.
+2. **Integración con el Ecosistema de Apple**: Las extensiones en Swift están profundamente integradas en el ecosistema de Apple, lo que facilita su uso para extender funcionalidades de las bibliotecas nativas de iOS y macOS. Por ejemplo, es común utilizar extensiones para agregar conveniencias a clases del framework UIKit o SwiftUI, lo que hace que el desarrollo sea más eficiente.
+3. **Expresividad en Tipos Genéricos**: Swift permite mayor control sobre las **restricciones de tipos genéricos** dentro de las extensiones, permitiendo definir extensiones solo para ciertos tipos. Esto facilita la creación de código más específico y controlado en ciertas circunstancias.
+
+:::
+
+:::danger Desventajas de Swift
+
+1. **Limitaciones en Propiedades de Extensión**: Una gran desventaja de **Swift** frente a **Kotlin** es que no permite propiedades de extensión de escritura, solo de lectura. Esto puede limitar los casos de uso, ya que no es posible almacenar o modificar nuevos valores a través de una propiedad de extensión.
+2. **Falta de Funciones de Extensión Dentro de Clases**: En Swift, las **extensiones deben definirse fuera de las clases**, lo que puede ser un inconveniente cuando deseas organizar el código relacionado dentro de una sola clase. En **Kotlin**, puedes definir funciones de extensión dentro de clases, lo que te permite mantenerlas dentro del contexto donde más sentido tiene utilizarlas.
+
+:::
+
+### ¿Qué Aprendimos?
+
+En esta lección, exploramos las **extensiones en Swift**, comparándolas con Kotlin y destacando su flexibilidad para agregar funcionalidad a tipos existentes sin modificar su código fuente. Aquí están los puntos clave:
+
+1. **Extensiones en Swift**: Al igual que en Kotlin, permiten agregar nuevos métodos y propiedades a clases, estructuras o protocolos existentes. En Swift, esto se logra utilizando la palabra clave `extension`. A diferencia de Kotlin, las extensiones en Swift no permiten propiedades de escritura, solo de lectura.
+2. **Adopción de Protocolos**: Una característica única de Swift es que las clases pueden adoptar **protocolos** a través de extensiones, lo que permite añadir conformidad a una interfaz sin alterar la clase original.
+3. **Expresividad en Tipos Genéricos**: Swift permite controlar las **restricciones de tipos genéricos** dentro de las extensiones, permitiendo que solo ciertos tipos puedan utilizar la extensión. Esto proporciona un nivel adicional de precisión y control que no es tan común en otros lenguajes.
+4. **Comparación con Kotlin**: Aunque ambos lenguajes permiten métodos y propiedades de extensión, Swift tiene algunas limitaciones, como la imposibilidad de definir funciones de extensión dentro de clases o tener propiedades de extensión de escritura. Por otro lado, la adopción de protocolos mediante extensiones es una ventaja clave que Kotlin no ofrece.
+
+En resumen, las extensiones en **Swift** son una herramienta poderosa y flexible, especialmente en términos de adoptar protocolos y controlar tipos genéricos, aunque presentan algunas limitaciones en comparación con Kotlin, como la falta de propiedades de escritura en las extensiones.
+
+<References references={[
+    {
+        bookTitle: "Swift Programming: The Big Nerd Ranch Guide",
+        title: "20. Extensions",
+        publisher: "Big Nerd Ranch",
+        location: "Arizona Ave NE",
+        pages: "281–288",
+        type: "book",
+        author: "Mikey Ward",
+        year: "2020"
+    },
+]}/>

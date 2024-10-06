@@ -1,0 +1,120 @@
+---
+title: Mónada Either en F#
+---
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+En **F#**, similar a **Kotlin**, el tipo `Either` puede ser modelado mediante la unión de tipos utilizando **Discriminated Unions**. En **F#**, las **Discriminated Unions** permiten definir un tipo que puede tener múltiples formas, lo que es perfecto para representar la dualidad de `Either`, con un caso exitoso (`Right`) y un caso de error o fallido (`Left`).
+
+```fsharp showLineNumbers title="Monads/Either.fs"
+namespace Monads
+
+type Either<'L, 'R> =
+    | Left of 'L
+    | Right of 'R
+
+module EitherMonad =
+    let unit x = Right x
+
+    let flatMap f either =
+        match either with
+        | Right x -> f x
+        | Left err -> Left err
+```
+
+:::info Explicación del Código
+
+- **[3-5]** `Either` es un tipo genérico que puede ser `Left` con un valor de tipo `'L` o `Right` con un valor de tipo `'R`.
+- **[8]** `unit`: Toma un valor de tipo `'R` y lo coloca dentro de un `Right`.
+- **[10-13]** `flatMap`: Verifica si el valor es `Left` o `Right`. Si es `Left`, devuelve el mismo valor de error. Si es `Right`, aplica la función `f` al valor encapsulado y devuelve el resultado.
+
+:::
+
+## Ejemplo: Validación de Contraseñas en F#
+
+En F#, implementamos una validación de contraseñas similar a la que vimos en Kotlin, utilizando el patrón de **Discriminated Unions** y funciones como `flatMap` para componer las validaciones.
+
+```fsharp showLineNumbers title="Monads/PasswordValidation.fs"
+module Monads.PasswordValidation
+
+let validateLength (password: string) =
+    if password.Length >= 8 then
+        Right password
+    else
+        Left "Password is too short"
+
+let validateContainsNumber password =
+    if Seq.exists System.Char.IsDigit password then
+        Right password
+    else
+        Left "Password must contain a number"
+
+let validatePassword password =
+    EitherMonad.unit password
+    |> EitherMonad.flatMap validateLength
+    |> EitherMonad.flatMap validateContainsNumber
+```
+
+```fsharp showLineNumbers title="Playground/Program.fs"
+open Monads
+
+PasswordValidation.validatePassword "123456" |> printfn "%A"
+PasswordValidation.validatePassword "12345678" |> printfn "%A"
+
+(* Output:
+Left "Password is too short"
+Right "12345678"
+*)
+```
+
+## Comparación Final
+
+| **Característica**                | **F#**                                                                                                | **Kotlin**                                                                                                  |
+|-----------------------------------|-------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
+| **Definición de Tipos**           | Utiliza **Uniones Discriminadas** que son nativas del lenguaje, facilitando la creación de tipos sum. | Emplea **Clases Selladas (Sealed Classes)** para representar tipos sum, permitiendo una estructura similar. |
+| **Sintaxis**                      | Sintaxis concisa y expresiva para definir `Either` con casos `Left` y `Right`.                        | Requiere definir clases separadas para `Left` y `Right` que heredan de una clase sellada base.              |
+| **Manejo de Errores**             | `Either` es una opción natural para el manejo de errores sin excepciones.                             | `Either` puede implementarse, pero Kotlin prefiere usar excepciones o librerías externas como Arrow.        |
+| **Composición de Funciones**      | Facilita la composición a través de funciones como `flatMap` y operadores de encadenamiento.          | La composición requiere un enfoque similar, pero puede ser menos intuitiva sin librerías auxiliares.        |
+| **Patrones de Coincidencia**      | Soporte robusto para el *pattern matching*, facilitando la manipulación de `Either`.                  | Soporte para *when expressions*, aunque puede ser menos poderoso que el de F#.                              |
+| **Ecosistema de Librerías**       | Menor cantidad de librerías específicas para programación funcional, pero robusto internamente.       | Amplio ecosistema con librerías funcionales como Arrow que amplían las capacidades de `Either`.             |
+| **Curva de Aprendizaje**          | Puede ser más pronunciada para quienes no están familiarizados con la programación funcional.         | Generalmente más accesible para desarrolladores con experiencia en programación orientada a objetos.        |
+
+:::tip Ventajas de F#
+
+- **Expresividad Funcional**: F# está diseñado para la programación funcional, ofreciendo herramientas potentes como las Uniones Discriminadas y el *pattern matching*.
+- **Concisión**: El código en F# tiende a ser más conciso, reduciendo la cantidad de boilerplate necesario.
+- **Inmutabilidad por Defecto**: Promueve prácticas de programación segura y sin efectos secundarios.
+- **Integración con .NET**: Acceso completo al ecosistema de .NET, permitiendo aprovechar una amplia gama de librerías y herramientas.
+
+:::
+
+:::danger Desventajas de F#
+
+- **Adopción Limitada**: Menor adopción en la industria comparado con lenguajes como Kotlin, lo que puede limitar recursos y comunidades de apoyo.
+- **Interoperabilidad**: Aunque interoperable con .NET, puede haber desafíos al integrarse con proyectos predominantemente orientados a objetos.
+- **Curva de Aprendizaje**: Para desarrolladores acostumbrados a paradigmas orientados a objetos, la transición a la programación funcional puede ser desafiante.
+
+:::
+
+## ¿Qué Aprendimos?
+
+Exploramos cómo modelar la mónada `Either` en F# utilizando **Uniones Discriminadas**, lo que facilita el manejo de errores y la composición de funciones con `flatMap`. También comparamos su implementación con Kotlin, destacando que F# ofrece una sintaxis más concisa y un enfoque más natural hacia la programación funcional, mientras que Kotlin tiene una adopción más amplia y un ecosistema robusto.
+
+Ambos lenguajes proporcionan soluciones eficientes para el manejo de errores con `Either`, siendo la elección entre ellos dependiente del contexto del proyecto y las preferencias del equipo.
+
+<References references={[
+    {
+        bookTitle: "Expert F# 4.0",
+        title: "5. Understanding Types in Functional Programming",
+        publisher: "Apress",
+        location: "New York",
+        pages: "89–119",
+        type: "book",
+        author: "Don Syme, Adam Granicz, Antonio Cisternino",
+        year: "2015",
+    },
+]}/>

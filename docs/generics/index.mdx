@@ -1,7 +1,16 @@
 ---
-title: Polimorfismo Paramétrico
+title: Programación Genérica
 ---
+import {Cons, ProCons, Pros} from "/src/components/cajitas/ProCons";
+import ReadingTime from "/src/components/ReadingTime";
+import LanguageCard from "/src/components/cards/LanguageCard";
 import Definition from "/src/components/Definition";
+
+<ReadingTime />
+
+La **programación genérica** es un paradigma clave en el diseño de software moderno que permite escribir código más flexible, reutilizable y robusto. Este enfoque permite trabajar con tipos abstractos, sin la necesidad de especificar los tipos concretos de antemano, facilitando el manejo de diferentes tipos de datos con un solo conjunto de funciones o estructuras.
+
+En esencia, la **programación genérica** es la aplicación práctica del **polimorfismo paramétrico** en la definición de funciones, clases e interfaces que operan sobre tipos genéricos, brindando una solución más abstracta que se adapta a cualquier tipo de dato.
 
 El **polimorfismo paramétrico** es un concepto fundamental en la programación de tipos que permite que las funciones y los tipos sean definidos sin especificar todos los tipos concretos. En lugar de operar sobre tipos concretos, el polimorfismo paramétrico permite que las funciones y los tipos trabajen de manera abstracta con uno o más tipos, lo que proporciona mayor flexibilidad y reutilización de código.
 
@@ -25,14 +34,6 @@ id x = x
 ```
 
 En este ejemplo, `a` es un **parámetro de tipo**. En lugar de fijar el tipo de `x`, `a` puede ser cualquier tipo, y `id` funcionará de manera genérica.
-
-:::tip Ventajas del Polimorfismo Paramétrico
-
-1. **Reutilización de Código**: Al no limitar una función o estructura de datos a un tipo específico, se puede reutilizar con diferentes tipos de datos.
-2. **Seguridad de Tipos**: El sistema de tipos puede garantizar que el código funcione correctamente con cualquier tipo permitido, evitando errores de tipo en tiempo de compilación.
-3. **Generalidad**: Permite escribir funciones y estructuras de datos más generales, lo que hace que el código sea más flexible y adaptable.
-
-:::
 
 <details>
     <summary>
@@ -82,26 +83,18 @@ En este ejemplo, `a` es un **parámetro de tipo**. En lugar de fijar el tipo de 
 
 Kotlin soporta el polimorfismo paramétrico a través de **tipos genéricos**. Puedes definir funciones, clases e interfaces que operen sobre tipos genéricos, lo que les permite ser reutilizados con cualquier tipo específico.
 
-### Sintaxis de Tipos Genéricos en Kotlin
-
-En Kotlin, podemos usar el polimorfismo paramétrico definiendo tipos genéricos con la sintaxis `T`, `U`, `V`, etc. Aquí `T` es un parámetro de tipo genérico, y puede ser sustituido por cualquier tipo concreto cuando se usa la función o clase.
-
-### Ejemplo Básico: Función de Identidad
+### Funciones Genéricas
 
 La función `identity` puede ser implementada fácilmente en Kotlin usando un parámetro de tipo genérico:
 
 ```kotlin showLineNumbers
 fun <T> identity(value: T): T = value
-```
 
-En este caso, `T` es un parámetro de tipo que permite que `identity` acepte cualquier tipo de dato como argumento y devuelva un valor del mismo tipo. El parámetro de tipo `T` será determinado en tiempo de compilación basado en el tipo de argumento que se pase a la función.
-
-**Uso**:
-
-```kotlin showLineNumbers
 val intIdentity = identity(42) // El tipo de intIdentity es Int
 val stringIdentity = identity("Hola") // El tipo de stringIdentity es String
 ```
+
+En este caso, `T` es un parámetro de tipo que permite que `identity` acepte cualquier tipo de dato como argumento y devuelva un valor del mismo tipo. El parámetro de tipo `T` será determinado en tiempo de compilación basado en el tipo de argumento que se pase a la función.
 
 ### Clases Genéricas
 
@@ -109,19 +102,15 @@ El polimorfismo paramétrico también puede ser aplicado en la definición de cl
 
 ```kotlin showLineNumbers
 class Box<T>(val value: T)
-```
 
-En esta clase, `T` es un parámetro de tipo que representa el tipo del valor almacenado en la caja (`Box`). La clase `Box` puede ser instanciada con cualquier tipo concreto:
-
-**Uso**:
-
-```kotlin showLineNumbers
 val intBox = Box(123)
 println(intBox.value) // Imprime: 123
 
 val stringBox = Box("Kotlin")
 println(stringBox.value) // Imprime: Kotlin
 ```
+
+En esta clase, `T` es un parámetro de tipo que representa el tipo del valor almacenado en la caja (`Box`). La clase `Box` puede ser instanciada con cualquier tipo concreto.
 
 ### Interfaces Genéricas
 
@@ -148,14 +137,53 @@ class UserRepository : Repository<User> {
 }
 
 class User(val id: Int, val name: String)
-```
 
-**Uso**:
-
-```kotlin showLineNumbers
 val userRepository = UserRepository()
 val user = User(1, "John Doe")
 userRepository.save(user)
 println(userRepository.findById(1)?.let { "${it.id}: ${it.name}" }) // Imprime: 1: John Doe
 ```
 
+### Ventajas y Desventajas de la Programación Genérica
+
+<ProCons>
+    <Pros>
+        - **Reutilización de código**: Permite escribir funciones, clases e interfaces que se pueden usar con diferentes tipos de datos sin duplicar código, mejorando la mantenibilidad.
+        - **Flexibilidad**: Al permitir trabajar con cualquier tipo de dato, el código se adapta a múltiples escenarios, proporcionando una mayor versatilidad.
+        - **Seguridad de tipos**: Los parámetros de tipo aseguran que las funciones y clases trabajen de manera segura con cualquier tipo especificado, lo que previene errores en tiempo de compilación.
+        - **Abstracción**: Facilita la creación de soluciones abstractas y generales que funcionan en múltiples contextos, lo que reduce la necesidad de implementar soluciones específicas para cada caso.
+        - **Compatibilidad con otros paradigmas**: La programación genérica se integra bien con otros paradigmas como la programación funcional, permitiendo un código más expresivo.
+    </Pros>
+    <Cons>
+        - **Complejidad adicional**: El uso de tipos genéricos puede incrementar la complejidad del código, lo que puede dificultar su comprensión, especialmente para quienes no están familiarizadxs con el concepto.
+        - **Errores de inferencia**: En algunos casos, la inferencia de tipos puede no ser suficiente o comportarse de manera inesperada, lo que lleva a la necesidad de especificar explícitamente los tipos.
+        - **Limitaciones del sistema de tipos**: No todos los lenguajes soportan características avanzadas de tipos genéricos como los límites superiores e inferiores o la variancia, lo que puede reducir su poder expresivo en algunos casos.
+        - **Sobrecarga de compilación**: En lenguajes con un sistema de tipos estricto, el uso intensivo de genéricos puede aumentar el tiempo de compilación, especialmente en proyectos grandes.
+        - **Curva de aprendizaje**: Para desarrolladorxs nuevos en programación genérica, puede ser más difícil de entender y aplicar correctamente, lo que podría llevar a errores conceptuales o mal uso de los genéricos.
+    </Cons>
+</ProCons>
+
+## ¿Qué Aprendimos?
+
+### ¿Qué Aprendimos?
+
+En esta lección, hemos explorado la **programación genérica**, un enfoque poderoso que permite escribir código más flexible y reutilizable al operar sobre tipos abstractos. A través del **polimorfismo paramétrico**, aprendimos cómo definir funciones, clases e interfaces que funcionan con cualquier tipo, lo que mejora la versatilidad y seguridad del código.
+
+- **Reutilización y flexibilidad**: Vimos cómo las funciones genéricas como `identity` y clases como `Box` pueden manejar múltiples tipos de datos sin duplicación de código, aumentando la flexibilidad de nuestras soluciones.
+- **Seguridad de tipos**: El uso de parámetros de tipo garantiza que nuestras funciones y clases trabajen de manera segura, evitando errores en tiempo de compilación.
+- **Aplicaciones prácticas**: La implementación de interfaces genéricas como `Repository` permite abstraer las operaciones sobre entidades, facilitando la creación de estructuras de datos reutilizables y adaptables.
+
+Sin embargo, también exploramos algunas **desventajas** de la programación genérica, como la **complejidad adicional** y la **curva de aprendizaje** involucrada. A pesar de estos desafíos, la programación genérica es una herramienta clave para el desarrollo de software robusto y eficiente.
+
+<div className="language-card-container">
+    <LanguageCard
+        logoSrc="https://www.svgrepo.com/show/354313/scala.svg"
+        language="Scala"
+        link="/docs/generics/scala"
+    />
+    <LanguageCard
+        logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Typescript_logo_2020.svg/800px-Typescript_logo_2020.svg.png"
+        language="TypeScript"
+        link="/docs/generics/typescript"
+    />
+</div>

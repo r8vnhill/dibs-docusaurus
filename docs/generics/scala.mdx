@@ -1,123 +1,148 @@
 ---
-title: Polimorfismo Paramétrico en Otros Lenguajes
+title: Polimorfismo Paramétrico en Scala
 ---
-import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 
 <ReadingTime/>
 
-**Scala** es otro lenguaje que soporta **polimorfismo paramétrico** y genéricos, compartiendo algunas similitudes con Kotlin, pero también introduciendo características avanzadas que difieren en su implementación, como la **varianza**, **upper bounds**, y **lower bounds**.
+El polimorfismo paramétrico es un concepto ampliamente utilizado también en **Scala**, que comparte varias similitudes con **Kotlin** en cuanto al soporte para tipos genéricos. **Scala** es un lenguaje de programación que combina paradigmas de programación funcional y orientada a objetos, y su sistema de tipos es extremadamente poderoso y flexible.
 
-### Upper y Lower Bounds
+## Función Genérica en Scala
 
-#### Upper Bounds
-En Scala, los **upper bounds** se especifican utilizando la sintaxis `<:`, que restringe un tipo genérico a subtipos de una clase o interfaz. Esto es similar a la forma en que Kotlin utiliza `:`. Sin embargo, Scala permite una sintaxis más flexible que incluye múltiples bounds a través de las cláusulas `with` o `extends` para interfaces y clases.
+En **Scala**, al igual que en Kotlin, podemos definir una función de identidad utilizando tipos genéricos. El polimorfismo paramétrico permite que esta función trabaje con cualquier tipo de datos.
 
-**Ejemplo en Scala:**
-
-```scala
-def add[T <: Number](a: T, b: T): Double = a.doubleValue + b.doubleValue
+```scala showLineNumbers
+def identity[T](value: T): T = value
 ```
 
-#### Lower Bounds
-En Scala, los **lower bounds** se especifican usando `>:`, lo que permite que un tipo genérico sea un supertipo de otro tipo, similar a `in` en Kotlin. Esta capacidad permite una flexibilidad adicional en la definición de genéricos.
+### Uso
 
-**Ejemplo en Scala:**
-
-```scala
-def addItems[T >: String](list: List[T], item: T): List[T] = item :: list
+```scala showLineNumbers
+val intIdentity = identity(42)          // intIdentity's type is Int
+val stringIdentity = identity("Hola")   // stringIdentity's type is String
 ```
 
-En este ejemplo, `T >: String` asegura que `T` debe ser un supertipo de `String`, permitiendo listas de supertipos como `Any`.
+## Clases Genéricas en Scala
 
-### Varianza: Sitio de Declaración y Sitio de Uso
+En Scala, las **clases genéricas** se definen de manera similar a Kotlin. Podemos crear una clase `Box` que pueda contener un valor de cualquier tipo:
 
-#### Varianza en el Sitio de Declaración
-Al igual que en Kotlin, Scala permite definir **covarianza** y **contravarianza** en el sitio de declaración. Se utiliza `+` para covarianza (equivalente a `out` en Kotlin) y `-` para contravarianza (equivalente a `in` en Kotlin).
+```scala showLineNumbers
+class Box[T](val value: T)
+```
 
-**Ejemplo en Scala para covarianza (`+`)**:
+### Uso
 
-```scala
-class Producer[+T](value: T) {
-  def produce(): T = value
+```scala showLineNumbers
+val intBox = new Box(123)
+println(intBox.value)  // Prints: 123
+
+val stringBox = new Box("Scala")
+println(stringBox.value)  // Prints: Scala
+```
+
+## Interfaces Genéricas en Scala
+
+Scala también soporta **interfaces genéricas** a través de **traits**. Los traits en Scala son similares a las interfaces en Kotlin, y permiten definir contratos para diferentes implementaciones.
+
+```scala showLineNumbers
+trait Repository[T] {
+    def save(item: T): Unit
+    def findById(id: Int): Option[T]
 }
 ```
 
-#### Varianza en el Sitio de Uso
-Scala también soporta la especificación de varianza en el sitio de uso mediante **wildcards**, de manera similar a Kotlin y Java.
+Luego, podemos implementar este trait para una clase `UserRepository` que gestione usuarios:
 
-**Ejemplo en Scala de covarianza en el sitio de uso**:
+```scala showLineNumbers
+class UserRepository extends Repository[User] {
+    private val users = scala.collection.mutable.ListBuffer[User]()
 
-```scala
-def printItems(list: List[_ <: Number]) = list.foreach(println)
+    def save(item: User): Unit = {
+        users += item
+    }
+
+    def findById(id: Int): Option[User] = {
+        users.find(user => user.id == id)
+    }
+}
+
+case class User(id: Int, name: String)
 ```
 
-### Tabla Comparativa
+### Uso
 
-| **Característica**                      | **Kotlin**                                                          | **Scala**                                                                        |
-|-----------------------------------------|---------------------------------------------------------------------|----------------------------------------------------------------------------------|
-| **Upper Bounds**                        | Se usa `:` o `where` para especificar upper bounds.                 | Se usa `<:` para especificar upper bounds.                                       |
-| **Lower Bounds**                        | Se utiliza `in` para definir lower bounds en contravarianza.        | Se usa `>:` para definir lower bounds en contravarianza.                         |
-| **Varianza en el Sitio de Declaración** | Se especifica con `out` para covarianza y `in` para contravarianza. | Se especifica con `+` para covarianza y `-` para contravarianza.                 |
-| **Varianza en el Sitio de Uso**         | Usa proyecciones con `out` (covarianza) y `in` (contravarianza).    | Usa wildcards `_ <: T` (covarianza) y `_ >: T` (contravarianza) si es necesario. |
+```scala showLineNumbers
+val userRepository = new UserRepository()
+val user = User(1, "John Doe")
+
+userRepository.save(user)
+println(userRepository.findById(1))  // Imprime: Some(User(1, "John Doe"))
+```
+
+## Higher-Kinded Types (Tipos de Clase Superior)
+
+**Scala** soporta **Higher-Kinded Types (HKTs)**, que permiten definir abstracciones genéricas sobre **constructores de tipos**. A diferencia de los genéricos comunes que aceptan tipos simples (`List[A]`), los **HKTs** aceptan tipos que ellos mismos toman parámetros (`F[_]`), lo que los hace clave en estructuras funcionales como **functores** y **mónadas**.
+
+### Ejemplo: Functor Genérico
+
+```scala
+trait Functor[F[_]] {
+  def map[A, B](fa: F[A])(f: A => B): F[B]
+}
+```
+
+Aquí, `F[_]` puede ser cualquier estructura como `List` o `Option`.
+
+### Implementación para List
+
+```scala
+object ListFunctor extends Functor[List] {
+  def map[A, B](fa: List[A])(f: A => B): List[B] = fa.map(f)
+}
+```
+
+## Comparación Final
+
+| Característica                  | Kotlin                            | Scala                            |
+|---------------------------------|-----------------------------------|----------------------------------|
+| **Polimorfismo Paramétrico**    | Soporte de tipos genéricos        | Soporte de tipos genéricos       |
+| **Higher-Kinded Types (HKTs)**  | No soportado nativamente          | Soporte completo para HKTs       |
+| **Traits/Interfaces Genéricas** | ``interface Repository<T>``       | ``trait Repository[T]``          |
+| **Clases Genéricas**            | ``class Box<T>(val value: T)``    | ``class Box[T](val value: T)``   |
+| **Funciones Genéricas**         | ``fun <T> identity(value: T): T`` | ``def identity[T](value: T): T`` |
+
+:::tip Ventajas de Scala
+
+1. **Soporte para HKTs**: Scala permite crear abstracciones sobre constructores de tipos, lo que facilita la implementación de patrones funcionales avanzados.
+2. **Sistema de tipos más poderoso**: Scala es conocido por su sistema de tipos expresivo, que permite construir estructuras más avanzadas.
+
+:::
+
+:::danger Desventajas de Scala
+
+1. **Curva de aprendizaje**: El sistema de tipos avanzado y el soporte para HKTs pueden aumentar la complejidad y la curva de aprendizaje.
+
+:::
 
 <References references={[
     {
-        title: "Scala Documentation - Generic Classes",
-        url: "https://docs.scala-lang.org/tour/generic-classes.html",
-        type: "web",
-        accessedDate: "28 de septiembre de 2024"
-    }
+        bookTitle: "Beginning Scala 3: A Functional and Object-Oriented Java Language",
+        title: "Scala Type System",
+        publisher: "Apress Media, LLC",
+        location: "New York Plaza, NY",
+        pages: "197–218",
+        type: "book",
+        author: "David Pollak, Vishal Layka, & Andres Sacco",
+        year: "2022",
+    },
+    {
+        title: "Higher-Kinded Types",
+        url: "https://www.baeldung.com/scala/higher-kinded-types",
+        type: "article",
+        author: "Baeldung on Scala",
+        publishedDate: "3 de agosto de 2020",
+    },
 ]}/>
-
-[//]: # (<References references={[)
-
-[//]: # (    {)
-
-[//]: # (        title: "",)
-
-[//]: # (        url: "",)
-
-[//]: # (        type: "article",)
-
-[//]: # (        author: "",)
-
-[//]: # (        publishedDate: "",)
-
-[//]: # (    },)
-
-[//]: # (    {)
-
-[//]: # (        accessedDate: '',)
-
-[//]: # (        siteOrAuthor: '',)
-
-[//]: # (        title: '',)
-
-[//]: # (        type: 'web',)
-
-[//]: # (        url: '',)
-
-[//]: # (    },)
-
-[//]: # (    {)
-
-[//]: # (        title: "",)
-
-[//]: # (        bookTitle: "",)
-
-[//]: # (        pages: "",)
-
-[//]: # (        location: "",)
-
-[//]: # (        publisher: "",)
-
-[//]: # (        year: "",)
-
-[//]: # (        type: "book",)
-
-[//]: # (        author: '')
-
-[//]: # (    },)
-
-[//]: # (]}/>)

@@ -1,0 +1,100 @@
+---
+title: "PBT: Concatenación de Strings con ScalaTest"
+---
+import {Cons, ProCons, Pros} from "/src/components/cajitas/ProCons";
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+Habiendo explorado **Property-Based Testing (PBT)** con **Kotest** en Kotlin, podemos compararlo con **ScalaTest**, otro framework popular para pruebas en Scala que también soporta este enfoque.
+
+En **ScalaTest**, las pruebas de PBT se implementan de manera similar, pero la sintaxis y la estructura del framework difieren ligeramente. En esta sección, veremos cómo replicar los ejemplos anteriores de concatenación de strings usando **ScalaTest** con un estilo equivalente a **FreeSpec**.
+
+### Ejemplo 1: Longitud de la concatenación de strings
+
+En Kotest, probamos que la longitud de la concatenación de dos strings es igual a la suma de las longitudes de los strings originales. En **ScalaTest**, esto se implementa de la siguiente manera:
+
+```scala showLineNumbers
+forAll { (s1: String, s2: String) =>
+    (s1 + s2).length shouldEqual s1.length + s2.length
+}
+```
+
+En **ScalaTest**:
+- **forAll**: Funciona de manera similar a `checkAll` en Kotest, generando datos arbitrarios para los strings.
+- **shouldEqual**: Equivalente a `shouldBe` en Kotest, se usa para comprobar que la longitud resultante sea igual a la suma de las longitudes de los strings.
+
+### Ejemplo 2: Leyes del Monoide para Concatenación de Strings
+
+En Kotest, verificamos las leyes del monoide para los strings: **identidad por la izquierda**, **identidad por la derecha** y **asociatividad**. En **ScalaTest**, la implementación es similar:
+
+```scala showLineNumbers
+"left identity" in {
+    forAll { (s: String) =>
+        ("" + s) shouldEqual s
+    }
+}
+
+"right identity" in {
+    forAll { (s: String) =>
+        (s + "") shouldEqual s
+    }
+}
+
+"associativity" in {
+    forAll { (s1: String, s2: String, s3: String) =>
+        ((s1 + s2) + s3) shouldEqual (s1 + (s2 + s3))
+    }
+}
+```
+
+En **ScalaTest**:
+- **in**: Se utiliza para definir cada prueba en lugar de usar `-` como en Kotest.
+- **forAll**: Genera datos arbitrarios para probar las propiedades del monoide, como lo hace `checkAll` en Kotest.
+
+## Comparación Final
+
+| **Característica**               | **Kotest**                                                                    | **ScalaTest**                                                                   |
+|----------------------------------|-------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| **Estructura de pruebas**        | Usa el estilo `FreeSpec` con `-` para estructurar las pruebas.                | Usa `in` para definir las pruebas en estilo `FreeSpec`.                         |
+| **Generación de datos**          | Utiliza `Arb` para generar datos arbitrarios.                                 | Se integra directamente con **ScalaCheck** para la generación de datos.         |
+| **Integración con Kotlin/Scala** | Diseñado específicamente para Kotlin, lo que aprovecha al máximo su sintaxis. | Ampliamente utilizado en proyectos de Scala, con una gran comunidad de soporte. |
+| **Verificación de resultados**   | Usa `shouldBe` para verificar resultados.                                     | Usa `shouldEqual` para las verificaciones de resultados.                        |
+
+<ProCons>
+    <Pros>
+        - **Integración con ScalaCheck**: ScalaTest se integra fácilmente con **ScalaCheck**, proporcionando una potente combinación para realizar **Property-Based Testing (PBT)**, lo que permite generar datos arbitrarios y probar propiedades complejas de forma exhaustiva.
+        - **Variedad de estilos de prueba**: ScalaTest ofrece múltiples estilos de pruebas (como **FreeSpec**, **FunSuite**, **FlatSpec**), lo que proporciona flexibilidad a lxs desarrolladorxs para escribir pruebas de manera que se adapten mejor a sus preferencias y al proyecto.
+        - **Ampliamente adoptado**: ScalaTest es uno de los frameworks más utilizados en el ecosistema de **Scala**, con gran soporte en herramientas como **SBT**, **Maven** y **Gradle**, y cuenta con una comunidad activa y una extensa documentación.
+        - **Escalabilidad**: ScalaTest es adecuado tanto para proyectos pequeños como para grandes aplicaciones empresariales, con un soporte robusto para pruebas de integración y pruebas complejas.
+    </Pros>
+    <Cons>
+        - **Dependencia de una biblioteca adicional para PBT**: A diferencia de otros frameworks que integran **Property-Based Testing** de forma nativa, ScalaTest depende de **ScalaCheck** como una biblioteca externa para realizar este tipo de pruebas, lo que introduce una complejidad adicional en la configuración y manejo de dependencias.
+        - **Uso extenso de implicits**: ScalaTest hace un uso considerable de **implicits**, especialmente cuando se utiliza junto con ScalaCheck para PBT. Aunque los implicits son potentes, pueden dificultar la lectura y el mantenimiento del código, y complicar la depuración, especialmente para desarrolladorxs que no están familiarizados con su uso intensivo.
+        - **Curva de aprendizaje para características avanzadas**: Si bien ScalaTest es fácil de usar para pruebas básicas, aprovechar al máximo sus características avanzadas, como la integración con ScalaCheck o el manejo de fixtures, puede requerir una curva de aprendizaje considerable.
+    </Cons>
+</ProCons>
+
+## ¿Qué Aprendimos?
+
+En esta lección, hemos comparado el uso de **Property-Based Testing (PBT)** en **Kotest** y **ScalaTest**, dos frameworks ampliamente utilizados en sus respectivos ecosistemas, **Kotlin** y **Scala**. A través de los ejemplos de concatenación de strings, vimos cómo ambos frameworks permiten verificar propiedades generales de manera eficiente, generando datos arbitrarios para probar múltiples casos.
+
+### Puntos clave
+
+- **Estructura de pruebas**: Mientras que **Kotest** usa `checkAll` y una sintaxis más directa para las pruebas, **ScalaTest** se integra con **ScalaCheck**, lo que introduce una capa adicional de configuración, pero también ofrece mayor flexibilidad.
+- **Verificación de propiedades fundamentales**: Probamos que la concatenación de strings respeta propiedades como la **longitud**, así como las **leyes del monoide** (asociatividad, identidad por la izquierda y la derecha) en ambos frameworks.
+- **Ventajas y desventajas**: **ScalaTest** ofrece una mayor flexibilidad y escalabilidad en proyectos Scala, pero su dependencia en **ScalaCheck** y el uso de **implicits** puede hacer que su configuración y mantenimiento sean más complejos.
+
+Al final, tanto **Kotest** como **ScalaTest** son herramientas poderosas para **Property-Based Testing**, pero la elección entre ellas dependerá del lenguaje y las preferencias del equipo, con **Kotest** siendo ideal para proyectos en **Kotlin** y **ScalaTest** para proyectos en **Scala**.
+
+<References references={[
+    {
+        title: "ScalaTest - Property-Based Testing",
+        type: "web",
+        url: "https://www.scalatest.org/user_guide/property_based_testing",
+        accessedDate: "6 de octubre de 2024",
+    },
+]}/>

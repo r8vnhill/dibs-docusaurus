@@ -1,0 +1,158 @@
+---
+title: Mónadas en Haskell
+---
+import {Cons, ProCons, Pros} from "/src/components/cajitas/ProCons";
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+Después de haber explorado la implementación de mónadas en Kotlin, comparemos cómo este concepto se traduce a Haskell, un lenguaje funcional puro con un soporte profundo para la programación monádica.
+
+En Haskell, las mónadas están definidas a través de la clase `Monad`, que incluye las mismas operaciones clave que vimos en Kotlin: `return` (equivalente a `unit`) y `>>=` (equivalente a `flatMap`). La principal diferencia es que Haskell tiene una sintaxis más concisa y orientada a la programación funcional.
+
+### Implementación de una Mónada en Haskell
+
+En Haskell, la clase `Monad` define las operaciones fundamentales de las mónadas. Así es como se vería la definición:
+
+```haskell showLineNumbers
+class Monad m where
+  return :: a -> m a               -- Equivalente a 'unit' en Kotlin
+  (>>=)  :: m a -> (a -> m b) -> m b  -- Equivalente a 'flatMap' en Kotlin
+```
+
+Esta clase `Monad` proporciona las herramientas necesarias para encadenar operaciones monádicas de manera similar a cómo lo hacemos en Kotlin.
+
+### Ejemplo: Mónada `Box` en Haskell
+
+En Kotlin, vimos la implementación de una mónada `Box` que encapsula un valor:
+
+```kotlin
+data class Box<out A>(val value: A)
+
+object BoxMonad {
+    fun <A> unit(a: A): Box<A> = Box(a)
+    fun <A, B> Box<A>.flatMap(f: (A) -> Box<B>): Box<B> = f(value)
+}
+```
+
+En Haskell, la implementación de una mónada equivalente sería:
+
+```haskell showLineNumbers
+data Box a = Box a
+
+instance Monad Box where
+  return x = Box x
+  (Box x) >>= f = f x
+```
+
+Aquí, `return` (equivalente a `unit` en Kotlin) envuelve un valor dentro de `Box`, y `>>=` (equivalente a `flatMap`) toma un valor encapsulado en `Box`, lo pasa a la función `f` y devuelve una nueva estructura `Box`.
+
+### Encadenamiento de Operaciones: Kotlin vs Haskell
+
+En Kotlin, utilizamos `flatMap` para encadenar operaciones monádicas:
+
+```kotlin
+val result = BoxMonad.unit(3)
+    .flatMap { Box(it + 1) }
+    .flatMap { Box(it * 2) }
+println(result)  // Output: Box(8)
+```
+
+En Haskell, podemos hacer lo mismo usando el operador `>>=` para encadenar operaciones:
+
+```haskell showLineNumbers
+result = return 3 >>= (\x -> return (x + 1)) >>= (\y -> return (y * 2))
+-- Resultado: Box 8
+```
+
+La diferencia aquí radica en que Haskell permite usar el encadenamiento con una sintaxis más directa y limpia gracias al operador `>>=`, mientras que en Kotlin necesitamos invocar explícitamente `flatMap`.
+
+### Notación `do` en Haskell
+
+Haskell también ofrece una notación especial llamada `do` para encadenar operaciones de manera más legible, evitando el uso explícito de `>>=`.
+
+El ejemplo anterior en Haskell usando la notación `do` se vería así:
+
+```haskell showLineNumbers
+result = do
+  x <- return 3
+  y <- return (x + 1)
+  return (y * 2)
+-- Resultado: Box 8
+```
+
+La notación `do` simplifica el encadenamiento de operaciones, haciendo que el código sea más fácil de leer y escribir.
+
+### Verificación de las Leyes de las Mónadas
+
+Al igual que en Kotlin, en Haskell las mónadas deben cumplir las tres leyes fundamentales:
+
+#### 1. Identidad Izquierda
+
+```haskell showLineNumbers
+-- return x >>= f  ==  f x
+leftIdentity = return 42 >>= (\x -> Box (x + 1))
+```
+
+#### 2. Identidad Derecha
+
+```haskell showLineNumbers
+-- m >>= return  ==  m
+rightIdentity = Box 42 >>= return
+```
+
+#### 3. Asociatividad
+
+```haskell showLineNumbers
+-- (m >>= f) >>= g  ==  m >>= (\x -> f x >>= g)
+associativity = (Box 42 >>= (\x -> Box (x + 1))) >>= (\y -> Box (y * 2))
+```
+
+### Comparación Final
+
+| **Característica**          | **Kotlin**                                                                   | **Haskell**                                                                       |
+|-----------------------------|------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
+| **Definición de Mónadas**   | Definición explícita a través de clases u objetos y funciones como `flatMap` | Definición directa a través de la clase `Monad` con el operador `>>=`             |
+| **Soporte para HKT**        | Limitado, requiere técnicas y patrones como ``Kind<K, A>`` para simularlo    | Nativo y robusto, Haskell soporta HKT de forma directa                            |
+| **Sintaxis para Encadenar** | Uso de `flatMap` para encadenar operaciones                                  | Operador `>>=` para encadenar operaciones, con la opción de usar la notación `do` |
+| **Expresividad**            | Requiere más verbosidad en la sintaxis                                       | Más conciso gracias a la integración nativa de las mónadas y HKT                  |
+| **Lenguaje**                | Orientado a objetos con soporte funcional                                    | Funcional puro, diseñado para la composición monádica                             |
+
+<ProCons>
+    <Pros>
+        - **Concisión y flexibilidad**: Haskell permite trabajar de manera nativa con HKT, lo que facilita la creación de abstracciones más avanzadas y reutilizables como functores, aplicativos y mónadas.
+        - **Soporte nativo para HKT**: Haskell soporta directamente los HKT, eliminando la necesidad de soluciones adicionales o librerías externas para implementar abstracciones funcionales complejas.
+        - **Composición natural de tipos**: Gracias al soporte de HKT, Haskell facilita la composición de estructuras de datos genéricas y la escritura de código más abstracto, flexible y reusable.
+    </Pros>
+    <Cons>
+        - **Curva de aprendizaje**: Trabajar con HKT en Haskell puede ser más complejo para quienes no están familiarizados con la teoría de categorías o la abstracción de tipos en programación funcional.
+        - **Sobrecarga conceptual**: Aunque los HKT permiten una gran flexibilidad, pueden introducir una sobrecarga mental para desarrolladores que vienen de lenguajes con un enfoque más pragmático o con soporte limitado para HKT como Kotlin.
+        - **Adopción más especializada**: Si bien Haskell sobresale en su soporte para HKT, su uso en aplicaciones comerciales es más limitado, lo que puede reducir el acceso a recursos, herramientas y ejemplos prácticos en comparación con lenguajes más ampliamente adoptados como Kotlin.
+    </Cons>
+</ProCons>
+
+### ¿Qué Aprendimos?
+
+En esta lección, hemos comparado cómo las mónadas se implementan y utilizan en Kotlin y Haskell, dos lenguajes con enfoques distintos hacia la programación funcional.
+
+1. **Sintaxis y Expresividad**: Haskell, con su soporte nativo para mónadas y tipos de alto orden (HKT), permite una sintaxis más concisa y flexible, especialmente cuando se utilizan características como la notación `do`. Kotlin, por otro lado, requiere más verbosidad al implementar y encadenar operaciones monádicas con `flatMap`, pero ofrece la ventaja de integrar la programación funcional en un entorno orientado a objetos.
+2. **Soporte para HKT**: Haskell tiene soporte nativo para HKT, lo que lo hace más adecuado para manejar abstracciones funcionales avanzadas como functores y aplicativos.
+3. **Ventajas y Desventajas**: Haskell es claramente más adecuado para aquellos que buscan profundizar en la programación funcional pura, con herramientas nativas que permiten escribir código más abstracto y reusable. Sin embargo, su curva de aprendizaje y la menor adopción en la industria pueden ser desventajas frente a Kotlin, que ofrece una transición más suave desde un paradigma orientado a objetos.
+
+En resumen, si bien ambos lenguajes pueden manejar mónadas de manera efectiva, la elección entre ellos depende del contexto y las necesidades del proyecto. Haskell brilla en entornos académicos y funcionales, mientras que Kotlin ofrece una mayor flexibilidad para desarrolladores que buscan combinar estilos de programación.
+
+<References references={[
+    {
+        bookTitle: "Effective Haskell: Solving real-world problems with strongly typed functional programming",
+        title: "9. Introducing Monads",
+        publisher: "The Pragmatic Bookshelf",
+        location: "Raleigh",
+        pages: "333-363",
+        type: "book",
+        author: "Rob Skinner",
+        year: "2022"
+    },
+]}/>

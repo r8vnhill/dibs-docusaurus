@@ -1,0 +1,157 @@
+---
+title: Tipos Anónimos
+---
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+En programación orientada a objetos, los tipos son representaciones de estructuras de datos que definen las propiedades y comportamientos de los objetos que los implementan. Generalmente, cuando hablamos de tipos en lenguajes como Kotlin, estamos acostumbrados a las **clases** e **interfaces** que tienen nombres y que se definen explícitamente en el código.
+
+Sin embargo, existen situaciones en las que necesitamos un tipo temporal, que se utilice solo una vez o en un contexto muy específico. En lugar de crear una clase completa para esto, podemos utilizar **tipos anónimos**. En Kotlin, los tipos anónimos se implementan mediante **object expressions**, los cuales permiten crear instancias de clases sin tener que definirlas explícitamente en el código.
+
+## ¿Qué es un Tipo Anónimo?
+
+Un **tipo anónimo** es un tipo de objeto que no tiene un nombre asociado a él en el código fuente, pero que aún puede tener comportamiento y propiedades específicas. La principal ventaja de los tipos anónimos es que pueden ser definidos e instanciados en un solo paso, lo que evita la creación de clases innecesarias cuando el uso de un objeto es limitado a una pequeña porción de código.
+
+En Kotlin, los **object expressions** permiten crear tipos anónimos. Un **object expression** es una expresión que crea un objeto único e instancia de una clase anónima, y puede tener propiedades y métodos, además de implementar interfaces o extender otras clases.
+
+:::tip ¿Cuándo utilizar un Tipo Anónimo?
+
+- **Implementación rápida de interfaces o clases abstractas**: Si necesitas implementar una interfaz o una clase abstracta pero solo una vez, un tipo anónimo es una buena opción para evitar definir clases adicionales en el proyecto.
+- **Modificación ligera de comportamiento**: Si deseas modificar el comportamiento de una clase sin necesidad de crear una subclase explícita, puedes usar un tipo anónimo.
+- **Simplicidad**: Los tipos anónimos son útiles cuando no tiene sentido crear una nueva clase que sea reutilizada en varias partes del programa.
+
+:::
+
+## Tipos Anónimos con Object Expressions en Kotlin
+
+Kotlin introduce una manera elegante de definir **tipos anónimos** a través de **object expressions**.
+
+La sintaxis básica para un **object expression** es la siguiente:
+
+```kotlin
+val anonymousObject = object {
+    val name = "John Doe"
+    fun greet() = "Hello, $name"
+}
+println(anonymousObject.greet())  // Output: Hello, John Doe
+```
+
+En este ejemplo, `anonymousObject` es una instancia de un tipo anónimo que tiene una propiedad `name` y una función `greet`. Este tipo no tiene un nombre, y no puede ser referenciado en otra parte del código.
+
+### Usar Object Expressions para Implementar Interfaces
+
+Una de las razones más comunes para usar tipos anónimos es la implementación de interfaces o clases abstractas. En lugar de crear una clase completa, puedes usar un **object expression** para crear una instancia anónima de una interfaz:
+
+```kotlin
+interface Animal {
+    fun makeSound(): String
+}
+
+val dog = object : Animal {
+    override fun makeSound() = "Woof!"
+}
+
+println(dog.makeSound())  // Output: Woof!
+```
+
+En este ejemplo, creamos un objeto anónimo que implementa la interfaz `Animal`. No es necesario definir una clase `Dog`, ya que este objeto será usado solo en este contexto.
+
+### Usar Object Expressions para Extender Clases
+
+También puedes usar **object expressions** para crear tipos anónimos que extiendan clases:
+
+```kotlin
+open class Vehicle(val brand: String) {
+    open fun drive() = "Driving a $brand vehicle."
+}
+
+val sportsCar = object : Vehicle("Ferrari") {
+    override fun drive() = "Driving a fast $brand sports car!"
+}
+
+println(sportsCar.drive())  // Output: Driving a fast Ferrari sports car!
+```
+
+En este ejemplo, `sportsCar` es un objeto anónimo que extiende la clase `Vehicle` y sobreescribe el método `drive`. Este objeto es creado y utilizado en un único contexto, sin la necesidad de definir una subclase explícita.
+
+### Acceso a Variables Locales en Object Expressions
+
+Una característica importante de los **object expressions** en Kotlin es que tienen acceso a las variables locales que están en el mismo contexto donde se define el objeto:
+
+```kotlin
+fun performOperation(x: Int) {
+    val multiplier = 2
+
+    val result = object {
+        fun calculate() = x * multiplier
+    }
+
+    println("Result: ${result.calculate()}")
+}
+
+performOperation(5)  // Output: Result: 10
+```
+
+Aquí, el objeto anónimo tiene acceso a la variable `multiplier` que está definida en el mismo alcance.
+
+### Usar Tipos Anónimos con Callbacks
+
+Un caso común para el uso de **object expressions** es en la implementación de **callbacks** o **listeners**:
+
+```kotlin
+interface ClickListener {
+    fun onClick()
+}
+
+fun setOnClickListener(listener: ClickListener) {
+    listener.onClick()
+}
+
+setOnClickListener(object : ClickListener {
+    override fun onClick() {
+        println("Button clicked!")
+    }
+})
+```
+
+En este ejemplo, el tipo anónimo implementa la interfaz `ClickListener` y se pasa como argumento a la función `setOnClickListener`. El uso de un tipo anónimo permite evitar la creación de una clase dedicada para manejar el evento de clic.
+
+:::warning Limitaciones de los Tipos Anónimos
+
+1. **No reutilizables**: Un tipo anónimo no tiene un nombre, por lo que no puede ser referenciado o reutilizado en otras partes del programa. Esto los hace útiles solo en contextos donde no se necesita reutilización.
+2. **No pueden ser tipos de retorno**: Los tipos anónimos no pueden ser usados como tipos de retorno de funciones. Si intentas hacerlo, obtendrás un error de compilación.
+3. **Código menos claro**: Aunque los tipos anónimos pueden ser convenientes, en algunos casos pueden hacer que el código sea menos legible, especialmente si se abusa de ellos.
+
+:::
+
+## ¿Qué Aprendimos?
+
+En esta lección hemos explorado el concepto de **tipos anónimos** en programación y cómo implementarlos en **Kotlin** mediante **object expressions**. Los tipos anónimos son útiles en situaciones donde necesitamos un objeto único, temporal y específico, sin la necesidad de definir una clase explícita.
+
+### Resumen de lo Aprendido:
+
+- **Concepto de tipos anónimos**: Son objetos sin nombre que encapsulan comportamiento y propiedades específicas, ideales para situaciones temporales o casos donde no se necesita una clase reutilizable.
+- **Object expressions en Kotlin**: Proveen una manera concisa y flexible de crear instancias de tipos anónimos.
+- **Implementaciones de interfaces y clases abstractas**: Los object expressions permiten crear objetos que implementan interfaces o extienden clases sin crear una clase adicional.
+- **Acceso a variables locales**: Los tipos anónimos creados con object expressions pueden acceder a variables locales del contexto en el que se definen, lo que los hace muy útiles en casos específicos.
+- **Usos comunes**: Los tipos anónimos son especialmente útiles en la implementación de callbacks y listeners, como en el manejo de eventos.
+
+Aunque los **tipos anónimos** tienen algunas limitaciones, como la falta de reutilización o el hecho de no poder ser tipos de retorno, ofrecen una solución rápida y limpia para muchos casos donde la creación de una clase adicional sería innecesaria.
+
+Usar **object expressions** en Kotlin no solo mejora la productividad, sino que también ayuda a mantener el código más compacto y centrado en su propósito, evitando la sobrecarga de clases innecesarias.
+
+<References references={[
+    {
+        publisher: "4. Classes, objects, and interfaces",
+        pages: "67–102",
+        type: "book",
+        title: "Kotlin in action",
+        author: "Dmitry Jemerov & Svetlana Isakova",
+        year: "2017",
+        bookTitle: "Kotlin in action",
+    },
+]}/>

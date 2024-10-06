@@ -1,0 +1,140 @@
+---
+title: Mónadas en Scala
+---
+import {Cons, ProCons, Pros} from "/src/components/cajitas/ProCons";
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+Scala, como Kotlin, es un lenguaje que combina paradigmas orientados a objetos y funcionales, pero a diferencia de Kotlin, Scala soporta nativamente los **Higher-Kinded Types (HKT)**. Esto lo convierte en una herramienta poderosa para trabajar con abstracciones funcionales avanzadas como **mónadas**, **functores**, y **aplicativos**.
+
+En esta sección compararemos cómo Scala implementa las mónadas, con un enfoque en los HKT, en contraste con Kotlin, donde se requiere un enfoque más manual.
+
+### Implementación de una Mónada en Scala
+
+Scala soporta directamente los HKT, lo que facilita la definición de tipos genéricos que operan sobre estructuras monádicas sin la necesidad de envolturas o clases adicionales.
+
+Aquí hay una definición simple de una mónada usando HKT en Scala:
+
+```scala showLineNumbers
+trait Monad[M[_]] {
+  def unit[A](value: A): M[A]
+  def flatMap[A, B](ma: M[A])(f: A => M[B]): M[B]
+}
+```
+
+### Ejemplo: Mónada `Box` en Scala
+
+Como vimos en Kotlin, definimos una estructura `Box` para encapsular un valor. En Scala, podemos hacer lo mismo y luego implementamos la mónada para `Box` utilizando HKT de manera directa:
+
+```scala showLineNumbers
+case class Box[A](value: A)
+
+object BoxMonad extends Monad[Box] {
+  def unit[A](value: A): Box[A] = Box(value)
+  def flatMap[A, B](box: Box[A])(f: A => Box[B]): Box[B] = f(box.value)
+}
+```
+
+En este ejemplo, `BoxMonad` utiliza el tipo de alto orden `M[_]`, que permite definir operaciones genéricas para cualquier tipo que se ajuste a la interfaz de una mónada. En este caso, el tipo concreto es `Box`, pero podría ser cualquier otro tipo monádico, lo que demuestra el poder de los HKT en Scala.
+
+### Encadenamiento de Operaciones en Scala
+
+En Scala, el encadenamiento de operaciones monádicas es sumamente sencillo gracias al uso de las funciones `flatMap` y `map`, las cuales permiten aplicar transformaciones secuenciales sobre valores encapsulados dentro de estructuras como `Box`, `Option`, o `List`.
+
+```scala showLineNumbers
+val result = BoxMonad.unit(3)
+  .flatMap(x => Box(x + 1))
+  .flatMap(y => Box(y * 2))
+println(result)  // Output: Box(8)
+```
+
+El uso de `flatMap` en Scala sigue el mismo principio de otras implementaciones monádicas: toma el valor encapsulado, aplica una función y devuelve un nuevo valor encapsulado en la misma estructura monádica.
+
+### Verificando las Leyes de las Mónadas
+
+Al igual que en Kotlin, podemos verificar que nuestra implementación de la mónada en Scala cumple con las tres leyes monádicas:
+
+#### Ley de Identidad Izquierda
+
+```scala showLineNumbers
+val leftIdentity = BoxMonad.flatMap(BoxMonad.unit(42))(x => Box(x + 1))
+```
+
+#### Ley de Identidad Derecha
+
+```scala showLineNumbers
+val rightIdentity = BoxMonad.flatMap(Box(42))(BoxMonad.unit)
+```
+
+#### Ley de Asociatividad
+
+```scala showLineNumbers
+val composition = BoxMonad.flatMap(Box(42))(x => Box(x + 1)).flatMap(y => Box(y * 2))
+```
+
+### Notación `for` en Scala
+
+Una de las características más poderosas de Scala es su **notación `for`**, que simplifica el encadenamiento de operaciones monádicas y proporciona una sintaxis más legible, similar a la notación `do` de Haskell. La notación `for` se traduce directamente a llamadas a `flatMap` y `map`, lo que la convierte en una herramienta esencial al trabajar con mónadas.
+
+El mismo ejemplo que vimos con `flatMap` en Scala se puede simplificar usando la notación `for`:
+
+```scala showLineNumbers
+val result = for {
+  x <- BoxMonad.unit(3)
+  y <- Box(x + 1)
+} yield y * 2
+
+println(result)  // Output: Box(8)
+```
+
+Aquí, la notación `for` oculta las llamadas explícitas a `flatMap` y `map`, mejorando la legibilidad y facilitando la composición de operaciones monádicas. Esto es especialmente útil cuando se trabaja con múltiples operaciones secuenciales, ya que elimina la necesidad de anidar funciones lambda, lo que puede volverse complejo con grandes transformaciones.
+
+### Comparación Final
+
+| **Característica**                | **Kotlin**                                                                                                                 | **Scala**                                                                                                     |
+|-----------------------------------|----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| **Definición de Mónadas**         | Definición a través de clases y funciones como `flatMap`, con necesidad de Arrow para abstracciones funcionales avanzadas. | Definición nativa de mónadas con soporte directo para operaciones monádicas a través de `flatMap` y HKT.      |
+| **Encadenamiento de Operaciones** | Uso explícito de `flatMap` para operaciones secuenciales.                                                                  | Notación `for` simplifica el encadenamiento, transformando automáticamente a `flatMap` y `map`.               |
+| **Sintaxis**                      | Necesita mayor verbosidad para implementar operaciones monádicas complejas.                                                | Conciso y legible gracias a la notación `for` y el soporte nativo para operaciones monádicas.                 |
+| **Flexibilidad**                  | El soporte funcional es limitado en comparación con Scala; depende de librerías externas como Arrow.                       | Alta flexibilidad al permitir definir abstracciones funcionales avanzadas sin dependencias adicionales.       |
+| **Curva de Aprendizaje**          | Más accesible para desarrolladores familiarizados con la programación orientada a objetos.                                 | La profundidad de su sistema de tipos y HKT aumenta la curva de aprendizaje, pero ofrece más poder funcional. |
+
+### Ventajas y Desventajas de Scala
+
+<ProCons>
+    <Pros>
+        - **Concisión**: La notación `for` y el sistema de tipos permiten escribir código más limpio y expresivo, eliminando la necesidad de anidar lambdas.
+        - **Soporte nativo para programación funcional**: Scala tiene soporte nativo para HKT y operaciones monádicas, lo que facilita la creación de abstracciones complejas.
+        - **Flexibilidad**: Las mónadas están integradas en el sistema de tipos, lo que permite la creación de código genérico y reutilizable.
+    </Pros>
+    <Cons>
+        - **Curva de aprendizaje más pronunciada**: Aunque ofrece muchas herramientas poderosas, el sistema de tipos de Scala puede ser complicado para aquellos no familiarizados con conceptos avanzados como HKT o la teoría de categorías.
+        - **Complejidad en aplicaciones simples**: Para proyectos pequeños o con requisitos simples, las características avanzadas de Scala pueden ser innecesarias y agregar complejidad.
+    </Cons>
+</ProCons>
+
+## ¿Qué Aprendimos?
+
+A lo largo de esta comparación entre Scala y Kotlin, hemos visto cómo Scala ofrece un enfoque más nativo y flexible para trabajar con mónadas, gracias a su soporte directo para **Higher-Kinded Types (HKT)** y su poderosa **notación `for`**. En resumen:
+
+1. **Scala facilita la programación funcional**: El soporte nativo para HKT permite definir abstracciones funcionales avanzadas de manera más concisa y con menos dependencias externas, en comparación con Kotlin, que requiere un enfoque más manual.
+2. **La notación `for` en Scala mejora la legibilidad**: Al simplificar el encadenamiento de operaciones monádicas, la notación `for` elimina la necesidad de `flatMap` explícitos, mejorando la claridad del código, especialmente en transformaciones secuenciales complejas.
+3. **Scala es más flexible, pero más complejo**: Si bien Scala es más adecuado para aplicaciones que requieren una fuerte funcionalidad basada en tipos, su sistema de tipos avanzado y la curva de aprendizaje más pronunciada pueden ser desafiantes para desarrolladores sin experiencia en programación funcional.
+
+Scala, en definitiva, es una excelente opción cuando se busca aprovechar al máximo la programación funcional y la composición de tipos, aunque puede ser excesivo para proyectos más simples o con menos requerimientos funcionales.
+
+<References references={[
+    {
+        bookTitle: "Functional programming with Scala (Second edition)",
+        title: "11. Monads",
+        publisher: "Manning Publications Co",
+        location: "Shelter Island",
+        type: "book",
+        author: "M. Pilquist, R. Bjarnason, P. Chiusano, M. Odersky, & D. Spiewak",
+        year: "2023"
+    },
+]}/>

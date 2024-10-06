@@ -1,10 +1,12 @@
 ---
 title: Property-Based Testing
 ---
+import References from "/src/components/ReferencesComponent";
+import {Cons, ProCons, Pros} from "/src/components/cajitas/ProCons";
 import TabItem from "@theme/TabItem";
 import Tabs from "@theme/Tabs";
-import GithubRepoLink from "../../../src/components/GithubRepoLink";
-import ReadingTime from "../../../src/components/ReadingTime";
+import GithubRepoLink from "/src/components/GithubRepoLink";
+import ReadingTime from "/src/components/ReadingTime";
 
 <ReadingTime/>
 <GithubRepoLink repo={"property-based-testing-kt"} user={"r8vnhill"}/>
@@ -28,7 +30,7 @@ Si tienes ``gh`` instalado, puedes obtener el código haciendo:
         git checkout base
         ```
     </TabItem>
-    <TabItem value="Unix" label="Unix">
+    <TabItem value="Linux/Mac" label="Linux/Mac">
         ```bash
         gh repo clone r8vnhill/property-based-testing-kt
         cd property-based-testing-kt || exit
@@ -73,14 +75,14 @@ Imaginemos que queremos testear la función `merge`, la cual toma dos listas ord
 
 Podríamos recurrir a **Data-Driven Testing** para verificar su comportamiento. Esto implicaría definir varios conjuntos de datos de entrada y validar que la función produce los resultados esperados para cada uno. Sin embargo, ¿qué conjuntos de datos serían apropiados para cubrir todos los casos posibles?
 
-### Preguntas clave al elegir inputs:
+### Preguntas clave al elegir inputs
 
 1. ¿Qué ocurre si una o ambas listas están vacías?
 2. ¿Qué pasa cuando las listas tienen elementos repetidos?
 3. ¿Cómo se comporta `merge` cuando una lista contiene elementos mayores o menores que todos los de la otra?
 4. ¿Qué sucede si ambas listas ya están ordenadas pero con diferentes rangos de valores?
 
-### Ejemplo de inputs que podríamos usar:
+### Ejemplo de inputs que podríamos usar
 
 - `merge([], [])` → `[]` (Ambas listas vacías)
 - `merge([1, 3, 5], [])` → `[1, 3, 5]` (Una lista vacía)
@@ -90,19 +92,21 @@ Podríamos recurrir a **Data-Driven Testing** para verificar su comportamiento. 
 - `merge([2, 4, 6], [1, 3, 5])` → `[1, 2, 3, 4, 5, 6]` (Listas desordenadas entre sí)
 
 <details>
-    <summary>Comencemos por crear un módulo que contenga la implementación de la colección perezosa.</summary>
+    <summary>
+        Comencemos por crear un módulo para esta lección...
+    </summary>
 
     <Tabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell
-            New-Item -Path "intro\src\test\kotlin" -ItemType Directory
-            Set-Content -Path "intro\build.gradle.kts" -Value "// Intentionally left blank"
+            New-Item -Path 'intro\src\test\kotlin' -ItemType Directory
+            Set-Content -Path 'intro\build.gradle.kts' -Value '// Intentionally left blank'
             ```
         </TabItem>
         <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
             ```powershell
-            mkdir "intro\src\test\kotlin"
-            "// Intentionally left blank" > intro\build.gradle.kts
+            mkdir 'intro\src\test\kotlin'
+            '// Intentionally left blank' > intro\build.gradle.kts
             ```
         </TabItem>
         <TabItem value="Unix" label="Unix">
@@ -118,11 +122,42 @@ Podríamos recurrir a **Data-Driven Testing** para verificar su comportamiento. 
 
 ### Definición de `data class` para los Casos de Prueba
 
+<details>
+    <summary>
+        Si quieres crear el archivo desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $Group = 'com\github\username'
+            $MergeDir = "intro\src\test\kotlin\$Group\merge"
+            New-Item -Path "$MergeDir\MergeTest.kt" -ItemType File -Force
+            ```
+        </TabItem>
+        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+            ```powershell
+            $Group = 'com\github\username'
+            $MergeDir = "intro\src\test\kotlin\$Group\merge"
+            ni "$MergeDir\MergeTest.kt" -i f -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            GROUP="com/github/username"
+            MERGE_DIR="intro/src/test/kotlin/$GROUP/merge"
+            mkdir -p "$MERGE_DIR"
+            touch "$MERGE_DIR/MergeTest.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
 En primer lugar, definimos una **data class** para encapsular los casos de prueba. Esta clase representa los inputs (`list1`, `list2`) y el resultado esperado (`expected`), lo que facilita la organización y reutilización de datos en nuestras pruebas.
 
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers title="intro/src/test/kotlin/com/github/tu_usuario/merge/MergeTest.kt"
+        ```kotlin showLineNumbers title="intro/src/test/kotlin/com/github/username/merge/MergeTest.kt"
         private data class MergeTestCase(
             val list1: List<Int>,   // Primera lista de enteros
             val list2: List<Int>,   // Segunda lista de enteros
@@ -131,8 +166,8 @@ En primer lugar, definimos una **data class** para encapsular los casos de prueb
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="intro/src/test/kotlin/com/github/tu_usuario/merge/MergeTest.kt"
-        package com.github.tu_usuario.merge
+        ```kotlin showLineNumbers title="intro/src/test/kotlin/com/github/username/merge/MergeTest.kt"
+        package com.github.username.merge
 
         // Clase de prueba para almacenar listas y el resultado esperado
         private data class MergeTestCase(
@@ -150,7 +185,7 @@ A continuación, definimos los casos de prueba usando la estructura `FreeSpec` y
 
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers title="intro/src/test/kotlin/com/github/tu_usuario/merge/MergeTest.kt"
+        ```kotlin showLineNumbers title="intro/src/test/kotlin/com/github/username/merge/MergeTest.kt"
         withData(
             MergeTestCase(listOf(), listOf(), listOf()),                         // Caso: ambas listas vacías
             MergeTestCase(listOf(1), listOf(), listOf(1)),                       // Caso: primera lista con un elemento
@@ -166,8 +201,8 @@ A continuación, definimos los casos de prueba usando la estructura `FreeSpec` y
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="intro/src/test/kotlin/com/github/tu_usuario/merge/MergeTest.kt"
-        package com.github.tu_usuario.merge
+        ```kotlin showLineNumbers title="intro/src/test/kotlin/com/github/username/merge/MergeTest.kt"
+        package com.github.username.merge
 
         import io.kotest.core.spec.style.FreeSpec
         import io.kotest.datatest.withData
@@ -217,15 +252,16 @@ Una solución es utilizar **generación automática de datos de prueba** o emple
 
 El **Property-Based Testing** es una metodología de prueba en la que se definen propiedades generales sobre el comportamiento esperado de un programa. En lugar de escribir casos de prueba específicos, se especifican propiedades que deben cumplirse para cualquier conjunto de entradas, y el framework de PBT genera automáticamente una amplia variedad de datos de entrada para verificar dichas propiedades.
 
-### Ventajas
-
-- **Cobertura exhaustiva**: PBT permite probar una función contra miles de casos de prueba generados automáticamente, lo que aumenta la probabilidad de encontrar errores que podrían pasar desapercibidos con pruebas manuales o casos limitados.
-- **Detección temprana de errores**: Al probar con una gama extensa de entradas, PBT ayuda a descubrir errores en etapas tempranas del desarrollo.
-- **Enfoque en el comportamiento**: En lugar de enfocarse en casos específicos, PBT ayuda a definir y verificar el comportamiento general de un programa, asegurando que se cumpla bajo múltiples condiciones.
-
-### Desafíos
-
-**Mayor complejidad inicial**: Escribir pruebas basadas en propiedades puede ser más complejo que los tests tradicionales, ya que se requiere una buena comprensión de las propiedades fundamentales del sistema que estamos probando.
+<ProCons>
+    <Pros>
+        - **Cobertura exhaustiva**: PBT permite probar una función contra miles de casos de prueba generados automáticamente, lo que aumenta la probabilidad de encontrar errores que podrían pasar desapercibidos con pruebas manuales o casos limitados.
+        - **Detección temprana de errores**: Al probar con una gama extensa de entradas, PBT ayuda a descubrir errores en etapas tempranas del desarrollo.
+        - **Enfoque en el comportamiento**: En lugar de enfocarse en casos específicos, PBT ayuda a definir y verificar el comportamiento general de un programa, asegurando que se cumpla bajo múltiples condiciones.
+    </Pros>
+    <Cons>
+        - **Mayor complejidad inicial**: Escribir pruebas basadas en propiedades puede ser más complejo que los tests tradicionales, ya que se requiere una buena comprensión de las propiedades fundamentales del sistema que estamos probando.
+    </Cons>
+</ProCons>
 
 :::tip
 
@@ -250,11 +286,13 @@ Para que las propiedades sean efectivas y fiables en **Property-Based Testing**,
 2. **Sin Efectos Secundarios**: Las propiedades puras no modifican el estado del sistema ni interactúan con el mundo exterior (por ejemplo, no realizan operaciones de I/O, no modifican bases de datos, etc.).
 3. **Independencia**: Cada ejecución de una propiedad es independiente de las demás, lo que facilita la paralelización y evita interferencias entre pruebas.
 
-**Ventajas de las Propiedades Puras:**
-
-- **Reproducibilidad**: Si una prueba falla, es más fácil reproducir el error porque no hay estados externos que afecten el comportamiento.
-- **Facilidad de Mantenimiento**: Las propiedades puras son más simples de entender y mantener, ya que su comportamiento está completamente determinado por sus inputs.
-- **Eficiencia**: Al no depender de efectos secundarios, las propiedades puras pueden paralelizarse de forma segura, lo que mejora la eficiencia de las pruebas.
+<ProCons>
+    <Pros>
+        - **Reproducibilidad**: Si una prueba falla, es más fácil reproducir el error porque no hay estados externos que afecten el comportamiento.
+        - **Facilidad de Mantenimiento**: Las propiedades puras son más simples de entender y mantener, ya que su comportamiento está completamente determinado por sus inputs.
+        - **Eficiencia**: Al no depender de efectos secundarios, las propiedades puras pueden paralelizarse de forma segura, lo que mejora la eficiencia de las pruebas.
+    </Pros>
+</ProCons>
 
 #### Generación Automática de Casos de Prueba
 
@@ -266,13 +304,37 @@ Los **generadores arbitrarios** son herramientas poderosas que permiten generar 
 
 Además, Kotest permite definir **generadores personalizados**, lo que brinda flexibilidad para casos de prueba más específicos y complejos. Estos generadores pueden componerse y transformarse, lo que los hace extremadamente versátiles para probar funciones bajo múltiples condiciones.
 
-## ¿Qué hemos visto?
+## ¿Qué Aprendimos?
 
-En esta lección, hemos explorado cómo integrar **Property-Based Testing** en nuestro proyecto para superar las limitaciones del **Data-Driven Testing**. Hemos explorado los conceptos clave de PBT, incluyendo la definición de propiedades, la importancia de la pureza de las propiedades, y la generación automática de casos de prueba mediante generadores arbitrarios.
+En esta lección, aprendimos sobre **Property-Based Testing (PBT)**, una técnica de pruebas centrada en definir **propiedades generales** en lugar de casos de prueba específicos. Esto permite validar que el comportamiento de una función se mantenga correcto bajo una amplia variedad de entradas generadas automáticamente.
 
-### Puntos clave:
-- **Property-Based Testing** es una técnica poderosa que permite probar el comportamiento general de una función bajo múltiples entradas generadas automáticamente.
-- **Generadores arbitrarios** facilitan la creación de entradas de prueba diversificadas y personalizables.
-- Aunque PBT puede ser más complejo de implementar al principio, ofrece una cobertura de pruebas superior, ayudando a identificar errores de manera más temprana y eficiente.
+### Puntos clave
 
-Considera usar **PBT** en tus proyectos para mejorar la calidad de tus pruebas y asegurar el correcto comportamiento de tus funciones bajo diversas condiciones.
+- **Propiedades generales**: En lugar de probar casos específicos, se definen reglas que deben cumplirse siempre, independientemente de las entradas.
+- **Generación automática de casos**: Los frameworks de PBT generan inputs aleatorios, lo que garantiza una mayor cobertura y reduce la posibilidad de errores no previstos.
+- **Pureza**: Las propiedades deben ser deterministas, sin efectos secundarios, para garantizar que los resultados sean consistentes y fiables.
+
+### Ventajas de PBT
+
+- **Cobertura exhaustiva**: Pruebas con miles de inputs generados automáticamente.
+- **Fiabilidad**: Verifica el comportamiento general de la función, no solo casos aislados.
+
+### Desafíos
+
+- **Complejidad inicial**: Definir propiedades puede ser más complicado que escribir pruebas específicas.
+- **Curva de aprendizaje**: Requiere un mayor entendimiento del sistema para definir las propiedades adecuadas.
+
+PBT es una herramienta potente que aumenta la calidad y fiabilidad del código al descubrir problemas que podrían pasar desapercibidos en pruebas manuales o basadas en ejemplos específicos. ¡Considera incorporar Property-Based Testing en tus proyectos para mejorar la robustez y la eficacia de tus pruebas!
+
+<References references={[
+    {
+        bookTitle: "Property-based testing with PropEr, Erlang, and Elixir: Find bugs before your users do",
+        title: "1. Foundations of Property-Based Testing",
+        publisher: "The Pragmatic Bookshelf",
+        location: "Raleigh, North Carolina",
+        pages: "3–16",
+        type: "book",
+        author: "Fred Hébert",
+        year: "2019"
+    },
+]}/>

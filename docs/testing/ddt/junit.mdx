@@ -1,10 +1,13 @@
 ---
 title: "Data-Driven Testing en JUnit 5"
 ---
-import ValueSource from "../../../src/pages/testing/ddt/junit-value-source.mdx";
-import CsvSource from "../../../src/pages/testing/ddt/junit-csv-source.mdx";
-import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import {Cons, ProCons, Pros} from "/src/components/cajitas/ProCons";
+import TabItem from "@theme/TabItem";
+import Tabs from "@theme/Tabs";
+import ValueSource from "/src/pages/testing/ddt/junit-value-source.mdx";
+import CsvSource from "/src/pages/testing/ddt/junit-csv-source.mdx";
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
 
 <ReadingTime/>
 
@@ -14,41 +17,256 @@ En **Java**, **JUnit 5** facilita la implementación de **Data-Driven Testing (D
 
 En **Kotlin**, el uso de **JUnit 5** para DDT sigue el mismo enfoque que en Java, pero se beneficia de una sintaxis más concisa y de las características de Kotlin, como la inferencia de tipos y el manejo de lambdas, lo que resulta en pruebas más legibles y mantenibles.
 
-Este ejemplo utiliza `@ParameterizedTest` junto con `@ValueSource` para probar diferentes valores de entrada en
-un solo método de prueba:
+### Ejemplo en JUnit 5 con `@ParameterizedTest` y `@ValueSource`
 
-<ValueSource />
+En este ejemplo, utilizamos la anotación `@ParameterizedTest` junto con `@ValueSource` para probar diferentes valores de entrada en un solo método de prueba:
 
-<CsvSource />
+<Tabs groupId={"jvm"}>
+    <TabItem value="Java" label="Java">
+    <Tabs>
+        <TabItem label={"Código esencial"} value={"Código esencial"}>
+            ```java showLineNumbers title="cl/ravenhill/bakemon/BakemonTest.java"
+            @ParameterizedTest
+            @ValueSource(ints = {-100, -1, 101, 1000})
+            void testInvalidHealthPoints(int invalidHp) {
+                assertThrows(IllegalArgumentException.class, () -> {
+                    bakemon.setCurrentHealthPoints(invalidHp);
+                });
+            }
+            ```
+        </TabItem>
+        <TabItem label={"Código completo"} value={"Código completo"}>
+            ```java showLineNumbers title="cl/ravenhill/bakemon/BakemonTest.java"
+            package cl.ravenhill.bakemon;
 
-### Similitudes entre JUnit 5 y Kotest
+            import org.junit.jupiter.api.BeforeEach;
+            import org.junit.jupiter.params.ParameterizedTest;
+            import org.junit.jupiter.params.provider.ValueSource;
 
-1. **Data-Driven Testing**: Ambos frameworks permiten ejecutar el mismo caso de prueba con diferentes conjuntos de datos, optimizando la reutilización y facilitando la creación de pruebas que cubran múltiples escenarios.
-2. **Ejecución Automática con Múltiples Parámetros**: Tanto **JUnit 5** como **Kotest** permiten pasar diferentes valores de entrada a una prueba sin necesidad de crear múltiples métodos de prueba. Esto asegura que la misma lógica de prueba se ejecute varias veces con diferentes parámetros.
-3. **Validación Eficiente**: En ambos frameworks, el enfoque DDT permite validar los mismos principios o comportamientos bajo diferentes condiciones, asegurando la consistencia en los resultados de las pruebas.
-4. **Compatibilidad con Kotlin**: Ambos frameworks son compatibles con **Kotlin** y se benefician de las características del lenguaje, como la inferencia de tipos y las lambdas.
-5. **Soporte para Integración Continua**: Los dos frameworks se integran fácilmente con pipelines de CI/CD, lo que permite ejecutar pruebas de manera eficiente y detectar errores a partir de múltiples conjuntos de datos automáticamente.
+            import static cl.ravenhill.bakemon.TestUtils.createBakemon;
+            import static org.junit.jupiter.api.Assertions.assertThrows;
 
-### Diferencias entre JUnit 5 y Kotest
+            class BakemonTest {
+                private static final int INITIAL_HEALTH_POINTS = 100;
+                private Bakemon bakemon;
 
-1. **Sintaxis**:
-    - **JUnit 5**: Utiliza anotaciones (`@ParameterizedTest`, `@ValueSource`, `@CsvSource`) para definir y manejar los datos de prueba. Esto puede ser más rígido y requiere un enfoque basado en anotaciones, lo que puede hacer que el código sea más largo.
-    - **Kotest**: Ofrece una sintaxis más fluida y declarativa utilizando funciones como `withData`, lo que permite escribir pruebas de una manera más expresiva, especialmente en el contexto de **Kotlin**. Esto resulta en un código más conciso y fácil de mantener.
-2. **Estilos de Prueba**:
-    - **JUnit 5**: Sigue un enfoque más tradicional basado en métodos de prueba, lo que puede limitar la flexibilidad a la hora de organizar y escribir pruebas.
-    - **Kotest**: Ofrece múltiples estilos de especificación como **StringSpec**, **FreeSpec**, **BDD** y otros, lo que facilita la creación de pruebas más legibles, con un enfoque en la semántica del comportamiento y una mejor organización de casos de prueba complejos.
-3. **Manejo de Valores Combinados**:
-    - **JUnit 5**: Para manejar combinaciones de múltiples valores, se requiere el uso de anotaciones adicionales como `@CsvSource` o `@MethodSource`, lo que puede añadir complejidad al gestionar grandes conjuntos de datos.
-    - **Kotest**: Facilita la combinación de valores usando `withData`, permitiendo un manejo sencillo y directo de múltiples conjuntos de datos dentro de una misma función de prueba, sin necesidad de anotaciones adicionales.
-4. **Expresividad**:
-    - **JUnit 5**: Aunque ofrece soporte para lambdas, su sintaxis no es tan expresiva como en **Kotest** cuando se trata de pruebas con múltiples valores o configuraciones dinámicas.
-    - **Kotest**: Aprovecha completamente las características de **Kotlin**, lo que permite expresar las pruebas de una manera más legible y declarativa, especialmente cuando se combina con lambdas y funciones de orden superior.
+                @BeforeEach
+                void setUp() {
+                    bakemon = createBakemon("Bigachu", INITIAL_HEALTH_POINTS);
+                }
 
-### Comparación Final: Kotest vs JUnit 5
+                @ParameterizedTest
+                @ValueSource(ints = {-100, -1, 101, 1000})
+                void testInvalidHealthPoints(int invalidHp) {
+                    assertThrows(IllegalArgumentException.class, () -> {
+                        bakemon.setCurrentHealthPoints(invalidHp);
+                    });
+                }
+            }
+            ```
+        </TabItem>
+    </Tabs>
+    </TabItem>
+    <TabItem value={"kotlin"} label={"Kotlin"}>
+        <Tabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```kotlin showLineNumbers title="src/test/kotlin/cl/ravenhill/bakemon/BakemonTest.kt"
+                @ParameterizedTest
+                @ValueSource(ints = [-100, -1, 101, 1000])
+                fun `test invalid health points`(invalidHp: Int) {
+                    assertThrows<IllegalArgumentException> {
+                        bakemon.setCurrentHealthPoints(invalidHp)
+                    }
+                }
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```kotlin showLineNumbers title="src/test/kotlin/cl/ravenhill/bakemon/BakemonTest.kt"
+                package cl.ravenhill.bakemon
 
-| **Característica**               | **Kotest**                                               | **JUnit 5**                                          |
-|----------------------------------|----------------------------------------------------------|------------------------------------------------------|
-| **Data-Driven Testing**          | `withData` para una sintaxis fluida                      | `@ParameterizedTest` + `@ValueSource` / `@CsvSource` |
-| **Sintaxis**                     | Declarativa, más fluida y flexible                       | Basada en anotaciones, más tradicional               |
-| **Soporte de Estilos de Prueba** | Soporte para múltiples estilos (`StringSpec`, BDD, etc.) | Tradicional basado en métodos                        |
-| **Configuración de Valores**     | Combinación sencilla con `withData`                      | Requiere anotaciones adicionales como `@CsvSource`   |
+                import org.junit.jupiter.api.BeforeEach
+                import org.junit.jupiter.api.Test
+                import org.junit.jupiter.params.ParameterizedTest
+                import org.junit.jupiter.params.provider.ValueSource
+                import org.junit.jupiter.api.assertThrows
+
+                class BakemonTest {
+                    private val INITIAL_HEALTH_POINTS = 100
+                    private lateinit var bakemon: Bakemon
+
+                    @BeforeEach
+                    fun setUp() {
+                        bakemon = TestUtils.createBakemon("Bigachu", INITIAL_HEALTH_POINTS)
+                    }
+
+                    @ParameterizedTest
+                    @ValueSource(ints = [-100, -1, 101, 1000])
+                    fun `test invalid health points`(invalidHp: Int) {
+                        assertThrows<IllegalArgumentException> {
+                            bakemon.setCurrentHealthPoints(invalidHp)
+                        }
+                    }
+                }
+                ```
+            </TabItem>
+        </Tabs>
+
+        :::info Uso de nombres de miembros con backticks (`` ` ``)
+
+        En Kotlin, es posible utilizar caracteres especiales, incluidos espacios, en los nombres de miembros si se encierran entre backticks (`` ` ``). Esto es útil para crear nombres de test más descriptivos y legibles. Sin embargo, se recomienda restringir su uso únicamente a los nombres de pruebas para mejorar la claridad, evitando su uso en código de producción, donde podrían afectar la legibilidad y el mantenimiento.
+
+        :::
+    </TabItem>
+</Tabs>
+
+### Ejemplo en JUnit 5 con múltiples parámetros usando `@CsvSource`
+
+Para probar múltiples combinaciones de valores, se puede utilizar `@CsvSource`:
+
+<Tabs groupId={"jvm"}>
+    <TabItem value="Java" label="Java">
+        <Tabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```java showLineNumbers title="cl/ravenhill/bakemon/BakemonTest.java"
+                @ParameterizedTest
+                @CsvSource({
+                    "Bigachu, -100",
+                    "Psygoose, -1",
+                    "Bigachu, 101",
+                    "Psygoose, 1000"
+                })
+                void testInvalidHealthPoints(String name, int invalidHp) {
+                    var bakemon = createBakemon(name, INITIAL_HEALTH_POINTS);
+                    assertThrows(IllegalArgumentException.class, () -> {
+                        bakemon.setCurrentHealthPoints(invalidHp);
+                    });
+                }
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```java showLineNumbers title="cl/ravenhill/bakemon/BakemonTest.java"
+                package cl.ravenhill.bakemon;
+
+                import org.junit.jupiter.params.ParameterizedTest;
+                import org.junit.jupiter.params.provider.CsvSource;
+
+                import static cl.ravenhill.bakemon.TestUtils.createBakemon;
+                import static org.junit.jupiter.api.Assertions.assertThrows;
+
+                class BakemonTest {
+                    private static final int INITIAL_HEALTH_POINTS = 100;
+
+                    @ParameterizedTest
+                    @CsvSource({
+                        "Bigachu, -100",
+                        "Psygoose, -1",
+                        "Bigachu, 101",
+                        "Psygoose, 1000"
+                    })
+                    void testInvalidHealthPoints(String name, int invalidHp) {
+                        var bakemon = createBakemon(name, INITIAL_HEALTH_POINTS);
+                        assertThrows(IllegalArgumentException.class, () -> {
+                            bakemon.setCurrentHealthPoints(invalidHp);
+                        });
+                    }
+                }
+                ```
+            </TabItem>
+        </Tabs>
+    </TabItem>
+    <TabItem value={"kotlin"} label={"Kotlin"}>
+        <Tabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```kotlin showLineNumbers title="src/test/kotlin/cl/ravenhill/bakemon/BakemonTest.kt"
+                @ParameterizedTest
+                @CsvSource(
+                    "Bigachu, -100",
+                    "Psygoose, -1",
+                    "Bigachu, 101",
+                    "Psygoose, 1000"
+                )
+                fun `test invalid health points`(name: String, invalidHp: Int) {
+                    val bakemon = TestUtils.createBakemon(name, INITIAL_HEALTH_POINTS)
+                    assertThrows<IllegalArgumentException> {
+                        bakemon.setCurrentHealthPoints(invalidHp)
+                    }
+                }
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```kotlin showLineNumbers title="src/test/kotlin/cl/ravenhill/bakemon/BakemonTest.kt"
+                package cl.ravenhill.bakemon
+
+                import org.junit.jupiter.api.BeforeEach
+                import org.junit.jupiter.api.Test
+                import org.junit.jupiter.params.ParameterizedTest
+                import org.junit.jupiter.params.provider.CsvSource
+                import org.junit.jupiter.api.assertThrows
+
+                class BakemonTest {
+                    private val INITIAL_HEALTH_POINTS = 100
+
+                    @ParameterizedTest
+                    @CsvSource(
+                        "Bigachu, -100",
+                        "Psygoose, -1",
+                        "Bigachu, 101",
+                        "Psygoose, 1000"
+                    )
+                    fun `test invalid health points`(name: String, invalidHp: Int) {
+                        val bakemon = TestUtils.createBakemon(name, INITIAL_HEALTH_POINTS)
+                        assertThrows<IllegalArgumentException> {
+                            bakemon.setCurrentHealthPoints(invalidHp)
+                        }
+                    }
+                }
+                ```
+            </TabItem>
+        </Tabs>
+    </TabItem>
+</Tabs>
+
+## Comparación Final
+
+| **Característica**              | **JUnit 5**                                      | **Kotest**                                     |
+|---------------------------------|-------------------------------------------------|------------------------------------------------|
+| **Anidación de datos (nested DDT)** | No es posible anidar `@ParameterizedTest` directamente. Se necesitan métodos separados para manejar múltiples niveles de datos. | **Soporta anidación** con `withData`, permitiendo múltiples conjuntos de datos en una sola prueba, facilitando escenarios más complejos. |
+| **Fuentes de datos**            | `@ValueSource`, `@CsvSource`, `@MethodSource`, entre otras. | Similar a JUnit 5, pero con `withData`, que permite una sintaxis más funcional y flexible. |
+| **Compatibilidad con Kotlin**   | Requiere algunas adaptaciones sintácticas para aprovechar las ventajas de Kotlin. | Totalmente integrado con Kotlin, aprovechando su sintaxis concisa y fluida para pruebas más legibles. |
+| **Fluidez en el código**        | Estructura basada en anotaciones (`@ParameterizedTest`), que puede volverse verbosa para pruebas más avanzadas. | Ofrece un estilo de pruebas más **fluido** y **funcional**, especialmente al utilizar combinaciones de `withData`. |
+| **Ejecución condicional de pruebas** | Soporta `@Disabled` y condicionales dentro de las pruebas. | **Permite condicionales** más sofisticadas y personalizadas a nivel de prueba con mayor flexibilidad. |
+
+<ProCons>
+    <Pros>
+        - **Amplia adopción**: JUnit es uno de los frameworks de pruebas más populares en el ecosistema JVM, con una comunidad grande y excelente soporte en herramientas como **IDEs** y **CI/CD pipelines**.
+        - **Facilidad de uso**: La implementación de **Data-Driven Testing** con anotaciones como `@ParameterizedTest` y `@ValueSource` es sencilla y fácil de aprender, lo que la convierte en una opción accesible para proyectos de cualquier tamaño.
+        - **Compatibilidad con Java y Kotlin**: Aunque no está diseñado específicamente para Kotlin, JUnit es compatible y funcional en ambos lenguajes, lo que facilita la transición entre proyectos Java y Kotlin.
+        - **Flexibilidad en fuentes de datos**: JUnit permite usar múltiples fuentes de datos como `@ValueSource`, `@CsvSource`, y `@MethodSource`, lo que ofrece una variedad de opciones para configurar pruebas basadas en datos.
+    </Pros>
+    <Cons>
+        - **Falta de anidación directa en DDT**: JUnit 5 no permite anidar fácilmente las pruebas con `@ParameterizedTest`. Cada conjunto de datos requiere su propio método de prueba, lo que puede ser más verboso y menos flexible comparado con frameworks como **Kotest**.
+        - **Menos fluido en Kotlin**: Aunque funciona con Kotlin, la sintaxis de JUnit es más orientada a Java y puede sentirse más rígida o verbosa en comparación con frameworks nativos de Kotlin como **Kotest**.
+        - **Limitaciones en personalización avanzada**: JUnit, aunque flexible con las fuentes de datos, tiene menos opciones de personalización avanzada en comparación con Kotest, como la capacidad de definir reglas y configuraciones a nivel de prueba con la misma fluidez.
+        - **Dependencia de anotaciones**: El uso extensivo de anotaciones (`@ParameterizedTest`, `@CsvSource`, etc.) puede volverse poco manejable en pruebas complejas o con muchos parámetros, lo que limita su claridad en proyectos grandes.
+        - **Tests anónimos**: En JUnit los tests parametrizados no tienen un nombre asociado, lo que puede dificultar la identificación de un test específico en un reporte de pruebas.
+    </Cons>
+</ProCons>
+
+## ¿Qué Aprendimos?
+
+En esta lección, exploramos cómo implementar **Data-Driven Testing (DDT)** con **JUnit 5** en **Java** y **Kotlin**, destacando las siguientes ideas clave:
+
+1. **JUnit 5** ofrece un enfoque sencillo para DDT con anotaciones como `@ParameterizedTest` y fuentes como `@ValueSource` y `@CsvSource`, mejorando la reutilización de pruebas.
+2. **Kotlin** aprovecha su sintaxis concisa y características como lambdas, haciendo las pruebas más legibles que en Java.
+3. **Limitaciones de JUnit 5**: No soporta anidación directa de pruebas con datos, lo que puede hacerlo menos flexible en escenarios complejos en comparación con **Kotest**.
+4. **Kotest** permite anidación de datos con `withData` y es más fluido y adaptable para pruebas avanzadas en Kotlin.
+
+<References references={[
+    {
+        title: "Guide to JUnit 5 Parameterized Tests",
+        url: "https://www.baeldung.com/parameterized-tests-junit-5",
+        type: "article",
+        author: "Baeldung",
+        publishedDate: "27 de junio de 2024"
+    },
+]}/>

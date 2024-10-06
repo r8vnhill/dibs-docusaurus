@@ -1,0 +1,101 @@
+---
+title: Mónada Either en OCaml
+---
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+**OCaml** es un lenguaje de programación funcional que tiene un sólido soporte para tipos algebraicos y es capaz de manejar tipos suma, como `Either`. Aunque OCaml no tiene un tipo `Either` incorporado como otros lenguajes funcionales, se puede implementar de manera sencilla utilizando los tipos suma algebraicos nativos de OCaml.
+
+## Implementando Either en OCaml
+
+En OCaml, podemos implementar `Either` utilizando el tipo suma como sigue:
+
+```ocaml
+type ('l, 'r) either = Left of 'l | Right of 'r
+```
+
+Aquí, `('a, 'b) either` es un tipo que puede contener un valor de tipo `'a` (en caso de error) o un valor de tipo `'b` (en caso de éxito).
+
+## Función `flatMap` y `pure` (unit) en OCaml
+
+Para que `Either` sea una mónada en OCaml, debemos implementar las funciones `flatMap` y `pure`:
+
+```ocaml
+let pure x = Right x
+
+let flatMap f = function
+    | Left x -> Left x
+    | Right y -> f y
+```
+
+:::info Explicación del Código
+
+- **`pure`** toma un valor y lo envuelve en un `Right`, equivalente a un valor exitoso.
+- **`flatMap`** aplica una función `f` al valor dentro de `Right` si existe, o devuelve el error en `Left`.
+
+:::
+
+## Ejemplo de Validación en OCaml
+
+Vamos a aplicar la validación de contraseña utilizando `Either` en OCaml, similar al ejemplo en Kotlin.
+
+```ocaml
+let validate_length password =
+    if String.length password >= 8 then Right password
+    else Left "Password is too short"
+
+let validate_contains_number password =
+    if String.exists (fun c -> '0' <= c && c <= '9') password then Right password
+    else Left "Password must contain a number"
+
+let validate_password password =
+    flatMap validate_contains_number (validate_length password)
+```
+
+## Comparación Final
+
+| Característica        | **OCaml**                                                     | **Kotlin**                                                  |
+|-----------------------|---------------------------------------------------------------|-------------------------------------------------------------|
+| **Either**            | Definido como un tipo algebraico nativo (`Left`, `Right`)     | Usado como una clase sellada (`Left`, `Right`)              |
+| **Mónada**            | `flatMap` y `pure` implementados manualmente                  | `flatMap` y `unit` implementados en `EitherMonad`           |
+| **Tipos Algebraicos** | Soporte nativo a tipos algebraicos (`Left`, `Right`)          | Tipos algebraicos con `sealed class`                        |
+| **Validación**        | Usando tipos algebraicos y funciones de orden superior        | Usando funciones de orden superior y tipos sellados         |
+
+:::tip Ventajas de OCaml
+1. **Soporte nativo para tipos algebraicos**: OCaml tiene soporte directo para tipos algebraicos, lo que hace que la implementación de tipos como `Either` sea simple y clara.
+2. **Sistema de tipos estático y fuerte**: El sistema de tipos de OCaml es robusto, permitiendo una gran seguridad y claridad en el manejo de errores y validaciones.
+:::
+
+:::danger Desventajas de OCaml
+1. **Menor popularidad**: OCaml no es tan utilizado en la industria en comparación con otros lenguajes, lo que puede significar menos recursos de aprendizaje y menos herramientas modernas.
+2. **Falta de características avanzadas**: Aunque OCaml es un lenguaje poderoso, no cuenta con tantas bibliotecas funcionales avanzadas o características de alto nivel como Kotlin con librerías como Arrow.
+:::
+
+## ¿Qué Aprendimos?
+
+En esta lección, hemos explorado cómo implementar la **Mónada Either** en OCaml, utilizando tipos algebraicos nativos del lenguaje y funciones como `flatMap` y `pure`. También hemos comparado su uso con Kotlin, destacando las similitudes y diferencias en términos de manejo de errores y validaciones.
+
+### Puntos clave:
+- **OCaml** soporta tipos algebraicos de forma nativa, lo que facilita la implementación de tipos como `Either`.
+- Las funciones **`flatMap`** y **`pure`** permiten trabajar con **Either** como una mónada, posibilitando la composición de funciones que pueden fallar.
+- Tanto en OCaml como en Kotlin, el uso de **Either** permite un manejo más explícito y estructurado de errores, evitando el uso de excepciones.
+- **OCaml** ofrece una solución simple y clara para manejar tipos suma, pero carece de algunas de las herramientas avanzadas de librerías funcionales que ofrece Kotlin.
+
+Este enfoque en **Either** es especialmente útil en aplicaciones que requieren un manejo robusto de errores y validaciones sin recurrir a excepciones, mejorando la claridad y seguridad del código.
+
+<References references={[
+    {
+        bookTitle: "Real World OCaml: Functional Programming for the Masses",
+        title: "7. Variants",
+        publisher: "Cambridge University Press",
+        location: "Cambridge",
+        pages: "99–112",
+        type: "book",
+        author: "Anil Madhavapeddy & Yaron Minsky",
+        year: "2022",
+    },
+]}/>

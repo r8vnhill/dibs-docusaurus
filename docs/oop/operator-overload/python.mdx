@@ -1,53 +1,57 @@
 ---
-title: Sobrecarga de operadores en otros lenguajes
+title: Sobrecarga de operadores en Python
 ---
-
-
-
-## Python
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 Tanto Kotlin como Python permiten la sobrecarga de operadores, pero lo hacen de maneras ligeramente diferentes. Mientras que Kotlin utiliza la palabra clave `operator` y nombres de funciones predefinidas, Python aprovecha métodos especiales con nombres predefinidos, conocidos como *dunder methods* (por el prefijo y sufijo doble de guión bajo, como `__add__`).
 
-### Sobrecarga de Operadores en Python
+## Sobrecarga de Operadores en Python
 
 En Python, la sobrecarga de operadores se realiza definiendo estos métodos especiales dentro de una clase. Por ejemplo, para sobrecargar el operador `+`, se implementa el método `__add__`.
 
-```python
-class Complex:
-    def __init__(self, real, imaginary):
-        self.real = real
-        self.imaginary = imaginary
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers
+        class Complex:
+            # ...
+            def __add__(self, other: 'Complex') -> 'Complex':
+                return Complex(self.real + other.real, self.imaginary + other.imaginary)
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers
+        class Complex:
+            real: float
+            imaginary: float
 
-    def __add__(self, other):
-        return Complex(self.real + other.real, self.imaginary + other.imaginary)
+            def __init__(self, real: float, imaginary: float):
+                self.real = real
+                self.imaginary = imaginary
 
-    def __str__(self):
-        return f"({self.real}, {self.imaginary})"
-```
+            def __add__(self, other: 'Complex') -> 'Complex':
+                return Complex(self.real + other.real, self.imaginary + other.imaginary)
 
-En este código:
-- `Complex` es una clase que almacena las partes real e imaginaria de un número complejo.
-- El método `__add__` sobrecarga el operador `+`, permitiendo la suma de dos objetos `Complex`.
-- `__str__` está definido para que, al imprimir el objeto, se muestre de manera legible.
+            def __str__(self) -> str:
+                return f"({self.real}, {self.imaginary})"
 
-### Uso en Python
+        if __name__ == '__main__':
+            number1 = Complex(1.0, 2.0)
+            number2 = Complex(3.0, 4.0)
+            sum_result = number1 + number2
+            print(f"Suma: {sum_result}")
+        ```
+    </TabItem>
+</Tabs>
 
-De manera similar a Kotlin, podemos sumar números complejos de una manera intuitiva utilizando el operador `+`:
+:::info Explicación del código
 
-```python
-number1 = Complex(1.0, 2.0)
-number2 = Complex(3.0, 4.0)
-sum_result = number1 + number2
-print(f"Suma: {sum_result}")
-```
+- **[1-4]** `Complex` es una clase que almacena las partes real e imaginaria de un número complejo.
+- **[3-4]**: El método `__add__` sobrecarga el operador `+`, permitiendo la suma de dos objetos `Complex`.
 
-La salida será:
+:::
 
-```plaintext
-Suma: (4.0, 6.0)
-```
-
-### Comparación
+## Comparación
 
 | Característica         | Kotlin                              | Python                                    |
 |------------------------|-------------------------------------|-------------------------------------------|
@@ -57,61 +61,26 @@ Suma: (4.0, 6.0)
 | Expresividad           | Similar a las funciones regulares   | Métodos especiales con sintaxis estándar  |
 | Uso en código          | `val result = obj1 + obj2`          | `result = obj1 + obj2`                    |
 
-## Scala
+:::tip Ventajas de Python
 
-En **Scala**, no existe el concepto de "sobrecarga de operadores" como en otros lenguajes, ya que todos los operadores son simplemente funciones con nombres simbólicos. Esto significa que puedes definir cualquier función con un símbolo como nombre (como `+`, `-`, `*`, etc.), y el compilador lo tratará como si fuera un operador.
+1. **Flexibilidad**: Python permite sobrecargar una amplia gama de operadores utilizando métodos especiales, lo que facilita la personalización del comportamiento de las operaciones en las clases.
+2. **Sintaxis Familiar**: La sobrecarga de operadores en Python utiliza una sintaxis estándar y conocida, lo que hace que sea fácil de entender y aplicar en clases personalizadas.
+3. **Compatibilidad**: La implementación de *dunder methods* (métodos especiales) no solo permite sobrecargar operadores, sino que también facilita la integración con otras características del lenguaje, como la conversión de tipos y el manejo de contextos.
 
-### Definición de funciones con nombres simbólicos en Scala
+:::
 
-En lugar de sobrecargar operadores, en Scala simplemente se define una función con el símbolo deseado como nombre. Por ejemplo, para la clase `Complex`, podemos definir una función `+` de la siguiente manera:
+:::danger Desventajas de Python
 
-```scala
-case class Complex(real: Double, imaginary: Double) {
+1. **Mayor Verbosidad**: Los *dunder methods* como `__add__`, `__mul__`, etc., pueden ser menos intuitivos y más verbosos que los equivalentes en otros lenguajes como Kotlin, donde los métodos tienen nombres más concisos como `plus` o `times`.
+2. **Convención en Lugar de Restricción**: Python no requiere palabras clave especiales como `operator` para la sobrecarga de operadores, lo que puede hacer más difícil identificar claramente qué métodos están sobrecargando operadores si no se sigue la convención estrictamente.
+3. **Sin Sobrecarga de Múltiples Operadores**: A diferencia de lenguajes como Kotlin, Python no permite tener múltiples versiones de `__add__` con diferentes firmas (sobrecarga de métodos). Esto significa que no puedes tener varias implementaciones de `__add__` que manejen distintos tipos de argumentos. En su lugar, se suele utilizar comprobaciones de tipo dentro del método para manejar diferentes casos, lo que puede hacer que el código sea más complejo y menos limpio.
 
-  def +(other: Complex): Complex =
-    Complex(this.real + other.real, this.imaginary + other.imaginary)
+:::
 
-  override def toString: String = s"($real, $imaginary)"
-}
-```
+## ¿Qué Aprendimos?
 
-### Uso en Scala
+En esta sección, exploramos cómo **Python** y **Kotlin** permiten la **sobrecarga de operadores**, con un enfoque en los métodos especiales de Python, conocidos como *dunder methods*, y la palabra clave `operator` en Kotlin. A través de ejemplos, vimos cómo ambos lenguajes permiten personalizar el comportamiento de operadores como `+`, pero con diferencias clave en su sintaxis y flexibilidad.
 
-El uso de funciones con nombres simbólicos en Scala se ve igual que el uso de operadores tradicionales en otros lenguajes:
+**Ventajas de Python** incluyen su flexibilidad y sintaxis familiar para sobrecargar una amplia gama de operadores, mientras que **desventajas** como la verbosidad y la falta de sobrecarga de múltiples operadores pueden ser limitantes en comparación con otros lenguajes como Kotlin.
 
-```scala
-object Main extends App {
-  val number1 = Complex(1.0, 2.0)
-  val number2 = Complex(3.0, 4.0)
-  val sumResult = number1 + number2
-  println(s"Suma: $sumResult")
-}
-```
-
-Salida:
-
-```
-Suma: (4.0, 6.0)
-```
-
-### Comparación
-
-| Característica         | Kotlin                              | Scala                                     |
-|------------------------|-------------------------------------|-------------------------------------------|
-| Definición de operador | `operator fun plus(other: Complex)` | `def +(other: Complex): Complex`          |
-| Palabra clave          | `operator`                          | No es necesaria                           |
-| Operadores predefinidos| Solo operadores específicos         | Los operadores son nombres simbólicos     |
-| Expresividad           | Similar a las funciones regulares   | Cualquier símbolo puede ser usado         |
-| Uso en código          | `val result = obj1 + obj2`          | `val result = obj1 + obj2`                |
-
-### Semejanzas con Kotlin
-
-- **Simplicidad**: Ambos lenguajes permiten definir funciones que se comportan como operadores de manera simple y clara, mejorando la legibilidad del código.
-- **Inmutabilidad**: Tanto en Kotlin como en Scala, las operaciones que involucran objetos como `Complex` no modifican el estado del objeto, sino que devuelven un nuevo objeto.
-- **Concisión**: Ambos lenguajes permiten escribir código conciso, y las funciones se comportan como operadores de una manera muy intuitiva.
-
-### Diferencias con Kotlin
-
-- **Palabra clave `operator`**: En Kotlin, la palabra clave `operator` es necesaria para marcar una función que puede usarse como un operador, mientras que en Scala no se requiere ninguna palabra clave especial.
-- **Uso de cualquier símbolo en Scala**: Scala permite una mayor flexibilidad al permitir que cualquier símbolo sea el nombre de una función, mientras que Kotlin tiene un conjunto predefinido de operadores que se pueden sobrecargar.
-- **Funciones simbólicas en general**: Mientras que Kotlin restringe los operadores a un conjunto limitado de nombres, Scala permite que cualquier método con nombre simbólico (no solo `+` o `-`, por ejemplo) se use de forma similar a los operadores, lo que ofrece más expresividad y flexibilidad.
+Ambos enfoques permiten personalizar las operaciones en clases, pero con diferencias importantes en la implementación y la legibilidad del código.

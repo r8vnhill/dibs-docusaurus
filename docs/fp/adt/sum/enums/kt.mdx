@@ -1,6 +1,9 @@
 ---
 title: Enumeraciones
 ---
+import Solution from "/src/components/exercise/Solution";
+import Exercise from "/src/components/exercise/Exercise";
+import {Cons, ProCons, Pros} from "/src/components/cajitas/ProCons";
 import LanguageCard from "/src/components/cards/LanguageCard";
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
@@ -8,89 +11,125 @@ import ReadingTime from '/src/components/ReadingTime';
 
 <ReadingTime/>
 
-En **Kotlin**, las enumeraciones se definen usando la palabra clave `enum class`. Esto asegura que solo se puedan asignar valores válidos a una variable, evitando errores como asignar estados mal escritos o no previstos:
+Las **enumeraciones** en lenguajes de programación son una forma común y directa de representar **tipos suma** concretos.
 
-```kotlin
+En muchos lenguajes, las enumeraciones permiten representar diferentes estados o condiciones de manera segura y manejable. Cada valor de una enumeración es un caso específico de una posible situación que puede ocurrir. En lugar de manejar estos casos con cadenas, números o booleanos, las **enumeraciones** aseguran que solo se utilicen valores válidos y conocidos, evitando errores comunes como malentendidos de sintaxis o valores inesperados.
+
+Por ejemplo, consideremos una enumeración que define los posibles estados de un pedido:
+
+```kotlin showLineNumbers
 enum class DeliveryState {
     PENDING, PAID, SHIPPED, DELIVERED, CANCELLED
 }
 ```
 
-El uso de **enumeraciones** permite que el código trabaje exclusivamente con los estados predefinidos, mejorando la consistencia y evitando errores por valores inválidos.
+Aquí, `DeliveryState` es una **concretización** de un tipo suma, donde solo puede tener uno de los estados predefinidos (`PENDING`, `PAID`, etc.). Esto garantiza que siempre trabajes con estados válidos y evita errores que podrían surgir al manejar strings o enteros de manera manual.
 
 ## Uso en un `when` exhaustivo
 
 En Kotlin, un `when` es exhaustivo cuando cubre todos los posibles valores de una enumeración. Esto significa que no necesitas un bloque `else` si has manejado todos los estados posibles:
 
-```kotlin
-fun handleOrderState(state: DeliveryState) = when (state) {
-    DeliveryState.PENDING -> println("Order is pending")
-    DeliveryState.PAID -> println("Order is paid")
-    DeliveryState.SHIPPED -> println("Order is shipped")
-    DeliveryState.DELIVERED -> println("Order is delivered")
-    DeliveryState.CANCELLED -> println("Order is cancelled")
-}
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers showLineNumbers
+        fun handleOrderState(state: DeliveryState) = when (state) {
+            DeliveryState.PENDING -> println("Order is pending")
+            DeliveryState.PAID -> println("Order is paid")
+            DeliveryState.SHIPPED -> println("Order is shipped")
+            DeliveryState.DELIVERED -> println("Order is delivered")
+            DeliveryState.CANCELLED -> println("Order is cancelled")
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers showLineNumbers
+        fun handleOrderState(state: DeliveryState) = when (state) {
+            DeliveryState.PENDING -> println("Order is pending")
+            DeliveryState.PAID -> println("Order is paid")
+            DeliveryState.SHIPPED -> println("Order is shipped")
+            DeliveryState.DELIVERED -> println("Order is delivered")
+            DeliveryState.CANCELLED -> println("Order is cancelled")
+        }
 
-Aquí tienes un ejemplo de cómo usar la función:
-
-```kotlin
-fun main() {
-    handleOrderState(DeliveryState.PENDING)
-    handleOrderState(DeliveryState.PAID)
-}
-```
-
-## Ventajas de las Enumeraciones
-
-1. **Validación Automática de Valores**: Las enumeraciones garantizan que solo se asignen valores predefinidos y válidos a las variables, eliminando el riesgo de errores debido a entradas incorrectas o mal escritas.
-2. **Legibilidad del Código**: Proporcionan nombres claros y representativos para un conjunto fijo de valores, lo que facilita la comprensión del código.
-3. **Mantenibilidad**: Centralizan los estados válidos en un solo lugar, lo que facilita las modificaciones y actualizaciones del código, reduciendo el riesgo de inconsistencias.
+        fun main() {
+            handleOrderState(DeliveryState.PENDING)
+            handleOrderState(DeliveryState.PAID)
+        }
+        ```
+    </TabItem>
+</Tabs>
 
 ## Métodos en Enumeraciones
 
 Las enumeraciones en Kotlin pueden contener tanto métodos abstractos como concretos, lo que permite que cada valor de la enumeración tenga su propia implementación personalizada, al mismo tiempo que comparten comportamientos comunes.
 
-```kotlin
-enum class DeliveryState {
-    PENDING {
-        override fun signal() = "Order is pending"
-    },
-    PAID {
-        override fun signal() = "Order is paid"
-    },
-    SHIPPED {
-        override fun signal() = "Order is shipped"
-    },
-    DELIVERED {
-        override fun signal() = "Order is delivered"
-    },
-    CANCELLED {
-        override fun signal() = "Order is cancelled"
-    };
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        enum class DeliveryState {
+            PENDING {
+                override fun signal() = "Order is pending"
+            },
+            CANCELLED {
+                override fun signal() = "Order is cancelled"
+            };
 
-    abstract fun signal(): String
+            abstract fun signal(): String
 
-    // Método común que determina si el estado es final
-    fun isFinalState() = this == DELIVERED || this == CANCELLED
-}
-```
+            fun isFinalState() = this == DELIVERED || this == CANCELLED
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        enum class DeliveryState {
+            PENDING {
+                override fun signal() = "Order is pending"
+            },
+            PAID {
+                override fun signal() = "Order is paid"
+            },
+            SHIPPED {
+                override fun signal() = "Order is shipped"
+            },
+            DELIVERED {
+                override fun signal() = "Order is delivered"
+            },
+            CANCELLED {
+                override fun signal() = "Order is cancelled"
+            };
 
-En este ejemplo:
+            abstract fun signal(): String
+
+            fun isFinalState() = this == DELIVERED || this == CANCELLED
+        }
+
+        fun handleOrderState(state: DeliveryState) = if (state.isFinalState()) {
+            println("Final state: ${state.signal()}")
+        } else {
+            println("Non-final state: ${state.signal()}")
+        }
+
+        fun main() {
+            handleOrderState(DeliveryState.PENDING)
+            handleOrderState(DeliveryState.DELIVERED)
+            /* Output:
+            Non-final state: Order is pending
+            Final state: Order is delivered
+            */
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del Código
+
 - Cada valor de la enumeración proporciona su propia implementación del método abstracto `signal`, devolviendo un mensaje específico.
 - El método concreto `isFinalState` está disponible para todos los valores de la enumeración y se utiliza para verificar si el estado es final (es decir, `DELIVERED` o `CANCELLED`).
 
+:::
+
 Este enfoque permite tener tanto comportamientos específicos como comunes en una enumeración.
-
-```kotlin
-fun handleOrderState(state: DeliveryState) = if (state.isFinalState()) {
-    println("Final state: ${state.signal()}")
-} else {
-    println("Non-final state: ${state.signal()}")
-}
-```
-
-En esta función, dependiendo del estado del pedido, se imprime si está en un estado final o no, utilizando los métodos `signal` e `isFinalState`.
 
 ## Constructores en Enumeraciones
 
@@ -100,138 +139,292 @@ En **Kotlin**, las enumeraciones pueden tener constructores. Esto significa que,
 
 Para crear una enumeración con un constructor en Kotlin, defines los parámetros del constructor en la declaración de la enumeración y luego pasas los valores correspondientes a cada miembro de la enumeración.
 
-```kotlin
-enum class DeliveryState(val description: String, val code: Int) {
-    PENDING("Order is pending", 1),
-    PAID("Order is paid", 2),
-    SHIPPED("Order is shipped", 3),
-    DELIVERED("Order is delivered", 4),
-    CANCELLED("Order is cancelled", 5)
-}
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        enum class DeliveryState(private val description: String, val code: Int) {
+            PENDING("Order is pending", 0),
+            CANCELLED("Order is cancelled", 4);
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        enum class DeliveryState(private val description: String, val code: Int) {
+            PENDING("Order is pending", 0),
+            PAID("Order is paid", 1),
+            SHIPPED("Order is shipped", 2),
+            DELIVERED("Order is delivered", 3),
+            CANCELLED("Order is cancelled", 4);
 
-En este ejemplo:
+            fun signal(): String = description
+
+            fun isFinalState() = this == DELIVERED || this == CANCELLED
+        }
+
+        fun handleOrderState(state: DeliveryState) = if (state.isFinalState()) {
+            println("Final state: ${state.signal()}")
+        } else {
+            println("Non-final state: ${state.signal()}")
+        }
+
+        fun main() {
+            handleOrderState(DeliveryState.PENDING)
+            handleOrderState(DeliveryState.DELIVERED)
+            /* Output:
+            Non-final state: Order is pending
+            Final state: Order is delivered
+            */
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del Código
+
 - **Descripción**: Cada valor de la enumeración tiene un `description` que detalla el estado del pedido.
 - **Código**: Se asocia un código numérico (`code`) a cada estado.
+
+:::
 
 ### Uso de los Valores del Constructor
 
 Puedes acceder a los valores del constructor de la enumeración como lo harías con cualquier propiedad de una clase. Esto hace que las enumeraciones sean más flexibles y útiles cuando necesitas asociar información adicional a cada valor.
 
-```kotlin
-fun printOrderDetails(state: DeliveryState) {
-    println("State: ${state.description}, Code: ${state.code}")
-}
-
-fun main() {
-    val state = DeliveryState.SHIPPED
-    printOrderDetails(state)  // Output: State: Order is shipped, Code: 3
-}
-```
-
-Aquí, cada valor de la enumeración tiene su propio mensaje personalizado y código que se accede a través de las propiedades `description` y `code`.
-
-## Funciones Útiles en Enumeraciones
-
-1. **``entries``**: Puedes acceder a todas las entradas de la enumeración con `entries`:
-    ```kotlin
-    fun listOrderStates() = DeliveryState.entries.forEach { println(it) }
-    ```
-
-2. **``valueOf``**: Puedes buscar un valor de la enumeración por su nombre con `valueOf`, aunque debes manejar posibles excepciones si el valor no existe:
-    ```kotlin
-    fun getOrderState(name: String) = DeliveryState.valueOf(name)
-    ```
-
-## Limitaciones de las Enumeraciones
-
-1. **Datos Asociados Limitados**: Las enumeraciones son adecuadas para representar un conjunto fijo de valores, pero tienen limitaciones cuando se requiere manejar información dinámica o extensa para cada valor. Si necesitas asociar datos específicos a cada valor, estos deben definirse de manera estática, lo que puede no ser ideal para casos con datos más complejos o cambiantes.
-
-2. **Manejo de Estados Complejos**: Para situaciones en las que el estado requiere un comportamiento o estructura más detallada, las enumeraciones pueden volverse difíciles de gestionar y mantener. En estos casos, recurrir a alternativas como las **clases selladas** puede ofrecer una solución más flexible y extensible, facilitando el manejo de estados más elaborados.
-
-:::tip Ejercicio: Interfaz y Enumeración de Acciones del Juego
 <Tabs>
-    <TabItem value="Enunciado" label="Enunciado">
-        Implementa una interfaz `GameAction`, una clase `Player` y una enumeración `GameEvent` que representen las
-        acciones de un juego.
-        - **Interfaz `GameAction`**:
-            - Define una interfaz `GameAction` que incluya un método `execute(player: Player)`.
-            - El método `execute` debe afectar al estado de un jugador de acuerdo con el tipo de evento.
-        - **Clase `Player`**:
-            - Crea una clase `Player` que contenga dos propiedades: `healthPoints` y `manaPoints`.
-            - La clase debe incluir métodos para aumentar y disminuir los puntos de salud (`healthPoints`) y los puntos de
-        maná (`manaPoints`) en una cantidad dada.
-        - **Enumeración `GameEvent`**:
-            - Define una enumeración `GameEvent` que implemente `GameAction`.
-            - La enumeración debe incluir los siguientes tipos de eventos:
-                - `HEALTH_BOOST`: Incrementa los puntos de salud del jugador.
-                - `MANA_DRAIN`: Disminuye los puntos de maná del jugador.
-                - `POISON`: Disminuye los puntos de salud del jugador.
-                - `ENERGY_SURGE`: Incrementa los puntos de maná del jugador.
-    </TabItem>
-    <TabItem value="Solución" label="Solución">
-        ```kotlin
-        class Player(health: Int, mana: Int) {
-            var health = health
-                private set
-            var mana = mana
-                private set
-
-            fun increaseHealth(amount: Int) {
-                health += amount
-            }
-
-            fun decreaseHealth(amount: Int) {
-                health -= amount
-            }
-
-            fun increaseMana(amount: Int) {
-                mana += amount
-            }
-
-            fun decreaseMana(amount: Int) {
-                mana -= amount
-            }
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        fun printOrderDetails(state: DeliveryState) {
+            println("State: ${state.description}, Code: ${state.code}")
         }
         ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        fun printOrderDetails(state: DeliveryState) {
+            println("State: ${state.description}, Code: ${state.code}")
+        }
 
-
-        ```kotlin
-        enum class GameEvent : GameAction {
-            HEALTH_BOOST {
-                override fun execute(player: Player) {
-                    player.increaseHealth(20)
-                }
-            },
-            MANA_DRAIN {
-                override fun execute(player: Player) {
-                    player.decreaseMana(15)
-                }
-            },
-            POISON {
-                override fun execute(player: Player) {
-                    player.decreaseHealth(10)
-                }
-            },
-            ENERGY_SURGE {
-                override fun execute(player: Player) {
-                    player.increaseMana(20)
-                }
-            };
+        fun main() {
+            val state = DeliveryState.SHIPPED
+            printOrderDetails(state)
+            /* Output: State: Order is shipped, Code: 2 */
         }
         ```
     </TabItem>
 </Tabs>
+
+Aquí, cada valor de la enumeración tiene su propio mensaje personalizado y código que se accede a través de las propiedades `description` y `code`.
+
+## Implementación de Interfaces
+
+Las enumeraciones en Kotlin pueden implementar interfaces, lo que les permite heredar comportamientos y métodos predeterminados definidos en estas interfaces. Esto es útil cuando se desea que los valores de una enumeración compartan comportamientos comunes sin necesidad de duplicar código en cada valor de la enumeración. A continuación, se presenta un ejemplo de cómo hacer que una enumeración implemente múltiples interfaces, con métodos que no necesitan ser sobrescritos.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        interface Notifier {
+            fun notify(subscriber: Subscriber, message: String) =
+                println("Notifying ${subscriber::class.simpleName}: $message")
+        }
+
+        interface Storable {
+            fun store() = println("Storing data")
+        }
+
+        enum class DeliveryState(private val description: String, val code: Int) : Notifier, Storable {
+            // ...
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        interface Subscriber {
+            fun subscribe()
+        }
+
+        interface Notifier {
+            fun notify(subscriber: Subscriber, message: String) =
+                println("Notifying ${subscriber::class.simpleName}: $message")
+        }
+
+        interface Storable {
+            fun store() = println("Storing data")
+        }
+
+        enum class DeliveryState(private val description: String, val code: Int) : Notifier, Storable {
+            PENDING("Order is pending", 0),
+            PAID("Order is paid", 1),
+            SHIPPED("Order is shipped", 2),
+            DELIVERED("Order is delivered", 3),
+            CANCELLED("Order is cancelled", 4);
+
+            fun signal(): String = description
+
+            fun isFinalState() = this == DELIVERED || this == CANCELLED
+        }
+
+        fun main() {
+            val state = DeliveryState.PAID
+            println(state.signal())
+            state.notify(object : Subscriber {
+                override fun subscribe() = println("Subscribing to notifications")
+            }, "Order is paid")
+            state.store()
+            println(state.isFinalState())
+            /*
+            Output:
+            Order is paid
+            Notifying null: Order is paid
+            Storing data
+            false
+            */
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del Código
+
+- **[1-4]**: `Notifier` define un método `notify` que toma un suscriptor y un mensaje, y proporciona una implementación predeterminada para notificar al suscriptor.
+- **[6-8]**: `Storable` define un método `store` con una implementación predeterminada que simula el almacenamiento de datos.
+- **[10-12]**: `DeliveryState` es una enumeración que implementa tanto `Notifier` como `Storable`, por lo que hereda sus comportamientos.
+
 :::
 
-## ¿Con qué nos vamos?
+## Funciones Útiles en Enumeraciones
 
-En resumen, las **enumeraciones en Kotlin** ofrecen una forma poderosa de gestionar un conjunto fijo de valores predefinidos, como estados o eventos en un sistema. Su uso garantiza la validez de los valores, mejora la legibilidad del código y simplifica la mantenibilidad. Además, permiten comportamientos personalizados a través de métodos abstractos y concretos dentro de la misma enumeración.
+### `entries`
 
-Las **enumeraciones** son útiles para situaciones en las que los valores son limitados y conocidos de antemano. Sin embargo, en casos que requieren mayor flexibilidad o estados más complejos, las **clases selladas** pueden ser una alternativa más adecuada.
+Puedes acceder a todas las entradas de la enumeración con `entries`:
 
-Finalmente, hemos explorado la implementación de un sistema de **eventos de juego** usando enumeraciones, lo que demuestra cómo se pueden aplicar en casos de uso práctico para manejar acciones específicas que afectan el estado de un jugador.
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        fun listOrderStates() = DeliveryState.entries.forEach { println(it) }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        fun listOrderStates() = DeliveryState.entries.forEach { println(it) }
 
+        fun main() {
+            listOrderStates()
+            /* Output:
+            PENDING
+            PAID
+            SHIPPED
+            DELIVERED
+            CANCELLED
+            */
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+### `valueOf`
+
+Puedes buscar un valor de la enumeración por su nombre con `valueOf`, aunque debes manejar posibles excepciones si el valor no existe:
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        fun getOrderState(name: String) = DeliveryState.valueOf(name)
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        fun getOrderState(name: String) = DeliveryState.valueOf(name)
+
+        fun main() {
+            try {
+                val state = getOrderState("PAID")
+                println("State: ${state.description}, Code: ${state.code}")
+            } catch (e: IllegalArgumentException) {
+                println("Invalid state")
+            }
+            /* Output: State: Order is paid, Code: 1 */
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+<ProCons>
+    <Pros>
+        - **Seguridad de Tipos**: Las enumeraciones garantizan que solo se utilicen valores predefinidos, reduciendo errores por entradas no válidas o mal escritas.
+        - **Exhaustividad**: En Kotlin, el uso de enumeraciones con `when` asegura que todos los casos estén cubiertos, evitando el uso de bloques `else` innecesarios.
+        - **Legibilidad y Mantenibilidad**: Las enumeraciones mejoran la claridad del código, ya que representan estados o condiciones predefinidos de manera explícita y centralizada.
+        - **Comportamiento Personalizado**: Puedes agregar métodos abstractos o concretos a los valores de la enumeración, lo que permite personalizar el comportamiento de cada uno.
+    </Pros>
+    <Cons>
+        - **Limitaciones para Estados Complejos**: Las enumeraciones son menos flexibles cuando se necesita manejar estados con múltiples variaciones o comportamientos más complejos. Para estos casos, las **clases selladas** pueden ser una mejor opción.
+        - **Datos Estáticos**: Aunque puedes asociar datos adicionales con enumeraciones mediante constructores, los valores siguen siendo estáticos, lo que puede no ser adecuado para todos los escenarios.
+    </Cons>
+</ProCons>
+
+<Exercise title={"Cambios de Estado de Suscripción"}>
+    Implementa una enumeración `SubscriptionStatus` que represente los siguientes estados de una suscripción: `ACTIVE`, `SUSPENDED`, `CANCELLED`, `EXPIRED`.
+
+    Cada estado tiene dos comportamientos:
+    1. **`renew()`**: Intenta renovar la suscripción.
+    2. **`nextState()`**: Cambia el estado a otro basado en una acción del sistema.
+
+    #### Requerimientos:
+    - **`ACTIVE`**: Permite renovar y pasa a `EXPIRED` en `nextState()`.
+    - **`SUSPENDED`**: No permite renovar, pero puede pasar a `ACTIVE`.
+    - **`CANCELLED`**: No permite renovar ni cambiar de estado.
+    - **`EXPIRED`**: Permite renovar y vuelve a `ACTIVE`.
+
+    <Solution>
+        ```kotlin showLineNumbers
+        enum class SubscriptionStatus {
+            ACTIVE {
+                override fun renew() = println("Renewed!")
+                override fun nextState() = EXPIRED
+            },
+            SUSPENDED {
+                override fun renew() = println("Cannot renew while suspended")
+                override fun nextState() = ACTIVE
+            },
+            CANCELLED {
+                override fun renew() = println("Cannot renew, it's cancelled")
+                override fun nextState() = CANCELLED
+            },
+            EXPIRED {
+                override fun renew() = println("Renewed!")
+                override fun nextState() = ACTIVE
+            };
+
+            abstract fun renew()
+            abstract fun nextState(): SubscriptionStatus
+        }
+        ```
+    </Solution>
+</Exercise>
+
+## ¿Qué Aprendimos?
+
+En esta lección hemos explorado las **enumeraciones** en Kotlin y cómo pueden utilizarse para modelar tipos suma concretos, representar estados específicos y proporcionar comportamientos comunes entre sus valores.
+
+### Principales conceptos
+
+1. **Enumeraciones como tipos suma**: Las enumeraciones permiten definir un conjunto fijo de valores, asegurando que solo estos valores sean utilizados, lo que proporciona **seguridad de tipos** y evita errores por entradas inválidas.
+2. **Uso de `when` exhaustivo**: En Kotlin, al trabajar con enumeraciones en una sentencia `when`, el compilador garantiza que todos los casos posibles sean manejados sin necesidad de un bloque `else`, lo que mejora la **legibilidad** y **mantenibilidad** del código.
+3. **Métodos en enumeraciones**: Las enumeraciones pueden contener métodos tanto abstractos como concretos, lo que permite comportamientos personalizados para cada valor de la enumeración. Además, los métodos compartidos ayudan a evitar la repetición de código.
+4. **Constructores en enumeraciones**: Las enumeraciones en Kotlin pueden tener constructores que permiten asociar datos adicionales a cada valor, como descripciones o códigos. Esto las hace más flexibles al permitir el almacenamiento de datos junto a los estados.
+5. **Implementación de interfaces**: Al implementar interfaces, las enumeraciones pueden heredar comportamientos comunes que se aplican a todos sus valores sin sobrescribir métodos. Esto permite una mayor reutilización de código.
+6. **Funciones útiles en enumeraciones**:
+    - **`entries`**: Permite acceder a todos los valores de una enumeración, lo que facilita su recorrido o manipulación.
+    - **`valueOf`**: Permite obtener un valor de la enumeración a partir de su nombre, aunque no es una operación completamente segura, ya que es necesario manejar excepciones como `IllegalArgumentException` si el valor no existe.
+
+### Ventajas y limitaciones
+
+- Las **enumeraciones** son ideales cuando se necesita trabajar con estados finitos y conocidos. Proporcionan **seguridad de tipos**, aseguran que todos los estados sean manejados y facilitan la implementación de comportamientos comunes.
+- Sin embargo, las **clases selladas** pueden ser más adecuadas para escenarios más complejos donde los estados tienen múltiples variaciones o comportamientos dinámicos.
+
+---
+
+Esta lección proporciona una base sólida para entender y aplicar enumeraciones en el desarrollo de software, permitiendo modelar estados de manera más eficiente y segura en Kotlin.
 <div className="language-card-container">
     <LanguageCard
         logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Logo_C_sharp.svg/1200px-Logo_C_sharp.svg.png"

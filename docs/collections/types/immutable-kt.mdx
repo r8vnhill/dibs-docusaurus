@@ -1,11 +1,12 @@
 ---
-title: Colecciones inmutables
+title: Colecciones Inmutables
 ---
-import LanguageCard from "../../../src/components/cards/LanguageCard";
-import GitHubRepoLink from "../../../src/components/GithubRepoLink";
-import References from "../../../src/components/ReferencesComponent";
-import ReadingTime from '../../../src/components/ReadingTime';
-import CollectionsVariance from '../../../src/pages/collections/types/collections-variance.mdx';
+import {Cons, ProCons, Pros} from "/src/components/cajitas/ProCons";
+import LanguageCard from "/src/components/cards/LanguageCard";
+import GitHubRepoLink from "/src/components/GithubRepoLink";
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import CollectionsVariance from '/src/pages/collections/types/collections-variance.mdx';
 
 <ReadingTime />
 <GitHubRepoLink repo={"collections-kt"} user={"r8vnhill"} />
@@ -35,7 +36,19 @@ Las colecciones son covariantes, lo que permite asignar una colección de un tip
 <details>
     <summary>Más detalles sobre covarianza</summary>
 
-    <CollectionsVariance />
+    Al asignar una colección de tipo `Collection<String>` a una variable de tipo `Collection<Any>`, se pierde la información específica de los tipos, pero algunas operaciones como `contains` siguen siendo seguras debido a su naturaleza pura (no modifican el estado).
+
+    ```kotlin showLineNumbers
+    val strings: Collection<String> = listOf("Kotlin", "Java")
+    val anys: Collection<Any> = strings
+    println(anys.contains(420))  // Output: false
+    println(strings.contains(420))  // Error de compilación
+    ```
+
+    **Explicación**:
+- **[2]**: La asignación es válida debido a la **covarianza**: `Collection<String>` es un subtipo de `Collection<Any>`.
+- **[3]**: Aunque `420` no es un `String`, el método `contains` espera un `Any` en `anys`, lo que permite la llamada. El resultado es `false`, ya que `420` no está en la colección.
+- **[4]**: Al intentar usar `contains` directamente en `strings` con un `Int`, el compilador arroja un error porque espera un parámetro de tipo `String`.
 </details>
 
 La covarianza en colecciones permite flexibilidad al tratar con tipos genéricos sin comprometer la seguridad de los tipos en operaciones de solo lectura.
@@ -85,22 +98,43 @@ val immutableMap: Map<String, Int> = mapOf("Kotlin" to 1, "Java" to 2)
 println(immutableMap["Kotlin"])  // Output: 1
 ```
 
-## Beneficios de las Colecciones Inmutables
+<ProCons>
+    <Pros>
+        - **Seguridad en concurrencia**: Las colecciones inmutables son intrínsecamente seguras para usar en entornos concurrentes, ya que no pueden ser modificadas, eliminando riesgos de condiciones de carrera.
+        - **Simplicidad y claridad**: Al no poder modificar las colecciones, el código es más fácil de entender y mantener, ya que se evita la lógica compleja relacionada con la modificación del estado.
+        - **Garantía de integridad de los datos**: Al utilizar colecciones inmutables, se garantiza que los datos no cambiarán accidentalmente después de ser inicializados, lo que proporciona mayor control y confianza en el comportamiento del programa.
+    </Pros>
+    <Cons>
+        - **Menor flexibilidad**: En situaciones donde se requiere modificar una colección frecuentemente, las colecciones inmutables pueden resultar menos eficientes, ya que cada modificación requiere la creación de una nueva colección.
+        - **Mayor uso de memoria**: Al no permitir modificaciones, cada cambio genera una nueva colección, lo que puede incrementar el consumo de memoria en operaciones que normalmente modificarían la colección original.
+        - **Costo de conversión**: Si se necesita transformar una colección mutable en inmutable o viceversa, el costo de conversión puede ser significativo en términos de rendimiento, especialmente en colecciones grandes.
+    </Cons>
+</ProCons>
 
-1. **Seguridad**: Garantizan que los datos no cambien, lo que evita errores imprevistos.
-2. **Facilitan la concurrencia**: Al no cambiar su estado, son naturalmente seguras para usar en entornos concurrentes.
-3. **Lectura más clara**: Es más fácil razonar sobre el comportamiento de un programa cuando las colecciones son inmutables, ya que no se esperan cambios imprevistos.
+## ¿Qué Aprendimos?
+
+En esta lección, hemos aprendido sobre las **colecciones inmutables en Kotlin** y su importancia en la programación segura y eficiente. A lo largo del texto, vimos cómo las colecciones como **`List`**, **`Set`**, y **`Map`** pueden ser utilizadas para manejar datos de manera **inmutable**, garantizando que no sean modificados accidentalmente una vez creados.
+
+### Puntos clave
+
+1. **Inmutabilidad por defecto**: Las colecciones inmutables en Kotlin proporcionan seguridad en el manejo de datos, especialmente en entornos concurrentes, evitando modificaciones inesperadas.
+2. **Covarianza en colecciones**: Permite asignar colecciones de subtipos a supertipos de manera segura, preservando la integridad de las operaciones de solo lectura.
+3. **Diferentes tipos de colecciones**: Kotlin ofrece una variedad de colecciones inmutables (`List`, `Set`, `Map`) que permiten organizar datos de diversas formas y realizar operaciones eficientes sin riesgo de modificaciones.
+
+Aunque las colecciones inmutables son útiles para garantizar la integridad de los datos y simplificar el código, en algunos casos pueden introducir **ineficiencias** relacionadas con el **mayor consumo de memoria** y la **necesidad de conversiones** si se requiere modificar los datos.
+
+En resumen, las colecciones inmutables son una excelente opción cuando se necesita seguridad y estabilidad en el manejo de datos, pero es importante considerar las implicaciones de rendimiento en contextos donde las modificaciones son frecuentes.
 
 <div className="language-card-container">
     <LanguageCard
         logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Logo_C_sharp.svg/1200px-Logo_C_sharp.svg.png"
         language="C#"
-        link="immutable/csharp"
+        link="/docs/collections/types/csharp"
     />
     <LanguageCard
         logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Haskell-Logo.svg/1200px-Haskell-Logo.svg.png"
         language="Haskell"
-        link="immutable/haskell"
+        link="/docs/collections/types/haskell"
     />
 </div>
 

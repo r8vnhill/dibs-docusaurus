@@ -1,8 +1,11 @@
 ---
 title: Excepciones en Python
 ---
-import References from "../../../src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import {Cons, ProCons, Pros} from "/src/components/cajitas/ProCons";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
 
 <ReadingTime/>
 
@@ -12,9 +15,30 @@ Al igual que **Kotlin**, Python también tiene un manejo de excepciones basado e
 
 En ambos lenguajes, se puede lanzar una excepción usando `throw` en Kotlin y `raise` en Python. Sin embargo, existe una diferencia importante en las convenciones. En Python, se usa la palabra **`Error`** en los nombres de las excepciones para indicar un fallo esperado, como `ValueError`, mientras que en Kotlin **`Error`** denota algo más grave y que típicamente no debería capturarse, como en el caso de errores fatales del sistema (`OutOfMemoryError`).
 
-```python
-raise ValueError("Cannot divide by zero")
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers title="playground.py"
+        raise ValueError("Cannot divide by zero")
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="playground.py"
+        def divide(a: int, b: int) -> int:
+            if b == 0:
+                raise ValueError("Cannot divide by zero")
+            return a // b
+
+        if __name__ == '__main__':
+            print(divide(10, 2))
+            print(divide(10, 0))
+        # Output:
+        # 5
+        # Traceback (most recent call last):
+        # ...
+        # ValueError: Cannot divide by zero
+        ```
+    </TabItem>
+</Tabs>
 
 En Kotlin, las excepciones que lanzamos son generalmente subclases de `Exception`, mientras que `Error` en Kotlin se refiere a fallos catastróficos que el programa no debería intentar manejar.
 
@@ -22,39 +46,105 @@ En Kotlin, las excepciones que lanzamos son generalmente subclases de `Exception
 
 Ambos lenguajes usan `try-catch` (o `try-except` en Python) para capturar excepciones. Sin embargo, en Python se puede usar un bloque `else` para definir código que debe ejecutarse si **no** se lanza ninguna excepción, una característica que no existe en Kotlin.
 
-```python showLineNumbers
-def safe_divide(a: float, b: float) -> float | None:
-    try:
-        return a / b
-    except ZeroDivisionError as e:
-        print(f"Error: {e}")
-        return None
-    else:
-        print("Division successful")
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers title="playground.py"
+        try:
+            return a / b
+        except ZeroDivisionError as e:
+            print(f"Error: {e}")
+            return None
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="playground.py"
+        def safe_divide(a: float, b: float) -> float | None:
+            try:
+                return a / b
+            except ZeroDivisionError as e:
+                print(f"Error: {e}")
+                return None
+
+        if __name__ == '__main__':
+            print(safe_divide(1.0, 2.0))
+            print(safe_divide(1.0, 0.0))
+            # Output:
+            # 0.5
+            # Error: float division by zero
+            # None
+        ```
+    </TabItem>
+</Tabs>
 
 ## Bloque `finally`
 
 En ambos lenguajes, el bloque `finally` se ejecuta siempre, independientemente de si una excepción fue lanzada o no. Esto se utiliza típicamente para la liberación de recursos.
 
-```python
-try:
-    # Some code
-except Exception as e:
-    # Handle exception
-finally:
-    print("Cleaning up resources")
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers title="playground.py"
+        try:
+            # Operation that may raise an exception
+        except Exception as e:
+            # Handle exception
+        finally:
+            # Cleanup resources
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="playground.py"
+        def read_file(path):
+            reader = None
+            try:
+                with open(path, 'r') as reader:
+                    content = reader.read()
+                    print("File content:")
+                    print(content)
+            except FileNotFoundError as e:
+                print(f"Error: File not found. {e}")
+            except PermissionError as e:
+                print(f"Error: Permission denied. {e}")
+            finally:
+                if reader and not reader.closed:
+                    reader.close()
+                    print("File closed")
+        ```
+    </TabItem>
+</Tabs>
 
 ## Excepciones Personalizadas
 
 En ambos lenguajes, puedes definir excepciones personalizadas. En Python, se sigue la convención de agregar "Error" al nombre de la excepción, mientras que en Kotlin las excepciones suelen derivar de `Exception`.
 
-```python
-class CustomError(Exception):
-    def __init__(self, message):
-        super().__init__(message)
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers
+        class StopLovingError(Exception):
+            def __init__(self, message: str):
+                super().__init__(message)
+
+        def validate_age(age: int) -> None:
+            if age >= 70:
+                raise StopLovingError("And, darling, I will be loving you 'til we're 70")
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="exceptions/stop_loving_error.py"
+        class StopLovingError(Exception):
+            def __init__(self, message: str):
+                super().__init__(message)
+        ```
+
+        ```python showLineNumbers title="exceptions/stop_loving_error.py"
+        from exceptions.stop_loving_error import StopLovingError
+
+
+        def validate_age(age: int) -> None:
+            if age >= 70:
+                raise StopLovingError("And, darling, I will be loving you 'til we're 70")
+        ```
+    </TabItem>
+</Tabs>
 
 ## Comparación final
 
@@ -69,10 +159,6 @@ class CustomError(Exception):
 | **Chequeo de Excepciones**         | No tiene excepciones chequeadas.                                             | Tampoco tiene excepciones chequeadas.                                                                     |
 | **Manejo de errores**              | Uso preferido de tipos anulables (`nullable`) y `Result`.                    | Se manejan principalmente con excepciones.                                                                |
 | **Propagación de Excepciones**     | Las excepciones se propagan si no se capturan, sin necesidad de declararlas. | Funciona de manera similar a Kotlin.                                                                      |
-
-## Resumen
-
-Kotlin y Python manejan las excepciones de manera similar en muchos aspectos, pero tienen diferencias importantes en cuanto a las convenciones y las funcionalidades adicionales, como el uso del bloque `else` en Python. Además, Kotlin introduce enfoques adicionales como los tipos anulables para manejar errores sin lanzar siempre excepciones.
 
 <References references={[
     {
