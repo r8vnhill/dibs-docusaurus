@@ -1,59 +1,87 @@
-import Tooltip from "../../../src/components/Tooltip";
-
-# JVM: Spock
+---
+title: Testing de Excepciones en Spock
+---
+import Tooltip from "/src/components/Tooltip";
+import {ProCons, Pros, Cons} from '/src/components/cajitas/ProCons';
 
 **Spock** es un framework de pruebas y especificaciones escrito en **Groovy** para Java y Groovy que se destaca por su sintaxis expresiva y su enfoque basado BDD utilizando en el patrón <Tooltip text={<>Este patrón es equivalente a <code>BehaviorSpec</code> en Kotest</>} highlight={true}>`given-when-then`</Tooltip>. A continuación, exploraremos cómo se realiza el testing de excepciones en **Spock** y compararemos las similitudes y diferencias con **Kotest** en Kotlin.
 
-## Ejemplo en Spock
+## Verificación de Excepciones
 
-En este ejemplo, se muestra cómo **Spock** permite probar excepciones lanzadas por un método que modifica la salud de un Bakémon:
+Tanto en **Spock** como en **Kotest**, es posible verificar que se lanzen excepciones durante la ejecución del código. Sin embargo, la forma en que cada framework maneja las pruebas de excepciones es diferente:
 
-```groovy showLineNumbers title="BakemonHpSpec.groovy"
-import spock.lang.Specification
+- En **Kotest**, puedes utilizar funciones como `shouldThrow`, `shouldThrowUnit`, y `shouldThrowExactly` para verificar que el código lance excepciones específicas. Estas funciones son altamente configurables y permiten comprobar tanto la clase de la excepción como el mensaje asociado.
+- En **Spock**, se utiliza un enfoque basado en bloques para verificar excepciones. El bloque `when` especifica el código que ejecuta la excepción y el bloque `then` se usa para verificar que la excepción ocurrió. En lugar de una función de aserción específica, Spock permite manejar las excepciones directamente dentro de la estructura del test.
 
-class BakemonHpSpec extends Specification {
+## Sintaxis de Testing de Excepciones
 
-    def "should throw exception when health points are set below zero"() {
-        given: "a Bakémon with maximum health"
-        Bakemon bakemon = new Bakemon("Bigachu", 100)
+### Kotest
 
-        when: "setting current health points to a negative value"
-        bakemon.setCurrentHealthPoints(-1)
+Kotest usa un enfoque más declarativo, en el que las excepciones se prueban envolviendo el código en una función como `shouldThrow`. Esto resulta útil cuando deseas verificar tanto la excepción como el mensaje.
 
-        then: "an IllegalArgumentException is thrown"
-        thrown(IllegalArgumentException)
-    }
-}
+### Spock
+
+En Spock, la estructura es más parecida a una secuencia de comandos. Definir las condiciones del test es más explícito debido a la separación de los bloques `when` y `then`. Esto proporciona una claridad sobre la fase en la que ocurre cada paso del test (ejecución y verificación).
+
+### Ejemplo en Spock
+
+En Spock, la verificación de excepciones puede ser similar a esto:
+
+```groovy
+when:
+bigachu.currentHealthPoints = -1
+
+then:
+thrown(IllegalArgumentException)
+exception.message == "Current health points is not in [0, 100]: -1"
 ```
 
-## Similitudes entre Kotest y Spock
+Este enfoque te permite manejar las excepciones con mayor claridad, destacando cuándo ocurre y qué se espera como resultado.
 
-1. **Expresividad**: Ambos frameworks ofrecen un enfoque declarativo para probar excepciones, lo que permite escribir tests que sean legibles y enfocados en el comportamiento.
+## Soporte para Excepciones Exactas
 
-2. **Verificación de Excepciones**: Tanto Kotest como Spock permiten verificar de forma explícita que se lance una excepción específica y su mensaje asociado. En **Kotest** se usa `shouldThrow`, mientras que en **Spock** se utiliza `thrown`.
+En **Kotest**, puedes asegurarte de que se lance exactamente una excepción particular (sin permitir subclases) mediante el uso de `shouldThrowExactly`. Esto es útil si necesitas ser muy preciso sobre qué tipo de excepción esperas.
 
-3. **Testing fluido**: Ambos frameworks utilizan una sintaxis fluida y expresiva, lo que facilita la creación de pruebas comprensibles. En **Spock**, el flujo de prueba se organiza en bloques (`given`, `when`, `then`), mientras que **Kotest** organiza las pruebas de forma fluida mediante estilos de especificación.
+En **Spock**, la verificación de subclases es automática y, aunque no tiene una verificación explícita para distinguir excepciones exactas versus subclases, puedes escribir un `assert` explícito si es necesario.
 
-## Diferencias entre Kotest y Spock
+## Personalización de Mensajes
 
-1. **Lenguaje de Programación**:
-    - **Kotest**: Está diseñado específicamente para **Kotlin**, aprovechando la concisa y expresiva sintaxis del lenguaje.
-    - **Spock**: Funciona en **Groovy**, pero también es compatible con **Java**, por lo que es más adecuado para proyectos basados en **Java** y con desarrolladores familiarizados con **Groovy**.
+Ambos frameworks permiten verificar los mensajes de las excepciones. Sin embargo, en **Kotest**, esta verificación se puede manejar directamente en la misma línea de la llamada `shouldThrow`, lo que puede ser más conciso.
 
-2. **Estilo de Estructuración**:
-    - **Kotest**: Ofrece varios estilos de especificación (`StringSpec`, `FreeSpec`, `BehaviorSpec`, etc.) para organizar las pruebas de forma flexible.
-    - **Spock**: Sigue el patrón `given-when-then`, lo que permite estructurar las pruebas de manera narrativa, pero menos flexible en comparación con Kotest.
+En **Spock**, la verificación del mensaje generalmente se hace en un bloque separado (`then`), lo que puede proporcionar más claridad cuando se desea especificar el mensaje en una sección dedicada.
 
-3. **Verificación de Excepciones**:
-    - **Kotest**: Proporciona varios métodos para testear excepciones (`shouldThrow`, `shouldThrowExactly`, etc.), lo que permite controlar el nivel de exactitud en la verificación de excepciones.
-    - **Spock**: Utiliza `thrown` para verificar excepciones, pero sin la granularidad que proporciona Kotest para verificar la clase exacta de excepción o aceptar subclases.
+## Comparación Final
 
-## Comparación Final: Kotest vs Spock
+| **Característica**                | **Kotest**                                                                                                                                | **Spock**                                                                                                                     |
+|-----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| **Verificación de Excepciones**   | Utiliza funciones como `shouldThrow`, `shouldThrowUnit`, y `shouldThrowExactly` para verificar excepciones específicas.                   | Usa bloques `when` y `then` para capturar y verificar excepciones, proporcionando claridad sobre el flujo del test.           |
+| **Precisión de Excepciones**      | Soporte explícito con `shouldThrowExactly` para asegurar que se lance una excepción específica sin permitir subclases.                    | Verificación de excepciones es automática, pero se pueden agregar `asserts` específicos para diferenciar si es necesario.     |
+| **Verificación de Mensajes**      | Los mensajes de excepción se pueden verificar en la misma línea de la llamada `shouldThrow`, lo que resulta en una sintaxis más compacta. | Los mensajes de excepción se verifican en un bloque `then`, lo que proporciona una estructura más clara y detallada.          |
+| **Sintaxis y Estructura**         | Enfoque declarativo que permite escribir tests de manera compacta y directa usando funciones de aserción específicas.                     | Sintaxis basada en bloques `given-when-then`, que destaca las fases del test y proporciona claridad sobre cada paso.          |
+| **Transformación de Excepciones** | Requiere implementación manual mediante bloques `try-catch` para transformar excepciones.                                                 | Permite transformar excepciones directamente en otros valores o resultados de manera fluida dentro de la estructura del test. |
 
-| **Característica**              | **Kotest**                                              | **Spock**                                        |
-|---------------------------------|---------------------------------------------------------|--------------------------------------------------|
-| **Lenguaje**                    | Kotlin                                                  | Groovy (también compatible con Java)             |
-| **Verificación de Excepciones** | `shouldThrow`, `shouldThrowExactly`, `shouldThrowAny`   | `thrown(IllegalArgumentException)`               |
-| **Estilo de Pruebas**           | Diversos estilos de especificación (e.g., `FreeSpec`)   | `given-when-then`                                |
-| **Control de Excepciones**      | Verificación exacta y flexible con `shouldThrowExactly` | Menos granular, pero declarativo y fácil de leer |
-| **Sintaxis Fluida**             | Altamente fluida con varios estilos de especificación   | Narrativo con bloques (`given`, `when`, `then`)  |
+<ProCons>
+    <Pros>
+        - **Claridad en la Estructura**: La separación en bloques `when` y `then` en Spock proporciona una estructura clara, facilitando la lectura y entendimiento del flujo del test.
+        - **Sintaxis Expresiva**: La sintaxis de Spock basada en BDD (Behavior-Driven Development) hace que las pruebas sean intuitivas y expresivas, mejorando la comprensión del comportamiento esperado del código.
+    </Pros>
+    <Cons>
+        - **Precisión Limitada para Excepciones Exactas**: A diferencia de Kotest, Spock no ofrece un método específico para verificar que se lance exactamente una excepción sin permitir subclases, lo que puede ser un inconveniente cuando se necesita precisión en las pruebas.
+        - **Sintaxis Verbosa en la Verificación de Mensajes**: La verificación de mensajes en Spock suele requerir un bloque `then` separado, lo que puede hacer que el código sea más largo en comparación con la sintaxis compacta de Kotest.
+    </Cons>
+</ProCons>
+
+## ¿Qué Aprendimos?
+
+En esta lección, exploramos las diferencias y similitudes entre **Kotest** y **Spock** en el contexto de testing de excepciones, destacando sus enfoques y capacidades particulares.
+
+### Puntos Clave
+
+1. **Verificación de Excepciones**:
+    - **Kotest** utiliza funciones específicas como `shouldThrow` y `shouldThrowExactly`, lo que proporciona una sintaxis compacta y directa para verificar excepciones y sus mensajes.
+    - **Spock**, por otro lado, emplea un enfoque basado en bloques (`when` y `then`), que permite una separación clara entre la ejecución y la verificación de excepciones, lo que mejora la legibilidad.
+2. **Precisión y Flexibilidad**:
+    - **Kotest** ofrece precisión con `shouldThrowExactly`, ideal para escenarios donde se requiere asegurarse de que se lance exactamente una excepción específica.
+    - **Spock** maneja automáticamente las subclases de excepciones, lo cual es conveniente en muchos casos, pero puede ser limitante cuando se necesita precisión absoluta.
+
+En resumen, **Spock** y **Kotest** son herramientas poderosas para el testing de excepciones, cada una con su propio enfoque y ventajas. La elección entre ellas puede depender de las necesidades específicas del proyecto y de la familiaridad del equipo con los lenguajes y estilos de test correspondientes.

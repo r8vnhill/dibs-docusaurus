@@ -14,14 +14,7 @@ const FeatureList: FeatureItem[] = [
         Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
         description: (
             <>
-                Este curso está enfocado en el desarrollo de bibliotecas de software, introduciendo técnicas avanzadas
-                de programación orientada a objetos y explorando paradigmas funcionales, genéricos y orientados a
-                lenguajes. A lo largo del curso, se abordarán temas clave como el uso correcto de herencia y
-                composición, metodologías rigurosas de testing, manejo eficiente de colecciones, diseño de APIs
-                intuitivas y extensibles, sistemas de construcción (build systems), y análisis estático. Además, se
-                explorarán soluciones a problemas como el diamante en herencia múltiple y el uso de reflexión para crear
-                software adaptado a dominios específicos, todo con el objetivo de escribir bibliotecas reutilizables,
-                mantenibles y robustas.
+                El curso "Diseño e Implementación de Bibliotecas de Software" está orientado a estudiantes con conocimientos básicos de OOP y se enfoca en desarrollar bibliotecas de software robustas y mantenibles. Se abordan principios de código limpio, void-safety, y sistemas de construcción para gestionar dependencias y automatizar tareas. El curso profundiza en temas avanzados de OOP como herencia múltiple y el problema del diamante, además de explorar la programación genérica, la funcional y técnicas avanzadas de testing. Los estudiantes aprenderán a crear bibliotecas eficientes, seguras y de calidad, listas para entornos de producción.
             </>
         ),
     },

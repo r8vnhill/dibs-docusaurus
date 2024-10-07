@@ -1,0 +1,87 @@
+---
+title: Programación Orientada a Objetos en Python
+---
+import References from "@site/src/components/ReferencesComponent";
+import ReadingTime from '@site/src/components/ReadingTime';
+
+<ReadingTime/>
+
+## Singleton
+
+En **Python**, no hay un equivalente directo a la palabra clave `object` de Kotlin para crear singletons. Sin embargo, se puede implementar un singleton mediante un patrón de diseño, utilizando decoradores o metaclases. Python requiere pasos explícitos para garantizar que solo exista una instancia de la clase, mientras que en Kotlin, el uso de `object` es directo y conveniente.
+
+```python showLineNumbers
+from typing import Any
+
+class SingletonMeta(type):
+    _instances: dict[type, Any] = {}
+
+    def __call__(cls: type, *args: Any, **kwargs: Any) -> Any:
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+        return cls._instances[cls]
+
+class MySingleton(metaclass=SingletonMeta):
+    name: str = "Singleton"
+
+    def greet(self) -> str:
+        return f"Hello, {self.name}"
+```
+
+## Clases
+
+Tanto en **Python** como en **Kotlin**, las clases se utilizan para definir las propiedades y comportamientos de los objetos. Las clases en Python son flexibles y no requieren la especificación explícita de tipos en las propiedades o métodos, a diferencia de Kotlin, que utiliza un sistema de tipos estáticos.
+
+## Interfaces
+
+En **Python**, no existen interfaces en el sentido estricto de Kotlin. En su lugar, Python utiliza **protocolos** (a partir de Python 3.8 con `typing.Protocol`) para definir contratos de comportamiento.
+
+```python showLineNumbers
+from typing import Protocol
+
+class Greeter(Protocol):
+    def greet(self) -> str:
+        ...
+
+class Walker(Protocol):
+    def walk(self) -> str:
+        ...
+
+class Person:
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    def greet(self) -> str:
+        return f"Hello, {self.name}"
+
+    def walk(self) -> str:
+        return "Walking..."
+
+# Verificamos que Person cumple con los protocolos
+def introduce(entity: Greeter & Walker) -> None:
+    print(entity.greet())
+    print(entity.walk())
+
+# Uso
+person = Person("Deku")
+introduce(person)
+```
+
+## Encapsulación
+
+La encapsulación en **Python** se logra mediante convención, utilizando un prefijo de guion bajo (`_`) para señalar que un atributo o método es privado. No existe un control estricto como en Kotlin, que permite especificar el nivel de acceso con `public`, `private`, `protected` e `internal`.
+
+**Diferencia clave**: Kotlin impone un control más estricto sobre la visibilidad de los miembros de una clase, mientras que Python sigue una convención que no restringe el acceso de manera efectiva, dejando la responsabilidad al desarrollador.
+
+## Constructores
+
+Python y Kotlin manejan constructores de manera diferente. En **Python**, la inicialización de una clase se realiza con el método `__init__`, que actúa como el constructor. A diferencia de Kotlin, que permite definir **constructores primarios y secundarios**, Python solo admite un método de inicialización por clase, aunque se pueden usar valores predeterminados y parámetros con `*args` y `**kwargs` para simular constructores secundarios.
+
+**Diferencia clave**: Kotlin ofrece un enfoque más estructurado con constructores primarios y secundarios, permitiendo sobrecargar constructores de manera explícita, mientras que Python se basa en su flexibilidad de parámetros para lograr algo similar.
+
+## Compatibilidad con Tipado
+
+Kotlin es un lenguaje de tipado estático, lo que permite detectar errores en tiempo de compilación y facilita la autocompletación de código y el análisis estático. Python, siendo dinámicamente tipado, no proporciona las mismas garantías en tiempo de compilación, aunque con `type hints` se pueden mejorar las herramientas de autocompletado y verificación de tipos.
+
+**Diferencia clave**: Kotlin proporciona mayor seguridad en tiempo de compilación gracias a su tipado estático, mientras que Python, aunque flexible, requiere de herramientas externas y `type hints` para acercarse a este nivel de seguridad.
