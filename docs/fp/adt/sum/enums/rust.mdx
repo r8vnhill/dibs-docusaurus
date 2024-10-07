@@ -68,39 +68,162 @@ impl DeliveryState {
 }
 ```
 
-### Comparación con Kotlin
+## Definición de Enumeraciones con Datos Asociados en Rust
 
-| **Característica**             | **Kotlin**                                        | **Rust**                                             |
-|-------------------------------|---------------------------------------------------|------------------------------------------------------|
-| **Métodos Abstractos en Enums** | Los métodos abstractos permiten comportamientos específicos por variante. | No se pueden definir métodos abstractos en las variantes; los métodos se implementan en un `impl block` general. |
-| **Datos Asociados**           | Los constructores pueden asociar datos a cada variante, pero de manera estática. | Cada variante puede tener diferentes datos asociados, permitiendo más flexibilidad. |
-| **Patrones Exhaustivos**      | `when` asegura exhaustividad pero permite un bloque `else` opcional. | `match` asegura exhaustividad sin un valor por defecto, lo que obliga a manejar todos los casos. |
+En Rust, cada variante de una enumeración puede tener tipos de datos asociados, lo que permite almacenar información adicional para cada valor de la enumeración. A diferencia de Kotlin, donde los parámetros se definen en el constructor, en Rust los datos asociados se especifican directamente en cada variante.
 
-### Diferencias Únicas en Rust
+```rust showLineNumbers
+enum DeliveryState {
+    Pending(String, u32),
+    Cancelled(String, u32),
+}
+```
 
-1. **Datos Asociados Dinámicos**: Rust permite que las variantes de una enumeración tengan diferentes tipos y cantidades de datos asociados, lo que no es posible en Kotlin de forma directa. Esto ofrece más flexibilidad al modelar estados complejos con datos adicionales.
-2. **Opciones sin Desventajas de Nulabilidad**: En Rust, las variantes de enumeración pueden tener valores que reemplazan las nulas, como `None` en lugar de `null`, lo que elimina errores comunes asociados a la nulabilidad en otros lenguajes.
-3. **Seguridad en Tiempo de Compilación**: Rust impone una seguridad más estricta que Kotlin al forzar el manejo de todos los casos posibles sin una opción de escape (sin `else`). Esto asegura que no se omita ningún caso, mejorando la robustez del código.
+:::info Explicación del Código
 
-### Ventajas y Desventajas de las Enumeraciones en Rust
+- **[2]** `Pending(String, u32)`: La variante `Pending` lleva un `String` que podría describir el estado y un `u32` como un código.
+- **[3]** `Cancelled(String, u32)`: Similarmente, la variante `Cancelled` tiene un `String` y un `u32`.
+
+:::
+
+### Uso de las Variantes con Datos Asociados
+
+Para acceder y utilizar los datos de cada variante en Rust, se utiliza **pattern matching** (`match`). Esto permite extraer y trabajar con los datos asociados a cada variante de manera explícita.
+
+#### Ejemplo de Uso:
+
+```rust showLineNumbers
+fn print_order_details(state: DeliveryState) {
+    match state {
+        DeliveryState::Pending(description, code) => {
+            println!("State: {}, Code: {}", description, code);
+        },
+        DeliveryState::Cancelled(description, code) => {
+            println!("State: {}, Code: {}", description, code);
+        },
+    }
+}
+```
+
+:::info Explicación del Código
+
+- **[2-9]**: Se utiliza `match` para verificar y extraer los valores de cada variante.
+- **[3-5, 6-8]**: Se desestructuran los datos asociados (`description` y `code`) de las variantes `Pending` y `Cancelled`, respectivamente.
+
+:::
+
+## Definición de Traits y su Implementación en Enumeraciones
+
+En Rust, se definen **traits** para establecer comportamientos comunes. Luego, se implementan para cada variante o para la enumeración en general.
+
+```rust
+trait Notifier {
+    fn notify(&self, message: &str);
+}
+
+trait Storable {
+    fn store(&self);
+}
+
+enum DeliveryState {
+    Pending,
+    Paid,
+    Shipped,
+    Delivered,
+    Cancelled,
+}
+
+impl Notifier for DeliveryState {
+    fn notify(&self, message: &str) {
+        println!("Notifying {:?}: {}", self, message);
+    }
+}
+
+impl Storable for DeliveryState {
+    fn store(&self) {
+        println!("Storing state: {:?}", self);
+    }
+}
+
+impl DeliveryState {
+    fn signal(&self) -> &str {
+        match self {
+            DeliveryState::Pending => "Order is pending",
+            DeliveryState::Paid => "Order is paid",
+            DeliveryState::Shipped => "Order is shipped",
+            DeliveryState::Delivered => "Order is delivered",
+            DeliveryState::Cancelled => "Order is cancelled",
+        }
+    }
+
+    fn is_final_state(&self) -> bool {
+        matches!(self, DeliveryState::Delivered | DeliveryState::Cancelled)
+    }
+}
+
+fn main() {
+    let state = DeliveryState::Paid;
+    println!("{}", state.signal());
+    state.notify("Order is paid");
+    state.store();
+    println!("{}", state.is_final_state());
+    /*
+    Output:
+    Order is paid
+    Notifying Paid: Order is paid
+    Storing state: Paid
+    false
+    */
+}
+```
+
+## Comparación Final
+
+| **Característica**                      | **Rust**                                                                                                    | **Kotlin**                                                                                                                    |
+|-----------------------------------------|-------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| **Definición de variantes**             | Las variantes se definen en el `enum`, y cada una puede tener datos asociados específicos.                  | Las variantes se definen con un constructor compartido en el `enum`, pero no permiten diferentes tipos de datos por variante. |
+| **Datos asociados**                     | Permite asociar datos distintos a cada variante, lo que proporciona flexibilidad en el diseño.              | Permite un solo conjunto de parámetros comunes para todas las variantes en el constructor.                                    |
+| **Métodos en enumeraciones**            | Los métodos se implementan mediante bloques `impl` y se aplican a la enumeración completa.                  | Los métodos pueden definirse directamente en la enumeración y cada variante puede tener sus propios métodos.                  |
+| **Implementación de interfaces**        | Usa traits para definir comportamientos que se implementan en las variantes o en el `enum` en general.      | Las enumeraciones pueden implementar interfaces directamente, heredando métodos predeterminados.                              |
+| **Patrones de coincidencia**            | Usa `match` para manejar variantes de manera exhaustiva, asegurando que todas se manejen.                   | Utiliza `when` para verificar las variantes, con verificación exhaustiva similar a Rust.                                      |
+| **Flexibilidad en el uso de variantes** | Cada variante puede llevar distintos tipos de datos y se accede a ellos usando `match` para desestructurar. | Se accede a los valores del constructor de forma similar a las propiedades de una clase.                                      |
 
 <ProCons>
     <Pros>
-        - **Datos Asociados Flexibles**: Las enumeraciones en Rust pueden contener datos asociados con cada variante, permitiendo modelar estados complejos y relaciones entre datos de manera eficiente.
-        - **Seguridad Exhaustiva en Compilación**: El compilador de Rust fuerza a manejar todos los casos posibles en un `match`, garantizando un código más seguro y predecible.
-        - **Integración Directa con Tipos Algebraicos**: Las enumeraciones en Rust son un componente fundamental para crear estructuras complejas, como las opciones y resultados (`Option` y `Result`), que se utilizan ampliamente para manejo seguro de valores y errores.
+        - **Flexibilidad con datos asociados**: Rust permite que cada variante de una enumeración tenga diferentes tipos y cantidades de datos asociados, lo que proporciona una gran flexibilidad en el diseño y uso de las variantes.
+        - **Patrones de coincidencia exhaustivos**: El uso del patrón `match` garantiza que todas las variantes sean manejadas, reduciendo el riesgo de errores en tiempo de ejecución y haciendo que el código sea más seguro y predecible.
+        - **Integración con traits**: Rust permite que las enumeraciones implementen traits, lo que posibilita extender el comportamiento y compartir funcionalidades entre las variantes de manera estructurada y reutilizable.
+        - **Eficiencia y control**: Al permitir un manejo explícito de los datos y comportamientos en las variantes, Rust proporciona un control granular sobre cómo se manejan y acceden las propiedades de cada variante.
     </Pros>
     <Cons>
-        - **Falta de Métodos Abstractos**: Rust no permite que las variantes de una enumeración definan comportamientos específicos directamente, lo que puede hacer que el código sea menos modular en comparación con Kotlin.
-        - **Complejidad Adicional**: La flexibilidad de asociar datos diferentes a cada variante puede hacer que las estructuras sean más complejas y difíciles de manejar, especialmente para quienes no están familiarizados con el sistema de tipos de Rust.
+        - **Complejidad en el manejo de datos asociados**: Aunque es flexible, el uso de datos asociados en cada variante puede añadir complejidad, especialmente cuando se deben manejar muchas variantes diferentes con distintos tipos de datos.
+        - **Verbosidad en la implementación**: La implementación de métodos en un bloque `impl` para enumeraciones puede ser más verbosa que en otros lenguajes, ya que requiere un manejo explícito de las variantes a través de `match`.
+        - **Curva de aprendizaje**: La combinación de traits, bloques `impl`, y patrones de coincidencia exhaustivos puede resultar compleja para quienes no están familiarizados con el enfoque de Rust, lo que puede aumentar la curva de aprendizaje inicial.
+        - **Limitaciones en métodos específicos por variante**: A diferencia de Kotlin, donde cada variante puede tener sus propios métodos específicos, en Rust los métodos se aplican a la enumeración completa, limitando las capacidades para métodos específicos en variantes individuales.
     </Cons>
 </ProCons>
 
-## Conclusión
+## ¿Qué Aprendimos?
 
-Las enumeraciones en **Rust** y **Kotlin** ofrecen capacidades poderosas y flexibles para representar tipos suma, pero cada uno tiene sus enfoques y limitaciones:
+En esta lección, hemos comparado las enumeraciones en **Rust** y **Kotlin**, destacando las similitudes y diferencias clave entre ambos lenguajes:
 
-- **Rust** destaca por su flexibilidad en asociar datos y su seguridad estricta en tiempo de compilación.
-- **Kotlin** ofrece un enfoque más estructurado y amigable para definir comportamientos específicos con métodos abstractos.
+- **Flexibilidad y Datos Asociados**: Mientras que Kotlin permite constructores en las enumeraciones para asociar información a las variantes, Rust proporciona una mayor flexibilidad al permitir tipos de datos asociados distintos en cada variante. Esto hace que las enumeraciones en Rust sean más versátiles para casos complejos.
+- **Patrones de Coincidencia Exhaustivos**: Tanto Rust como Kotlin garantizan que las coincidencias en las enumeraciones sean exhaustivas, pero Rust se asegura de que todos los casos sean manejados estrictamente, evitando errores en tiempo de ejecución.
+- **Implementación de Métodos y Traits**: Las enumeraciones en Rust pueden implementar métodos a través de bloques `impl` y se pueden extender con traits, lo que permite un comportamiento compartido entre variantes. En Kotlin, las enumeraciones pueden implementar interfaces directamente, heredando comportamientos predeterminados.
 
-Al elegir entre ambos, es importante considerar las necesidades del proyecto y el enfoque preferido para manejar variantes y datos asociados.
+La elección entre usar Rust o Kotlin para trabajar con enumeraciones dependerá del contexto y de las necesidades del proyecto. Rust ofrece más flexibilidad y un control detallado, pero con una curva de aprendizaje más pronunciada y una mayor complejidad en el manejo de datos asociados y patrones. Kotlin, por otro lado, ofrece una sintaxis más directa y familiar para quienes están acostumbrados a trabajar con lenguajes orientados a objetos.
+
+Esta comparación nos ayuda a entender cómo las decisiones de diseño en los lenguajes afectan la manera en que manejamos y utilizamos las enumeraciones en el desarrollo de software.
+
+<References references={[
+    {
+        bookTitle: "The Rust Programming Language",
+        title: "6. Enums and Pattern Matching",
+        publisher: "No Starch Press",
+        location: "San Francisco",
+        pages: "103–118",
+        type: "book",
+        author: "S. Klabnik & C. Nichols",
+        year: "2023",
+    },
+]}/>
