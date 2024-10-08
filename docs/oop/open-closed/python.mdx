@@ -1,26 +1,32 @@
 ---
-title: python
+title: Clases Abiertas y Cerradas en Python
 ---
-import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
 
-<ReadingTime/>
-
-
-
-## Python
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
 
 En **Python**, el paradigma de herencia es más flexible que en Kotlin. No existen las palabras clave `open` o `final` para controlar explícitamente si una clase o método puede ser heredado o sobrescrito. Esto puede facilitar la extensión, pero también puede llevar al **Problema de la Base Frágil** si no se tiene cuidado al diseñar las clases base.
 
-### Clases en Python
+## Clases en Python
 
 En Python, todas las clases son *abiertas* por defecto, lo que significa que pueden ser heredadas sin necesidad de una palabra clave especial. Sin embargo, hay maneras de restringir la herencia utilizando ciertas técnicas.
 
-### Métodos y Herencia en Python
+## Métodos y Herencia en Python
 
 Los métodos en Python también son abiertos por defecto y pueden ser sobrescritos en las subclases sin restricciones. A diferencia de Kotlin, no hay una palabra clave explícita para controlar este comportamiento, pero es posible usar decoradores o convenciones para influir en cómo se debe extender una clase.
 
-#### Métodos "finales"
+### Métodos "finales"
 
 Aunque no existen métodos "finales" en Python, se puede usar el decorador `@final` introducido en la biblioteca `typing` para sugerir que un método no debe ser sobrescrito. Este decorador es solo una indicación y no impide físicamente que el método sea sobrescrito, pero las herramientas de análisis estático pueden generar advertencias si se viola esta convención.
 
@@ -39,16 +45,21 @@ class PhDStudent(UniversityStudent):
     def study(self):
         print("I'm studying a lot!")
 
-    # Esto lanzará una advertencia en análisis estático, pero no impedirá la sobrescritura.
+    # highlight-next-line
     def party(self):
         print("I'm too busy to party!")
 ```
 
-En este ejemplo:
-- (4-5, 12-13) **`study`** es sobrescrito en la subclase `PhDStudent`, tal como se haría en Kotlin con un método `open`.
-- (7-9, 15-17) **`party`** tiene el decorador `@final`, lo que indica que no debe ser sobrescrito, aunque Python no lo impide de forma estricta.
+:::info Explicación del Código
 
-### Simulación de Clases Cerradas en Python
+- **[4-5, 12-13]**: `study` es sobrescrito en la subclase `PhDStudent`, tal como se haría en Kotlin con un método `open`.
+- **[7-9, 15-17]**: `party` tiene el decorador `@final`, lo que indica que no debe ser sobrescrito, aunque Python no lo impide de forma estricta. Esto generará la siguiente advertencia:
+    ```plaintext
+    'UniversityStudent.party' is marked as '@final' and should not be overridden 
+    ```
+:::
+
+## Simulación de Clases Cerradas en Python
 
 Si se desea prohibir que una clase sea heredada, se puede recurrir a técnicas como el uso de metaclases o lanzar excepciones en el constructor si se detecta que la clase está siendo heredada. No obstante, estas técnicas son inusuales y no forman parte de las prácticas comunes en Python, donde la flexibilidad es más valorada que la restricción.
 
@@ -62,14 +73,25 @@ class FinalMeta(type):
 class FinalClass(metaclass=FinalMeta):
     pass
 
-# Intentar heredar de `FinalClass` lanzará una excepción
 class AttemptedSubclass(FinalClass):
-    pass  # Raises TypeError: Cannot inherit from final class <class '__main__.FinalClass'>
+    pass
 ```
 
-### Comparación entre Python y Kotlin
+:::info Explicación del Código
 
-| **Aspecto**                   | **Kotlin**                                       | **Python**                                       |
+- **[1-5]**: La metaclase `FinalMeta` se encarga de lanzar una excepción si se intenta heredar de una clase que utiliza esta metaclase.
+- **[7-8]**: `FinalClass` es una clase final que utiliza `FinalMeta` como metaclase.
+- **[11-13]**: Intentar heredar de `FinalClass` resultará en una excepción `TypeError` al momento de ejecutar el código.
+
+    ```plaintext
+    TypeError: Cannot inherit from final class (<class '__main__.FinalClass'>,)
+    ```
+
+:::
+
+## Comparación Final
+
+| **Característica**                   | **Kotlin**                                     | **Python**                                       |
 |-------------------------------|-------------------------------------------------|-------------------------------------------------|
 | **Clases Abiertas**            | Clases son cerradas por defecto, se abren con `open` | Clases abiertas por defecto, no se necesita palabra clave |
 | **Clases Cerradas**            | Clases son cerradas por defecto (`final`)       | No hay clases cerradas por defecto, se puede simular con metaclases |
@@ -77,29 +99,34 @@ class AttemptedSubclass(FinalClass):
 | **Métodos Cerrados**           | Métodos no pueden sobrescribirse sin `open`     | Se puede usar el decorador `@final` para sugerir que un método no debe sobrescribirse, pero no es obligatorio |
 | **Control de Herencia**        | Herencia controlada explícitamente con `open` y `final` | Flexibilidad total, pero se puede restringir con decoradores o metaclases |
 
-<References references={[
-    {
-        title: "",
-        url: "",
-        type: "article",
-        author: "",
-        publishedDate: "",
-    },
-    {
-        accessedDate: '',
-        siteOrAuthor: '',
-        title: '',
-        type: 'web',
-        url: '',
-    },
-    {
-        title: "",
-        bookTitle: "",
-        pages: "",
-        location: "",
-        publisher: "",
-        year: "",
-        type: "book",
-        author: ''
-    },
-]}/>
+<ProCons>
+    <Pros>
+        - **Flexibilidad en Herencia**: Python permite heredar de cualquier clase sin restricciones por defecto, lo que facilita la extensión y modificación de clases, favoreciendo la adaptabilidad en proyectos que requieren modificaciones rápidas.
+        - **Decoradores y Metaclases**: Python ofrece decoradores como `@final` y el uso de metaclases, proporcionando herramientas para quienes desean imponer restricciones o indicar convenciones, pero sin forzar el cumplimiento rígido.
+        - **Simplicidad y Menor Verbosidad**: A diferencia de Kotlin, donde es necesario marcar explícitamente las clases o métodos como `open`, en Python todo es abierto por defecto, lo que simplifica el código y reduce la necesidad de especificaciones adicionales.
+        - **Compatibilidad y Extensibilidad**: La herencia abierta y la ausencia de restricciones rígidas en Python hacen que sea fácil extender bibliotecas existentes y trabajar con código legado sin limitaciones.
+
+    </Pros>
+    <Cons>
+        - **Falta de Control Explícito**: La ausencia de palabras clave como `open` y `final` en Python puede dificultar la gestión de la herencia, lo que aumenta el riesgo de sobrescritura accidental o comportamientos inesperados si no se documenta y gestiona correctamente.
+        - **Problema de la Base Frágil**: La flexibilidad en la herencia y la sobrescritura de métodos sin restricciones explícitas aumenta la probabilidad de encontrar el Problema de la Base Frágil, especialmente en proyectos grandes o colaborativos donde se heredan clases sin una comprensión profunda.
+        - **Decoradores y Metaclases No Estándar**: Aunque existen maneras de simular clases y métodos finales en Python, como metaclases o decoradores como `@final`, estas técnicas no son convenciones estándar y pueden ser difíciles de entender o mantener para quienes no están familiarizados con ellas.
+        - **Ausencia de Restricciones Automáticas**: En Python, las herramientas para restringir la herencia o sobrescritura dependen de convenciones y análisis estático, pero no se imponen en tiempo de ejecución, lo que puede hacer que las violaciones de estas restricciones pasen desapercibidas hasta que ocurran errores en el uso.
+    </Cons>
+</ProCons>
+
+## ¿Qué Aprendimos?
+
+En esta lección, exploramos cómo **Python** maneja las clases abiertas y cerradas en comparación con **Kotlin**, destacando las similitudes y diferencias clave en la gestión de la herencia y los métodos en ambos lenguajes.
+
+### Puntos Clave
+
+1. **Herencia Abierta por Defecto**: En Python, todas las clases y métodos son abiertos por defecto, lo que simplifica el código y permite una mayor flexibilidad, pero también aumenta el riesgo de sobrescritura accidental si no se gestiona cuidadosamente.
+2. **Decoradores y Metaclases**: Python ofrece herramientas como el decorador `@final` y el uso de metaclases para simular el comportamiento de clases y métodos finales, proporcionando un control adicional para quienes deseen imponer ciertas restricciones. Sin embargo, estas técnicas no son convencionales y no garantizan un control estricto en tiempo de ejecución.
+3. **Problema de la Base Frágil**: La flexibilidad de Python en la herencia puede llevar al problema de la base frágil si las clases base no se diseñan y documentan adecuadamente para ser heredadas de manera segura.
+4. **Simulación de Clases Cerradas**: Aunque Python no soporta clases cerradas de forma nativa, se pueden utilizar metaclases para lograr un control más estricto de la herencia. Sin embargo, esta técnica es más avanzada y rara vez se utiliza en la práctica, dado que la filosofía de Python prioriza la flexibilidad y simplicidad.
+5. **Comparación con Kotlin**: Mientras que Kotlin proporciona un control explícito de la herencia y sobrescritura mediante `open` y `final`, Python opta por un enfoque más flexible y abierto, lo que lo hace más adecuado para proyectos donde la adaptabilidad y la facilidad de modificación son prioridades.
+
+---
+
+En resumen, Python y Kotlin presentan enfoques opuestos hacia la herencia. **Kotlin** prioriza el control explícito y la seguridad, mientras que **Python** se enfoca en la flexibilidad y simplicidad, ofreciendo herramientas adicionales para quienes deseen imponer restricciones pero sin forzar una estructura rígida en el código.
