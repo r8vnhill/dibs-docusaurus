@@ -1,0 +1,123 @@
+---
+title: Clases abiertas y cerradas en Scala
+---
+
+import ReadingTime from "@site/src/components/ReadingTime";
+import { ProCons, Pros, Cons } from "@site/src/components/cajitas/ProCons";
+import References from "@site/src/components/ReferencesComponent";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import Exercise from "@site/src/components/exercise/Exercise";
+import Solution from "@site/src/components/exercise/Solution";
+import Hint from "@site/src/components/exercise/Hint";
+import Definition from "@site/src/components/Definition";
+import Corollary from "@site/src/components/Corollary";
+import GithubRepoLink from "@site/src/components/GithubRepoLink";
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+En **Scala**, las clases también se gestionan con un enfoque en la herencia controlada, similar a Kotlin, pero con algunas diferencias clave en cómo se manejan las clases abiertas y cerradas.
+ 
+## Clases Finales
+
+En **Scala**, todas las clases son abiertas de manera predeterminada, lo que significa que pueden ser heredadas a menos que se marquen explícitamente como **`final`**. Esto contrasta con Kotlin, donde las clases son cerradas por defecto y se deben marcar como **`open`** para que se permita la herencia.
+
+```scala showLineNumbers
+final class DatabaseConnection private (
+    val url: String, 
+    val user: String, 
+    val password: String
+)
+```
+
+En este ejemplo de Scala, la clase `DatabaseConnection` está marcada como `final`, lo que la hace cerrada y no puede ser heredada. Esta configuración asegura que la clase mantenga su integridad y seguridad, protegiendo el sistema de modificaciones accidentales o malintencionadas.
+
+## Clases Abstractas
+
+Las **clases abstractas** en Scala, al igual que en Kotlin, son siempre abiertas. Esto significa que pueden ser heredadas sin necesidad de marcar explícitamente la clase como abierta. Esto es consistente en ambos lenguajes, ya que las clases abstractas están diseñadas para ser extendidas.
+
+## Métodos `final`
+
+En **Scala**, los métodos son sobrescribibles por defecto, pero se pueden marcar con `final` para evitar que las subclases los sobrescriban. Esto es similar a Kotlin, donde los métodos también son cerrados por defecto y deben marcarse como `open` para ser sobrescribibles.
+
+```scala showLineNumbers
+class ExampleClass {
+  final def calculate: Int = 42
+}
+```
+
+En este caso, el método `calculate` es `final` y no puede ser sobrescrito, protegiendo su implementación. Esto se alinea con el enfoque de Kotlin en proteger el comportamiento de las clases y métodos por defecto.
+
+Una particularidad es que también se pueden marcar como `final` los miembros de un **`trait`**. Esto permite definir comportamientos en interfaces que no se puedan sobrescribir, algo que no es posible en Kotlin, ya que no soporta miembros `final` en interfaces.
+
+```scala showLineNumbers
+trait Logger {
+  final def log(message: String): Unit = 
+    println(s"LOG: $message")
+}
+```
+
+:::info Explicación del código
+
+- El `trait` `Logger` define un método `log` marcado como `final`, lo que **impide** que cualquier clase que implemente el `trait` modifique el comportamiento de este método.
+- Esto asegura que todas las implementaciones de `Logger` utilicen la misma lógica de registro, protegiendo así la consistencia en el manejo de mensajes.
+
+:::
+
+Este enfoque ofrece más flexibilidad en **Scala** para asegurar que ciertos comportamientos dentro de interfaces (traits) permanezcan inmutables, algo que no es posible en **Kotlin** dado que las interfaces en Kotlin no pueden tener miembros `final`.
+
+## Comparación Final
+
+| **Característica**              | **Scala**                                                                                                                  | **Kotlin**                                                                                                                 |
+|--------------------------------|----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| **Clases Abiertas por Defecto**| Todas las clases en Scala son abiertas de manera predeterminada y deben marcarse con `final` para evitar la herencia.     | Las clases en Kotlin son cerradas por defecto, y se deben marcar con `open` para permitir que otras clases las hereden.   |
+| **Métodos Sobrescribibles**    | Los métodos en Scala son sobrescribibles a menos que se marquen como `final`.                                              | Los métodos en Kotlin son cerrados por defecto y deben marcarse como `open` para permitir la sobrescritura.               |
+| **Clases Abstractas**          | Las clases abstractas en Scala son abiertas automáticamente, no requieren una marca especial para ser heredadas.           | En Kotlin, las clases abstractas también son abiertas por defecto, similar al comportamiento de Scala.                     |
+| **Miembros Final en Traits**   | Scala permite marcar métodos dentro de `traits` como `final`, impidiendo que las clases que implementen el `trait` los sobrescriban. | Kotlin no permite definir miembros `final` en interfaces, limitando la capacidad de proteger implementaciones en este contexto. |
+| **Uso de `final` en Implementaciones**| Scala ofrece flexibilidad al permitir el uso de `final` en clases y métodos dentro de traits e implementaciones.        | Kotlin sigue un enfoque simplificado en el que `final` solo aplica a clases y métodos concretos, no a interfaces.         |
+
+<ProCons>
+    <Pros>
+        - **Flexibilidad en Traits**: Scala permite marcar métodos en `traits` como `final`, asegurando que ciertas implementaciones permanezcan inmutables. Esto proporciona un nivel adicional de control y consistencia en el diseño de interfaces, lo cual es beneficioso para proteger comportamientos críticos.
+        - **Compatibilidad con Java**: Dado que Scala se diseñó para interoperar con Java, su enfoque abierto en clases y métodos mantiene una mayor compatibilidad con bibliotecas y frameworks de Java, permitiendo un uso más fluido de componentes ya existentes en el ecosistema de Java.
+        - **Control Preciso**: Al poder marcar clases y métodos como `final` o dejarlos abiertos por defecto, Scala proporciona una gran flexibilidad para que las personas desarrolladoras decidan explícitamente dónde permitir la herencia, adaptando el diseño a las necesidades específicas del proyecto.
+    </Pros>
+    <Cons>
+        - **Riesgo de Herencia Accidental**: Debido a que las clases en Scala son abiertas por defecto, hay un mayor riesgo de herencia accidental si quienes desarrollan no son cuidadosos en marcar las clases y métodos críticos como `final`, lo que puede conducir a problemas de diseño en proyectos grandes o colaborativos.
+        - **Menos Restricciones en Interfaces Comparado con Kotlin**: Aunque Scala permite más flexibilidad en `traits`, la falta de restricciones más estrictas en sus interfaces (en comparación con Kotlin) podría dar lugar a API menos seguras y a un diseño menos robusto si no se aplica un control adecuado.
+    </Cons>
+</ProCons>
+
+## ¿Qué Aprendimos?
+
+En esta lección, exploramos las diferencias clave en el enfoque de **Scala** y **Kotlin** para manejar la herencia y la protección de clases y métodos.
+
+### Puntos Clave
+
+1. **Clases Abiertas y Cerradas**:
+   - En **Scala**, las clases son **abiertas por defecto**, lo que permite la herencia a menos que se marquen explícitamente como `final`. Este enfoque ofrece flexibilidad, pero también introduce el riesgo de herencia accidental.
+   - En **Kotlin**, las clases son **cerradas por defecto** y deben marcarse con `open` para permitir la herencia, protegiendo la integridad de las clases y reduciendo el riesgo de modificaciones no planificadas.
+2. **Métodos Sobrescribibles**:
+   - Los métodos en Scala son sobrescribibles por defecto, pero se pueden marcar con `final` para evitar la sobrescritura. 
+   - En Kotlin, los métodos son cerrados a menos que se marquen como `open`, lo que proporciona una capa adicional de control sobre las modificaciones.
+3. **Clases Abstractas**:
+   - En ambos lenguajes, las clases abstractas son **abiertas por naturaleza**, permitiendo que se hereden sin necesidad de marcarlas con `open` o `final`, ya que su propósito es servir como base para otras clases.
+4. **Miembros Finales en Traits**:
+   - Scala permite marcar métodos dentro de `traits` como `final`, asegurando que las implementaciones en las clases que los utilizan sean consistentes e inmutables.
+   - En **Kotlin**, las interfaces (equivalentes a los `traits` de Scala) no permiten tener miembros `final`, lo que limita la capacidad de proteger comportamientos específicos en interfaces.
+
+---
+
+Tanto **Scala** como **Kotlin** ofrecen herramientas para controlar la herencia y proteger implementaciones, pero lo hacen con enfoques distintos. Scala proporciona más flexibilidad, permitiendo un control preciso sobre clases y métodos, pero esto también requiere mayor atención para evitar herencia accidental. Por otro lado, Kotlin opta por una estrategia de cierre predeterminado que fomenta la estabilidad y la seguridad, aunque puede ser menos flexible en ciertos contextos, especialmente en el manejo de interfaces.
+
+Con esta información, hemos aprendido a evaluar cuándo y cómo utilizar estas características en cada lenguaje, garantizando un diseño más robusto y controlado en nuestras aplicaciones.
+
+<References references={[
+  {
+      title: "Scala | Final",
+      url: "https://www.geeksforgeeks.org/scala-final/",
+      accessedDate: "8 de octubre de 2024",
+      type: "web",
+  },
+]}/>

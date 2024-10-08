@@ -1,91 +1,121 @@
-## Ruby
+---
+title: Métodos de Acceso en Ruby
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
 
-En **Ruby**, las propiedades (también llamadas *accessors*) se gestionan mediante los métodos `attr_reader`, `attr_writer`, y `attr_accessor`. Estos métodos permiten definir getters y setters de manera muy concisa. Similar a **Kotlin** y **Python**, Ruby también permite personalizar estos métodos si se requiere un comportamiento específico.
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
 
-### Propiedades en Ruby
+En **Ruby**, no existen las propiedades como en Kotlin, pero se pueden implementar de manera similar utilizando **métodos de acceso**. En lugar de definir propiedades directamente, Ruby usa **atributos** y proporciona métodos para acceder y modificar su valor. Ruby permite definir estos métodos de manera explícita o usando atajos como `attr_reader`, `attr_writer`, y `attr_accessor`.
 
-Ruby ofrece tres formas simples de definir accesos a los atributos de una clase:
+### Accesores y Modificadores en Ruby
 
-- **`attr_reader`**: Define solo un getter.
-- **`attr_writer`**: Define solo un setter.
-- **`attr_accessor`**: Define tanto el getter como el setter.
+En Ruby, los métodos de acceso (`getter`) y de modificación (`setter`) se definen como métodos regulares dentro de la clase. Ruby también ofrece la posibilidad de generarlos automáticamente utilizando `attr_reader`, `attr_writer`, y `attr_accessor`:
 
-### Ejemplo de Propiedades Básicas en Ruby
-
-```ruby
+```ruby showLineNumbers
 class Person
-  attr_accessor :name   # Define tanto el getter como el setter para 'name'
+  attr_accessor :name # Define tanto el getter como el setter
 
   def initialize(name)
     @name = name
   end
 end
-
-# Uso
-person = Person.new("John")
-puts person.name    # Getter
-person.name = "Doe" # Setter
-puts person.name
 ```
 
-En este ejemplo:
-- **`attr_accessor`**: Define automáticamente tanto el getter como el setter para la propiedad `name`.
-- El atributo interno `@name` es la variable de instancia en Ruby, accesible a través del getter y setter generados.
+:::info Explicación del código
 
-### Propiedades con Getter y Setter Personalizados
+- **[2]**: `attr_accessor` crea tanto un *getter* como un *setter* para el atributo `name`.
+- **[5]**: La variable de instancia `@name` almacena el valor real, similar al `field` en Kotlin.
 
-Al igual que en **Kotlin** y **Python**, Ruby permite personalizar los getters y setters si se requiere un comportamiento adicional al acceder o modificar una propiedad.
+:::
 
-```ruby
+### Métodos de Acceso y Modificación Personalizados
+
+Ruby permite definir métodos de acceso y modificación personalizados, similar a cómo Kotlin permite personalizar los *getters* y *setters*. Estos métodos se comportan como funciones regulares dentro de la clase:
+
+```ruby showLineNumbers
 class Person
-  def initialize(name)
-    @name = name
+  def name
+    @name
   end
 
-  def name  # Getter personalizado
-    @name.capitalize
-  end
-
-  def name=(value)  # Setter personalizado
-    @name = value.downcase
+  def name=(value)
+    @name = value.upcase # Setter personalizado que transforma el valor
   end
 end
-
-# Uso
-person = Person.new("john")
-puts person.name    # Output: "John" (getter personalizado capitaliza)
-person.name = "DOE" # Setter personalizado convierte a minúsculas
-puts person.name    # Output: "Doe"
 ```
 
-En este ejemplo:
-- El **getter** personalizado devuelve el valor capitalizado.
-- El **setter** personalizado convierte el valor a minúsculas antes de almacenarlo.
+Aquí, el *setter* convierte el valor a mayúsculas antes de asignarlo, lo cual es un ejemplo de cómo se puede controlar el valor almacenado.
 
-### Propiedades de Solo Lectura
+### Propiedad Calculada
 
-Si una propiedad debe ser solo de lectura (similar a un `val` en **Kotlin**), podemos utilizar `attr_reader`, lo que genera únicamente un getter, pero no un setter.
+Al igual que en Kotlin, se pueden definir propiedades calculadas en Ruby, pero se hace mediante métodos en lugar de *getters*:
 
-```ruby
+```ruby showLineNumbers
 class Person
-  attr_reader :age   # Solo lectura
+  def full_name
+    "#{@first_name} #{@last_name}"
+  end
+end
+```
+
+En este caso, `full_name` es un método que devuelve un valor calculado basado en otras variables de instancia. Cada vez que se llama al método, el valor se calcula nuevamente.
+
+### Setter Privado en Ruby
+
+Ruby permite hacer privados ciertos métodos, incluyendo los *setters*, para limitar el acceso externo, similar a cómo Kotlin permite *setters* privados:
+
+```ruby showLineNumbers
+class Person
+  attr_reader :age
 
   def initialize(age)
     @age = age
   end
-end
 
-# Uso
-person = Person.new(25)
-puts person.age  # Getter funciona
-# person.age = 30  # Esto dará un error, ya que no hay setter
+  private
+
+  def age=(value)
+    @age = value
+  end
+end
 ```
 
-### Comparación entre Kotlin y Ruby
+En este ejemplo, el *setter* `age=` es privado, lo que significa que solo se puede usar dentro de la clase. En contraste, Kotlin permite definir un *setter* como privado directamente en la propiedad, lo que simplifica el control de acceso.
 
-| **Característica**         | **Kotlin**                                   | **Ruby**                                             |
-|----------------------------|----------------------------------------------|------------------------------------------------------|
-| **Propiedades**            | Uso de `val` y `var`                         | Uso de `attr_reader`, `attr_writer`, `attr_accessor` |
-| **Propiedad Calculada**    | Uso de `get()` en propiedades                | Getter personalizado                                 |
-| **Setter Privado**         | Definido con `private set`                   | Definir manualmente sin un `attr_writer`             |
-| **Flexibilidad de Acceso** | Control de visibilidad (`public`, `private`) | Definir getter o setter personalizado                |
+## Comparación Final
+
+| **Característica**               | **Ruby**                                                                                                                   | **Kotlin**                                                                                                                 |
+|---------------------------------|-----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| **Propiedades Automáticas**      | Ruby no tiene propiedades automáticas; se usan métodos o atajos como `attr_accessor` para simularlas.                      | Kotlin genera automáticamente *getters* y *setters* para las propiedades declaradas con `var` o `val`.                    |
+| **Métodos Personalizados**       | Los *getters* y *setters* se definen como métodos regulares; se puede usar lógica personalizada.                           | Kotlin permite personalizar *getters* y *setters* directamente en la propiedad, usando el campo `field` para acceder o modificar. |
+| **Propiedades Calculadas**       | Se implementan como métodos que calculan y devuelven valores basados en otras variables de instancia.                      | Kotlin permite definir propiedades calculadas directamente en la declaración de la propiedad, de forma más concisa.        |
+| **Setters Privados**             | Los métodos de modificación se pueden hacer privados explícitamente en Ruby, pero se requiere definir métodos adicionales. | Kotlin permite definir *setters* privados directamente en la propiedad, simplificando el control de acceso.               |
+| **Acceso a Variables de Instancia** | Ruby utiliza variables de instancia (`@var`) para almacenar datos, que son accesibles solo dentro de la clase.            | Kotlin usa `field` como referencia interna para acceder al valor de la propiedad dentro de *getters* y *setters*.         |
+
+<ProCons>
+    <Pros>
+        - **Flexibilidad en Definición de Métodos**: Ruby permite definir métodos de acceso y modificación personalizados de manera explícita, ofreciendo gran flexibilidad para manipular los valores y aplicar lógica adicional sin restricciones en las propiedades.
+        - **Atajos Convenientes**: Con `attr_reader`, `attr_writer` y `attr_accessor`, Ruby simplifica la creación de métodos de acceso y modificación, reduciendo el código repetitivo y mejorando la legibilidad.
+        - **Privacidad Controlada**: Ruby permite hacer privados los métodos de modificación (setters), proporcionando un control granular sobre el acceso a las propiedades y mejorando la seguridad de la clase.
+        - **Propiedades Calculadas Fáciles de Definir**: Al implementar propiedades calculadas como métodos, Ruby permite realizar cálculos dinámicos sin complicaciones, lo que es útil para derivar valores basados en otros atributos.
+
+    </Pros>
+    <Cons>
+        - **Falta de Propiedades Automáticas**: A diferencia de Kotlin, Ruby no genera automáticamente *getters* y *setters* para las propiedades. Esto puede resultar en más código repetitivo si no se usan atajos como `attr_accessor`.
+        - **Menos Integración de Propiedades y Variables**: En Ruby, las propiedades se manejan como métodos y las variables de instancia (`@var`) deben gestionarse manualmente, lo que puede ser menos intuitivo en comparación con el enfoque unificado de Kotlin con `field`.
+        - **Requiere Definición Manual para Modificaciones**: Para personalizar la lógica en las propiedades, Ruby requiere definir métodos adicionales, lo que puede ser más laborioso en comparación con Kotlin, donde la personalización de *getters* y *setters* se hace directamente en la declaración de la propiedad.
+        - **Acceso Privado Menos Simplificado**: Aunque Ruby permite hacer privados los *setters*, este control se aplica manualmente a través de métodos, lo que puede resultar menos directo en comparación con el sistema simplificado de Kotlin para establecer la privacidad en las propiedades.
+    </Cons>
+</ProCons>
+
