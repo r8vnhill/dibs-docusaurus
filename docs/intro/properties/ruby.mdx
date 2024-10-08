@@ -22,15 +22,39 @@ En **Ruby**, no existen las propiedades como en Kotlin, pero se pueden implement
 
 En Ruby, los métodos de acceso (`getter`) y de modificación (`setter`) se definen como métodos regulares dentro de la clase. Ruby también ofrece la posibilidad de generarlos automáticamente utilizando `attr_reader`, `attr_writer`, y `attr_accessor`:
 
-```ruby showLineNumbers
-class Person
-  attr_accessor :name # Define tanto el getter como el setter
+- `attr_reader`: Crea un *getter* para el atributo especificado.
+- `attr_writer`: Crea un *setter* para el atributo especificado.
+- `attr_accessor`: Crea tanto un *getter* como un *setter* para el atributo especificado.
 
-  def initialize(name)
-    @name = name
-  end
-end
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```ruby showLineNumbers title="person.rb"
+        class Person
+          attr_accessor :name
+
+          def initialize(name)
+            @name = name
+          end
+        end
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```ruby showLineNumbers title="person.rb"
+        class Person
+          attr_accessor :name
+
+          def initialize(name)
+            @name = name
+          end
+        end
+
+        person = Person.new("Brielle")
+        puts person.name # Output: Brielle
+        person.name = "Safron"
+        puts person.name # Output: Safron
+        ```
+    </TabItem>
+</Tabs>
 
 :::info Explicación del código
 
@@ -43,17 +67,34 @@ end
 
 Ruby permite definir métodos de acceso y modificación personalizados, similar a cómo Kotlin permite personalizar los *getters* y *setters*. Estos métodos se comportan como funciones regulares dentro de la clase:
 
-```ruby showLineNumbers
-class Person
-  def name
-    @name
-  end
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```ruby showLineNumbers
+        class Person
+          def name=(value)
+            @name = value
+          end
+        end
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```ruby showLineNumbers
+        class Person
+          def name
+            @name
+          end
 
-  def name=(value)
-    @name = value.upcase # Setter personalizado que transforma el valor
-  end
-end
-```
+          def name=(value)
+            @name = value.upcase
+          end
+        end
+
+        person = Person.new
+        person.name = "Kaneki"
+        puts person.name # Output: KANEKI
+        ```
+    </TabItem>
+</Tabs>
 
 Aquí, el *setter* convierte el valor a mayúsculas antes de asignarlo, lo cual es un ejemplo de cómo se puede controlar el valor almacenado.
 
@@ -61,13 +102,36 @@ Aquí, el *setter* convierte el valor a mayúsculas antes de asignarlo, lo cual 
 
 Al igual que en Kotlin, se pueden definir propiedades calculadas en Ruby, pero se hace mediante métodos en lugar de *getters*:
 
-```ruby showLineNumbers
-class Person
-  def full_name
-    "#{@first_name} #{@last_name}"
-  end
-end
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```ruby showLineNumbers
+        class Person
+          def full_name
+            "#{@first_name} #{@last_name}"
+          end
+        end
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```ruby showLineNumbers
+        class Person
+          attr_reader :first_name, :last_name
+
+          def initialize(first_name, last_name)
+            @first_name = first_name
+            @last_name = last_name
+          end
+
+          def full_name
+            "#{@first_name} #{@last_name}"
+          end
+        end
+
+        person = Person.new("Luigi", "Mario")
+        puts person.full_name # Output: Luigi Mario
+        ```
+    </TabItem>
+</Tabs>
 
 En este caso, `full_name` es un método que devuelve un valor calculado basado en otras variables de instancia. Cada vez que se llama al método, el valor se calcula nuevamente.
 
@@ -75,21 +139,44 @@ En este caso, `full_name` es un método que devuelve un valor calculado basado e
 
 Ruby permite hacer privados ciertos métodos, incluyendo los *setters*, para limitar el acceso externo, similar a cómo Kotlin permite *setters* privados:
 
-```ruby showLineNumbers
-class Person
-  attr_reader :age
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```ruby showLineNumbers
+        class Person
+          private
 
-  def initialize(age)
-    @age = age
-  end
+          def age=(value)
+            @age = value
+          end
+        end
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```ruby showLineNumbers
+        class Person
+          attr_reader :age
 
-  private
+          def initialize(age)
+            @age = age
+          end
 
-  def age=(value)
-    @age = value
-  end
-end
-```
+          private
+
+          def age=(value)
+            @age = value
+          end
+
+          def update_age(value)
+            self.age = value
+          end
+        end
+
+        person = Person.new(25)
+        person.update_age(30)
+        person.age = 30 # Error: private method `age=' called for #<Person:0x00007f9b9b8b3d10 @age=25> (NoMethodError)
+        ```
+    </TabItem>
+</Tabs>
 
 En este ejemplo, el *setter* `age=` es privado, lo que significa que solo se puede usar dentro de la clase. En contraste, Kotlin permite definir un *setter* como privado directamente en la propiedad, lo que simplifica el control de acceso.
 
@@ -119,3 +206,18 @@ En este ejemplo, el *setter* `age=` es privado, lo que significa que solo se pue
     </Cons>
 </ProCons>
 
+## ¿Qué Aprendimos?
+
+En esta lección, exploramos cómo **Ruby** maneja los **métodos de acceso** y los comparamos con las **propiedades** en **Kotlin**, destacando las similitudes y diferencias clave entre ambos enfoques.
+
+### Puntos Clave
+
+1. **Propiedades Automáticas vs. Métodos de Acceso**: A diferencia de Kotlin, Ruby no cuenta con propiedades automáticas. En su lugar, se deben definir métodos de acceso manualmente o utilizar atajos como `attr_accessor` para simular el comportamiento de las propiedades. Esto ofrece flexibilidad pero puede resultar en más código repetitivo.
+2. **Personalización de Métodos**: Ruby permite una personalización directa y explícita de los *getters* y *setters*, similar a Kotlin. Sin embargo, mientras en Kotlin se personalizan directamente en la propiedad, en Ruby se definen como métodos regulares.
+3. **Propiedades Calculadas**: Tanto en Ruby como en Kotlin, es posible definir propiedades calculadas, pero en Ruby se implementan como métodos. Esto ofrece una forma clara de derivar valores dinámicos, aunque puede ser menos conciso que en Kotlin.
+4. **Control de Acceso**: Ruby permite definir *setters* privados de manera explícita, lo que proporciona un control granular sobre el acceso a los atributos. Kotlin simplifica este proceso permitiendo establecer la privacidad directamente en la propiedad, reduciendo la necesidad de métodos adicionales.
+5. **Gestión de Variables Internas**: Ruby utiliza variables de instancia (`@var`) para almacenar datos, lo cual se debe manejar manualmente. En contraste, Kotlin unifica el acceso a las propiedades con `field`, lo que simplifica el manejo de variables internas y la personalización de sus comportamientos.
+
+---
+
+En resumen, aunque **Ruby** y **Kotlin** ofrecen mecanismos para manejar métodos de acceso y control de datos en clases, **Ruby** proporciona más flexibilidad manual y menos automatización en comparación con **Kotlin**, que simplifica el proceso con propiedades automáticas y personalización directa. Esta comparación permite evaluar cuál de los dos enfoques se adapta mejor a diferentes necesidades y estilos de desarrollo.
