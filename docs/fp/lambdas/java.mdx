@@ -3,61 +3,146 @@ title: Funciones Lambda en Java
 ---
 import References from "/src/components/ReferencesComponent";
 import ReadingTime from '/src/components/ReadingTime';
-import Tabs from '@theme/Tabs'
-import TabItem from '@theme/TabItem'
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import {ProCons, Pros, Cons} from '/src/components/cajitas/ProCons';
 
 <ReadingTime/>
 
 Java, al igual que Kotlin, soporta funciones lambda, aunque este soporte fue introducido más tarde, en Java 8. Las lambdas en Java permiten escribir código más conciso y legible, especialmente cuando se trata de funciones de orden superior o programación funcional. Sin embargo, la implementación y sintaxis de las funciones lambda en Java y Kotlin tienen algunas diferencias clave.
 
-### Ejemplo en Java
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```java showLineNumbers title="src/main/java/cl/ravenhill/fp/Adder.java"
+        BinaryOperator<Integer> addition = (a, b) -> a + b;
+        var result = addition.apply(5, 10);
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```java showLineNumbers title="src/main/java/cl/ravenhill/fp/Adder.java"
+        package cl.ravenhill.fp;
 
-```java
-import java.util.function.BinaryOperator;
+        import java.util.function.BinaryOperator;
 
-public class Main {
-    public static void main(String[] args) {
-        BinaryOperator<Integer> sumar = (a, b) -> a + b;
-        int resultado = sumar.apply(5, 10);
-        System.out.println(resultado);  // Output: 15
-    }
-}
-```
+        public class Adder {
+            public static void main(String[] args) {
+                BinaryOperator<Integer> addition = (a, b) -> a + b;
+                var result = addition.apply(5, 10);
+                System.out.println(result);
+                /* Output: 15 */
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
 
-### Comparación con Kotlin
+:::info Explicación del Código
 
-- **Sintaxis:**
-  - **Kotlin:** Utiliza `{ }` y `->` para definir funciones lambda.
-  - **Java:** Utiliza `->` para definir lambdas, pero requiere el uso de interfaces funcionales, como `BinaryOperator`.
-- **Uso de interfaces funcionales:**
-  - **Kotlin:** Las lambdas no necesitan estar asociadas a interfaces específicas, pero pueden usarse con interfaces funcionales ([SAM](https://kotlinlang.org/docs/fun-interfaces.html)).
-  - **Java:** Requiere interfaces funcionales predefinidas o personalizadas.
+- **[1]**: Definimos una función lambda `addition` que toma dos enteros y devuelve su suma. El tipo de la variable `addition` es `BinaryOperator<Integer>`, que representa una operación binaria en enteros.
+- **[2]**: Aplicamos la función lambda `addition` a los valores `5` y `10` utilizando el método `apply`, lo que resulta en `15`.
 
-### Funciones de Orden Superior en Java
+:::
+
+## Funciones de Orden Superior
 
 En Java, las funciones de orden superior (funciones que toman otras funciones como argumentos) se implementan utilizando **interfaces funcionales**. Aunque Java no soporta funciones como valores directamente, las interfaces funcionales como `Function`, `Predicate`, y `BinaryOperator` permiten un comportamiento similar.
 
-### Ejemplo en Java
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```java showLineNumbers title="src/main/java/cl/ravenhill/fp/HigherOrderFunctions.java"
+        public static int applyOperation(
+            int x, 
+            @NotNull Function<Integer, Integer> operation
+        ) {
+            return operation.apply(x);
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```java showLineNumbers title="src/main/java/cl/ravenhill/fp/HigherOrderFunctions.java"
+        package cl.ravenhill.fp;
 
-```java
-import java.util.function.BiFunction;
+        import org.jetbrains.annotations.NotNull;
 
-public class Main {
-    public static void main(String[] args) {
-        BiFunction<Integer, Integer, Integer> procesarEnteros = (a, b) -> a + b;
-        int suma = procesarEnteros.apply(3, 4);
-        System.out.println(suma);  // Output: 7
-    }
-}
-```
+        import java.util.function.Function;
 
-### Comparación con Kotlin
+        public class HigherOrderFunctions {
+            public static int applyOperation(
+                int x, 
+                @NotNull Function<Integer, Integer> operation
+            ) {
+                return operation.apply(x);
+            }
 
-- **Sintaxis:**
-  - **Kotlin:** Escribe funciones de orden superior directamente, sin necesidad de interfaces funcionales.
-  - **Java:** Necesita utilizar una interfaz funcional, como `BiFunction`, para pasar funciones como parámetros.
+            public static void main(String[] args) {
+                Function<Integer, Integer> doubleValue = value -> value * 2;
+                int result = applyOperation(5, doubleValue);
+                System.out.println("Resultado: " + result);
+                /* Output: Resultado: 10 */
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
 
-### Desestructuración en Java
+En este ejemplo, Java permite emular funciones de orden superior utilizando **interfaces funcionales** y **expresiones lambda**, brindando flexibilidad para pasar comportamientos como parámetros.
+
+## Single Abstract Method (SAM)
+
+En Java, las funciones lambda se implementan usando **interfaces funcionales**, también conocidas como **Single Abstract Method (SAM)** interfaces. Estas interfaces contienen un único método abstracto, lo que permite que las lambdas se asocien directamente con ellas. Esto se utiliza para emular un comportamiento funcional en Java, dado que el lenguaje no permite pasar funciones como valores de forma directa.
+
+### Ejemplo de Implementación de SAM en Java
+
+Para implementar un SAM en Java, se puede definir una interfaz funcional personalizada:
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```java showLineNumbers
+        @FunctionalInterface
+        interface Greeting {
+            void sayHello(String name);
+        }
+        ```
+
+        ```java showLineNumbers
+        Greeting greeting = name -> System.out.println("Hello, " + name);
+        greeting.sayHello("Alice");
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```java showLineNumbers title="src/main/java/cl/ravenhill/fp/Greeting.java"
+        package cl.ravenhill.fp;
+
+        @FunctionalInterface
+        public interface Greeting {
+            void sayHello(String name);
+        }
+        ```
+
+        ```java showLineNumbers
+        package cl.ravenhill.fp;
+
+        public class SAMExample {
+            public static void main(String[] args) {
+                Greeting greeting = name -> System.out.println("Hello, " + name);
+                greeting.sayHello("Alice");
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del Código
+
+1. Definimos una interfaz funcional `Greeting` con un único método `sayHello` que toma un `String` como argumento.
+2. Creamos una instancia de la interfaz funcional `Greeting` utilizando una expresión lambda que imprime un saludo.
+
+:::
+
+
+Java proporciona varias **interfaces funcionales predefinidas** en el paquete `java.util.function` como `Function`, `Predicate`, y `Consumer`, que se pueden usar en lugar de crear interfaces personalizadas para simplificar el uso de funciones lambda y funciones de orden superior.
+
+## Desestructuración en Java
 
 A diferencia de Kotlin, **Java no soporta desestructuración** de manera nativa. Esto significa que en Java no se puede descomponer un objeto en varias variables directamente. Para lograr un comportamiento similar, se deben acceder manualmente a las propiedades de un objeto mediante métodos de acceso (`getters`).
 
@@ -66,42 +151,39 @@ A diferencia de Kotlin, **Java no soporta desestructuración** de manera nativa.
 | **Característica**              | **Kotlin**                                                                                                                 | **Java**                                                                                                                                    |
 |---------------------------------|----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
 | **Sintaxis Lambda**             | Utiliza `{ }` y `->` para definir lambdas directamente sin necesidad de interfaces funcionales.                            | Utiliza `->`, pero requiere interfaces funcionales como `BinaryOperator`.                                                                   |
-| **Interfaces Funcionales**      | No es necesario utilizar interfaces funcionales, aunque puede trabajar con SAMs.                                           | Las lambdas deben asociarse a interfaces funcionales predefinidas o personalizadas.                                                         |
+| **Interfaces Funcionales**      | No es necesario utilizar interfaces funcionales, aunque puede trabajar con [SAMs](https://kotlinlang.org/docs/fun-interfaces.html).                                           | Las lambdas deben asociarse a interfaces funcionales predefinidas o personalizadas.                                                         |
 | **Funciones de Orden Superior** | Se pueden escribir funciones de orden superior directamente.                                                               | Requiere interfaces funcionales como `BiFunction` para simular funciones de orden superior.                                                 |
 | **Desestructuración**           | Soporta desestructuración nativa de objetos en múltiples variables.                                                        | No tiene soporte nativo para desestructuración; debe accederse manualmente a los atributos.                                                 |
 | **Inmutabilidad y Colecciones** | Kotlin promueve el uso de colecciones inmutables por defecto y tiene funciones avanzadas como `map`, `filter`, y `reduce`. | Java usa colecciones mutables por defecto y las funciones como `map` y `filter` están disponibles solo a partir de Java 8 con `Stream API`. |
 | **Tipo de Retorno Lambda**      | Las lambdas pueden inferir su tipo de retorno automáticamente.                                                             | El tipo de retorno debe ser compatible con el tipo de la interfaz funcional.                                                                |
 | **Programación Funcional**      | Facilita la programación funcional con características como funciones de orden superior y lambdas concisas.                | Java admite programación funcional a través de `Stream API` y lambdas, pero con más verbosidad.                                             |
 
-:::tip **Ventajas de Java**
+<ProCons>
+    <Pros>
+        - **Compatibilidad Amplia**: Java, a pesar de su enfoque más verboso en lambdas, sigue siendo uno de los lenguajes más utilizados en la industria, lo que garantiza una amplia compatibilidad con bibliotecas y herramientas de terceros.
+        - **Interfaces Funcionales Predefinidas**: La existencia de interfaces como `Function`, `Predicate`, y `Consumer` simplifica la integración de programación funcional en Java sin necesidad de crear interfaces personalizadas.
+        - **Flexibilidad para Proyectos Legados**: Dado que Java es compatible con versiones anteriores, las lambdas y las interfaces funcionales permiten modernizar código heredado sin romper la estructura existente.
+        - **Soporte y Documentación Extensiva**: Java cuenta con una vasta comunidad y documentación, lo que facilita aprender y aplicar funciones lambda en diversos contextos de desarrollo.
 
-- **Mayor uso en la industria**: Aunque Kotlin ha crecido en popularidad, Java sigue siendo ampliamente utilizado en grandes sistemas empresariales.
-- **Compatibilidad amplia**: Java es compatible con una amplia gama de plataformas y bibliotecas, y se puede ejecutar en casi cualquier entorno.
-- **Madurez del lenguaje**: Java tiene una larga historia y muchas herramientas de desarrollo, bibliotecas y recursos.
+    </Pros>
+    <Cons>
+        - **Verboso y Requiere Interfaces Funcionales**: A diferencia de Kotlin, Java necesita interfaces funcionales para usar lambdas, lo que incrementa la verbosidad y puede resultar en código menos limpio y más extenso.
+        - **Menor Flexibilidad en Desestructuración**: Java carece de desestructuración nativa, lo que obliga a acceder manualmente a las propiedades de un objeto, aumentando la complejidad en comparación con Kotlin.
+        - **Menos Conciso en Programación Funcional**: Aunque Java permite programación funcional a través de lambdas y `Stream API`, sigue siendo más detallado y requiere más esfuerzo que Kotlin para lograr la misma funcionalidad.
+    </Cons>
+</ProCons>
 
-:::
+## ¿Qué Aprendimos?
 
-:::danger **Desventajas de Java**
+En esta lección, exploramos las **lambdas** en **Java** y comparamos su implementación con **Kotlin**. Java introdujo el soporte para funciones lambda en Java 8, lo que permitió un enfoque más funcional, pero con diferencias importantes respecto a Kotlin.
 
-- **Verboso**: La sintaxis de Java tiende a ser más detallada y requiere más líneas de código que Kotlin.
-- **Menos soporte funcional**: Aunque Java ha introducido lambdas y el `Stream API`, carece de las características funcionales avanzadas que ofrece Kotlin.
-- **Sin soporte nativo para desestructuración**: A diferencia de Kotlin, no se puede descomponer objetos directamente.
+1. **Lambdas en Java y Kotlin**: Aprendimos a escribir **lambdas** en Java y observamos cómo difieren en sintaxis y flexibilidad en comparación con Kotlin, donde no se requieren interfaces funcionales.
+2. **Interfaces Funcionales y SAM**: Analizamos cómo Java depende de **interfaces funcionales** (como `Function` y `BinaryOperator`) y el concepto de **Single Abstract Method (SAM)** para implementar lambdas. Esto se compara con Kotlin, que no necesita estas interfaces para definir funciones lambda.
+3. **Funciones de Orden Superior**: Vimos cómo Java emula **funciones de orden superior** utilizando interfaces funcionales, mientras que en Kotlin estas funciones se definen de forma nativa y directa.
+4. **Limitaciones en Desestructuración**: Destacamos que Java no admite desestructuración nativa, lo que obliga a un acceso más manual a las propiedades de los objetos, a diferencia de Kotlin, que soporta desestructuración de forma directa.
+5. **Enfoque en Programación Funcional**: Evaluamos cómo Kotlin facilita la programación funcional con características avanzadas y concisas, mientras que Java permite un enfoque funcional mediante `Stream API` y lambdas, aunque con mayor verbosidad.
 
-:::
-
-### ¿Qué Aprendimos?
-
-En esta lección, hemos explorado las **lambdas** en **Java** y su comparación con **Kotlin**. Aunque Java introdujo el soporte para funciones lambda a partir de Java 8, su implementación es más verbosa y depende de **interfaces funcionales** como `Function` y `BiFunction`. En cambio, Kotlin ofrece una sintaxis más concisa y funcional, sin necesidad de utilizar estas interfaces.
-
-Hemos aprendido a:
-
-1. Escribir **lambdas** en Java y Kotlin, y las diferencias clave en su sintaxis.
-2. Usar **interfaces funcionales** en Java, mientras que en Kotlin no son necesarias para escribir funciones lambda.
-3. Comparar cómo cada lenguaje maneja las **funciones de orden superior**.
-4. Ver las limitaciones de Java respecto a la **desestructuración** de objetos, que es una característica nativa en Kotlin.
-5. Analizar cómo cada lenguaje aborda la **programación funcional**, con Kotlin proporcionando características más avanzadas y concisas, mientras que Java ofrece una funcionalidad similar a través de `Stream API` pero con mayor verbosidad.
-
-Finalmente, entendimos las **ventajas** y **desventajas** de Java en comparación con Kotlin, lo que nos permite elegir el lenguaje adecuado para diferentes contextos y necesidades en el desarrollo de software.
+En resumen, aunque Java ofrece capacidades funcionales modernas, Kotlin proporciona un entorno más flexible y conciso, lo que facilita la programación funcional y reduce la complejidad del código. Decidir cuál usar dependerá de las necesidades del proyecto y del entorno en el que se trabaje, considerando las ventajas y limitaciones de cada lenguaje.
 
 <References references={[
     {

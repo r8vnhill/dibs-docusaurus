@@ -1,0 +1,184 @@
+---
+title: Propiedades en Swift
+---
+import {Cons, ProCons, Pros} from "../../../src/components/cajitas/ProCons";
+import References from "/src/components/ReferencesComponent";
+import ReadingTime from '/src/components/ReadingTime';
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime/>
+
+En Swift, las propiedades, al igual que en Kotlin, combinan el comportamiento de variables con métodos **getter** y **setter**. Sin embargo, hay algunas particularidades que vale la pena mencionar.
+
+## Propiedades Almacenadas y Computadas
+
+Swift distingue entre **propiedades almacenadas** y **propiedades computadas**. Las propiedades almacenadas funcionan como las propiedades estándar de Kotlin, donde se guarda un valor específico. Las propiedades computadas, por otro lado, no almacenan un valor, sino que proporcionan un cálculo cada vez que se accede a ellas, muy parecido a lo que Kotlin hace con las **propiedades calculadas**. Sin embargo, en Swift no es necesario declarar un `getter` explícito si la propiedad es de solo lectura, lo que simplifica la sintaxis en comparación con Kotlin.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```swift showLineNumbers
+        struct Rectangle {
+            var width: Double
+            var height: Double
+
+            var area: Double {
+                return width * height
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```swift showLineNumbers
+        struct Rectangle {
+            var width: Double
+            var height: Double
+
+            var area: Double {
+                return width * height
+            }
+        }
+
+        let rect = Rectangle(width: 5.0, height: 10.0)
+        print("Área: \(rect.area)")       // Output: Área: 50.0
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del Código
+
+- **[2-3]**: Propiedades Almacenadas (`width` y `height`)**: Estas propiedades guardan un valor específico que se puede leer o modificar directamente.
+- **[5-7]**: Propiedad Computada (`area`): Calcula el valor basándose en las otras propiedades (`width` y `height`) cada vez que se accede a ella. No guarda un valor en sí misma.
+
+:::
+
+## Observadores de Propiedades
+
+Otro aspecto distintivo de Swift es el uso de **observadores de propiedades**, conocidos como **`willSet`** y **`didSet`**, que permiten ejecutar código automáticamente antes o después de que se actualice el valor de una propiedad. Esta funcionalidad no tiene un equivalente directo en Kotlin, donde la personalización del comportamiento de las propiedades se realiza típicamente a través de `getter` y `setter`.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```swift showLineNumbers
+        class Temperature {
+            var celsius: Double {
+                willSet(newTemperature) {
+                    print("La temperatura va a cambiar de \(celsius)°C a \(newTemperature)°C")
+                }
+                didSet {
+                    print("La temperatura cambió de \(oldValue)°C a \(celsius)°C")
+                }
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```swift showLineNumbers
+        class Temperature {
+            var celsius: Double {
+                willSet(newTemperature) {
+                    print("La temperatura va a cambiar de \(celsius)°C a \(newTemperature)°C")
+                }
+                didSet {
+                    print("La temperatura cambió de \(oldValue)°C a \(celsius)°C")
+                }
+            }
+
+            init(celsius: Double) {
+                self.celsius = celsius
+            }
+        }
+
+        let temp = Temperature(celsius: 25.0)
+        temp.celsius = 30.0
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del Código
+
+- **[3-5]** `willSet`: Este observador se ejecuta justo antes de que el valor de la propiedad cambie. Recibe como parámetro el nuevo valor que se le asignará (en este caso, `newTemperature`).
+- **[6-8]** `didSet`: Se ejecuta inmediatamente después de que el valor haya cambiado. El valor anterior se puede acceder a través de `oldValue`.
+
+:::
+
+<details>
+    <summary>
+        Propiedades Observables en Kotlin
+    </summary>
+
+    En Kotlin, aunque no hay un equivalente directo a los observadores de propiedades como **`willSet`** y **`didSet`** de Swift, se pueden lograr comportamientos similares utilizando **propiedades observables** con `Delegates.observable`. Este enfoque permite ejecutar código cuando cambia el valor de una propiedad, proporcionando una forma estructurada de observar y reaccionar a los cambios.
+
+    ```kotlin showLineNumbers
+    class Temperature {
+        var celsius: Double by Delegates.observable(25.0) { property, oldValue, newValue ->
+            println("La temperatura cambió de $oldValue°C a $newValue°C")
+        }
+    }
+    ```
+</details>
+
+## Propiedades `lazy`
+
+Además, Swift permite definir **propiedades `lazy`**, que se inicializan solo la primera vez que se acceden. Esto es útil para optimizar recursos, especialmente cuando el cálculo inicial es costoso. Kotlin también ofrece propiedades `lazy`, pero solo para propiedades `val` inmutables, lo que impone una ligera restricción comparado con Swift.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```swift showLineNumbers
+        class Person {
+            lazy var greeting: String = {
+                print("Generando saludo...")
+                return "Hello, \(self.name)"
+            }()
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```swift showLineNumbers
+        class Person {
+            var name: String
+            lazy var greeting: String = {
+                print("Generando saludo...")
+                return "Hello, \(self.name)"
+            }()
+
+            init(name: String) {
+                self.name = name
+            }
+        }
+
+        let person = Person(name: "John")
+        print(person.greeting)  // "Generando saludo..." seguido de "Hello, John"
+        print(person.greeting)  // Solo "Hello, John"
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del Código
+
+- **[2]**: Se declara una propiedad `lazy` llamada `greeting` que se inicializa solo la primera vez que se accede.
+- **[2-5]**: La propiedad `greeting` utiliza una *closure* para construir el valor inicial, lo que permite usar la propiedad `name` de la instancia.
+- Cuando se accede a `greeting` por primera vez, la *closure* se ejecuta, generando y devolviendo el saludo. En accesos posteriores, se reutiliza el valor calculado previamente.
+
+:::
+
+## Comparación Final
+
+| **Característica**                          | **Swift**                                                                                                                                                                                                      | **Kotlin**                                                                                                                                                                                      |
+|---------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Propiedades Almacenadas y Computadas**    | Distingue entre **propiedades almacenadas** (valores directos) y **propiedades computadas** (cálculos). Las computadas no requieren un getter explícito si son de solo lectura, lo que simplifica la sintaxis. | Kotlin permite **propiedades calculadas** de manera similar, pero siempre requieren un getter explícito, incluso si son de solo lectura, lo que puede ser un poco más detallado.                |
+| **Observadores de Propiedades**             | Ofrece **`willSet`** y **`didSet`** para ejecutar código antes y después de que una propiedad cambie, aplicable tanto a clases como a estructuras.                                                             | Kotlin no tiene un equivalente directo; sin embargo, se pueden usar **`Delegates.observable`** para lograr un comportamiento similar, aunque con una sintaxis más indirecta y solo para clases. |
+| **Propiedades `lazy`**                      | Soporta **propiedades `lazy`** que pueden ser mutables (`var`) o inmutables (`let`), y se inicializan solo cuando se accede a ellas por primera vez.                                                           | Kotlin permite **propiedades `lazy`** únicamente para propiedades inmutables (`val`), lo que restringe su uso si se necesita modificar la propiedad después de la inicialización.               |
+
+<ProCons>
+    <Pros>
+        - **Simplificación con Propiedades Computadas**: En Swift, las propiedades computadas de solo lectura no requieren un getter explícito, lo que reduce la verbosidad y hace que el código sea más limpio y fácil de leer.
+        - **Observadores de Propiedades**: Swift ofrece una implementación directa y clara para observar y reaccionar a cambios en las propiedades con `willSet` y `didSet`, que se puede aplicar tanto a clases como a estructuras, proporcionando más versatilidad.
+        - **Mayor Flexibilidad con Propiedades `lazy`**: La posibilidad de tener propiedades `lazy` tanto mutables como inmutables en Swift otorga más opciones para optimizar recursos en diferentes situaciones.
+    </Pros>
+    <Cons>
+        - **Complejidad Adicional en el Uso de Observadores**: Aunque los observadores de propiedades (`willSet` y `didSet`) en Swift son útiles, pueden agregar complejidad innecesaria si no se usan con cuidado, especialmente cuando hay lógica compleja que podría haberse implementado mejor en otro lugar.
+    </Cons>
+</ProCons>
+
+## ¿Qué Aprendimos?
+
