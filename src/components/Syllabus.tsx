@@ -18,7 +18,7 @@ const sections: CourseSection[] = [
         ],
     },
     {
-        title: "Build systems", // 3 semanas    total: 4.5/15 semanas
+        title: "Build systems", // 3.5 semanas    total: 5/15 semanas
         contents: [
             "Introducción a build systems",
             "Manejo de dependencias",
@@ -26,10 +26,11 @@ const sections: CourseSection[] = [
             "Compilación y empaquetado de aplicaciones",
             "Compilación y empaquetado de bibliotecas",
             "Publicación de bibliotecas",
+            "Introducción a la automatización de pruebas",
         ],
     },
     {
-        title: "Programación orientada a objetos",  // 2 semanas    total: 6.5/15 semanas
+        title: "Programación orientada a objetos",  // 2 semanas    total: 7/15 semanas
         contents: [
             "Problema de la base débil",
 
@@ -42,7 +43,7 @@ const sections: CourseSection[] = [
         ],
     },
     {
-        title: "Programación genérica",    // 1 semana    total: 7.5/15 semanas
+        title: "Programación genérica",    // 1 semana    total: 8/15 semanas
         contents: [
             "Polimorfismo paramétrico",
             "Varianza en sitio de declaración",
@@ -52,20 +53,20 @@ const sections: CourseSection[] = [
         ],
     },
     {
-        title: "Programación funcional",    // 3.5 semanas    total: 11/15 semanas
+        title: "Programación funcional",    // 3.5 semanas    total: 11.5/15 semanas
         contents: [
             "Funciones puras y efectos secundarios",
             "Funciones de alto orden",
             "Funciones lambda",
             "Tipos de datos algebráicos",
             "Optimización de funciones recursivas",
+            "Funtores",
             "Mónadas"
         ],
     },
     {
-        title: "Testing",   // 3 semanas    total: 14/15 semanas
+        title: "Testing",   // 2.5 semanas    total: 14/15 semanas
         contents: [
-            "Repaso de testing",
             "Data-driven testing",
             "Aserciones avanzadas",
             "Property-based testing",
