@@ -1,13 +1,50 @@
 ---
 title: Funciones lambda
 ---
-import LanguageCard from "../../../src/components/cards/LanguageCard";
-import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
-import Exercise from '@site/src/components/exercise/Exercise';
-import Solution from '@site/src/components/exercise/Solution';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import LanguageCard from '@site/src/components/cards/LanguageCard'
 
 <ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="functional-programming-kt" />
+
+<details>
+    <summary>
+        Comencemos por crear un módulo para la lección...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "lambdas" -ItemType "Directory"
+            "// Intentionally left blank" > "lambdas\build.gradle.kts"
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            mkdir "lambdas"
+            "// Intentionally left blank" > "lambdas\build.gradle.kts"
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            mkdir "lambdas"
+            echo "// Intentionally left blank" > "lambdas/build.gradle.kts" 
+            ```
+        </TabItem>
+    </Tabs>
+
+    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
+</details>
 
 Las **funciones lambda**, también conocidas como funciones anónimas, son una forma concisa y flexible de representar funciones **sin un nombre explícito**. Son especialmente útiles cuando necesitamos una función que se puede pasar como argumento, o cuando queremos escribir una función de manera breve sin necesidad de definirla previamente. En su forma más simple, una función lambda es un **bloque de código sin nombre** que puede ser asignado a una variable o pasado como parámetro a otras funciones, permitiendo una gran flexibilidad en la escritura de código.
 
@@ -46,17 +83,88 @@ Donde:
 - **``t, s, ...``**: Nombres de los argumentos de la función lambda (nuevamente ``...`` indica que puede haber más de un argumento, pero es pseudocódigo).
 - **``body``**: Cuerpo de la función lambda.
 
+<details>
+    <summary>
+        Si quieres crear el archivo desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $Group = "com\github\username"
+            ```
+
+            ```powershell
+            $LambdaTestDir = "lambdas\src\test\kotlin\$Group\lambdas"
+            New-Item -Path "$LambdaTestDir\SumTest.kt" -ItemType "file" -Force
+            $LambdaMainDir = "lambdas\src\main\kotlin\$Group\lambdas"
+            New-Item -Path "$LambdaMainDir\Sum.kt" -ItemType "file" -Force
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell	
+            $Group = "com\github\username"
+            ```
+
+            ```powershell
+            $LambdaTestDir = "lambdas\src\test\kotlin\$Group\lambdas"
+            ni "$LambdaTestDir\SumTest.kt" -i f -f
+            $LambdaMainDir = "lambdas\src\main\kotlin\$Group\lambdas"
+            ni "$LambdaMainDir\Sum.kt" -i f -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash	
+            GROUP="com/github/username"
+            ```
+
+            ```bash
+            LAMBDA_TEST_DIR="lambdas/src/test/kotlin/$GROUP/lambdas"
+            mkdir -p "$LAMBDA_TEST_DIR"
+            touch "$LAMBDA_TEST_DIR/SumTest.kt"
+            LAMBDA_MAIN_DIR="lambdas/src/main/kotlin/$GROUP/lambdas"
+            mkdir -p "$LAMBDA_MAIN_DIR"
+            touch "$LAMBDA_MAIN_DIR/Sum.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
 Por ejemplo, si quisiéramos definir una función lambda que suma dos números:
 
-```kotlin showLineNumbers
-val sumar: (Int, Int) -> Int = { a, b -> a + b }
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="lambdas/src/main/kotlin/com/github/username/lambdas/Sum.kt"
+        val add: (Int, Int) -> Int = { a, b -> a + b }
+        ```
 
-Podemos llamar a esta lambda de la siguiente manera:
+        ```kotlin showLineNumbers title="lambdas/src/test/kotlin/com/github/username/lambdas/SumTest.kt"
+        add(3, 4) shouldBe 7
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="lambdas/src/main/kotlin/com/github/username/lambdas/Sum.kt"
+        package com.github.username.lambdas
 
-```kotlin showLineNumbers
-val resultado = sumar(5, 10)  // 15
-```
+        val add: (Int, Int) -> Int = { a, b -> a + b }
+        ```
+
+        ```kotlin showLineNumbers title="lambdas/src/test/kotlin/com/github/username/lambdas/SumTest.kt"
+        package com.github.username.lambdas
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        class SumTest : FreeSpec({
+            "An add function" - {
+                "can sum two numbers" {
+                    add(3, 4) shouldBe 7
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
 
 <details>
     <summary>Breve historia y teoría</summary>
@@ -84,16 +192,57 @@ val resultado = sumar(5, 10)  // 15
 
 ### Lambdas en _Kotlin_ con funciones de orden superior
 
+<details>
+    <summary>
+        Si quieres crear el archivo desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "$LambdaTestDir\ParityTest.kt" -ItemType "file"
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            ni "$LambdaTestDir\ParityTest.kt" -i f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            touch "$LAMBDA_TEST_DIR/ParityTest.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
 Las **funciones lambda** son especialmente útiles cuando se combinan con **funciones de orden superior**.
 
 A continuación, veremos un ejemplo usando `filter`, una función de orden superior que toma una lambda como argumento:
 
-```kotlin showLineNumbers
-val numeros = listOf(1, 2, 3, 4, 5)
-// Aplicamos filter para obtener solo los números pares
-val numerosPares = filter(numeros) { it % 2 == 0 }
-println(numerosPares)  // Output: [2, 4]
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+        numbers.filter { it % 2 == 0 } shouldBe listOf(2, 4, 6, 8, 10)
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        package cl.ravenhill.lambdas
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        class ParityTest : FreeSpec({
+            "A list can be filtered by parity" {
+                val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+                numbers.filter { it % 2 == 0 } shouldBe listOf(2, 4, 6, 8, 10)
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
 
 En este caso, la función `filter` recibe una lambda que evalúa si un número es par.
 
@@ -108,7 +257,53 @@ val numerosPares = filter(numeros) { it % 2 == 0 }
 
 ### Aplicando lambdas en funciones de orden superior
 
+<details>
+    <summary>
+        Si quieres crear el archivo desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "$LambdaTestDir\IntProcessingTest.kt" -ItemType "file"
+            New-Item -Path "$LambdaMainDir\IntProcessing.kt" -ItemType "file"
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            ni "$LambdaTestDir\IntProcessingTest.kt" -i f
+            ni "$LambdaMainDir\IntProcessing.kt" -i f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            touch "$LAMBDA_TEST_DIR/IntProcessingTest.kt"
+            touch "$LAMBDA_MAIN_DIR/IntProcessing.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
 Puedes crear tus propias funciones de orden superior que acepten lambdas como parámetros. Aquí hay un ejemplo simple:
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        package cl.ravenhill.lambdas
+
+        fun processInts(a: Int, b: Int, operation: (Int, Int) -> Int) =
+            operation(a, b)
+        ```
+
+        ```kotlin showLineNumbers
+        
+        ```
+    </TabItem>
+</Tabs>
 
 ```kotlin showLineNumbers
 fun procesarEnteros(a: Int, b: Int, operacion: (Int, Int) -> Int) =

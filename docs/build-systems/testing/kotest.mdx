@@ -206,53 +206,37 @@ Luego, crearemos un archivo `build.gradle.kts` vacío para este módulo, ya que 
 <Tabs>
     <TabItem value={"Windows"} label={"Windows"}>
         ```powershell
+        $Group = 'com\github\username'
+        ```
+
+        ```powershell
         New-Item -Path 'basic-tests' -ItemType 'Directory'
         '// Intentionally left blank' | 
             Out-File -FilePath 'basic-tests/build.gradle.kts' -Force
-        ```
-    </TabItem>
-    <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-        ```powershell
-        mkdir 'basic-tests'
-        '// Intentionally left blank' > 'basic-tests/build.gradle.kts'
-        ```
-    </TabItem>
-    <TabItem value={"macOS/Linux"} label={"macOS/Linux"}>
-        ```bash
-        mkdir basic-tests
-        echo '// Intentionally left blank' > basic-tests/build.gradle.kts
-        ```
-    </TabItem>
-</Tabs>
-
-Ahora, añadiremos un archivo de prueba en el directorio `src/test/kotlin` dentro del módulo `basic-tests`:
-
-<Tabs groupId={"os"}>
-    <TabItem value="Windows" label="Windows">
-        ```powershell
-        $Group = 'com\github\username'
-        ```
-        ```powershell
         $BasicTestDir = "basic-tests\src\test\kotlin\$Group\basics"
         New-Item -Path "$BasicTestDir\MyTest.kt" -ItemType "File"
         ```
     </TabItem>
-    <TabItem value="Windows (corto)" label="Windows (corto)">
+    <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
         ```powershell
         $Group = 'com\github\username'
         ```
 
         ```powershell
+        mkdir 'basic-tests'
+        '// Intentionally left blank' > 'basic-tests/build.gradle.kts'
         $BasicTestDir = "basic-tests\src\test\kotlin\$Group\basics"
         ni "$BasicTest\MyTest.kt" -i 'f' -f
         ```
     </TabItem>
-    <TabItem value="Linux/Mac" label="Linux/Mac">
+    <TabItem value={"macOS/Linux"} label={"macOS/Linux"}>
         ```bash
         GROUP="com/github/username"
         ```
 
         ```bash
+        mkdir basic-tests
+        echo '// Intentionally left blank' > basic-tests/build.gradle.kts
         BASIC_TEST_DIR="basic-tests/src/test/kotlin/$GROUP/basics"
         mkdir -p $BASIC_TEST_DIR
         touch "$BASIC_TEST_DIR/MyTest.kt"
@@ -270,10 +254,10 @@ Kotest permite escribir pruebas utilizando diferentes estilos; aquí mostramos v
         import io.kotest.core.spec.style.StringSpec
         import io.kotest.matchers.shouldBe
 
-        class MyTest : StringSpec({   // (1)
-            "String length should be equal to the number of characters" {   // (2)
+        class MyTest : StringSpec({
+            "String length should be equal to the number of characters" {
                 val str = "Hello, World!"
-                str.length shouldBe 13  // (3)
+                str.length shouldBe 13
             }
         })
         ```
@@ -287,10 +271,12 @@ Kotest permite escribir pruebas utilizando diferentes estilos; aquí mostramos v
         import io.kotest.core.spec.style.FunSpec
         import io.kotest.matchers.shouldBe
 
-        class MyTest : FunSpec({   // (1)
-            test("String length should be equal to the number of characters") {   // (2)
-                val str = "Hello, World!"
-                str.length shouldBe 13  // (3)
+        class MyTest : FunSpec({
+            context("String length") {
+                test("Should be equal to the number of characters") {
+                    val str = "Hello, World!"
+                    str.length shouldBe 13
+                }
             }
         })
         ```
@@ -304,11 +290,11 @@ Kotest permite escribir pruebas utilizando diferentes estilos; aquí mostramos v
         import io.kotest.core.spec.style.FreeSpec
         import io.kotest.matchers.shouldBe
 
-        class MyTest : FreeSpec({   // (1)
+        class MyTest : FreeSpec({
             "String length" - {
-                "should be equal to the number of characters" {   // (2)
+                "should be equal to the number of characters" {
                     val str = "Hello, World!"
-                    str.length shouldBe 13  // (3)
+                    str.length shouldBe 13
                 }
             }
         })
@@ -323,11 +309,11 @@ Kotest permite escribir pruebas utilizando diferentes estilos; aquí mostramos v
         import io.kotest.core.spec.style.WordSpec
         import io.kotest.matchers.shouldBe
 
-        class MyTest : WordSpec({   // (1)
+        class MyTest : WordSpec({
             "String length" should {
-                "be equal to the number of characters" {   // (2)
+                "be equal to the number of characters" {
                     val str = "Hello, World!"
-                    str.length shouldBe 13  // (3)
+                    str.length shouldBe 13
                 }
             }
         })
@@ -342,10 +328,10 @@ Kotest permite escribir pruebas utilizando diferentes estilos; aquí mostramos v
         import io.kotest.core.spec.style.BehaviorSpec
         import io.kotest.matchers.shouldBe
 
-        class MyTest : BehaviorSpec({   // (1)
+        class MyTest : BehaviorSpec({
             given("a string") {
-                `when`("calculating its length") {   // (2)
-                    then("it should be equal to the number of characters") {   // (3)
+                `when`("calculating its length") {
+                    then("it should be equal to the number of characters") { 
                         val str = "Hello, World!"
                         str.length shouldBe 13
                     }
@@ -358,17 +344,28 @@ Kotest permite escribir pruebas utilizando diferentes estilos; aquí mostramos v
     </TabItem>
 </Tabs>
 
-#### ¿Qué hemos hecho?
+:::info ¿Qué hemos hecho?
 
 1. Creamos una clase de pruebas `MyTest` que extiende una clase base de **Kotest**. Cada estilo (`StringSpec`, `FunSpec`, `FreeSpec`, `WordSpec`, `BehaviorSpec`, etc.) ofrece diferentes formas de estructurar las pruebas, permitiéndote elegir el que más te acomode.
 2. Definimos un bloque de prueba que describe el comportamiento esperado de una cadena de texto.
 3. Escribimos una aserción (`shouldBe`) para verificar que la longitud de la cadena sea la esperada.
+
+:::
 
 Finalmente, podemos ejecutar las pruebas con Gradle desde la terminal:
 
 ```bash
 ./gradlew test
 ```
+
+:::tip Plugin de IntelliJ IDEA
+
+El IDE recomendado para trabajar con Kotest es **IntelliJ IDEA**, que ofrece un plugin oficial para ejecutar y depurar pruebas de Kotest de manera sencilla. Puedes instalarlo desde el **Marketplace** de IntelliJ IDEA.
+
+
+Puedes encontrar más información en la [documentación oficial de Kotest](https://kotest.io/docs/intellij/intellij-plugin.html).
+
+:::
 
 ## ¿Qué hemos aprendido?
 
