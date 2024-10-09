@@ -288,76 +288,229 @@ Puedes crear tus propias funciones de orden superior que acepten lambdas como pa
 
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers
+        ```kotlin showLineNumbers title="lambdas/src/main/kotlin/com/github/username/lambdas/IntProcessing.kt"
+        fun processInts(a: Int, b: Int, operation: (Int, Int) -> Int) =
+            operation(a, b)
+        ```
+
+        ```kotlin showLineNumbers title="lambdas/src/test/kotlin/com/github/username/lambdas/IntProcessingTest.kt"
+        processInts(3, 4) { a, b -> a + b } shouldBe 7
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
         ```kotlin showLineNumbers
-        package cl.ravenhill.lambdas
+        package com.github.username.lambdas
 
         fun processInts(a: Int, b: Int, operation: (Int, Int) -> Int) =
             operation(a, b)
         ```
 
         ```kotlin showLineNumbers
-        
+        package cl.ravenhill.lambdas
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        class IntProcessingTest : FreeSpec({
+            "Two integers can be combined with an add operation" {
+                processInts(3, 4) { a, b -> a + b } shouldBe 7
+            }
+        })
         ```
     </TabItem>
 </Tabs>
 
-```kotlin showLineNumbers
-fun procesarEnteros(a: Int, b: Int, operacion: (Int, Int) -> Int) =
-    operacion(a, b)
+:::info ¿Qué acabamos de hacer?
 
-val suma = procesarEnteros(3, 4) { x, y -> x + y }
-println(suma)  // Output: 7
-```
+- Definimos una función `processInts` que toma dos enteros y una función lambda como argumentos.
+- La función `processInts` aplica la función lambda a los dos enteros y devuelve el resultado.
+- En el test, pasamos una lambda que suma los dos enteros `3` y `4` a la función `processInts` y comprobamos que el resultado es `7`.
 
-En este ejemplo:
-- La función `procesarEnteros` acepta dos enteros y una lambda que define cómo operarlos.
-- Al llamar a `procesarEnteros`, proporcionamos una lambda que suma los dos números.
+:::
 
+### Ventajas y desventajas de las funciones lambda
+
+<ProCons>
+    <Pros>
+        - **Concisión y legibilidad**: Las funciones lambda permiten escribir código de manera más breve y clara, eliminando la necesidad de declarar y definir funciones completas cuando solo se requiere una lógica simple.
+        - **Flexibilidad**: Las lambdas se pueden pasar como argumentos a otras funciones, lo que las hace extremadamente útiles para funciones de orden superior, como `map`, `filter` y `fold`.
+        - **Funcionalidad modular**: Facilitan la creación de código modular y reutilizable al encapsular pequeños fragmentos de lógica que pueden ser fácilmente combinados y reutilizados.
+        - **Compatibilidad con la programación funcional**: Kotlin adopta elementos de la programación funcional, y las lambdas son un componente central de este paradigma, permitiendo un estilo de programación expresivo y efectivo.
+    </Pros>
+    <Cons>
+        - **Dificultad de depuración**: El uso intensivo de lambdas puede hacer que el código sea más difícil de depurar, ya que las funciones anónimas no tienen nombre y los errores pueden no señalar directamente la fuente del problema.
+        - **Complejidad en casos avanzados**: Las lambdas son fáciles de usar en casos simples, pero pueden volverse complicadas cuando se manejan tipos complejos o múltiples parámetros, lo que puede afectar la claridad del código.
+        - **Sobrecarga de uso**: Aunque son concisas, el uso excesivo de lambdas puede resultar en un código menos legible, especialmente si se anidan lambdas o se utilizan sin contexto suficiente.
+        - **Rendimiento**: En algunos casos, las lambdas pueden introducir un pequeño overhead debido a la creación de objetos adicionales en tiempo de ejecución, lo que podría impactar en el rendimiento si no se utilizan con cuidado.
+    </Cons>
+</ProCons>
 
 ## Destructuring declarations
 
 Las **declaraciones de desestructuración** permiten descomponer objetos complejos en componentes individuales, asignándolos a variables separadas en una sola declaración. Esto simplifica la extracción de valores de estructuras como **pares**, **listas**, **diccionarios** o **tipos de datos personalizados**, facilitando su manipulación.
 
-### Ventajas
-- **Sintaxis concisa**: Permite extraer varios valores de un objeto en una única línea de código.
-- **Versátil**: Se puede utilizar en diferentes contextos, como asignaciones de variables, bucles de iteración y parámetros de funciones.
-- **Legibilidad**: Mejora la claridad del código al eliminar la necesidad de múltiples llamadas a getters.
-
 ### Ejemplo
 
-```kotlin showLineNumbers
-data class Person(val name: String, val age: Int)
+<details>
+    <summary>
+        Si quieres crear el archivo desde la terminal...
+    </summary>
 
-val person = Person("Alice", 29)
-val (name, age) = person
-println("Name: $name, Age: $age")  // Output: Name: Alice, Age: 29
-```
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "$LambdaTestDir\destructuring\PersonTest.kt" `
+                -ItemType "file" -Force
+            New-Item -Path "$LambdaMainDir\Person.kt" `
+                -ItemType "file" -Force
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            ni "$LambdaTestDir\destructuring\PersonTest.kt" -i f -f
+            ni "$LambdaMainDir\Person.kt" -i f -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            mkdir -p "$LAMBDA_TEST_DIR/destructuring"
+            touch "$LAMBDA_TEST_DIR/destructuring/PersonTest.kt"
+            touch "$LAMBDA_MAIN_DIR/Person.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="lambdas/src/main/kotlin/com/github/username/destructuring/Person.kt"
+        data class Person(val name: String, val age: Int)
+        ```
+
+        ```kotlin showLineNumbers title="lambdas/src/test/kotlin/com/github/username/destructuring/PersonTest.kt"
+        val person = Person("Alice", 29)
+        val (name, age) = person
+        name shouldBe "Alice"
+        age shouldBe 29
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="lambdas/src/main/kotlin/com/github/username/destructuring/Person.kt"
+        package com.github.username.destructuring
+
+        data class Person(val name: String, val age: Int)
+        ```
+
+        ```kotlin showLineNumbers title="lambdas/src/test/kotlin/com/github/username/destructuring/PersonTest.kt"
+        package cl.ravenhill.destructuring
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        class PersonTest : FreeSpec({
+            "A person object" - {
+                "can be destructured into name and age" {
+                    val person = Person("Alice", 29)
+                    val (name, age) = person
+                    name shouldBe "Alice"
+                    age shouldBe 29
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
+
+:::info ¿Qué acabamos de hacer?
 
 En este ejemplo, descomponemos el objeto `person` en sus componentes `name` y `age` utilizando la sintaxis de desestructuración: `val (component1, component2, ...)`. Esta técnica se puede aplicar en diversos escenarios, mejorando la simplicidad y eficiencia en la manipulación de datos.
 
+:::
+
 ```kotlin showLineNumbers
 val (first, second) = listOf(1, 2)  // También funciona con listas
+first shouldBe 1
+second shouldBe 2
 ```
 
 ### Under the Hood
+
+<details>
+    <summary>
+        Si quieres crear el archivo desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "$LambdaMainDir\destructuring\Point.kt" `
+                -ItemType "file" -Force
+            New-Item -Path "$LambdaTestDir\destructuring\PointTest.kt" `
+                -ItemType "file" -Force
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            ni "$LambdaMainDir\destructuring\Point.kt" -i f -f
+            ni "$LambdaTestDir\destructuring\PointTest.kt" -i f -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            touch "$LAMBDA_MAIN_DIR/destructuring/Point.kt"
+            touch "$LAMBDA_TEST_DIR/destructuring/PointTest.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
 
 En Kotlin, todas las **data classes** automáticamente declaran operadores `componentN` para cada una de las variables de la clase, lo que permite la desestructuración de sus propiedades de manera sencilla. Sin embargo, también es posible personalizar este comportamiento en clases no marcadas como `data`, definiendo manualmente los métodos `componentN`.
 
 Por ejemplo, podemos desestructurar una clase personalizada como `Point` definiendo los operadores correspondientes:
 
-```kotlin showLineNumbers
-class Point(val x: Int, val y: Int) {
-    operator fun component1() = x
-    operator fun component2() = y
-}
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="lambdas/src/main/kotlin/com/github/username/destructuring/Point.kt"
+        class Point(val x: Int, val y: Int) {
+            operator fun component1() = x
+            operator fun component2() = y
+        }
+        ```
 
-val (x, y) = Point(10, 20)
-println("x: $x, y: $y")  // Output: x: 10, y: 20
-```
+        ```kotlin showLineNumbers title="lambdas/src/test/kotlin/com/github/username/destructuring/PointTest.kt"
+        val (x, y) = Point(10, 20)
+        x shouldBe 10
+        y shouldBe 20
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="lambdas/src/main/kotlin/com/github/username/destructuring/Point.kt"
+        package com.github.username.destructuring
+
+        class Point(val x: Int, val y: Int) {
+            operator fun component1() = x
+            operator fun component2() = y
+        }
+        ```
+
+        ```kotlin showLineNumbers title="lambdas/src/test/kotlin/com/github/username/destructuring/PointTest.kt"
+        package cl.ravenhill.destructuring
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        class PointTest : FreeSpec({
+            "A Point object" - {
+                "can be destructured into x and y" {
+                    val (x, y) = Point(10, 20)
+                    x shouldBe 10
+                    y shouldBe 20
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
 
 Este enfoque te permite controlar explícitamente cómo se descomponen las propiedades de la clase, incluso en aquellas que no son `data classes`.
 
@@ -375,33 +528,100 @@ Este enfoque te permite controlar explícitamente cómo se descomponen las propi
 
 ### Desestructuración en Lambdas
 
+<details>
+    <summary>
+        Si quieres crear el archivo desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "$LambdaMainDir\destructuring\PairProcessing.kt" `
+                -ItemType "file" -Force
+            New-Item -Path "$LambdaTestDir\destructuring\PairProcessingTest.kt" `
+                -ItemType "file" -Force
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            ni "$LambdaMainDir\destructuring\PairProcessing.kt" -i f -f
+            ni "$LambdaTestDir\destructuring\PairProcessingTest.kt" -i f -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            touch "$LAMBDA_MAIN_DIR/destructuring/PairProcessing.kt"
+            touch "$LAMBDA_TEST_DIR/destructuring/PairProcessingTest.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
 En Kotlin, una lambda puede desestructurar cualquier estructura que tenga definidos sus operadores `componentN`. Esto permite acceder fácilmente a los valores de un objeto directamente dentro de la lambda, mejorando la legibilidad y la simplicidad del código.
 
-```kotlin showLineNumbers
-val sumPair = { (a, b): Pair<Int, Int> -> a + b }
-val increasePairBy = { (a, b): Pair<Int, Int>, n: Int -> Pair(a + n, b + n) }
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="lambdas/src/main/kotlin/com/github/username/destructuring/PairProcessing.kt"
+        val sumPair = { (a, b): Pair<Int, Int> -> a + b }
+        val increasePairBy = { (a, b): Pair<Int, Int>, n: Int -> 
+            (a + n) to (b + n)
+        }
+        ```
 
-println(sumPair(3 to 4))  // Output: 7
-println(increasePairBy(3 to 4, 2))  // Output: (5, 6)
-```
+        ```kotlin showLineNumbers title="lambdas/src/test/kotlin/com/github/username/destructuring/PairProcessingTest.kt"
+        sumPair(3 to 4) shouldBe 7
+        increasePairBy(3 to 4, 2) shouldBe (5 to 6)
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="lambdas/src/main/kotlin/com/github/username/destructuring/PairProcessing.kt"
+        package com.github.username.destructuring
 
-En estos ejemplos:
+        val sumPair = { (a, b): Pair<Int, Int> -> a + b }
+
+        val increasePairBy = { (a, b): Pair<Int, Int>, n: Int ->
+            (a + n) to (b + n)
+        }
+        ```
+
+        ```kotlin showLineNumbers title="lambdas/src/test/kotlin/com/github/username/destructuring/PairProcessingTest.kt"
+        package cl.ravenhill.lambdas.destructuring
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        class PairProcessingTest : FreeSpec({
+            "A pair can be destructured by a lambda" {
+                sumPair(3 to 4) shouldBe 7
+                increasePairBy(3 to 4, 2) shouldBe (5 to 6)
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
+
+:::info ¿Qué acabamos de hacer?
+
 - `sumPair` desestructura el par `(a, b)` y devuelve la suma de sus componentes.
 - `increasePairBy` desestructura el par `(a, b)` y devuelve un nuevo par donde ambos valores han sido incrementados por `n`.
+
+:::
 
 Este uso de desestructuración en lambdas es particularmente útil cuando trabajamos con estructuras de datos más complejas y deseamos acceder a sus valores de manera directa y concisa.
 
 :::warning Estructuras anidadas
+
 La desestructuración en _Kotlin_ no es compatible con estructuras anidadas, como pares de pares o listas de pares. Para descomponer estructuras anidadas, es necesario realizar la desestructuración de forma manual.
+
 :::
 
 <Exercise title={"Desestructuración en lambdas"}>
     Indica el número de parámetros que recibe cada una de las siguientes lambdas:
 
-    1. ``val f1 = { a: Int, b: Int -> /* ... */ }``
-    2. ``val f2 = { (a, b): Pair<Int, Int> -> /* ... */ }``
-    3. ``val f3 = { a: Int, (b, c): Pair<Int, Int> -> /* ... */ }``
-    4. ``val f4 = { (a, b): Pair<Int, Int>, (c, d): Pair<Int, Int> -> /* ... */ }``
+    1. ``val f1 = { a: Int, b: Int -> TODO() }``
+    2. ``val f2 = { (a, b): Pair<Int, Int> -> TODO() }``
+    3. ``val f3 = { a: Int, (b, c): Pair<Int, Int> -> TODO() }``
+    4. ``val f4 = { (a, b): Pair<Int, Int>, (c, d): Pair<Int, Int> -> TODO() }``
 
     <Solution>
         1. ``f1`` recibe dos parámetros: ``a`` y ``b``.
@@ -411,19 +631,30 @@ La desestructuración en _Kotlin_ no es compatible con estructuras anidadas, com
     </Solution>
 </Exercise>
 
-## ¿Qué aprendimos?
+### Ventajas y desventajas de la desestructuración
 
-En esta lección, exploramos el concepto de **funciones lambda** y cómo estas ofrecen una manera concisa y flexible de representar funciones en Kotlin. Vimos cómo las lambdas nos permiten escribir funciones sin nombre, lo que es especialmente útil en casos donde las funciones se utilizan como parámetros o se evalúan en un contexto perezoso.
+<ProCons>
+    <Pros>
+        - **Simplicidad y legibilidad**: Permite descomponer estructuras de datos complejas en elementos individuales de manera clara y concisa, mejorando la legibilidad del código.
+        - **Acceso directo a datos**: Facilita el acceso directo a los componentes de un objeto sin necesidad de métodos adicionales, lo que hace que la manipulación de datos sea más eficiente.
+        - **Flexibilidad**: La desestructuración se puede aplicar a múltiples tipos de estructuras, como listas, pares, y clases de datos, haciendo que sea una herramienta versátil para manejar datos en diversas situaciones.
+        - **Compatibilidad con lambdas**: Se puede usar en funciones lambda, lo que permite escribir expresiones de manera más natural y reducir la necesidad de usar referencias explícitas a las propiedades de un objeto.
+    </Pros>
+    <Cons>
+        - **Dificultad de depuración**: En casos complejos o cuando se usa en exceso, puede hacer que el seguimiento de errores sea más difícil, ya que los valores se descomponen directamente y no siempre queda claro de dónde provienen.
+        - **Limitaciones en estructuras anidadas**: La desestructuración no soporta estructuras de datos anidadas de forma automática, lo que obliga a realizar la descomposición de manera manual o con múltiples pasos adicionales.
+        - **Potencial de ambigüedad**: Cuando se utiliza con estructuras similares, puede ser confuso determinar qué elementos están siendo desestructurados, especialmente si se utiliza en contextos con nombres de variables poco descriptivos.
+        - **Sobrecarga en el rendimiento**: En algunos casos, la desestructuración puede introducir una pequeña sobrecarga en tiempo de ejecución, especialmente si se utiliza con frecuencia en bucles o en operaciones críticas de rendimiento.
+    </Cons>
+</ProCons>
 
-Algunos puntos clave que cubrimos:
+### ¿Qué aprendimos?
 
-1. **Definición y uso** de lambdas en Kotlin, utilizando su sintaxis concisa para escribir funciones de manera más simple.
-2. **Diferencias con las funciones anónimas**, resaltando la flexibilidad de las lambdas para casos comunes.
-3. **Uso de lambdas con funciones de orden superior**, demostrando cómo podemos pasar lambdas como parámetros para modificar el comportamiento de una función.
-4. **Declaraciones de desestructuración**, que permiten extraer componentes individuales de objetos complejos de manera más clara y sencilla.
-5. **Desestructuración en lambdas**, lo cual simplifica la manipulación de estructuras de datos como pares o clases personalizadas, permitiendo acceder a los componentes de manera directa dentro del cuerpo de la lambda.
+En esta lección, exploramos en profundidad el concepto de **funciones lambda** en Kotlin, su definición y uso, así como su relevancia en la programación funcional y en las funciones de orden superior. Repasamos la sintaxis y las ventajas que ofrecen, como la **concisión**, **flexibilidad**, y **compatibilidad** con paradigmas funcionales. También analizamos las **declaraciones de desestructuración**, destacando su utilidad para simplificar el acceso a los datos y cómo se integran de manera eficiente en lambdas para mejorar la legibilidad y modularidad del código.
 
-Finalmente, con las **declaraciones de desestructuración** y las lambdas, vimos cómo estas características no solo mejoran la legibilidad del código, sino que también promueven un enfoque más funcional y eficiente al manipular datos.
+Además, abordamos las **ventajas** y **desventajas** tanto de las funciones lambda como de la desestructuración, discutiendo cómo su uso adecuado puede mejorar la legibilidad y flexibilidad del código, pero también los desafíos que presentan, como la depuración y limitaciones en casos complejos o anidados.
+
+A partir de este conocimiento, lxs desarrolladorxs pueden aprovechar estas características para escribir código más limpio y eficiente, manteniendo un enfoque en la programación funcional y modular, que es central en Kotlin.
 
 <div className="language-card-container">
     <LanguageCard
