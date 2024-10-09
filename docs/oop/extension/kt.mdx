@@ -1,14 +1,14 @@
 ---
 title: Métodos de Extensión
 ---
-import LanguageCard from "../../../src/components/cards/LanguageCard";
+import LanguageCard from "@site/src/components/cards/LanguageCard";
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import ReadingTime from '@site/src/components/ReadingTime';
 
 <ReadingTime />
 
-En Kotlin, los **métodos de extensión** (o funciones de extensión) son una característica poderosa que te permite añadir nuevas funciones a clases existentes sin modificar su código fuente o utilizar herencia. Esto es especialmente útil cuando quieres extender clases de librerías o APIs que no puedes cambiar directamente.
+Los **métodos de extensión** (o funciones de extensión) son una característica poderosa que te permite añadir nuevas funciones a clases existentes sin modificar su código fuente o utilizar herencia. Esto es especialmente útil cuando quieres extender clases de librerías o APIs que no puedes cambiar directamente.
 
 ## Definición de Método de Extensión
 
@@ -33,12 +33,35 @@ Donde:
 
 ### Ejemplo sencillo
 
-```kotlin showLineNumbers
-fun String.isPalindrome() = this == this.reversed()
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        fun String.isPalindrome() = this == this.reversed()
+        ```
 
-val word = "radar"
-println(word.isPalindrome()) // Output: true
-```
+        ```kotlin showLineNumbers
+        "radar".isPalindrome() shouldBe true
+        "hello".isPalindrome() shouldBe false
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        fun String.isPalindrome() = this == this.reversed()
+        ```
+
+        ```kotlin showLineNumbers
+        class PalindromeTest : FreeSpec({
+            "'radar' is a palindrome" {
+                "radar".isPalindrome() shouldBe true
+            }
+
+            "'hello' is not a palindrome" {
+                "hello".isPalindrome() shouldBe false
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
 
 En este ejemplo, hemos añadido una función `isPalindrome` a la clase `String` que verifica si una cadena es un palíndromo.
 
@@ -50,15 +73,50 @@ Puedes extender cualquier clase, incluyendo las de la librería estándar de Kot
 
 Supongamos que queremos añadir una función `second()` a las listas, que devuelve el segundo elemento o lanza una excepción si la lista tiene menos de dos elementos.
 
-```kotlin showLineNumbers
-fun <T> List<T>.second(): T {
-    if (size < 2) throw NoSuchElementException("La lista tiene menos de dos elementos")
-    return this[1]
-}
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        fun <T> List<T>.second(): T {
+            if (size < 2) throw NoSuchElementException("La lista tiene menos de dos elementos")
+            return this[1]
+        }
+        ```
 
-val numbers = listOf(10, 20, 30)
-println(numbers.second()) // Output: 20
-```
+        ```kotlin showLineNumbers
+        listOf(10, 20, 30).second() shouldBe 20
+
+        shouldThrow<NoSuchElementException> {
+            emptyList<Int>().second()
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        fun <T> List<T>.second(): T {
+            if (size < 2) throw NoSuchElementException("La lista tiene menos de dos elementos")
+            return this[1]
+        }
+        ```
+
+        ```kotlin showLineNumbers
+        class ListExtensionTest : FreeSpec({
+            "Getting the second element of a list" - {
+                "should return 20 for [10, 20, 30]" {
+                    val numbers = listOf(10, 20, 30)
+                    numbers.second() shouldBe 20
+                }
+
+                "should throw an exception for an empty list" {
+                    val emptyList = emptyList<Int>()
+                    shouldThrow<NoSuchElementException> {
+                        emptyList.second() 
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
 
 :::info Explicación del Código
 
@@ -76,40 +134,74 @@ Los métodos de extensión pueden ser genéricos, lo que te permite trabajar con
 
 Queremos crear una función de extensión que transponga una lista de listas (matriz), es decir, intercambiar filas por columnas.
 
-```kotlin showLineNumbers
-fun <T> List<List<T>>.transpose(): List<List<T>> {
-    if (isEmpty() || this[0].isEmpty()) return emptyList()
-
-    val rowCount = this.size
-    val columnCount = this[0].size
-    val result = MutableList(columnCount) { MutableList<T>(rowCount) { this[0][0] } }
-
-    for (rowIndex in 0..<rowCount) {
-        for (columnIndex in 0..<columnCount) {
-            result[columnIndex][rowIndex] = this[rowIndex][columnIndex]
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        fun <T> List<List<T>>.transpose(): List<List<T>> {
+            // ...
         }
-    }
+        ```
 
-    return result
-}
+        ```kotlin showLineNumbers
+        val matrix = listOf(
+            listOf(1, 2, 3),
+            listOf(4, 5, 6)
+        )
+        matrix.transpose() shouldBe listOf(
+            listOf(1, 4),
+            listOf(2, 5),
+            listOf(3, 6)
+        )
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        fun <T> List<List<T>>.transpose(): List<List<T>> {
+            if (isEmpty() || this[0].isEmpty()) return emptyList()
 
-val matrix = listOf(
-    listOf(1, 2, 3),
-    listOf(4, 5, 6)
-)
+            val rowCount = this.size
+            val columnCount = this[0].size
+            val result = MutableList(columnCount) { MutableList<T>(rowCount) { this[0][0] } }
 
-val transposed = matrix.transpose()
-println(transposed) // Output: [[1, 4], [2, 5], [3, 6]]
-```
+            for (rowIndex in 0..<rowCount) {
+                for (columnIndex in 0..<columnCount) {
+                    result[columnIndex][rowIndex] = this[rowIndex][columnIndex]
+                }
+            }
 
-:::info Explicación del Código
+            return result
+        }
+        ```
 
-- **[2]** Verificamos si la lista o sus sublistas están vacías.
-- **[4-5]** Calculamos el número de filas y columnas.
-- **[6]** Creamos una matriz mutable con las dimensiones intercambiadas.
-- **[8-12]** Iteramos sobre la matriz original y transponemos los elementos.
+        ```kotlin showLineNumbers
+        class MatrixTest : FreeSpec({
+            "Transposing a matrix" - {
+                "returns a matrix with rows and columns swapped" {
+                    val matrix = listOf(
+                        listOf(1, 2, 3),
+                        listOf(4, 5, 6)
+                    )
+                    val transposed = matrix.transpose()
+                    transposed shouldBe listOf(
+                        listOf(1, 4),
+                        listOf(2, 5),
+                        listOf(3, 6)
+                    )
+                }
+            }
+        })
+        ```
 
-:::
+        :::info Explicación del Código
+
+        - **[2]** Verificamos si la lista o sus sublistas están vacías.
+        - **[4-5]** Calculamos el número de filas y columnas.
+        - **[6]** Creamos una matriz mutable con las dimensiones intercambiadas.
+        - **[8-12]** Iteramos sobre la matriz original y transponemos los elementos.
+
+        :::
+    </TabItem>
+</Tabs>
 
 ## Funciones de Extensión Dentro de una Clase
 
@@ -117,18 +209,46 @@ Puedes definir funciones de extensión dentro de una clase. Estas funciones de e
 
 ### Ejemplo: Función de Extensión en una Clase
 
-```kotlin showLineNumbers
-class Host(val hostname: String) {
-    fun printConnectionString(port: Int) {
-        fun Int.formatPort() = "Port: $this"
-        println("$hostname connects to ${port.formatPort()}")
-    }
-}
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        class Host(val hostname: String) {
+            fun formatConnectionString(port: Int) {
+                fun Int.formatPort() = "Port: $this"
+                return "$hostname connects to ${port.formatPort()}"
+            }
+        }
+        ```
 
-val host = Host("localhost")
-host.printConnectionString(8080)
-// Output: localhost connects to Port: 8080
-```
+        ```kotlin showLineNumbers
+        val host = Host("example.com")
+        host.formatConnectionString(8080) shouldBe
+            "example.com connects to Port: 8080"
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```Kotlin showLineNumbers
+        class Host(val hostname: String) {
+            fun formatConnectionString(port: Int) {
+                fun Int.formatPort() = "Port: $this"
+                return "$hostname connects to ${port.formatPort()}"
+            }
+        }
+        ```
+
+        ```kotlin showLineNumbers
+        class HostTest : FreeSpec({
+            "Creating a connection string" - {
+                "should format the port number" {
+                    val host = Host("example.com")
+                    host.formatConnectionString(8080) shouldBe
+                        "example.com connects to Port: 8080"
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
 
 **Explicación**:
 
