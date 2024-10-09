@@ -15,7 +15,27 @@ import GithubRepoLink from '@site/src/components/GithubRepoLink'
 import LanguageCard from '@site/src/components/cards/LanguageCard'
 
 <ReadingTime />
-<GithubRepoLink user="r8vnhill" repo="" />
+<GithubRepoLink user="r8vnhill" repo="kotest-intro" />
+
+:::note Si quieres seguir el código del tutorial puedes comenzar desde [este punto](https://github.com/r8vnhill/kotest-intro/tree/base)
+
+Si tienes ``gh`` instalado, puedes obtener el código haciendo:
+
+```bash
+gh repo clone r8vnhill/kotest-intro
+cd kotest-intro || exit
+git checkout base
+```
+
+Si quieres tener tu propia copia del código, puedes hacer un fork del repositorio y clonarlo desde tu cuenta de GitHub.
+
+```bash
+gh repo fork r8vnhill/kotest-intro
+cd kotest-intro || exit
+git checkout base
+```
+
+:::
 
 El **testing** es una parte fundamental del ciclo de vida del desarrollo de software. A través de pruebas, podemos asegurarnos de que una aplicación o sistema funcione correctamente bajo diferentes condiciones, manteniendo su **integridad** y **fiabilidad** a medida que evoluciona.
 
@@ -54,75 +74,197 @@ Kotest se integra fácilmente con otros frameworks y bibliotecas populares en el
 
 Para comenzar a utilizar **Kotest** en nuestro proyecto, lo primero que haremos es agregar las dependencias necesarias en el catálogo de versiones.
 
-```toml title="gradle/libs.versions.toml" showLineNumbers
-[versions]
-# ...
-kotest = "5.9.1"
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```toml title="gradle/libs.versions.toml" showLineNumbers
+        [versions]
+        kotest-framework = "5.9.1"
 
-[libraries]
-# ...
-kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+        [libraries]
+        kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest-framework" }
 
-[bundles]
-kotest = ["kotest-runner-junit5"]
-```
+        [bundles]
+        kotest = ["kotest-runner-junit5"]
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```toml showLineNumbers title="gradle/libs.versions.toml"
+        [versions]
+        kotlin = "2.0.20"
+        kotest-intro = "1.0.0"
+        detekt = "1.23.6"
+        kotest-framework = "5.9.1"
+
+        [libraries]
+        kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+        detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
+        kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest-framework" }
+
+        [plugins]
+        detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+
+        [bundles]
+        kotest = ["kotest-runner-junit5"]        
+        ```
+    </TabItem>
+</Tabs>
+
+:::info ¿Qué hemos hecho?
 
 Hemos definido un **bundle** llamado `kotest`, que incluye la dependencia de **JUnit 5** para Kotest (`kotest-runner-junit5`). Esto nos permite añadir más dependencias de Kotest de manera sencilla en el futuro.
 
+:::
+
 Ahora podemos aplicar este **bundle** a nuestro proyecto de Gradle:
 
-```kotlin title="build.gradle.kts" showLineNumbers
-// ...
-val kotestBundle = libs.bundles.kotest
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="build.gradle.kts"
+        val kotestBundle = libs.bundles.kotest
 
-subprojects {
-    // ...
-    dependencies {
-        detektPlugins("$detektFormattingModule:$detektFormattingVersion")
-        implementation(kotestBundle)
-    }
-}
-```
+        subprojects {
+            dependencies {
+                implementation(kotestBundle)
+            }
+        }        
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        plugins {
+            id("jvm.conventions")
+            alias(libs.plugins.detekt)
+        }
+
+        val projectGroup = extra["kotest-intro.group"]!! // Throws an exception if the property is not found
+        val projectVersion: String = libs.versions.kotest.intro.get()
+        val detektId: String = libs.plugins.detekt.get().pluginId
+        val detektFormattingModule = libs.detekt.formatting.get().module.toString()
+        val detektFormattingVersion = libs.detekt.formatting.get().version
+        val kotestBundle = libs.bundles.kotest
+
+        allprojects {
+            group = projectGroup
+            version = projectVersion
+        }
+
+        subprojects {
+            apply(plugin = "jvm.conventions")
+            apply(plugin = detektId)
+
+            dependencies {
+                detektPlugins("$detektFormattingModule:$detektFormattingVersion")
+                implementation(kotestBundle)
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+:::info ¿Qué hemos hecho?
 
 Con esta configuración, hemos integrado **Kotest** en nuestro proyecto, dejándolo listo para que comencemos a escribir nuestras pruebas de manera eficiente y con todas las herramientas que Kotest ofrece.
 
+:::
+
 ### Escribiendo Pruebas con Kotest
 
-Para comenzar a escribir pruebas con **Kotest**, primero crearemos un módulo llamado `test-basics` y lo agregaremos al archivo `settings.gradle.kts` de nuestro proyecto:
+Para comenzar a escribir pruebas con **Kotest**, primero crearemos un módulo llamado `basic-tests` y lo agregaremos al archivo `settings.gradle.kts` de nuestro proyecto:
 
-```kotlin title="settings.gradle.kts" showLineNumbers
-// ...
-include("test-basics")
-```
+<Tabs>
+    <TabItem label="Código esencial" value="Código esencial">
+        ```kotlin showLineNumbers
+        include(":basic-tests")        
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        rootProject.name = "kotest-intro"
+
+        pluginManagement {
+            includeBuild("convention-plugins")
+            repositories {
+                mavenCentral()
+                gradlePluginPortal()
+            }
+        }
+
+        dependencyResolutionManagement {
+            @Suppress("UnstableApiUsage")
+            repositories {
+                mavenCentral()
+            }
+        }
+
+        include(":basic-tests")
+        ```
+    </TabItem>
+</Tabs>
 
 Luego, crearemos un archivo `build.gradle.kts` vacío para este módulo, ya que las dependencias comunes estarán configuradas en el bloque `subprojects`.
 
 <Tabs>
     <TabItem value={"Windows"} label={"Windows"}>
         ```powershell
-        New-Item -Path "test-basics" -ItemType Directory
-        "// Intentionally left blank" | Set-Content -Path "test-basics/build.gradle.kts"
+        New-Item -Path 'basic-tests' -ItemType 'Directory'
+        '// Intentionally left blank' | 
+            Out-File -FilePath 'basic-tests/build.gradle.kts' -Force
         ```
     </TabItem>
     <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
         ```powershell
-        mkdir "test-basics"
-        "// Intentionally left blank" > "test-basics/build.gradle.kts"
+        mkdir 'basic-tests'
+        '// Intentionally left blank' > 'basic-tests/build.gradle.kts'
         ```
     </TabItem>
     <TabItem value={"macOS/Linux"} label={"macOS/Linux"}>
         ```bash
-        mkdir test-basics
-        echo "// Intentionally left blank" > test-basics/build.gradle.kts
+        mkdir basic-tests
+        echo '// Intentionally left blank' > basic-tests/build.gradle.kts
         ```
     </TabItem>
 </Tabs>
 
-Ahora, añadiremos un archivo de prueba en el directorio `src/test/kotlin` dentro del módulo `test-basics`. Kotest permite escribir pruebas utilizando diferentes estilos; aquí mostramos varios ejemplos:
+Ahora, añadiremos un archivo de prueba en el directorio `src/test/kotlin` dentro del módulo `basic-tests`:
+
+<Tabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        $Group = 'com\github\username'
+        ```
+        ```powershell
+        $BasicTestDir = "basic-tests\src\test\kotlin\$Group\basics"
+        New-Item -Path "$BasicTestDir\MyTest.kt" -ItemType "File"
+        ```
+    </TabItem>
+    <TabItem value="Windows (corto)" label="Windows (corto)">
+        ```powershell
+        $Group = 'com\github\username'
+        ```
+
+        ```powershell
+        $BasicTestDir = "basic-tests\src\test\kotlin\$Group\basics"
+        ni "$BasicTest\MyTest.kt" -i 'f' -f
+        ```
+    </TabItem>
+    <TabItem value="Linux/Mac" label="Linux/Mac">
+        ```bash
+        GROUP="com/github/username"
+        ```
+
+        ```bash
+        BASIC_TEST_DIR="basic-tests/src/test/kotlin/$GROUP/basics"
+        mkdir -p $BASIC_TEST_DIR
+        touch "$BASIC_TEST_DIR/MyTest.kt"
+        ```
+    </TabItem>
+</Tabs>
+
+Kotest permite escribir pruebas utilizando diferentes estilos; aquí mostramos varios ejemplos:
 
 <Tabs>
     <TabItem value={"StringSpec"} label={"StringSpec"}>
-        ```kotlin title="test-basics/src/test/kotlin/cl/ravenhill/ebt/MyTest.kt" showLineNumbers
+        ```kotlin title="basic-tests/src/test/kotlin/cl/ravenhill/ebt/MyTest.kt" showLineNumbers
         package cl.ravenhill.ebt
 
         import io.kotest.core.spec.style.StringSpec
@@ -139,7 +281,7 @@ Ahora, añadiremos un archivo de prueba en el directorio `src/test/kotlin` dentr
         `StringSpec` permite escribir pruebas de manera declarativa utilizando cadenas como descripciones.
     </TabItem>
     <TabItem value={"FunSpec"} label={"FunSpec"}>
-        ```kotlin title="test-basics/src/test/kotlin/cl/ravenhill/ebt/MyTest.kt" showLineNumbers
+        ```kotlin title="basic-tests/src/test/kotlin/cl/ravenhill/ebt/MyTest.kt" showLineNumbers
         package cl.ravenhill.ebt
 
         import io.kotest.core.spec.style.FunSpec
@@ -156,7 +298,7 @@ Ahora, añadiremos un archivo de prueba en el directorio `src/test/kotlin` dentr
         `FunSpec` permite escribir pruebas en forma de funciones, similar a otros frameworks de pruebas.
     </TabItem>
     <TabItem value={"FreeSpec"} label={"FreeSpec"}>
-        ```kotlin title="test-basics/src/test/kotlin/cl/ravenhill/ebt/MyTest.kt" showLineNumbers
+        ```kotlin title="basic-tests/src/test/kotlin/cl/ravenhill/ebt/MyTest.kt" showLineNumbers
         package cl.ravenhill.ebt
 
         import io.kotest.core.spec.style.FreeSpec
@@ -175,7 +317,7 @@ Ahora, añadiremos un archivo de prueba en el directorio `src/test/kotlin` dentr
         `FreeSpec` permite estructurar las pruebas en bloques anidados, lo que da mayor flexibilidad.
     </TabItem>
     <TabItem value={"WordSpec"} label={"WordSpec"}>
-        ```kotlin title="test-basics/src/test/kotlin/cl/ravenhill/ebt/MyTest.kt" showLineNumbers
+        ```kotlin title="basic-tests/src/test/kotlin/cl/ravenhill/ebt/MyTest.kt" showLineNumbers
         package cl.ravenhill.ebt
 
         import io.kotest.core.spec.style.WordSpec
@@ -194,7 +336,7 @@ Ahora, añadiremos un archivo de prueba en el directorio `src/test/kotlin` dentr
         `WordSpec` sigue un estilo BDD (Behavior-Driven Development), muy útil para describir comportamientos de forma natural.
     </TabItem>
     <TabItem value={"BehaviorSpec"} label={"BehaviorSpec"}>
-        ```kotlin title="test-basics/src/test/kotlin/cl/ravenhill/ebt/MyTest.kt" showLineNumbers
+        ```kotlin title="basic-tests/src/test/kotlin/cl/ravenhill/ebt/MyTest.kt" showLineNumbers
         package cl.ravenhill.ebt
 
         import io.kotest.core.spec.style.BehaviorSpec
