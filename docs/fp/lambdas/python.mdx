@@ -1,226 +1,125 @@
 ---
 title: Funciones lambda en otros lenguajes
 ---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
 
-## Python
+<ReadingTime />
 
-En **Python**, las funciones lambda y la desestructuración son soportadas de manera nativa, aunque presentan algunas diferencias en comparación con Kotlin y otros lenguajes modernos. Python permite definir **lambdas** con una sintaxis sencilla y realizar **desestructuración** de listas, tuplas y diccionarios, pero tiene limitaciones en cuanto a la flexibilidad de las lambdas.
+En **Python**, las **funciones lambda** son también una forma de definir funciones anónimas, permitiendo crear bloques de código simples que se pueden asignar a variables o pasar como parámetros, similar a Kotlin. Sin embargo, hay diferencias significativas en la implementación y capacidades entre ambos lenguajes.
 
-### Lambdas en Python
+## Sintaxis
 
-Las lambdas en Python son funciones anónimas que pueden asignarse a variables o pasarse como parámetros. Su sintaxis es más limitada que en Kotlin, ya que solo permite una sola expresión.
-
-#### Ejemplo en Python (con anotaciones de tipo)
-
-```python showLineNumbers
-sumar: callable = lambda a: int, b: int: a + b
-resultado: int = sumar(5, 10)
-print(resultado)  # Output: 15
-```
-
-**Comparación con Kotlin:**
-- **Kotlin:** Usa `{ }` y `->` para definir lambdas con múltiples líneas de código y permite inferencia de tipos.
-- **Python:** Usa `lambda` para definir una función anónima que está limitada a una sola expresión.
-
-### Funciones de Orden Superior en Python
-
-Python permite trabajar con funciones de orden superior de manera directa, ya que las funciones son objetos de primera clase. Esto significa que pueden ser asignadas a variables, pasadas como parámetros y devueltas como resultados.
-
-#### Ejemplo en Python (con anotaciones de tipo)
+En **Python**, las lambdas utilizan una sintaxis compacta que se limita a expresiones simples. La sintaxis es la siguiente:
 
 ```python showLineNumbers
-from typing import Callable
-
-def procesar_enteros(a: int, b: int, operacion: Callable[[int, int], int]) -> int:
-    return operacion(a, b)
-
-suma: int = procesar_enteros(3, 4, lambda x, y: x + y)
-print(suma)  # Output: 7
+lambda argumentos: expresión
 ```
 
-**Comparación con Kotlin:**
-- **Kotlin:** Las funciones de orden superior son de primera clase y se escriben directamente sin necesidad de definir interfaces.
-- **Python:** Requiere la definición del tipo usando `Callable` para declarar que la función acepta otra función como parámetro.
+:::warning Limitaciones
 
-### Desestructuración en Python
+Las lambdas se limitan a una única expresión y no permiten múltiples líneas o bloques complejos. Esto las hace ideales para operaciones simples, pero menos flexibles comparadas con las lambdas de Kotlin, que pueden tener varias líneas y acceder a un contexto más amplio.
 
-Python soporta desestructuración limitada a listas, tuplas y diccionarios, lo que permite asignar múltiples variables a partir de una colección.
+:::
 
-#### Desestructuración de listas
+## Acceso y Captura de Variables
+
+Las lambdas en **Python** pueden acceder a variables del contexto en el que se definen (clausuras), pero con algunas restricciones cuando se trata de modificar variables externas:
 
 ```python showLineNumbers
-numeros: list[int] = [1, 2, 3]
-primero: int
-segundo: int
-tercero: int
-primero, segundo, tercero = numeros
-print(primero, segundo, tercero)  # Output: 1 2 3
+count = 0
+
+increment = lambda x: x + count
+
+count = 10
+print(increment(5))  # Output: 15
 ```
 
-#### Desestructuración de diccionarios
+En este ejemplo, la lambda en Python captura el valor de `count` en el momento en que se ejecuta, no en el momento en que se define. **Kotlin**, en cambio, permite un control más explícito sobre qué se captura y cuándo.
+
+## Compatibilidad con Desestructuración
+
+En **Python**, la desestructuración se soporta en algunas estructuras como listas y tuplas, pero no se aplica en las lambdas de la misma manera que en Kotlin:
 
 ```python showLineNumbers
-from typing import TypedDict
-
-class Persona(TypedDict):
-    nombre: str
-    edad: int
-
-persona: Persona = {"nombre": "Alice", "edad": 29}
-nombre: str = persona["nombre"]
-edad: int = persona["edad"]
-print(f"Nombre: {nombre}, Edad: {edad}")  # Output: Nombre: Alice, Edad: 29
+points = [(1, 2), (3, 4), (5, 6)]
+sums = list(map(lambda point: point[0] + point[1], points))
+print(sums)  # Output: [3, 7, 11]
 ```
 
-**Comparación con Kotlin:**
-- **Kotlin:** Usa `val (name, age) = person` para desestructurar objetos.
-- **Python:** Usa `TypedDict` para describir la estructura del diccionario y `list` para desestructurar listas.
+En **Kotlin**, se puede desestructurar directamente dentro de la lambda si se define un `componentN` o se trabaja con una `data class`, lo cual mejora la legibilidad y simplifica el acceso a componentes específicos.
 
-### Desestructuración en Parámetros de Funciones
+## Uso en Funciones de Orden Superior
 
-A diferencia de Kotlin, **Python no soporta la desestructuración directamente en los parámetros de las funciones**. Sin embargo, se puede lograr un comportamiento similar desempaquetando los valores dentro del cuerpo de la función o utilizando `*args` para listas/tuplas y `**kwargs` para diccionarios.
+Ambos lenguajes admiten el uso de lambdas como argumentos en funciones de orden superior, pero la sintaxis y capacidades varían:
 
-#### Ejemplo en Python (con anotaciones de tipo)
+En **Python**, las funciones de orden superior como `map`, `filter` o `reduce` son comunes y se utilizan con lambdas. No obstante, la estructura limitada de las lambdas puede requerir definir funciones anónimas más detalladas o recurrir a funciones regulares (`def`).
 
-```python
-from typing import Tuple
-
-def sumar_pares(pares: Tuple[int, int]) -> int:
-    a, b = pares  # Desestructuración en el cuerpo de la función
-    return a + b
-
-resultado: int = sumar_pares((3, 4))
-print(resultado)  # Output: 7
+```python showLineNumbers
+numbers = [1, 2, 3, 4, 5]
+evens = list(filter(lambda x: x % 2 == 0, numbers))
+print(evens)  # Output: [2, 4]
 ```
 
-En este ejemplo, aunque los valores de la tupla `pares` son desestructurados dentro del cuerpo de la función, **no es posible** desestructurar directamente en los parámetros de la función, como sí ocurre en Kotlin.
+## Comparación Final
 
-#### Comparación con Kotlin
+| **Característica**              | **Python**                                                                                                                | **Kotlin**                                                                                                                                |
+|--------------------------------|----------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| **Sintaxis Lambda**             | Utiliza `lambda` seguido de `argumentos: expresión`, pero se limita a expresiones simples.                                  | Utiliza `{ }` y `->` para definir lambdas, permite múltiples líneas y bloques complejos, ofreciendo mayor flexibilidad.                    |
+| **Captura de Variables**        | Captura variables en el momento de ejecución, lo que puede llevar a comportamientos inesperados si las variables cambian.  | Captura variables externas con control explícito sobre cuándo y cómo se capturan, permitiendo mayor precisión en su uso.                   |
+| **Desestructuración**           | Soporta desestructuración en estructuras como listas y tuplas, pero no se aplica directamente en lambdas.                  | Permite desestructuración directa dentro de lambdas para acceder a componentes de forma sencilla, especialmente con `data classes`.        |
+| **Funciones de Orden Superior** | Admite el uso de funciones de orden superior (`map`, `filter`, `reduce`), pero las lambdas se limitan a una única expresión. | Soporta funciones de orden superior con lambdas complejas, y es compatible con trailing lambdas, mejorando la legibilidad del código.     |
+| **Compatibilidad**              | Compatible con versiones más antiguas de Python, asegurando aplicabilidad en proyectos legacy.                              | Integra lambdas en una estructura moderna de programación funcional, optimizando su uso en entornos avanzados y con características más robustas. |
 
-- **Kotlin:** Permite la desestructuración directamente en la declaración de parámetros de las lambdas o funciones, siempre que estén definidos los operadores `componentN`.
-- **Python:** No soporta desestructuración en la declaración de parámetros. La desestructuración debe realizarse en el cuerpo de la función, como en el ejemplo anterior.
+<ProCons>
+    <Pros>
+        - **Simplicidad en la Sintaxis**: Las lambdas en Python tienen una sintaxis simple y directa, ideal para operaciones pequeñas y rápidas.
+        - **Compatibilidad con Proyectos Legacy**: Dado que Python es compatible con versiones más antiguas, las lambdas se pueden utilizar sin preocuparse por problemas de compatibilidad, lo cual es útil en proyectos heredados.
+        - **Facilidad de Uso en Funciones de Orden Superior**: Python cuenta con funciones de orden superior como `map`, `filter` y `reduce` que facilitan el uso de lambdas para manipular y transformar datos de manera sencilla.
+        - **Desestructuración Flexible**: Aunque la desestructuración en lambdas no es tan avanzada como en Kotlin, Python permite desestructurar listas y tuplas en otros contextos, lo cual sigue siendo útil para simplificar el acceso a datos.
+    </Pros>
+    <Cons>
+        - **Limitaciones en Expresiones**: Las lambdas en Python solo soportan expresiones de una línea, lo que limita su uso en casos donde se requiere lógica más compleja o múltiple.
+        - **Menos Control en la Captura de Variables**: La captura de variables en Python ocurre en el momento de ejecución, lo que puede causar comportamientos inesperados si las variables cambian, a diferencia de Kotlin, que ofrece un control más preciso.
+        - **Falta de Desestructuración en Lambdas**: La falta de soporte para desestructuración directa en lambdas limita la legibilidad y simplicidad del código en comparación con Kotlin, que permite desestructurar dentro de la propia lambda.
+        - **Menor Flexibilidad para Funciones Complejas**: La estructura limitada de las lambdas en Python puede obligar a definir funciones `def` adicionales cuando se necesitan operaciones más complejas, lo que incrementa la verbosidad y reduce la concisión.
+    </Cons>
+</ProCons>
 
-### Comparación entre Kotlin y Python
+## ¿Qué Aprendimos?
 
-| **Aspecto**                         | **Kotlin**                              | **Python**                                   |
-|-------------------------------------|-----------------------------------------|----------------------------------------------|
-| **Lambdas**                         | `{ }` y `->`, múltiples expresiones     | `lambda`, limitado a una sola expresión      |
-| **Funciones de Orden Superior**     | Soporte directo                         | Soporte directo con `Callable`               |
-| **Trailing Lambdas**                | Soportado, permite sintaxis concisa     | No soportado                                 |
-| **Desestructuración de Parámetros** | Soporta desestructuración en parámetros | No soportado, desestructuración en el cuerpo |
+En esta lección, exploramos cómo las **funciones lambda** se implementan en **Python** y las comparamos con **Kotlin**, destacando las diferencias clave y las limitaciones de cada enfoque.
 
-## TypeScript
+### Puntos Clave
 
-Al igual que Kotlin, TypeScript soporta **funciones lambda** (conocidas como **funciones flecha** o **arrow functions**) y **desestructuración**, permitiendo escribir código más conciso y expresivo.
+1. **Sintaxis y Limitaciones**: Vimos que Python ofrece una sintaxis simple para las lambdas, pero está limitada a expresiones de una sola línea, lo cual puede ser insuficiente para funciones más complejas, a diferencia de Kotlin, que permite bloques de múltiples líneas.
+2. **Captura de Variables**: En Python, las lambdas capturan variables en el momento de ejecución, lo que puede llevar a comportamientos inesperados si las variables cambian después de definir la lambda. Kotlin, en cambio, ofrece un control más preciso sobre la captura de variables, proporcionando mayor estabilidad y predictibilidad en su comportamiento.
+3. **Desestructuración**: Mientras que Python permite desestructurar listas y tuplas en algunos contextos, esta capacidad no se extiende a las lambdas. Kotlin, en cambio, permite la desestructuración directamente dentro de las lambdas, lo cual mejora la legibilidad y simplifica el acceso a los componentes de estructuras complejas como `data classes`.
+4. **Funciones de Orden Superior**: Ambos lenguajes admiten el uso de funciones de orden superior, pero las capacidades de las lambdas en Python se limitan a casos simples debido a la restricción de una única expresión. Kotlin permite utilizar lambdas más complejas y soporta trailing lambdas, lo que mejora la legibilidad y flexibilidad del código.
+5. **Compatibilidad y Uso en Proyectos Legacy**: Python mantiene una amplia compatibilidad con versiones anteriores, haciendo que sus lambdas sean útiles en proyectos heredados. Kotlin, por otro lado, se enfoca en proporcionar un entorno moderno para programación funcional, con características más robustas pero menos aplicabilidad en versiones de lenguajes anteriores.
 
-### Funciones Lambda en TypeScript
+---
 
-En TypeScript, las funciones lambda se definen utilizando la sintaxis de flecha `=>`. Estas funciones pueden asignarse a variables, pasarse como argumentos y usarse de manera similar a como se hace en Kotlin.
+Con estas diferencias en mente, hemos aprendido a evaluar cuándo usar lambdas en Python o Kotlin, según las capacidades, limitaciones y necesidades específicas de nuestros proyectos.
 
-**Ejemplo en TypeScript:**
-
-```typescript
-const sumar = (a: number, b: number): number => a + b;
-
-const resultado = sumar(5, 10);  // 15
-console.log(resultado);
-```
-
-**Comparación con Kotlin:**
-
-- **Sintaxis:**
-    - **Kotlin:** Utiliza `{ }` y `->` para definir lambdas.
-    - **TypeScript:** Utiliza `=>` para definir funciones flecha.
-- **Tipos de datos:**
-    - Ambos lenguajes permiten definir los tipos de los parámetros y el tipo de retorno de la función.
-- **Asignación y uso:**
-    - En ambos casos, las funciones lambda pueden asignarse a variables y utilizarse posteriormente.
-
-### Funciones de Orden Superior
-
-TypeScript también soporta **funciones de orden superior**, permitiendo pasar funciones como argumentos y retornarlas.
-
-**Ejemplo en TypeScript:**
-
-```typescript
-function procesarEnteros(a: number, b: number, operacion: (x: number, y: number) => number): number {
-    return operacion(a, b);
-}
-
-const suma = procesarEnteros(3, 4, (x, y) => x + y);
-console.log(suma);  // Output: 7
-```
-
-**Comparación con Kotlin:**
-
-- La capacidad de pasar funciones como parámetros es similar en ambos lenguajes.
-- La sintaxis para definir el tipo de la función es ligeramente diferente, pero conceptualmente equivalente.
-
-### Desestructuración en TypeScript
-
-TypeScript soporta la **desestructuración** de objetos y arreglos, lo que permite extraer valores y asignarlos a variables de manera concisa.
-
-#### Desestructuración de Objetos
-
-```typescript
-interface Person {
-    name: string;
-    age: number;
-}
-
-const person: Person = { name: "Alice", age: 29 };
-const { name, age } = person;
-
-console.log(`Name: ${name}, Age: ${age}`);  // Output: Name: Alice, Age: 29
-```
-
-#### Desestructuración de Arreglos
-
-```typescript
-const numbers = [1, 2, 3];
-const [first, second] = numbers;
-
-console.log(first, second);  // Output: 1 2
-```
-
-#### Comparación con Kotlin
-
-- **Sintaxis:**
-    - **Kotlin:** Utiliza `val (name, age) = person` para desestructurar.
-    - **TypeScript:** Utiliza `{ }` para desestructurar objetos y `[ ]` para desestructurar arreglos.
-- **Capacidades:**
-    - Ambos lenguajes permiten desestructurar objetos y colecciones.
-    - TypeScript permite desestructuración anidada, lo que es una ventaja sobre Kotlin.
-
-### Desestructuración en Parámetros de Funciones
-
-TypeScript permite desestructurar parámetros directamente en la definición de la función, incluyendo en funciones flecha.
-
-#### Ejemplo en TypeScript
-
-```typescript
-const sumPair = ({ a, b }: { a: number; b: number }): number => a + b;
-
-console.log(sumPair({ a: 3, b: 4 }));  // Output: 7
-```
-
-#### Comparación con Kotlin
-
-- **Kotlin:** Permite desestructuración en lambdas si los operadores `componentN` están definidos.
-- **TypeScript:** Permite desestructuración de objetos directamente en los parámetros.
-
-### Diferencias Clave
-
-- **Desestructuración Anidada:**
-    - **TypeScript:** Soporta desestructuración anidada de objetos y arreglos.
-        ```typescript
-        const person = { name: "Alice", address: { city: "Wonderland" } };
-        const { address: { city } } = person;
-        console.log(city);  // Output: Wonderland
-        ```
-    - **Kotlin:** No soporta desestructuración anidada directamente; se requiere desestructurar manualmente cada nivel.
-- **Sintaxis de Lambdas:**
-    - **Kotlin:** Utiliza `{ }` y `->`, y permite inferencia de tipos en muchos casos.
-    - **TypeScript:** Utiliza `=>` y requiere tipos explícitos o inferencia basada en el contexto.
-- **Funciones de Orden Superior:**
-    - Ambos lenguajes soportan funciones de orden superior, pero Kotlin tiene una integración más profunda con características funcionales, como la posibilidad de utilizar **trailing lambdas** y una sintaxis más concisa.
+<References references={[
+    {
+        title: "7. Functions as First-Class Objects",
+        bookTitle: "Fluent Python: Clear, concise, and effective programming",
+        publisher: "O’Reilly",
+        location: "Beijing Boston Farnham Sebastopol Tokyo",
+        pages: "231–252",
+        year: "2022",
+        author: "Luciano Ramalho",
+        type: "book",
+    },
+]}/>

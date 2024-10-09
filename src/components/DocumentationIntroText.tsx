@@ -9,7 +9,7 @@ const DocumentationText: React.FC = () => (
             text="Todxs sabemos que el tiempo es dinero, y en una sociedad capitalista, el dinero es la prioridad número uno para las grandes corporaciones.">
             soporte y consultas frecuentes
         </Tooltip>
-        , mejorando la adopción de la biblioteca, ya que los desarrolladores prefieren usar herramientas bien
+        , mejorando la adopción de la biblioteca, ya que lxs desarrolladorxs prefieren usar herramientas bien
         documentadas.
     </p>
 );

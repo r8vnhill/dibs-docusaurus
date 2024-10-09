@@ -1,42 +1,66 @@
 ---
-title: Funciones de Alto Orden
+title: Funciones de Orden Superior
 ---
-import Definition from "../../src/components/Definition";
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
-import ReadingTime from '../../src/components/ReadingTime';
-import Exercise from '@site/src/components/exercise/Exercise';
-import Solution from '@site/src/components/exercise/Solution';
-import References from '@site/src/components/ReferencesComponent';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
 
 <ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="functional-programming-kt" />
+
+:::note Si quieres seguir el código del tutorial puedes comenzar desde [este punto](https://github.com/r8vnhill/functional-programming-kt/tree/base).
+
+Si tienes ``gh`` instalado, puedes obtener el código haciendo:
+
+```bash
+gh repo clone r8vnhill/functional-programming-kt
+cd functional-programming-kt || exit
+git checkout base
+```
+
+Si quieres tener tu propia copia del código, puedes hacer un fork del repositorio y clonarlo desde tu cuenta de GitHub.
+
+```bash
+gh repo fork r8vnhill/functional-programming-kt
+cd functional-programming-kt || exit
+git checkout base
+```
+
+:::
 
 <details>
-    <summary>Comencemos por crear un módulo para esta sección</summary>
+    <summary>Comencemos por crear un módulo para esta lección</summary>
 
     <Tabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell showLineNumbers
-            New-Item -Path "hof\src\main\kotlin" -ItemType Directory
-            Set-Content -Path "hof\build.gradle.kts" -Value "// Intentionally left blank"
+            Set-Content -Path 'hof\build.gradle.kts' `
+                -Value '// Intentionally left blank' -Force
             ```
         </TabItem>
         <TabItem value="Windows (corto)" label="Windows (corto)">
             ```powershell showLineNumbers
-            mkdir hof\src\main\kotlin
-            "// Intentionally left blank" > hof\build.gradle.kts
+            '// Intentionally left blank' > 'hof\build.gradle.kts'
             ```
         </TabItem>
         <TabItem value="Linux/Mac" label="Linux/Mac">
             ```bash showLineNumbers
-            mkdir -p hof/src/main/kotlin
-            echo "// Intentionally left blank" > hof/build.gradle.kts
+            mkdir -p "hof/src/main/kotlin"
+            echo "// Intentionally left blank" > "hof/build.gradle.kts"
             ```
         </TabItem>
     </Tabs>
 </details>
 
-Las **funciones de alto orden** son aquellas que **reciben** otras funciones como parámetros o **retornan** una función como resultado. Esto permite un nivel adicional de abstracción y reutilización de código.
+Las **funciones de orden superior** son aquellas que **reciben** otras funciones como parámetros o **retornan** una función como resultado. Esto permite un nivel adicional de abstracción y reutilización de código.
 
 Por ejemplo, una función que aplique otra función a todos los elementos de una lista podría tener el siguiente tipo:
 
@@ -60,7 +84,7 @@ Otro ejemplo es una función que componga dos funciones y retorne una nueva func
 
 Esto significa que la función toma dos funciones `f` y `g` y devuelve una nueva función que transforma un valor de tipo `A` a tipo `C` pasando por los dos pasos intermedios (primero aplica `f` y luego `g`).
 
-### Asociación a la derecha
+## Asociación a la derecha
 
 En la notación de funciones, el operador `->` se asocia a la derecha, lo que significa que:
 
@@ -76,9 +100,58 @@ Es equivalente a:
 
 Esto implica que la función acepta un parámetro de tipo `A` y retorna una función que a su vez toma un parámetro de tipo `B` y retorna un valor de tipo `C`. Este concepto es clave en la **currificación**, una técnica común en la programación funcional.
 
-<Definition title={`Currificación`}>
-La **currificación** es el proceso de convertir una función que toma múltiples argumentos en una secuencia de funciones que toman un solo argumento. Esto permite aplicar parcialmente una función, es decir, proporcionar solo algunos de los argumentos necesarios y obtener una nueva función que espera los argumentos restantes.
-</Definition>
+<details>
+    <summary>
+        Currificación
+    </summary>
+
+    La **currificación** es un proceso en programación funcional que consiste en transformar una función que toma múltiples argumentos en una secuencia de funciones, cada una de las cuales toma un único argumento. Esto permite aplicar parcialmente la función y facilita la reutilización y composición de funciones. En lugar de pasar todos los argumentos a la vez, la función currificada se llama con un solo argumento, devolviendo otra función que espera el siguiente argumento, y así sucesivamente.
+
+    Supongamos que tenemos una función que suma dos números:
+
+    ```kotlin showLineNumbers
+    fun add(a: Int, b: Int): Int = a + b
+    ```
+
+    La función `add` toma dos argumentos (`a` y `b`) y devuelve su suma. Ahora, vamos a currificar esta función.
+
+    La versión currificada de la función `add` se vería así:
+
+    ```kotlin showLineNumbers
+    fun addCurried(a: Int): (Int) -> Int = { b -> a + b }
+    ```
+
+    En esta versión, `addCurried` toma un solo argumento (`a`) y devuelve una función que espera el segundo argumento (`b`). Cuando llamamos a esta nueva función con `b`, devuelve la suma de `a` y `b`.
+
+    Podemos usar la función currificada de la siguiente manera:
+
+    ```kotlin showLineNumbers
+    val addFive = addCurried(5) // Devuelve una función que suma 5
+    val result = addFive(3)     // Aplica la función con el argumento 3
+    println(result)             // Output: 8
+    ```
+
+    En este caso, `addFive` es una función que suma 5 a cualquier número que se le pase como argumento. Luego, llamamos a `addFive(3)` y obtenemos `8` como resultado.
+
+    #### Ventajas de la Currificación
+
+    1. **Aplicación Parcial**: La currificación permite crear versiones específicas de funciones aplicando algunos argumentos y dejando otros para más adelante, como se vio en el ejemplo con `addFive`.
+    2. **Composición de Funciones**: Facilita la composición de funciones en programación funcional, ya que las funciones currificadas se pueden encadenar y combinar fácilmente.
+    3. **Reutilización y Flexibilidad**: Las funciones currificadas se pueden reutilizar y adaptar sin tener que redefinir la función original.
+
+    <ProCons>
+        <Pros>
+            1. **Aplicación Parcial**: Permite aplicar solo algunos argumentos a una función y obtener una nueva función que espera los argumentos restantes.
+            2. **Composición de Funciones**: Facilita la composición de funciones al permitir encadenar y combinar funciones de manera flexible.
+            3. **Reutilización y Flexibilidad**: Las funciones currificadas son más flexibles y reutilizables, ya que se pueden adaptar y combinar de diversas formas.
+        </Pros>
+        <Cons>
+            1. **Mayor Complejidad**: Currificar funciones puede hacer que el código sea más difícil de entender para quienes no están familiarizados con el paradigma funcional, ya que las funciones currificadas implican múltiples llamadas en cadena.
+            2. **Rendimiento**: Dependiendo de la implementación y del entorno, el uso de funciones currificadas puede tener un impacto en el rendimiento debido a la creación de múltiples funciones anidadas. Esto podría ser menos eficiente que una llamada directa con todos los argumentos.
+            3. **Menor Intuitividad en Algunos Casos**: En contextos donde se espera que todas las funciones reciban múltiples parámetros, la currificación puede parecer menos intuitiva, especialmente cuando se convierte en una práctica generalizada en código de gran escala.
+        </Cons>
+    </ProCons>
+</details>
 
 <Exercise title={"Tipos de Funciones"}>
     
@@ -95,7 +168,7 @@ La **currificación** es el proceso de convertir una función que toma múltiple
     </Solution>
 </Exercise>
 
-### Map
+## Map
 
 Vamos a programar la función `map`. Esta función toma una lista y una función, luego aplica esa función a todos los elementos de la lista, devolviendo una nueva lista con los resultados.
 
@@ -105,17 +178,33 @@ Vamos a programar la función `map`. Esta función toma una lista y una función
     <Tabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell
-            New-Item -Path hof\src\main\kotlin\com\github\your_user\functional\map\Main.kt -ItemType File
+            $Group = 'com\github\username'
+            ```
+
+            ```powershell
+            $FnTestDir = "hof\src\test\kotlin\$Group\functional"
+            New-Item -Path "$FnTestDir\map\MapTest.kt" -ItemType File -Force
             ```
         </TabItem>
         <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
             ```powershell
-            ni hof\src\main\kotlin\com\github\your_user\functional\map\Main.kt
+            $Group = 'com\github\username'
+            ```
+
+            ```powershell
+            $FnTestDir = "hof\src\test\kotlin\$Group\functional"
+            ni "$FnTestDir\map\MapTest.kt" -i f -f
             ```
         </TabItem>
-        <TabItem value="Unix" label="Unix">
+        <TabItem value="Linux/Mac" label="Linux/Mac">
             ```bash
-            touch hof/src/main/kotlin/com/github/your_user/functional/map/Main.kt
+            GROUP="com/github/username"
+            ```
+
+            ```bash	
+            FN_TEST_DIR="hof/src/test/kotlin/$GROUP/functional"
+            mkdir -p "$FN_TEST_DIR/map"
+            touch "$FN_TEST_DIR/map/MapTest.kt"
             ```
         </TabItem>
     </Tabs>
@@ -123,28 +212,37 @@ Vamos a programar la función `map`. Esta función toma una lista y una función
 
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers title="hof/src/main/kotlin/com/github/your_user/functional/map/Main.kt"
-        println(map(listOf(1, 2, 3, 4, 5), ::double))
-        println(map(listOf(1, 2, 3, 4, 5), ::square))
+        ```kotlin showLineNumbers title="hof/src/test/kotlin/com/github/username/functional/map/MapTest.kt"
+        map(listOf(1, 2, 3, 4, 5), ::double) shouldBe listOf(2, 4, 6, 8, 10)
+        map(listOf(1, 2, 3, 4, 5), ::square) shouldBe listOf(1, 4, 9, 16, 25)
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="hof/src/main/kotlin/com/github/your_user/functional/map/Main.kt"
-        package com.github.your_user.functional.map
+        ```kotlin showLineNumbers title="hof/src/test/kotlin/com/github/username/functional/map/MapTest.kt"
+        package com.github.username.functional.map
 
-        fun double(n: Int): Int = n * 2
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
 
-        fun square(n: Int): Int = n * n
+        private fun double(n: Int): Int = n * 2
 
-        fun main() {
-            println(map(listOf(1, 2, 3, 4, 5), ::double))
-            println(map(listOf(1, 2, 3, 4, 5), ::square))
-        }
+        private fun square(n: Int): Int = n * n
+
+        class MapTest : FreeSpec({
+            "A map function" - {
+                "can double the elements" {
+                    map(listOf(1, 2, 3, 4, 5), ::double) shouldBe listOf(2, 4, 6, 8, 10)
+                }
+                "can square the elements" {
+                    map(listOf(1, 2, 3, 4, 5), ::square) shouldBe listOf(1, 4, 9, 16, 25)
+                }
+            }
+        })
         ```
     </TabItem>
 </Tabs>
 
-#### Implementación iterativa de `map`
+### Implementación iterativa de `map`
 
 <details>
     <summary>Si quieres crear el archivo desde la terminal...</summary>
@@ -152,17 +250,21 @@ Vamos a programar la función `map`. Esta función toma una lista y una función
     <Tabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell
-            New-Item -Path hof\src\main\kotlin\com\github\your_user\functional\map\Map.kt -ItemType File
+            $FnMainDir = "hof\src\main\kotlin\$Group\functional"
+            New-Item -Path "$FnMainDir\map\Map.kt" -ItemType File -Force
             ```
         </TabItem>
         <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
             ```powershell
-            ni hof\src\main\kotlin\com\github\your_user\functional\map\Map.kt
+            $FnMainDir = "hof\src\main\kotlin\$Group\functional"
+            ni "$FnMainDir\map\Map.kt" -i f -f
             ```
         </TabItem>
         <TabItem value="Unix" label="Unix">
             ```bash
-            touch hof/src/main/kotlin/com/github/your_user/functional/map/Map.kt
+            FN_MAIN_DIR="hof/src/main/kotlin/$GROUP/functional"
+            mkdir -p "$FN_MAIN_DIR/map"
+            touch "$FN_MAIN_DIR/map/Map.kt"
             ```
         </TabItem>
     </Tabs>
@@ -170,65 +272,42 @@ Vamos a programar la función `map`. Esta función toma una lista y una función
 
 La implementación básica de `map` toma una lista de cualquier tipo y una función que se aplica a cada elemento de esa lista. La función `map` recorre la lista original, aplica la función a cada elemento, y devuelve una nueva lista con los resultados.
 
-<Tabs>
-    <TabItem value="Código esencial" label="Código esencial">
-        ```kotlin showLineNumbers title="hof/src/main/kotlin/com/github/your_user/functional/map/Map.kt"
-        fun <T, R> map(list: List<T>, f: (T) -> R): List<R> {
-            val result = mutableListOf<R>()
-            for (i in list) {
-                result.add(f(i))
-            }
-            return result
-        }
-        ```
-    </TabItem>
-    <TabItem value="Código completo" label="Código completo">
-        ```kotlin showLineNumbers title="hof/src/main/kotlin/com/github/your_user/functional/map/Map.kt"
-        package com.github.your_user.functional.map
+```kotlin showLineNumbers title="hof/src/main/kotlin/com/github/username/functional/map/Map.kt"
+package com.github.username.functional.map
 
-        fun <T, R> map(list: List<T>, f: (T) -> R): List<R> {
-            val result = mutableListOf<R>()
-            for (i in list) {
-                result.add(f(i))
-            }
-            return result
-        }
-        ```
-    </TabItem>
-</Tabs>
+fun <T, R> map(list: List<T>, f: (T) -> R): List<R> {
+    val result = mutableListOf<R>()
+    for (i in list) {
+        result.add(f(i))
+    }
+    return result
+}
+```
 
 En este código, se crea una lista mutable `result` que almacenará los resultados. A continuación, la función recorre cada elemento de la lista original, aplica la función `f`, y añade el resultado a `result`. Finalmente, se retorna la nueva lista con los resultados aplicados.
 
 :::danger Problema de Mutabilidad
+
 El uso de estructuras mutables como `MutableList` puede generar **efectos secundarios** y **errores inesperados**. En programación funcional, se recomienda evitar la mutabilidad y trabajar con estructuras inmutables para reducir el riesgo de errores y mejorar la mantenibilidad del código.
+
 :::
 
-#### Implementación Recursiva
+### Implementación Recursiva
 
 Una forma más **funcional** de implementar `map` sería utilizando **recursión** en lugar de un bucle. Esta implementación evita el uso de estructuras mutables, lo cual es más acorde con los principios de la programación funcional.
 
-<Tabs>
-    <TabItem value="Código esencial" label="Código esencial">
-        ```kotlin showLineNumbers title="hof/src/main/kotlin/com/github/your_user/functional/map/Map.kt"
-        fun <T, R> map(list: List<T>, f: (T) -> R): List<R> = if (list.isEmpty()) {
-            emptyList()
-        } else {
-            listOf(f(list.first())) + map(list.drop(1), f)
-        }
-        ```
-    </TabItem>
-    <TabItem value="Código completo" label="Código completo">
-        ```kotlin showLineNumbers title="hof/src/main/kotlin/com/github/your_user/functional/map/Map.kt"
-        package com.github.your_user.functional.map
+```kotlin showLineNumbers title="hof/src/main/kotlin/com/github/username/functional/map/Map.kt"
+package com.github.username.functional.map
 
-        fun <T, R> map(list: List<T>, f: (T) -> R): List<R> = if (list.isEmpty()) {
-            emptyList()
-        } else {
-            listOf(f(list.first())) + map(list.drop(1), f)
-        }
-        ```
-    </TabItem>
-</Tabs>
+fun <T, R> map(
+    list: List<T>,
+    f: (T) -> R
+): List<R> = if (list.isEmpty()) {
+    emptyList()
+} else {
+    listOf(f(list.first())) + map(list.drop(1), f)
+}
+```
 
 En este caso, la función `map` verifica si la lista está vacía. Si lo está, retorna una lista vacía. Si no, aplica la función `f` al primer elemento de la lista (`list.first()`), lo agrega a una nueva lista, y luego llama recursivamente a `map` con el resto de los elementos de la lista (`list.drop(1)`).
 
@@ -252,7 +331,7 @@ En este caso, la función `map` verifica si la lista está vacía. Si lo está, 
     </Solution>
 </Exercise>
 
-### Fold
+## Fold
 
 <details>
     <summary>Si quieres crear el archivo desde la terminal...</summary>
@@ -260,17 +339,22 @@ En este caso, la función `map` verifica si la lista está vacía. Si lo está, 
     <Tabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell
-            New-Item -Path hof\src\main\kotlin\com\github\your_user\functional\fold\Fold.kt -ItemType File
+            New-Item -Path "$FnTestDir\fold\FoldTest.kt" -ItemType File -Force
+            New-Item -Path "$FnMainDir\fold\Fold.kt" -ItemType File -Force
             ```
         </TabItem>
         <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
             ```powershell
-            ni hof\src\main\kotlin\com\github\your_user\functional\fold\Fold.kt
+            ni "$FnTestDir\fold\FoldTest.kt" -i f -f
+            ni "$FnMainDir\fold\Fold.kt" -i f -f
             ```
         </TabItem>
         <TabItem value="Unix" label="Unix">
             ```bash
-            touch hof/src/main/kotlin/com/github/your_user/functional/fold/Fold.kt
+            mkdir -p "$FN_TEST_DIR/fold"
+            touch "$FN_TEST_DIR/fold/FoldTest.kt"
+            mkdir -p "$FN_MAIN_DIR/fold"
+            touch "$FN_MAIN_DIR/fold/Fold.kt"
             ```
         </TabItem>
     </Tabs>
@@ -280,13 +364,13 @@ Imagina que tienes una lista de números y quieres sumarlos todos. Una forma de 
 
 En programación funcional, **`fold`** toma una lista y la "reduce" a un solo valor aplicando una operación (por ejemplo, sumar o multiplicar) a todos sus elementos, uno por uno.
 
-#### ¿Cómo funciona?
+### ¿Cómo funciona?
 
 1. **Elemento inicial**: Necesitamos un valor inicial que actúe como "base". Este valor se usa para comenzar la acumulación.
 2. **Función de acumulación**: Usamos una función que toma dos valores: el acumulador (que guarda el resultado parcial) y el siguiente elemento de la lista. La función combina estos dos valores y devuelve un nuevo valor acumulado.
 3. **Recorrer la lista**: Aplicamos esta función de acumulación a cada elemento de la lista, combinándolo con el valor acumulado hasta ese punto.
 
-#### Ejemplo con suma
+### Ejemplo con suma
 
 Si tienes la lista `[1, 2, 3]` y quieres sumar los números, el proceso sería algo así:
 
@@ -297,103 +381,82 @@ Si tienes la lista `[1, 2, 3]` y quieres sumar los números, el proceso sería a
 
 El resultado final es `6`.
 
-#### Implementación recursiva de `fold`
+### Probando `fold`
+
+Ahora que tenemos una idea de cómo funciona `fold`, podríamos comenzar por escribir algunas pruebas para esta función.
+
+<Tabs>
+    <TabItem value="Código esencial" label="Código esencial">
+        ```kotlin showLineNumbers title="hof/src/test/kotlin/com/github/username/functional/fold/FoldTest.kt"
+        fold(listOf(1, 2, 3, 4, 5), 0, ::add) shouldBe 15
+        fold(listOf(1, 2, 3, 4, 5), 1, ::multiply) shouldBe 120
+        ```
+    </TabItem>
+    <TabItem value="Código completo" label="Código completo">
+        ```kotlin showLineNumbers title="hof/src/test/kotlin/com/github/username/functional/fold/FoldTest.kt"
+        package com.github.username.functional.fold
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        private fun add(a: Int, b: Int): Int = a + b
+
+        private fun multiply(a: Int, b: Int): Int = a * b
+
+        class FoldTest : FreeSpec({
+            "A fold function" - {
+                "can sum the elements" {
+                    fold(listOf(1, 2, 3, 4, 5), 0, ::add) shouldBe 15
+                }
+                "can multiply the elements" {
+                    fold(listOf(1, 2, 3, 4, 5), 1, ::multiply) shouldBe 120
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del código
+
+- **[1]**: Se llama a `fold` con un valor inicial de `0`, una lista de números `[1, 2, 3, 4, 5]`, y la función `add` que suma dos números. Esto sumará todos los elementos de la lista, formando la expresión `(((((0 + 1) + 2) + 3) + 4) + 5) = 15`.
+- **[2]**: Se llama a `fold` con un valor inicial de `1`, una lista de números `[1, 2, 3, 4, 5]`, y la función `multiply` que multiplica dos números. Esto multiplicará todos los elementos de la lista, formando la expresión `(((((1 * 1) * 2) * 3) * 4) * 5) = 120`.
+
+:::
+
+### Implementación recursiva de `fold`
 
 A continuación, vamos a implementar una versión recursiva de `fold`:
 
-<Tabs>
-    <TabItem value="Código esencial" label="Código esencial">
-        ```kotlin showLineNumbers title="hof/src/main/kotlin/com/github/your_user/functional/fold/Fold.kt"
-        fun <T, R> fold(list: List<T>, initial: R, combine: (R, T) -> R): R =
-            if (list.isEmpty()) {
-                initial
-            } else {
-                val first = list.first()
-                val rest = list.drop(1)
-                val newAcc = combine(initial, first)
-                fold<T, R>(rest, newAcc, combine)
-            }
-        ```
-    </TabItem>
-    <TabItem value="Código completo" label="Código completo">
-        ```kotlin showLineNumbers title="hof/src/main/kotlin/com/github/your_user/functional/fold/Fold.kt"
-        package cl.ravenhill.functional.fold
+```kotlin showLineNumbers title="hof/src/main/kotlin/com/github/your_user/functional/fold/Fold.kt"
+package cl.ravenhill.functional.fold
 
-        fun <T, R> fold(list: List<T>, initial: R, combine: (R, T) -> R): R =
-            if (list.isEmpty()) {
-                initial
-            } else {
-                val first = list.first()
-                val rest = list.drop(1)
-                val newAcc = combine(initial, first)
-                fold<T, R>(rest, newAcc, combine)
-            }
-        ```
-    </TabItem>
-</Tabs>
+fun <T, R> fold(list: List<T>, initial: R, combine: (R, T) -> R): R =
+    if (list.isEmpty()) {
+        initial
+    } else {
+        val first = list.first()
+        val rest = list.drop(1)
+        val newAcc = combine(initial, first)
+        fold(rest, newAcc, combine)
+    }
+```
 
 **¿Qué hace esta función?**
-- **(1)** Recibe una lista de tipo `T`, un valor inicial de tipo `R`, y una función que combina un valor de tipo `R` con un valor de tipo `T` para producir un nuevo valor de tipo `R`.
-- **(3)** Si la lista está vacía, retorna el valor inicial.
-- **(5-6)** Si no, toma el primer elemento de la lista y el resto de la lista.
-- **(7)** Combina el valor inicial con el primer elemento.
-- **(8)** Llama recursivamente a `fold` con el resto de la lista y el nuevo valor acumulado.
-
-#### Ejemplo de uso
-
-<details>
-    <summary>Si quieres crear el archivo desde la terminal...</summary>
-
-    <Tabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path hof\src\main\kotlin\com\github\your_user\functional\fold\Main.kt -ItemType File
-            ```
-        </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-            ```powershell
-            ni hof\src\main\kotlin\com\github\your_user\functional\fold\Main.kt
-            ```
-        </TabItem>
-        <TabItem value="Unix" label="Unix">
-            ```bash
-            touch hof/src/main/kotlin/com/github/your_user/functional/fold/Main.kt
-            ```
-        </TabItem>
-    </Tabs>
-</details>
-
-Vamos a usar esta función para sumar una lista de números:
-
-<Tabs>
-    <TabItem value="Código esencial" label="Código esencial">
-        ```kotlin showLineNumbers title="hof/src/main/kotlin/com/github/your_user/functional/fold/Main.kt"
-        val numbers = listOf(1, 2, 3, 4, 5)
-        val result = fold(numbers, 0, ::sum)
-        println(result)  // Imprime: 15
-        ```
-    </TabItem>
-    <TabItem value="Código completo" label="Código completo">
-        ```kotlin showLineNumbers title="hof/src/main/kotlin/com/github/your_user/functional/fold/Main.kt"
-        package com.github.your_user.functional.fold
-
-        fun sum(a: Int, b: Int) = a + b
-
-        fun main() {
-            val numbers = listOf(1, 2, 3, 4, 5)
-            val result = fold(numbers, 0, ::sum)
-            println(result)  // Imprime: 15
-        }
-        ```
-    </TabItem>
-</Tabs>
-
-Aquí usamos la función `sum` para combinar los números. El valor inicial es `0`, y la lista es `[1, 2, 3, 4, 5]`. El resultado final será `15`.
+- **[3]** Recibe una lista de tipo `T`, un valor inicial de tipo `R`, y una función que combina un valor de tipo `R` con un valor de tipo `T` para producir un nuevo valor de tipo `R`.
+- **[4-5]** Si la lista está vacía, retorna el valor inicial.
+- **[7-8]** Si no, toma el primer elemento de la lista y el resto de la lista.
+- **[9]** Combina el valor inicial con el primer elemento.
+- **[10]** Llama recursivamente a `fold` con el resto de la lista y el nuevo valor acumulado.
 
 <Exercise title="Generación de acrónimos">
     Supongamos que necesitas implementar una función que construya un acrónimo a partir de una lista de palabras. En específico, tu objetivo es construir una nueva palabra a partir de la primera letra de cada palabra de la lista. Si la palabra tiene menos de 3 letras, la ignoras.
 
     Implementa la función `acronym: (List<String>) -> String` que cumpla con esta especificación utilizando la función `fold`.
+
+    ```kotlin showLineNumbers
+    acronym(listOf("Functional", "Programming", "in", "Kotlin")) shouldBe "FPK"
+    ```
 
     <Solution>
         ```kotlin
@@ -404,18 +467,27 @@ Aquí usamos la función `sum` para combinar los números. El valor inicial es `
     </Solution>
 </Exercise>
 
-### Resumen de la Lección
+## ¿Qué Aprendimos?
 
-En esta lección, exploramos las **funciones de alto orden**, su poder para recibir o retornar otras funciones, y cómo permiten un nivel más alto de abstracción y reutilización de código.
+En esta lección, exploramos las **funciones de orden superior** en **Kotlin** y cómo se utilizan en programación funcional para componer y reutilizar lógica de manera eficiente. También implementamos funciones comunes como `map` y `fold` para demostrar su utilidad práctica.
 
-Vimos cómo funcionan conceptos clave como:
+### Puntos Clave
 
-1. **Currificación**: El proceso de convertir una función con múltiples argumentos en una secuencia de funciones que toman un solo argumento. Esto permite la aplicación parcial de funciones.
-2. **Map**: Implementamos la función `map` tanto de forma iterativa como recursiva, y discutimos los problemas de mutabilidad en las estructuras de datos.
-3. **Filter**: Implementamos `filter` como una función recursiva que selecciona los elementos de una lista que cumplen con un predicado.
-4. **Fold**: Introdujimos el concepto de **fold** como una forma de "reducir" una lista a un único valor aplicando una operación acumulativa. Exploramos su uso para sumar números y generar acrónimos a partir de listas de palabras.
+1. **Funciones de Orden Superior**: Las funciones de orden superior son fundamentales en la programación funcional. Permiten recibir otras funciones como parámetros o devolverlas como resultado, aumentando la flexibilidad y expresividad en la forma de componer y reutilizar lógica.
+2. **Implementación de `map` y `fold`**: 
+   - **`map`**: Nos permite aplicar una función a cada elemento de una lista y generar una nueva lista con los resultados transformados. Esto es útil para realizar transformaciones masivas de datos de manera concisa y eficiente.
+   - **`fold`**: Acumula los elementos de una lista en un solo valor utilizando una función de combinación, lo que es ideal para operaciones de reducción, como sumar o multiplicar elementos, o generar cadenas acumulativas.
+3. **Recursividad vs. Iteración**: Las implementaciones recursivas de funciones como `map` y `fold` en programación funcional evitan el uso de estructuras mutables, respetando principios de inmutabilidad. Sin embargo, deben gestionarse con cuidado para evitar problemas de eficiencia o desbordamiento de pila en listas grandes.
 
-Al final, comprendimos cómo estas funciones permiten una programación más funcional, modular y flexible.
+### Reflexiones Finales
+
+Comprender y aplicar **funciones de orden superior** es crucial para aprovechar las ventajas de la programación funcional en Kotlin. Estos conceptos no solo permiten crear código más modular y reutilizable, sino que también posibilitan escribir soluciones más concisas y expresivas. Es importante encontrar un equilibrio, considerando las implicaciones de eficiencia y complejidad en estructuras y listas grandes.
+
+A medida que te familiarices con las funciones de orden superior, experimentar con diferentes formas de usar y combinar funciones te ayudará a desarrollar patrones que maximicen la claridad y la eficiencia en tu código.
+
+--- 
+
+Con estos conceptos y ejemplos, ahora tienes una base sólida para aplicar funciones de orden superior en tus proyectos y aprovechar las técnicas de programación funcional en Kotlin para escribir código más limpio y mantenible.
 
 <References references={[
     {

@@ -19,15 +19,38 @@ Para comenzar a utilizar **Property-Based Testing** en tu proyecto, lo primero q
 
 Añade las dependencias correspondientes en el archivo `versions.toml`:
 
-```toml
-[libraries]
-# Dependencias para Kotest y Property-Based Testing
-kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
-# Otras dependencias...
-[bundles]
-# Definimos un bundle que agrupa las dependencias de Kotest
-kotest = ["kotest-runner-junit5", "kotest-datatest", "kotest-property"]
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```toml showLineNumbers
+        [libraries]
+        kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+        [bundles]
+        kotest = ["kotest-runner-junit5", "kotest-datatest", "kotest-property"]
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```toml showLineNumbers
+        [versions]
+        kotlin = "2.0.20"
+        pbt = "1.0.0"
+        detekt = "1.23.6"
+        kotest = "5.9.1"
+
+        [libraries]
+        kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+        detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
+        kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+        kotest-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest" }
+        kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+
+        [plugins]
+        detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+
+        [bundles]
+        kotest = ["kotest-runner-junit5", "kotest-datatest", "kotest-property"]
+        ```
+    </TabItem>
+</Tabs>
 
 Con este **bundle** configurado, ya no es necesario añadir las dependencias de Kotest manualmente en el bloque `dependencies` de tu archivo de configuración `build.gradle.kts`. Simplemente, puedes referenciar el bundle `kotest` y asegurarte de tener todas las herramientas necesarias para realizar pruebas basadas en propiedades.
 
@@ -41,25 +64,27 @@ Este enfoque mantiene tu archivo de dependencias limpio y organizado, permitiend
     <Tabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell
-            New-Item -Path "str-len\src\test\kotlin\com\github\username\strings\StringConcatenationTest.kt" `
-                -ItemType File `
-                -Force  # Crea directorios intermedios si no existen
-            Set-Content -Path "str-len\build.gradle.kts" -Value "// Intentionally left blank"
+            $Group = 'com\github\username'
+            $StringsDir = "str-cat\src\test\kotlin\$Group\strings"
+            New-Item -Path "$StringsDir\StringConcatenationTest.kt" -ItemType File -Force
+            Set-Content -Path "str-cat\build.gradle.kts" -Value "// Intentionally left blank"
             ```
         </TabItem>
         <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
             ```powershell
-            ni "str-len\src\test\kotlin\com\github\username\strings\StringConcatenationTest.kt" `
-                -ItemType File `
-                -Force
-            "// Intentionally left blank" > "str-len\build.gradle.kts"
+            $Group = 'com\github\username'
+            $StringsDir = "str-cat\src\test\kotlin\$Group\strings"
+            ni "$StringsDir\StringConcatenationTest.kt" -i f -f
+            "// Intentionally left blank" > "str-cat\build.gradle.kts"
             ```
         </TabItem>
         <TabItem value="Unix" label="Unix">
             ```bash
-            mkdir -p str-len/src/test/kotlin/com/github/username/strings
-            touch str-len/src/test/kotlin/com/github/username/strings/StringConcatenationTest.kt
-            echo "// Intentionally left blank" > str-len/build.gradle.kts
+            GROUP=com/github/username
+            STRINGS_DIR="str-cat/src/test/kotlin/$GROUP/strings"
+            mkdir -p $STRINGS_DIR
+            touch "$STRINGS_DIR/StringConcatenationTest.kt"
+            echo "// Intentionally left blank" > str-cat/build.gradle.kts
             ```
         </TabItem>
     </Tabs>
@@ -98,15 +123,15 @@ Este enfoque mantiene tu archivo de dependencias limpio y organizado, permitiend
     </TabItem>
 </Tabs>
 
-En este test:
+:::info Explicación del Código
 
 - Usamos `checkAll` para realizar **testing basado en propiedades**, probando con diferentes combinaciones de inputs generados automáticamente.
 - `Arb.string()` es un generador arbitrario que proporciona strings aleatorios, incluyendo casos de borde como el string vacío.
 - La propiedad que estamos verificando es que la **longitud de la concatenación de dos strings debe ser igual a la suma de las longitudes de los strings originales**. Esto se mantiene sin importar los valores específicos de los strings generados.
 
-Esta técnica permite probar de forma exhaustiva la propiedad del código, garantizando que funcione correctamente bajo una variedad de condiciones.
+:::
 
-Aquí tienes una versión mejorada y más clara del texto:
+Esta técnica permite probar de forma exhaustiva la propiedad del código, garantizando que funcione correctamente bajo una variedad de condiciones.
 
 ## Probando más propiedades
 
@@ -196,11 +221,13 @@ Podemos verificar que la concatenación de strings sigue las leyes de los monoid
     </TabItem>
 </Tabs>
 
-### Explicación del Código:
+:::info Explicación del Código
 
 - **Identidad por la izquierda**: Concatenar el string vacío por la izquierda no cambia el valor original del string.
 - **Identidad por la derecha**: Concatenar el string vacío por la derecha tampoco altera el valor original.
 - **Asociatividad**: La concatenación de strings es asociativa, es decir, el orden en que se agrupan las operaciones de concatenación no afecta el resultado.
+
+:::
 
 Este enfoque nos permite probar formalmente propiedades importantes de los strings y asegurar que el comportamiento esperado se mantenga bajo cualquier circunstancia.
 
@@ -221,3 +248,16 @@ Este enfoque nos permite garantizar que la concatenación de strings en nuestro 
         link="/docs/testing/pbt/concatenation/scalatest"
     />
 </div>
+
+<References references={[
+    {
+        title: "8. Property-based testing",
+        bookTitle: "Functional Programming in Kotlin",
+        publisher: "Manning Publications Co. LLC",
+        location: "Shelter Island, NY",
+        pages: "150–176",
+        year: "2021",
+        author: "Marco Vermeulen, Rúnar Bjarnason, Paul Chiusano",
+        type: "book",
+    },
+]}/>

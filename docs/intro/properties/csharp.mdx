@@ -1,12 +1,20 @@
 ---
-title: Propiedades y Accessors en C#
+title: Propiedades en C#
 ---
-import References from "/src/components/ReferencesComponent";
-import ReadingTime from '/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
 import Tabs from '@theme/Tabs'
 import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
 
 En **C#**, las propiedades también combinan el comportamiento de campos y métodos, pero se gestionan a través de un sistema de **accessors**: `get` y `set`. Las propiedades proporcionan una forma más controlada de acceder y modificar los datos de una clase, similar a **Kotlin**.
 
@@ -16,78 +24,175 @@ A diferencia de Kotlin, donde las propiedades son implícitamente generadas con 
 
 Una **auto-implemented property** en **C#** se declara con `get` y `set`, y el compilador genera automáticamente el campo subyacente para almacenar el valor:
 
-```csharp showLineNumbers
-public class Person {
-    public string Name { get; set; } = "John";
-}
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```csharp showLineNumbers title="Properties/Person.cs"
+        public class Person(string name, int age)
+        {
+            public string Name { get; } = name;
+            public int Age { get; set; } = age;
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```csharp showLineNumbers title="Properties/Person.cs"
+        namespace Properties;
 
-En este ejemplo, la propiedad `Name` tiene tanto un `get` como un `set` automáticos, lo que significa que C# generará el campo correspondiente para manejar el valor.
+        public class Person(string name, int age)
+        {
+            public string Name { get; } = name;
+            public int Age { get; set; } = age;
+        }
+        ```
+
+        ```csharp showLineNumbers
+        using Properties;
+
+        var person = new Person("Masatoshi Ono");
+        person.Age = 57;
+        Console.WriteLine($"Name: {person.Name}, Age: {person.Age}");
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del Código
+
+- **[3]**: Se define una propiedad `Name` de solo lectura con un *getter* automático que se inicializa con el valor del parámetro `name`.
+- **[4]**: Se define una propiedad `Age` con *getter* y *setter* automáticos que se inicializa con el valor del parámetro `age`.
+
+:::
 
 ## Propiedad con Getter y Setter Personalizados
 
 En **C#**, puedes personalizar los *getters* y *setters* para controlar el acceso o modificar el valor de la propiedad de una manera más precisa:
 
-```csharp showLineNumbers
-public class Person {
-    private string _name;
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```csharp showLineNumbers
+        public class Person(string name, int age)
+        {
+            private int _age = age;
+            public string Name => name.ToUpper();
 
-    public string Name {
-        get {
-            return _name;
+            public int Age
+            {
+                get => _age;
+                set
+                {
+                    if (value < 0) throw new ArgumentException("Age cannot be negative.");
+                    _age = value;
+                }
+            }
         }
-        set {
-            _name = value;
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```csharp showLineNumbers title="Properties/Person.cs"
+        namespace Properties;
+
+        public class Person(string name, int age)
+        {
+            private int _age = age;
+            public string Name => name.ToUpper();
+
+            public int Age
+            {
+                get => _age;
+                set
+                {
+                    if (value < 0) throw new ArgumentException("Age cannot be negative.");
+                    _age = value;
+                }
+            }
         }
-    }
-}
-```
+        ```
+        
+        ```csharp showLineNumbers
+        using Properties;
 
-Aquí, se usa un campo privado `_name` para almacenar el valor de la propiedad, y tanto el `get` como el `set` son personalizados.
+        var person = new Person("Joseph Joestar", 20);
+        Console.WriteLine(person.Name); // JOSEPH JOESTAR
+        person.Age = 21;
+        Console.WriteLine(person.Age); // 21
+        try
+        {
+            person.Age = -1;
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine(ex.Message); // Age cannot be negative.
+        }
+        ```
+    </TabItem>
+</Tabs>
 
-## Propiedades Calculadas
+:::info Explicación del Código
 
-En **C#**, una **propiedad calculada** puede ser declarada con un *getter* que calcula su valor cada vez que se accede a ella:
+- **[4]**: Se define una propiedad calculada `Name` que convierte el nombre a mayúsculas.
+- **[6-12]**: Se define una propiedad `Age` con un *getter* y *setter* personalizados. El *setter* valida que el valor no sea negativo y lanza una excepción si lo es.
 
-```csharp showLineNumbers
-public class Clock {
-    public DateTime CurrentTime => DateTime.Now;
-}
-```
-
-El valor de `CurrentTime` se calcula dinámicamente cada vez que es accedido, proporcionando una forma de obtener valores actualizados en tiempo real.
-
-## Propiedades de Solo Lectura
-
-Si deseas que una propiedad sea **solo de lectura** en **C#**, puedes definirla con solo un *getter*. Esto es útil para valores calculados o valores que no deberían ser modificados una vez establecidos:
-
-```csharp showLineNumbers
-public class Person {
-    public string Name { get; }
-
-    public Person(string name) {
-        Name = name;
-    }
-}
-```
-
-En este ejemplo, `Name` es solo de lectura: se establece en el constructor y no puede ser cambiado posteriormente.
+:::
 
 ## Propiedades con Setters Privados
 
 Al igual que en **Kotlin**, puedes hacer que una propiedad en **C#** sea de solo escritura interna restringiendo el acceso al `set` a nivel privado:
 
-```csharp showLineNumbers
-public class Person {
-    public int Age { get; private set; }
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```csharp showLineNumbers
+        public class Person(string name, int age)
+        {
+            public int Age
+            {
+                get => _age;
+                private set
+                {
+                    // ...
+                }
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```csharp showLineNumbers
+        namespace Properties;
 
-    public void Birthday() {
-        Age++;
-    }
-}
-```
+        public class Person(string name, int age)
+        {
+            private int _age = age;
+            public string Name { get; } = name;
 
-En este caso, la propiedad `Age` solo puede modificarse dentro de la clase, lo que proporciona un control adicional sobre cuándo y cómo se actualiza el valor.
+            public int Age
+            {
+                get => _age;
+                private set
+                {
+                    if (value < 0) throw new ArgumentException("Age cannot be negative.");
+                    _age = value;
+                }
+            }
+            
+            public void Birthday() => _age++;
+        }
+        ```
+
+        ```csharp showLineNumbers
+        using Properties;
+
+        var person = new Person("Isaac", 17);
+        person.Birthday();
+        Console.WriteLine($"{person.Name} is {person.Age} years old.");
+        person.Age = 19; // Esto no compilará
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del Código
+
+- **[5]**: Se define un *getter* público, esto es necesario para poder definir un setter privado.
+- **[6-9]**: Se define un *setter* privado que solo puede ser accedido dentro de la clase.
+
+:::
 
 ## Comparación final
 
@@ -99,24 +204,20 @@ En este caso, la propiedad `Age` solo puede modificarse dentro de la clase, lo q
 | **Propiedades con Backing Field** | Uso explícito del campo `field`.                            | Uso opcional de un campo privado para almacenar datos. |
 | **Setter privado**                | Se puede declarar con `private set`.                        | Soporta `private set` de forma similar.                |
 | **Propiedad de solo lectura**     | Declarada con `val` (inmutable).                            | Declarada con `readonly` o usando solo `get`.          |
-| **Instantes actuales**            | Usar `Clock.System.now()` para calcular instantes actuales. | Usar `DateTime.Now` para instantes actuales.           |
 
-:::tip Ventajas de las Propiedades en C#
-
-1. **Expresividad**: La sintaxis de las propiedades en C# con la flecha (`=>`) para propiedades calculadas es concisa y expresiva, similar a las funciones lambda.
-2. **Compatibilidad**: C# es ampliamente utilizado y compatible con una amplia gama de herramientas y plataformas, lo que facilita su adopción.
-3. **Memorización Opcional**: Las propiedades en C# permiten el uso opcional de memorización a través de un campo privado para optimizar el rendimiento en propiedades calculadas.
-4. **Soporte para Interfaces**: Las propiedades en C# se pueden definir directamente en interfaces, lo que brinda mayor flexibilidad en la definición de APIs.
-
-:::
-
-:::danger Desventajas de las Propiedades en C#
-
-1. **Mayor verbosidad**: A pesar de las mejoras en la sintaxis, las propiedades en C# tienden a ser más verbosas que en Kotlin, especialmente al definir getters y setters personalizados.
-2. **Uso de Backing Fields**: El manejo manual de `backing fields` en propiedades calculadas puede aumentar la complejidad del código.
-3. **Menor inmutabilidad implícita**: A diferencia de Kotlin, donde `val` indica claramente la inmutabilidad, C# requiere especificar `readonly` o un getter sin setter para obtener el mismo comportamiento, lo que puede no ser tan evidente al leer el código.
-
-:::
+<ProCons>
+    <Pros>
+        - **Control y Flexibilidad**: En C#, los *getters* y *setters* pueden personalizarse fácilmente para aplicar lógica adicional, como validaciones o transformaciones, brindando un control preciso sobre cómo se gestionan las propiedades.
+        - **Auto-implemented Properties**: Permite declarar propiedades de manera rápida y concisa, similar a Kotlin, reduciendo el código repetitivo sin sacrificar la flexibilidad de personalización si es necesario.
+        - **Setters Privados**: Al igual que en Kotlin, se puede restringir el acceso a los *setters* mediante `private`, permitiendo un control granular sobre las propiedades y asegurando que solo métodos internos puedan modificar ciertos valores.
+        - **Propiedades Calculadas Sencillas**: C# permite definir propiedades calculadas utilizando la sintaxis de flecha (`=>`), facilitando la implementación de propiedades que derivan su valor de otros atributos de la clase de manera clara y concisa.
+    </Pros>
+    <Cons>
+        - **Declaración Explícita Necesaria**: A diferencia de Kotlin, donde las propiedades se generan automáticamente con `val` o `var`, en C# es necesario definir explícitamente las propiedades y sus *getters* y *setters*, lo que puede resultar en más código.
+        - **Menos Concisión en Personalización**: La personalización de *getters* y *setters* en C# puede requerir definir campos privados y lógica adicional, lo cual puede ser menos conciso y más verboso en comparación con la manera simplificada en la que se manejan en Kotlin.
+        - **Campos Backing Opcionales**: Aunque C# permite usar campos privados como "backing fields", esto no es obligatorio y puede generar confusión si no se aplica de manera consistente en el diseño de las clases.
+    </Cons>
+</ProCons>
 
 ## ¿Qué Aprendimos?
 

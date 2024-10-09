@@ -28,8 +28,8 @@ const sidebars: SidebarsConfig = {
                         'intro/basics',
                         'intro/types',
                         'intro/oop/oop',
-                        'intro/properties/properties-kt',
                         'intro/exceptions/exceptions-kt',
+                        'intro/properties/properties-kt',
                         'intro/void/void-safety',
                     ]
                 },
