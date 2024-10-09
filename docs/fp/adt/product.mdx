@@ -1,37 +1,161 @@
 ---
-title: Tipos producto
+title: Tipos Producto
 ---
-import LanguageCard from "../../../src/components/cards/LanguageCard";
-import References from "../../../src/components/ReferencesComponent";
-import ReadingTime from '../../../src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import LanguageCard from '@site/src/components/cards/LanguageCard'
 
 <ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+Los **tipos producto** son estructuras fundamentales en programación que permiten agrupar varios valores, posiblemente de tipos distintos, en una sola entidad. Estos tipos se denominan así porque el número de combinaciones posibles de valores es el producto del número de valores posibles de cada tipo. En esta lección, exploraremos cómo se implementan y usan los tipos producto en **Kotlin**, desde pares y tuplas hasta registros más avanzados utilizando **data classes**.
 
 ## Pares
 
-La implementación más simple de un tipo producto es el par. Un par, representado como $(A,B)$, $A \times B$ ó $A \to B$ ("$A$ to $B$"), es un tipo que contiene dos valores de tipos posiblemente diferentes. En Kotlin, los pares se pueden representar con la clase `Pair` de la biblioteca estándar.
+<details>
+    <summary>
+        Si quires crear los archivos desde la terminal...
+    </summary>
+    
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $Group = 'com\github\username'
+            ```
 
-```kotlin
-val pair = Pair(1, true)
-```
+            ```powershell
+            $ProductTestDir = "adt\src\test\kotlin\$Group\product"
+            New-Item -Path "$ProductTestDir\PairTest.kt" -ItemType "File" -Force
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            $Group = 'com\github\username'
+            ```
 
-o
+            ```powershell
+            $ProductTestDir = "adt\src\test\kotlin\$Group\product"
+            ni "$ProductTestDir\PairTest.kt" -i f -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            GROUP=com/github/username
+            ```
 
-```kotlin
-val pair = 1 to true
-```
+            ```bash
+            PRODUCT_TEST_DIR="adt/src/test/kotlin/$GROUP/product"
+            mkdir -p $PRODUCT_TEST_DIR
+            touch "$PRODUCT_TEST_DIR/PairTest.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+La implementación más simple de un tipo producto es el par. Un par, representado como $(a,b)$, $a \times b$ ó $a \to b$ ("$a$ to $b$"), es un tipo que contiene dos valores de tipos posiblemente diferentes. En Kotlin, los pares se pueden representar con la clase `Pair` de la biblioteca estándar.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="adt/src/main/kotlin/com/github/username/product/Pair.kt"
+        "Two ways of creating a pair" {
+            Pair(1, true) shouldBe (1 to true)
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="adt/src/main/kotlin/com/github/username/product/Pair.kt"   
+        package com.github.username.product
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        class PairTest : FreeSpec({
+            "Two ways of creating a pair" {
+                Pair(1, true) shouldBe (1 to true)
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
 
 El nombre tipo producto proviene del hecho de que el tipo $A \times B$ tiene $|A| \cdot |B|$ valores posibles, donde $|A|$ y $|B|$ son el número de valores posibles de los tipos $A$ y $B$, respectivamente. En nuestro ejemplo, el par $\text{Int} \to \text{Boolean}$ tiene $2^{32} \cdot 2 = 2^{33}$ valores posibles.
 
 ## Tuplas
 
-Aunque cualquier tipo puede ser representado como una composición de pares, como $A \to (B \to C)$, una alternativa más directa es el uso de **tuplas**. Una tupla es un tipo producto que contiene un número fijo de valores de diferentes tipos. Cada valor en la tupla puede ser de un tipo distinto, y la cantidad de valores define la "dimensión" de la tupla (e.g., una tupla de tres elementos es una "triple").
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+    
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $ProductMainDir = "adt\src\main\kotlin\$Group\product"
+            New-Item -Path "$ProductMainDir\Triple.kt" -ItemType "File" -Force
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            $ProductMainDir = "adt\src\main\kotlin\$Group\product"
+            ni "$ProductMainDir\Triple.kt" -i f -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            PRODUCT_MAIN_DIR="adt/src/main/kotlin/$GROUP/product"
+            mkdir -p $PRODUCT_MAIN_DIR
+            touch "$PRODUCT_MAIN_DIR/Triple.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+Aunque cualquier tipo puede ser representado como una composición de pares, como $A \times (B \times C)$, una alternativa más directa es el uso de **tuplas**. Una tupla es un tipo producto que contiene un número fijo de valores de diferentes tipos. Cada valor en la tupla puede ser de un tipo distinto, y la cantidad de valores define la "dimensión" de la tupla (e.g., una tupla de tres elementos es un "triple").
 
 En Kotlin, no existe un concepto general de tuplas, pero en esencia, cualquier clase que tenga varias propiedades puede actuar como una tupla de $n$ valores. Un ejemplo común es la clase `Triple`, que representa una tupla de tres elementos:
 
-```kotlin
-class Triple<A, B, C>(val first: A, val second: B, val third: C)
-```
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="adt/src/main/kotlin/com/github/username/product/Triple.kt"
+        class Triple<A, B, C>(val first: A, val second: B, val third: C)
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="adt/src/main/kotlin/com/github/username/product/Triple.kt"
+        package com.github.username.product
+
+        class Triple<A, B, C>(val first: A, val second: B, val third: C)
+        ```
+
+        ```kotlin showLineNumbers title="adt/src/test/kotlin/com/github/username/product/TripleTest.kt"
+        package cl.ravenhill.product
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        class TripleTest : FreeSpec({
+            "A triple" - {
+                "can be created" {
+                    with(Triple(1, true, "hello")) {
+                        first shouldBe 1
+                        second shouldBe true
+                        third shouldBe "hello"
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
 
 Por lo tanto, una tupla de tres valores en Kotlin podría ser representada con esta clase, donde cada elemento de la tupla tiene un tipo específico y puede ser accedido mediante las propiedades `first`, `second`, y `third`.
 
@@ -41,11 +165,44 @@ Los **registros** son tipos de datos que agrupan un conjunto de campos con nombr
 
 ### Definición de un Registro
 
-```kotlin
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+    
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path "$ProductMainDir\Person.kt" -ItemType "File" -Force
+            New-Item -Path "$ProductTestDir\PersonTest.kt" -ItemType "File" -Force
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            ni "$ProductMainDir\Person.kt" -i f -f
+            ni "$ProductTestDir\PersonTest.kt" -i f -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            touch "$PRODUCT_MAIN_DIR/Person.kt"
+            touch "$PRODUCT_TEST_DIR/PersonTest.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+```kotlin showLineNumbers title="adt/src/main/kotlin/com/github/username/product/Person.kt"
+package com.github.username.product
+
 data class Person(val name: String, val age: Int)
 ```
 
+:::info Explicación del Código
+
 En este ejemplo, `Person` es un registro que contiene dos campos: `name` y `age`. Este tipo de clase es ideal para representar objetos de dominio en aplicaciones que requieren un conjunto fijo de propiedades.
+
+:::
 
 ### Características Automáticas de las Data Classes
 
@@ -59,7 +216,7 @@ Kotlin proporciona varias funcionalidades automáticas para las **data classes**
 
 Esto es equivalente a escribir la siguiente clase manualmente:
 
-```kotlin
+```kotlin showLineNumbers
 class Person(val name: String, val age: Int) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -90,30 +247,109 @@ class Person(val name: String, val age: Int) {
 
 Crear y manipular instancias de un registro es simple y eficiente. Por ejemplo:
 
-```kotlin
-val person = Person("Alice", 30)
-val (name, age) = person   // Uso de destructuración
-println("Name: $name, Age: $age")  // Imprime: Name: Alice, Age: 30
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        "can be created" {
+            with(Person("John", 30)) {
+                name shouldBe "John"
+                age shouldBe 30
+            }
+        }
 
-val newPerson = person.copy(name = "Bob")  // Crea una copia con un nuevo nombre
-println(newPerson)  // Imprime: Person(name=Bob, age=30)
-```
+        "can be compared" {
+            val person1 = Person("John", 30)
+            val person2 = Person("John", 30)
+            person1 shouldBe person2
+        }
 
-Este ejemplo muestra cómo crear una instancia de la clase `Person`, acceder a sus propiedades, utilizar la destructuración y crear copias con valores modificados de forma concisa, gracias a las capacidades integradas de las **data classes**.
+        "can be copied" {
+            val person1 = Person("John", 30)
+            val person2 = person1.copy(name = "Jane")
+            person1 shouldBe Person("John", 30)
+            person2 shouldBe Person("Jane", 30)
+        }
 
-:::warning
-Si bien es posible definir los campos de un registro como `var` en lugar de `val`, se recomienda mantener los campos como `val` para garantizar la inmutabilidad de los registros. La manera de "mutar" un registro es mediante su función `copy()`.
+        "can be destructured" {
+            val (name, age) = Person("John", 30)
+            name shouldBe "John"
+            age shouldBe 30
+        }
+
+        "can be converted to a string" {
+            Person("John", 30).toString() shouldBe "Person(name=John, age=30)"
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        package cl.ravenhill.product
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        class PersonTest : FreeSpec({
+            "A person" - {
+                "can be created" {
+                    with(Person("John", 30)) {
+                        name shouldBe "John"
+                        age shouldBe 30
+                    }
+                }
+
+                "can be compared" {
+                    val person1 = Person("John", 30)
+                    val person2 = Person("John", 30)
+                    person1 shouldBe person2
+                }
+
+                "can be copied" {
+                    val person1 = Person("John", 30)
+                    val person2 = person1.copy(name = "Jane")
+                    person1 shouldBe Person("John", 30)
+                    person2 shouldBe Person("Jane", 30)
+                }
+
+                "can be destructured" {
+                    val (name, age) = Person("John", 30)
+                    name shouldBe "John"
+                    age shouldBe 30
+                }
+
+                "can be converted to a string" {
+                    Person("John", 30).toString() shouldBe "Person(name=John, age=30)"
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del Código
+
+En este código de prueba, se crean instancias de `Person` y se realizan varias operaciones comunes con registros, como comparar, copiar, desestructurar y convertir a cadena. Las **data classes** en Kotlin simplifican la manipulación de datos al proporcionar automáticamente estos métodos útiles.
+
 :::
 
-## En resumen
+:::warning
 
-Los **tipos producto** son una forma común de estructurar datos que contienen múltiples valores, posiblemente de diferentes tipos. Los **pares** y las **tuplas** son implementaciones básicas de estos tipos, que agrupan dos o más valores. En Kotlin, los pares pueden ser representados con la clase `Pair`, mientras que las tuplas de mayor tamaño, como las de tres valores, pueden ser representadas por clases como `Triple`.
+Si bien es posible definir los campos de un registro como `var` en lugar de `val`, se recomienda mantener los campos como `val` para garantizar la inmutabilidad de los registros. La manera de "mutar" un registro es mediante su función `copy()`.
 
-Los **registros** son una variante más rica de los tipos producto, donde los valores están etiquetados con nombres, lo que mejora la claridad del código. En Kotlin, los registros se implementan mediante **data classes**, que proporcionan automáticamente métodos útiles como `equals()`, `hashCode()`, `toString()`, y `copy()`. Estas clases facilitan la manipulación de datos en aplicaciones que requieren objetos con un conjunto fijo de propiedades.
+:::
 
-En resumen, los tipos producto permiten representar estructuras de datos de manera eficiente y clara, ya sea mediante pares, tuplas o registros. La elección entre estas opciones dependerá de las necesidades específicas del contexto, como la cantidad de valores que necesitas almacenar o la conveniencia de acceder a ellos por nombre en lugar de por posición.
+## ¿Qué Aprendimos?
 
-## Ejemplos en otros lenguajes
+Los **tipos producto** son una herramienta esencial en programación para agrupar varios valores de tipos diferentes en una sola entidad. En **Kotlin**, los pares y tuplas simples pueden representar estos tipos de manera directa usando clases como `Pair` y `Triple`. Para tipos más avanzados y flexibles, se utilizan **data classes**, que actúan como registros y proporcionan métodos útiles automáticamente, como `equals()`, `hashCode()`, `toString()`, y `copy()`.
+
+### Puntos Clave
+
+1. **Pares** y **tuplas** son formas básicas de tipos producto, útiles para almacenar pequeños conjuntos de valores sin necesidad de definir clases personalizadas.
+2. Los **registros**, implementados como **data classes**, ofrecen una forma más estructurada de manejar conjuntos de datos con nombres específicos, facilitando la claridad y la manipulación de datos.
+3. La inmutabilidad es clave en el manejo de registros en Kotlin, y es preferible usar `val` para los campos, manteniendo la consistencia y seguridad de los datos.
+
+---
+
+En resumen, los tipos producto, desde los más simples como pares hasta los más avanzados como registros, nos permiten estructurar y manejar datos de manera eficiente y clara en Kotlin.
 
 <div className="language-card-container">
     <LanguageCard
@@ -144,6 +380,12 @@ En resumen, los tipos producto permiten representar estructuras de datos de mane
             publisher: "Millington Keynes",
             year: "2019",
             location: "Lightning Source UK",
+        },
+        {
+            title: "Kotlin Data Classes",
+            url: "https://kotlinlang.org/docs/data-classes.html",
+            accessedDate: "8 de octubre de 2024",
+            type: "web",
         },
     ]
 } />
