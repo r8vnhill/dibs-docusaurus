@@ -1,0 +1,264 @@
+---
+title: Introducción a la automatización de pruebas
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import LanguageCard from '@site/src/components/cards/LanguageCard'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+El **testing** es una parte fundamental del ciclo de vida del desarrollo de software. A través de pruebas, podemos asegurarnos de que una aplicación o sistema funcione correctamente bajo diferentes condiciones, manteniendo su **integridad** y **fiabilidad** a medida que evoluciona.
+
+El objetivo del testing es proporcionar una validación continua de que el software:
+
+- **Cumple con los requisitos**: Asegura que todas las funcionalidades esperadas estén presentes y se comporten correctamente.
+- **Previene la regresión**: Verifica que los cambios recientes no rompan las funcionalidades ya existentes.
+- **Identifica errores**: Facilita la detección de errores o problemas de rendimiento que puedan afectar la experiencia de lx usuarix final.
+
+Además de verificar la funcionalidad, el testing mejora la **confianza** en el código, permite una evolución más rápida del software y asegura que sea más mantenible a largo plazo.
+
+## Test-Driven Development (TDD)
+
+TDD es una metodología de desarrollo de software que prioriza la creación de pruebas antes de implementar cualquier funcionalidad. El flujo típico de TDD consiste en los siguientes pasos:
+
+1. **Escribir casos de prueba**: Antes de escribir el código, los requisitos del software se traducen en casos de prueba que describen cómo debería comportarse la funcionalidad.
+2. **Desarrollar el código**: Se implementa el código necesario para pasar los casos de prueba.
+3. **Refactorizar**: Una vez que las pruebas son exitosas, el código puede ser mejorado o refactorizado sin miedo a romper la funcionalidad, ya que los tests ya están en su lugar.
+
+Este enfoque asegura que el desarrollo esté alineado con los requisitos desde el principio y ayuda a capturar errores en etapas tempranas del desarrollo, lo que mejora la calidad del software y reduce el costo de corregir fallos más adelante.
+
+## Kotest
+
+**Kotest** es un framework de testing para Kotlin que ofrece una API flexible y expresiva para la creación de pruebas unitarias, de integración y más. Entre sus principales características se encuentran:
+
+- **API Declarativa**: Kotest permite escribir pruebas de forma clara y legible, facilitando el mantenimiento y la comprensión de los casos de prueba.
+- **Data-Driven Testing (DDT)**: Permite ejecutar un mismo caso de prueba con diferentes conjuntos de datos, mejorando la cobertura de pruebas y asegurando que las funciones se comporten correctamente en distintos escenarios.
+- **Property-Based Testing (PBT)**: Genera automáticamente casos de prueba basados en propiedades definidas, verificando que las funciones cumplan con condiciones específicas bajo un amplio rango de entradas.
+- **Matchers Flexibles**: Kotest incluye una amplia gama de *matchers* para realizar aserciones en pruebas, desde comparaciones simples hasta validaciones más complejas como excepciones o estructuras anidadas.
+- **Soporte para Coroutines**: Kotest está diseñado para trabajar de manera fluida con las *coroutines* de Kotlin, lo que permite escribir pruebas asíncronas de manera sencilla y eficiente.
+- **Integración con JUnit**: Kotest se integra sin problemas con JUnit, lo que facilita la adopción en proyectos existentes y permite el uso de herramientas y configuraciones ya familiares.
+
+Kotest se integra fácilmente con otros frameworks y bibliotecas populares en el ecosistema de Kotlin, como **Ktor**, **Spring**, y **Arrow**, haciendo de él una herramienta robusta y versátil para cualquier tipo de prueba.
+
+### Incluyendo Kotest en un Proyecto
+
+Para comenzar a utilizar **Kotest** en nuestro proyecto, lo primero que haremos es agregar las dependencias necesarias en el catálogo de versiones.
+
+```toml title="gradle/libs.versions.toml" showLineNumbers
+[versions]
+# ...
+kotest = "5.9.1"
+
+[libraries]
+# ...
+kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+
+[bundles]
+kotest = ["kotest-runner-junit5"]
+```
+
+Hemos definido un **bundle** llamado `kotest`, que incluye la dependencia de **JUnit 5** para Kotest (`kotest-runner-junit5`). Esto nos permite añadir más dependencias de Kotest de manera sencilla en el futuro.
+
+Ahora podemos aplicar este **bundle** a nuestro proyecto de Gradle:
+
+```kotlin title="build.gradle.kts" showLineNumbers
+// ...
+val kotestBundle = libs.bundles.kotest
+
+subprojects {
+    // ...
+    dependencies {
+        detektPlugins("$detektFormattingModule:$detektFormattingVersion")
+        implementation(kotestBundle)
+    }
+}
+```
+
+Con esta configuración, hemos integrado **Kotest** en nuestro proyecto, dejándolo listo para que comencemos a escribir nuestras pruebas de manera eficiente y con todas las herramientas que Kotest ofrece.
+
+### Escribiendo Pruebas con Kotest
+
+Para comenzar a escribir pruebas con **Kotest**, primero crearemos un módulo llamado `test-basics` y lo agregaremos al archivo `settings.gradle.kts` de nuestro proyecto:
+
+```kotlin title="settings.gradle.kts" showLineNumbers
+// ...
+include("test-basics")
+```
+
+Luego, crearemos un archivo `build.gradle.kts` vacío para este módulo, ya que las dependencias comunes estarán configuradas en el bloque `subprojects`.
+
+<Tabs>
+    <TabItem value={"Windows"} label={"Windows"}>
+        ```powershell
+        New-Item -Path "test-basics" -ItemType Directory
+        "// Intentionally left blank" | Set-Content -Path "test-basics/build.gradle.kts"
+        ```
+    </TabItem>
+    <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+        ```powershell
+        mkdir "test-basics"
+        "// Intentionally left blank" > "test-basics/build.gradle.kts"
+        ```
+    </TabItem>
+    <TabItem value={"macOS/Linux"} label={"macOS/Linux"}>
+        ```bash
+        mkdir test-basics
+        echo "// Intentionally left blank" > test-basics/build.gradle.kts
+        ```
+    </TabItem>
+</Tabs>
+
+Ahora, añadiremos un archivo de prueba en el directorio `src/test/kotlin` dentro del módulo `test-basics`. Kotest permite escribir pruebas utilizando diferentes estilos; aquí mostramos varios ejemplos:
+
+<Tabs>
+    <TabItem value={"StringSpec"} label={"StringSpec"}>
+        ```kotlin title="test-basics/src/test/kotlin/cl/ravenhill/ebt/MyTest.kt" showLineNumbers
+        package cl.ravenhill.ebt
+
+        import io.kotest.core.spec.style.StringSpec
+        import io.kotest.matchers.shouldBe
+
+        class MyTest : StringSpec({   // (1)
+            "String length should be equal to the number of characters" {   // (2)
+                val str = "Hello, World!"
+                str.length shouldBe 13  // (3)
+            }
+        })
+        ```
+
+        `StringSpec` permite escribir pruebas de manera declarativa utilizando cadenas como descripciones.
+    </TabItem>
+    <TabItem value={"FunSpec"} label={"FunSpec"}>
+        ```kotlin title="test-basics/src/test/kotlin/cl/ravenhill/ebt/MyTest.kt" showLineNumbers
+        package cl.ravenhill.ebt
+
+        import io.kotest.core.spec.style.FunSpec
+        import io.kotest.matchers.shouldBe
+
+        class MyTest : FunSpec({   // (1)
+            test("String length should be equal to the number of characters") {   // (2)
+                val str = "Hello, World!"
+                str.length shouldBe 13  // (3)
+            }
+        })
+        ```
+
+        `FunSpec` permite escribir pruebas en forma de funciones, similar a otros frameworks de pruebas.
+    </TabItem>
+    <TabItem value={"FreeSpec"} label={"FreeSpec"}>
+        ```kotlin title="test-basics/src/test/kotlin/cl/ravenhill/ebt/MyTest.kt" showLineNumbers
+        package cl.ravenhill.ebt
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        class MyTest : FreeSpec({   // (1)
+            "String length" - {
+                "should be equal to the number of characters" {   // (2)
+                    val str = "Hello, World!"
+                    str.length shouldBe 13  // (3)
+                }
+            }
+        })
+        ```
+
+        `FreeSpec` permite estructurar las pruebas en bloques anidados, lo que da mayor flexibilidad.
+    </TabItem>
+    <TabItem value={"WordSpec"} label={"WordSpec"}>
+        ```kotlin title="test-basics/src/test/kotlin/cl/ravenhill/ebt/MyTest.kt" showLineNumbers
+        package cl.ravenhill.ebt
+
+        import io.kotest.core.spec.style.WordSpec
+        import io.kotest.matchers.shouldBe
+
+        class MyTest : WordSpec({   // (1)
+            "String length" should {
+                "be equal to the number of characters" {   // (2)
+                    val str = "Hello, World!"
+                    str.length shouldBe 13  // (3)
+                }
+            }
+        })
+        ```
+
+        `WordSpec` sigue un estilo BDD (Behavior-Driven Development), muy útil para describir comportamientos de forma natural.
+    </TabItem>
+    <TabItem value={"BehaviorSpec"} label={"BehaviorSpec"}>
+        ```kotlin title="test-basics/src/test/kotlin/cl/ravenhill/ebt/MyTest.kt" showLineNumbers
+        package cl.ravenhill.ebt
+
+        import io.kotest.core.spec.style.BehaviorSpec
+        import io.kotest.matchers.shouldBe
+
+        class MyTest : BehaviorSpec({   // (1)
+            given("a string") {
+                `when`("calculating its length") {   // (2)
+                    then("it should be equal to the number of characters") {   // (3)
+                        val str = "Hello, World!"
+                        str.length shouldBe 13
+                    }
+                }
+            }
+        })
+        ```
+
+        `BehaviorSpec` también es un estilo BDD que permite describir escenarios complejos usando "given", "when", y "then".
+    </TabItem>
+</Tabs>
+
+#### ¿Qué hemos hecho?
+
+1. Creamos una clase de pruebas `MyTest` que extiende una clase base de **Kotest**. Cada estilo (`StringSpec`, `FunSpec`, `FreeSpec`, `WordSpec`, `BehaviorSpec`, etc.) ofrece diferentes formas de estructurar las pruebas, permitiéndote elegir el que más te acomode.
+2. Definimos un bloque de prueba que describe el comportamiento esperado de una cadena de texto.
+3. Escribimos una aserción (`shouldBe`) para verificar que la longitud de la cadena sea la esperada.
+
+Finalmente, podemos ejecutar las pruebas con Gradle desde la terminal:
+
+```bash
+./gradlew test
+```
+
+## ¿Qué hemos aprendido?
+
+En esta lección, aprendimos sobre los fundamentos del **testing** y cómo asegurarnos de que nuestro software funcione correctamente a través de diferentes tipos de pruebas. Exploramos el enfoque **Test-Driven Development (TDD)**, que nos guía a escribir pruebas antes de implementar cualquier funcionalidad, mejorando la calidad y la confianza en el código.
+
+También nos familiarizamos con **Kotest**, un framework de pruebas para Kotlin que ofrece una API flexible y herramientas avanzadas como **Data-Driven Testing (DDT)**, **Property-Based Testing (PBT)** y un rico conjunto de *matchers* para realizar aserciones. Además, vimos cómo Kotest se integra fácilmente con JUnit y otras bibliotecas de Kotlin, lo que lo convierte en una opción poderosa para realizar pruebas.
+
+Finalmente, analizamos diferentes estilos de escritura de pruebas en Kotest, como **StringSpec**, **FunSpec**, **FreeSpec**, **WordSpec**, y **BehaviorSpec**, permitiéndonos estructurar nuestras pruebas de la forma que mejor se ajuste a nuestras necesidades.
+
+<References references={[
+    {
+        type: "web",
+        title: "Testing Styles | Kotest",
+        url: "https://kotest.io/docs/framework/testing-styles.html",
+        siteOrAuthor: "Kotest",
+        accessedDate: "15 de septiembre de 2024"
+    },
+    {
+        type: "web",
+        title: "Test-Driven Development (TDD) Explained",
+        url: "https://circleci.com/blog/test-driven-development-tdd/",
+        siteOrAuthor: "Schmitt, Jacob",
+    },
+    {
+        title: "The Basics of Unit Testing",
+        bookTitle: "The Art of Unit Testing: With Examples in C#",
+        pages: "3–18",
+        location: "Shelter Island, NY",
+        publisher: "Manning",
+        year: "2014",
+        type: "book",
+        author: 'Osherove, Roy',
+        edition: "2. ed.",
+    },
+]} />

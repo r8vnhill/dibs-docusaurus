@@ -1,0 +1,133 @@
+---
+title: Funtor función en Python
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import LanguageCard from '@site/src/components/cards/LanguageCard'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="functional-programming-kt" />
+
+En la programación funcional y la teoría de categorías, un **functor** es una entidad que puede ser mapeada, permitiendo aplicar una función a sus valores internos sin alterar su estructura. En Kotlin, ya hemos explorado cómo las **funciones** pueden actuar como funtores, permitiendo transformar su salida de manera elegante y declarativa.
+
+En esta lección, compararemos el concepto de **functor función** en **Python**, destacando similitudes y diferencias con respecto a Kotlin. Veremos cómo en Python también es posible tratar a las funciones como funtores y cómo esto nos permite componer y transformar funciones de manera flexible.
+
+## El Functor Función en Python
+
+En **Python**, las funciones son **objetos de primera clase**, lo que significa que pueden ser asignadas a variables, pasadas como argumentos y retornadas por otras funciones. Esta característica es fundamental para implementar el concepto de functor función.
+
+### Definición
+
+Supongamos que tenemos una función `f` de tipo `Callable[[T], R]`. Queremos aplicar una transformación `g` de tipo `Callable[[R], S]` a la salida de `f`, obteniendo una nueva función `h` de tipo `Callable[[T], S]`. Esto se logra mediante la composición de funciones.
+
+Podemos definir una función `map_function` que realiza esta operación:
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers
+        class FunctionFunctor:
+            func: Callable[[T], R]
+
+            def __init__(self, func: Callable[[T], R]):
+                self.func = func
+
+            def map(
+                self,
+                transformer: Callable[[R], S]
+            ) -> 'FunctionFunctor':
+                return FunctionFunctor(lambda x: transformer(self.func(x)))
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers
+        from typing import Callable, TypeVar
+
+        T = TypeVar('T')
+        R = TypeVar('R')
+        S = TypeVar('S')
+
+        class FunctionFunctor:
+            func: Callable[[T], R]
+
+            def __init__(self, func: Callable[[T], R]):
+                self.func = func
+
+            def map(
+                self,
+                transformer: Callable[[R], S]
+            ) -> 'FunctionFunctor':
+                return FunctionFunctor(lambda x: transformer(self.func(x)))
+
+            def __call__(self, x: T) -> R:
+                return self.func(x)
+        ```
+    </TabItem>
+</Tabs>
+
+:::info Explicación del Código
+
+- **[2]**: `func` es la función original de tipo `Callable[[T], R]`.
+- **[9]**: `transformer` es la función que transforma la salida de `func`.
+- **[11]**: La función `map` devuelve una nueva función que aplica `func` y luego `transformer` al resultado.
+
+:::
+
+## Transformando la salida de una función
+
+```python showLineNumbers
+get_length: Callable[[str], int] = lambda s: len(s)
+is_length_even: Callable[[int], bool] = FunctionFunctor(get_length)
+    .map(lambda x: x % 2 == 0)
+print(is_length_even("Python"))  # False
+```
+
+## Comparación Final
+
+| **Característica**               | **Kotlin**                                                                                                                                  | **Python**                                                                                                                       |
+|---------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| **Funciones de Extensión**      | Permite agregar métodos como `map` directamente a funciones existentes, simplificando la sintaxis y facilitando la composición fluida.      | No soporta funciones de extensión directamente; requiere envolver las funciones en clases para añadir métodos, añadiendo complejidad. |
+| **Tipado Estático**             | Ofrece tipado estático con verificaciones en tiempo de compilación, garantizando mayor seguridad y reduciendo errores relacionados con tipos. | Tipado dinámico, con soporte para anotaciones de tipo (`typing`), pero las verificaciones no son estrictas en tiempo de compilación.  |
+| **Inmutabilidad**               | Las transformaciones con el functor función no alteran la función original, manteniendo la inmutabilidad y seguridad de las funciones.       | Similar a Kotlin; las funciones no se modifican directamente, pero la implementación de funtores requiere clases adicionales para mantener esta propiedad.     |
+| **Flexibilidad Dinámica**       | Más orientado a la seguridad en tiempo de compilación, lo que puede ser menos flexible en contextos que requieran dinámicas rápidas.        | Python ofrece una flexibilidad mayor, permitiendo modificar y componer funciones en tiempo de ejecución, ideal para prototipos rápidos.        |
+| **Soporte para Programación Funcional** | Fuerte soporte con funciones de orden superior y composición funcional, proporcionando una experiencia más fluida y declarativa.         | Aunque Python soporta programación funcional, las transformaciones y composiciones pueden ser más verbosas y menos integradas que en Kotlin.  |
+| **Encadenamiento de Transformaciones** | Simplifica el encadenamiento de funciones mediante operadores de extensión, haciéndolo más declarativo y limpio.                          | El encadenamiento es posible pero menos directo, ya que las funciones deben encapsularse en objetos para permitir la aplicación de métodos.    |
+
+<ProCons>
+   <Pros>
+      - **Composición Elegante**: Tanto en Kotlin como en Python, el functor función permite transformar la salida de una función sin modificar su estructura interna, lo que facilita la composición de funciones de manera clara y declarativa.
+      - **Flexibilidad en Python**: Python, al ser dinámico, permite modificar y manipular funciones en tiempo de ejecución, lo que brinda más flexibilidad en escenarios donde se necesitan ajustes rápidos y prototipos.
+      - **Inmutabilidad**: En ambos lenguajes, el functor función preserva la inmutabilidad de las funciones originales, garantizando seguridad y consistencia en las transformaciones.
+   </Pros>
+   <Cons>
+      - **Complejidad en Python**: Python no soporta funciones de extensión directamente, por lo que para aplicar el functor función es necesario envolver las funciones en clases, añadiendo una capa extra de complejidad en comparación con Kotlin.
+      - **Menor Seguridad en Python**: Debido a su tipado dinámico, Python no ofrece las mismas garantías de seguridad de tipos que Kotlin, lo que puede llevar a errores difíciles de rastrear en aplicaciones más grandes y complejas.
+      - **Verbosidad**: En Python, la implementación de funtores puede resultar más verbosa y menos fluida que en Kotlin, donde las funciones de extensión simplifican la sintaxis y permiten encadenar transformaciones de manera más natural.
+      - **Limitación del Encadenamiento en Python**: Aunque el encadenamiento de funciones es posible en Python, es menos directo que en Kotlin, donde las funciones de extensión facilitan la composición fluida de transformaciones.
+   </Cons>
+</ProCons>
+
+## ¿Qué Aprendimos?
+
+En esta lección, hemos comparado el **functor función** en **Kotlin** y **Python**, resaltando cómo ambos lenguajes permiten transformar la salida de funciones sin alterar su estructura. Algunos puntos clave que cubrimos incluyen:
+
+### Puntos Clave
+
+1. **Definición del Functor Función**: Entendimos cómo una función puede comportarse como un functor al permitir la aplicación de transformaciones sobre su salida, manteniendo la inmutabilidad y reutilización de funciones.
+2. **Similitudes entre Kotlin y Python**: Ambos lenguajes permiten tratar las funciones como objetos de primera clase, lo que habilita la composición y transformación de funciones, aunque con enfoques diferentes.
+3. **Diferencias Clave**:
+   - **Funciones de extensión en Kotlin**: Kotlin ofrece funciones de extensión para simplificar la composición de transformaciones, haciendo que el código sea más conciso y declarativo.
+   - **Mayor flexibilidad dinámica en Python**: Python ofrece mayor flexibilidad dinámica al permitir la modificación de funciones en tiempo de ejecución, pero requiere más verbosidad y el uso de clases adicionales para lograr transformaciones similares a las de Kotlin.
+4. **Ventajas y Desventajas**: Vimos cómo Kotlin puede ser más adecuado para situaciones donde se requiere mayor seguridad de tipos y una sintaxis más fluida, mientras que Python es más flexible para prototipos y ajustes rápidos, pero con una complejidad adicional.
+
+---
+
+En resumen, ambos lenguajes proporcionan herramientas poderosas para trabajar con funciones como funtores, y la elección del lenguaje dependerá del equilibrio entre seguridad, flexibilidad y simplicidad que se requiera en cada caso.

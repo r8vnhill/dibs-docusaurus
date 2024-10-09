@@ -1,42 +1,50 @@
 ---
-title: Functor Función
+title: El funtor función
 ---
-import References from "/src/components/ReferencesComponent";
-import ReadingTime from '/src/components/ReadingTime';
-import Exercise from '/src/components/exercise/Exercise';
-import Solution from '/src/components/exercise/Solution';
-import Hint from '/src/components/exercise/Hint';
-import {ProCons, Pros, Cons} from '/src/components/cajitas/ProCons';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import LanguageCard from '@site/src/components/cards/LanguageCard'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="functional-programming-kt" />
 
-Ya vimos que un **functor** es una estructura que puede ser mapeada, es decir, que admite la aplicación de una función sobre sus elementos internos sin cambiar su estructura. Un ejemplo común es la lista: podemos mapear una función sobre cada elemento de una lista y obtener una nueva lista con los resultados.
 
-Sin embargo, existe un tipo de functor que es menos obvio, pero igualmente poderoso: el **functor función**. En esta lección, exploraremos cómo las **funciones** mismas pueden ser consideradas funtores y cómo esto nos permite componer y transformar funciones de manera elegante y eficiente.
+Ya vimos que un **funtor** es una estructura que puede ser mapeada, es decir, que admite la aplicación de una función sobre sus elementos internos sin cambiar su estructura. Un ejemplo común es la lista: podemos mapear una función sobre cada elemento de una lista y obtener una nueva lista con los resultados.
 
-## El Functor Función
+Sin embargo, existe un tipo de funtor que es menos obvio, pero igualmente poderoso: el **funtor función**. En esta lección, exploraremos cómo las **funciones** mismas pueden ser consideradas funtores y cómo esto nos permite componer y transformar funciones de manera elegante y eficiente.
 
-En el contexto de programación funcional y teoría de categorías, una función de tipo `(T) -> R` puede ser considerada como un functor en `R` cuando fijamos `T`. Esto significa que podemos definir una operación de mapeo sobre funciones que nos permite transformar su **salida** sin modificar su **entrada**.
+## El Funtor Función
+
+En el contexto de programación funcional y teoría de categorías, una función de tipo `(T) -> R` puede ser considerada como un funtor en `R` cuando fijamos `T`. Esto significa que podemos definir una operación de mapeo sobre funciones que nos permite transformar su **salida** sin modificar su **entrada**.
 
 ### Definición
 
 Consideremos una función `f: (T) -> R`. Queremos aplicar una transformación `g: (R) -> S` a la salida de `f`, obteniendo una nueva función `h: (T) -> S`. Esto es posible gracias a la composición de funciones.
 
-La operación de mapeo para el functor función se define como:
+La operación de mapeo para el funtor función se define como:
 
 ```kotlin showLineNumbers
-class FunctionFunctor<T> {
+class FunctionFuntor<T> {
     fun <R, S> ((T) -> R).map(f: (R) -> S): (T) -> S = { t -> f(this(t)) }
 }
 ```
 
 Aquí, `this` es la función original de tipo `(T) -> R`, y `f` es la función que queremos aplicar a su resultado.
 
-### Propiedades del Functor Función
+### Propiedades del Funtor Función
 
-El functor función cumple con las dos **leyes fundamentales** de los funtores:
+El funtor función cumple con las dos **leyes fundamentales** de los funtores:
 
-1. **Identidad**: Mapear la función identidad sobre un functor no cambia el functor.
+1. **Identidad**: Mapear la función identidad sobre un funtor no cambia el funtor.
 
     ```kotlin showLineNumbers
     function.map { it } == function
@@ -48,7 +56,7 @@ El functor función cumple con las dos **leyes fundamentales** de los funtores:
     function.map { f(g(it)) } == function.map(g).map(f)
     ```
 
-Estas propiedades garantizan que el functor función se comporte de manera coherente con las expectativas matemáticas de un functor.
+Estas propiedades garantizan que el funtor función se comporte de manera coherente con las expectativas matemáticas de un funtor.
 
 ## Ejemplos Prácticos
 
@@ -63,7 +71,7 @@ val getLength: (String) -> Int = { it.length }
 Queremos transformar esta función para que, en lugar de devolver la longitud, devuelva si la longitud es par o impar:
 
 ```kotlin showLineNumbers
-with(FunctionFunctor<String>()) {
+with(FunctionFuntor<String>()) {
     val isLengthEven: (String) -> Boolean = getLength.map { it % 2 == 0 }
 }
 ```
@@ -78,11 +86,11 @@ Aunque podríamos lograr lo mismo mediante la **composición tradicional** de fu
 val isLengthEven: (String) -> Boolean = { s -> (getLength(s) % 2 == 0) }
 ```
 
-El uso del functor función y su operación `map` nos permite expresar esta transformación de manera más **declarativa** y **generalizable**.
+El uso del funtor función y su operación `map` nos permite expresar esta transformación de manera más **declarativa** y **generalizable**.
 
 ### Aplicaciones en Programación Reactiva
 
-En programación reactiva, es común trabajar con flujos de datos y transformar las emisiones a medida que fluyen por el sistema. El functor función permite aplicar transformaciones a las funciones que generan o manipulan estos datos.
+En programación reactiva, es común trabajar con flujos de datos y transformar las emisiones a medida que fluyen por el sistema. El funtor función permite aplicar transformaciones a las funciones que generan o manipulan estos datos.
 
 Por ejemplo, si tenemos una función que obtiene datos de una API:
 
@@ -93,7 +101,7 @@ val fetchData: (Request) -> Response = { request -> /* ... */ }
 Podemos transformar su salida para extraer solo la información que nos interesa:
 
 ```kotlin showLineNumbers
-with(FunctionFunctor<Request>()) {
+with(FunctionFuntor<Request>()) {
     val extractData: (Request) -> Data = fetchData.map { response -> response.data }
 }
 ```
@@ -125,12 +133,12 @@ En este ejemplo, hemos aplicado dos transformaciones sucesivas sobre la función
 
 <details>
     <summary>
-        Functor Contravariante
+        Funtor Contravariante
     </summary>
 
-    Es importante notar que también existe el concepto de **functor contravariante**, que en lugar de transformar la salida de una función, transforma su **entrada**.
+    Es importante notar que también existe el concepto de **funtor contravariante**, que en lugar de transformar la salida de una función, transforma su **entrada**.
 
-    La operación para un functor contravariante se define como:
+    La operación para un funtor contravariante se define como:
 
     ```kotlin showLineNumbers
     fun <R, A, B> ((A) -> R).contramap(f: (B) -> A): (B) -> R = { b -> this(f(b)) }
@@ -148,7 +156,7 @@ En este ejemplo, hemos aplicado dos transformaciones sucesivas sobre la función
 
     Esta función toma una `String` como entrada y devuelve un `Boolean`, indicando si la longitud es válida o no.
 
-    Ahora supongamos que tenemos una clase `Person` con un campo `name`, y queremos reutilizar la función `validateLength` para validar la longitud del nombre de una persona. Aquí es donde el **functor contravariante** entra en juego: podemos transformar la entrada de la función para que acepte un `Person` en lugar de una `String`.
+    Ahora supongamos que tenemos una clase `Person` con un campo `name`, y queremos reutilizar la función `validateLength` para validar la longitud del nombre de una persona. Aquí es donde el **funtor contravariante** entra en juego: podemos transformar la entrada de la función para que acepte un `Person` en lugar de una `String`.
 
     ```kotlin showLineNumbers
     data class Person(val name: String, val age: Int)
@@ -221,14 +229,14 @@ En este ejemplo, hemos aplicado dos transformaciones sucesivas sobre la función
 
 <ProCons>
     <Pros>
-        - **Composición Elegante**: El functor función permite encadenar transformaciones de manera clara y declarativa, mejorando la legibilidad y manteniendo la lógica de transformación bien estructurada.
-        - **Flexibilidad**: Al ser aplicable a cualquier tipo de función, el functor función proporciona una herramienta flexible para reutilizar y modificar el comportamiento de funciones existentes sin duplicar código.
-        - **Compatibilidad con la Programación Funcional**: El uso del functor función está alineado con los principios de la programación funcional, facilitando el uso de funciones de orden superior y la composición de transformaciones.
-        - **Inmutabilidad**: Las transformaciones aplicadas mediante el functor función no alteran la función original, lo que garantiza inmutabilidad y seguridad en el manejo de funciones.
+        - **Composición Elegante**: El funtor función permite encadenar transformaciones de manera clara y declarativa, mejorando la legibilidad y manteniendo la lógica de transformación bien estructurada.
+        - **Flexibilidad**: Al ser aplicable a cualquier tipo de función, el funtor función proporciona una herramienta flexible para reutilizar y modificar el comportamiento de funciones existentes sin duplicar código.
+        - **Compatibilidad con la Programación Funcional**: El uso del funtor función está alineado con los principios de la programación funcional, facilitando el uso de funciones de orden superior y la composición de transformaciones.
+        - **Inmutabilidad**: Las transformaciones aplicadas mediante el funtor función no alteran la función original, lo que garantiza inmutabilidad y seguridad en el manejo de funciones.
     </Pros>
     <Cons>
-        - **Complejidad Adicional**: La implementación y uso del functor función pueden resultar menos intuitivos para desarrolladores que no están familiarizados con los conceptos de la programación funcional o la teoría de categorías.
-        - **Limitaciones en la Transformación**: El functor función solo permite transformar la **salida** de la función, lo que puede ser una restricción si se requiere manipular la **entrada** sin cambiar la lógica interna de la función original.
+        - **Complejidad Adicional**: La implementación y uso del funtor función pueden resultar menos intuitivos para desarrolladores que no están familiarizados con los conceptos de la programación funcional o la teoría de categorías.
+        - **Limitaciones en la Transformación**: El funtor función solo permite transformar la **salida** de la función, lo que puede ser una restricción si se requiere manipular la **entrada** sin cambiar la lógica interna de la función original.
         - **Dificultad para Debuggear**: Encadenar múltiples transformaciones puede hacer que el seguimiento y debuggeo del código sea más complicado, ya que los errores pueden ocurrir en cualquiera de las transformaciones aplicadas en la cadena.
         - **Sobrecarga Conceptual**: Entender y aplicar correctamente las leyes de los funtores, como las propiedades de identidad y composición, puede ser un desafío, especialmente para quienes no están acostumbradxs a los conceptos matemáticos subyacentes.
     </Cons>
@@ -236,12 +244,20 @@ En este ejemplo, hemos aplicado dos transformaciones sucesivas sobre la función
 
 ## ¿Qué Aprendimos?
 
-En esta lección, exploramos el **functor función** y cómo las funciones mismas pueden comportarse como funtores, permitiéndonos aplicar transformaciones de manera elegante y declarativa sobre sus resultados. Algunos puntos clave que cubrimos incluyen:
+En esta lección, exploramos el **funtor función** y cómo las funciones mismas pueden comportarse como funtores, permitiéndonos aplicar transformaciones de manera elegante y declarativa sobre sus resultados. Algunos puntos clave que cubrimos incluyen:
 
-1. **Definición del Functor Función**: Comprendimos cómo una función de tipo `(T) -> R` puede ser tratada como un functor en `R` al fijar el tipo de entrada `T`, lo que nos permite transformar la salida de la función sin modificar su entrada.
-2. **Propiedades del Functor**: Analizamos las dos leyes fundamentales de los funtores — **Identidad** y **Composición** — y cómo se aplican al functor función para garantizar consistencia y coherencia en las transformaciones.
+1. **Definición del Funtor Función**: Comprendimos cómo una función de tipo `(T) -> R` puede ser tratada como un funtor en `R` al fijar el tipo de entrada `T`, lo que nos permite transformar la salida de la función sin modificar su entrada.
+2. **Propiedades del Funtor**: Analizamos las dos leyes fundamentales de los funtores — **Identidad** y **Composición** — y cómo se aplican al funtor función para garantizar consistencia y coherencia en las transformaciones.
 3. **Implementación Práctica**: Vimos cómo definir la operación `map` en Kotlin para encadenar transformaciones sobre funciones de forma fluida y flexible, manteniendo la inmutabilidad y promoviendo un código más claro y estructurado.
-4. **Aplicaciones en Programación Reactiva**: Exploramos cómo el functor función es útil en la programación reactiva y en el manejo de flujos de datos, permitiendo transformar las emisiones de datos a medida que fluyen por el sistema.
+4. **Aplicaciones en Programación Reactiva**: Exploramos cómo el funtor función es útil en la programación reactiva y en el manejo de flujos de datos, permitiendo transformar las emisiones de datos a medida que fluyen por el sistema.
 5. **Comparación y Composición**: Discutimos la diferencia entre usar `map` y la **composición tradicional** de funciones, resaltando cómo `map` ofrece una forma más declarativa y generalizable de aplicar transformaciones.
 
-El functor función es una herramienta poderosa en el arsenal de la programación funcional, que permite trabajar con funciones de manera abstracta y flexible, facilitando el diseño de soluciones modulares y reutilizables.
+El funtor función es una herramienta poderosa en el arsenal de la programación funcional, que permite trabajar con funciones de manera abstracta y flexible, facilitando el diseño de soluciones modulares y reutilizables.
+
+<div className="language-card-container">
+    <LanguageCard
+        logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/800px-Python-logo-notext.svg.png"
+        language="Python"
+        link="/docs/fp/functors/function/py"
+    />
+</div>

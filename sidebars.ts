@@ -100,6 +100,17 @@ const sidebars: SidebarsConfig = {
                             ],
                         },
                     ],
+                },
+                {
+                    label: 'Testing',
+                    type: 'category',
+                    link: {
+                        type: 'doc',
+                        id: 'build-systems/testing/kotest',
+                    },
+                    items: [
+                        
+                    ],
                 }
             ],
         },
