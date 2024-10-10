@@ -139,7 +139,8 @@ const sidebars: SidebarsConfig = {
                 id: 'generics/index',
             },
             items: [
-
+                'generics/declaration/kt',
+                'generics/use/kt',
             ],
         },
         {
@@ -168,7 +169,7 @@ const sidebars: SidebarsConfig = {
                             },
                             items: [
                                 'fp/adt/sum/enums/kt',
-                                'fp/adt/sum/sealed/sealed'
+                                'fp/adt/sum/sealed/sealed',
                             ],
                         },
                     ],

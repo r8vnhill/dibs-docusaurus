@@ -1,0 +1,161 @@
+---
+title: Varianza en sitio de declaración
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import LanguageCard from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+La **varianza** es un concepto fundamental en lenguajes de programación genéricos que describe cómo los tipos genéricos se comportan en relación con sus subtipos. En **Kotlin**, la varianza se puede especificar en el sitio de **declaración**, lo que significa que definimos cómo se comportará un parámetro de tipo genérico en el momento en que declaramos la clase o interfaz genérica.
+
+Este enfoque contrasta con la **varianza en sitio de uso**, donde especificamos la varianza al utilizar el tipo genérico. En esta lección, exploraremos la varianza en sitio de declaración en Kotlin y cómo aplicarla en el contexto de bibliotecas de software, para crear APIs más seguras y flexibles.
+
+## Conceptos Básicos
+
+### Covarianza y Contravarianza
+
+- **Covarianza** (`out`): Permite que un tipo genérico acepte subtipos del parámetro de tipo especificado. Se utiliza cuando el tipo genérico produce valores de tipo `T`.
+    <center>
+        $A <: B \Rightarrow \mathrm{Producer}[A] <: \mathrm{Producer}[B]$
+    </center>
+- **Contravarianza** (`in`): Permite que un tipo genérico acepte supertipos del parámetro de tipo especificado. Se utiliza cuando el tipo genérico consume valores de tipo `T`.
+    <center>
+        $A <: B \Rightarrow \mathrm{Consumer}[B] <: \mathrm{Consumer}[A]$
+    </center>
+- **Invarianza**: El tipo genérico solo acepta exactamente el tipo especificado; ni subtipos ni supertipos.
+
+## Varianza en Sitio de Declaración
+
+En Kotlin, podemos declarar la varianza de un parámetro de tipo directamente en la definición de una clase o interfaz genérica, usando las palabras clave `out` y `in`. Esto se conoce como **varianza en sitio de declaración**.
+
+```kotlin showLineNumbers
+interface Producer<out T> {
+    fun produce(): T
+}
+
+interface Consumer<in T> {
+    fun consume(item: T)
+}
+```
+
+<Explanation>
+    - **`Producer<out T>`**: Declara `T` como covariante. Esto significa que si `A` es una subclase de `B`, entonces `Producer<A>` es un subtipo de `Producer<B>`.
+    - **`Consumer<in T>`**: Declara `T` como contravariante. Esto significa que si `A` es una subclase de `B`, entonces `Consumer<B>` es un subtipo de `Consumer<A>`.    
+</Explanation>
+
+## Ejemplo Práctico: Biblioteca de Procesamiento de Datos
+
+Supongamos que estamos desarrollando una biblioteca que maneja procesadores de datos. Tenemos una jerarquía de tipos:
+
+```kotlin showLineNumbers
+class Data
+class TextData : Data()
+class ImageData : Data()
+```
+
+Queremos definir una interfaz `DataProcessor` que procese datos:
+
+```kotlin showLineNumbers
+interface DataProcessor<in T> {
+    fun process(data: T)
+}
+```
+
+Aquí, usamos `in T` para indicar que `T` es contravariante, ya que `DataProcessor` **consume** datos de tipo `T`.
+
+Gracias a la contravarianza, podemos hacer lo siguiente:
+
+```kotlin showLineNumbers
+val generalProcessor: DataProcessor<Data> = object : DataProcessor<Data> {
+    override fun process(data: Data) {
+        println("Processing data")
+    }
+}
+
+val textProcessor: DataProcessor<TextData> = generalProcessor
+```
+
+<Explanation>
+    - `DataProcessor<in T>` es contravariante en `T`.
+    - Dado que `TextData` es un subtipo de `Data`, y debido a la contravarianza, podemos asignar un `DataProcessor<Data>` a una variable de tipo `DataProcessor<TextData>`.
+</Explanation>
+
+Esto nos permite reutilizar procesadores generales para tipos de datos más específicos.
+
+## Ejemplo: Colecciones Inmutables
+
+Las colecciones inmutables en Kotlin están diseñadas utilizando varianza en sitio de declaración.
+
+```kotlin showLineNumbers
+interface List<out E> : Collection<E> {
+    operator fun get(index: Int): E
+    // ...
+}
+```
+
+Aquí, `E` está declarado como `out E`, lo que significa que `List` es covariante en `E`.
+
+Podemos asignar una `List<TextData>` a una variable de tipo `List<Data>`:
+
+```kotlin showLineNumbers
+val textDataList: List<TextData> = listOf(TextData(), TextData())
+val dataList: List<Data> = textDataList  // Válido gracias a la covarianza
+```
+
+
+<ProCons>
+   <Pros>
+      - **Flexibilidad de APIs**: La varianza en sitio de declaración permite diseñar APIs más flexibles que pueden trabajar con jerarquías de tipos más amplias. Esto facilita que las bibliotecas sean más adaptables y reutilizables en diferentes contextos, mejorando la experiencia de lxs desarrolladorxs que las utilizan.
+      - **Seguridad de Tipos en Tiempo de Compilación**: Al especificar la varianza en la declaración, el compilador puede garantizar la seguridad de tipos, evitando errores en tiempo de ejecución relacionados con incompatibilidades de tipos. Esto resulta en código más robusto y confiable.
+      - **Código Más Claro y Mantenible**: Declarar la varianza directamente en la definición de clases o interfaces hace que las intenciones del código sean más explícitas. Esto mejora la legibilidad y facilita el mantenimiento, ya que otrxs desarrolladorxs pueden entender rápidamente cómo se espera que se utilicen los tipos genéricos.
+      - **Reutilización de Implementaciones Genéricas**: Permite reutilizar implementaciones generales en contextos más específicos sin necesidad de duplicar código. Por ejemplo, un `DataProcessor<Data>` puede ser utilizado como `DataProcessor<TextData>` gracias a la contravarianza.
+   </Pros>
+   <Cons>
+      - **Complejidad Conceptual**: Entender y aplicar correctamente la varianza en sitio de declaración puede ser complicado, especialmente para desarrolladorxs menos experimentadxs. Esto puede llevar a confusiones y errores sutiles si no se comprende completamente cómo funciona.
+      - **Restricciones en el Uso de Tipos Genéricos**: Las restricciones impuestas por la varianza pueden limitar cómo se utilizan los parámetros de tipo dentro de la clase o interfaz. Por ejemplo, en una clase covariante (`out T`), no puedes usar `T` en posiciones de entrada, lo que puede ser limitante en ciertos casos.
+      - **Mensajes de Error Difíciles de Interpretar**: Los errores del compilador relacionados con varianza pueden ser difíciles de entender y diagnosticar, lo que puede aumentar el tiempo de desarrollo y depuración.
+      - **Menor Flexibilidad en Casos Específicos**: En situaciones donde se necesita tanto consumir como producir valores de tipo `T`, la varianza en sitio de declaración puede no ser adecuada, obligando a utilizar tipos invariantes o proyectados, lo que añade complejidad adicional.
+   </Cons>
+</ProCons>
+
+<Exercise>
+    Implementa una interfaz `Logger` para una biblioteca de registro de eventos.
+
+    1. Declara un método `log(): M` que devuelve un mensaje de tipo `M`.
+    2. ¿Qué tipo de varianza debería tener `Logger` en `M` y por qué?
+    
+    <Solution>
+        1. 
+            ```kotlin showLineNumbers
+            interface Logger<out M> {
+                fun log(): M
+            }
+            ```
+
+        2. `Logger` debe ser covariante en `M`. Esto permite que un `Logger<String>` sea asignado a un `Logger<Any>`, ya que un `Logger<String>` puede producir mensajes de tipo `String`, que es un subtipo de `Any`.
+    </Solution>
+</Exercise>
+
+<References references={[
+    {
+        title: "9. Generics",
+        bookTitle: "Kotlin in Action",
+        publisher: "Manning Publications Co",
+        pages: "223–253",
+        year: "2017",
+        author: "Dmitry Jemerov & Svetlana Isakova",
+        type: "book",
+    },
+]} />

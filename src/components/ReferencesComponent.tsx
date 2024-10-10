@@ -90,14 +90,11 @@ const renderReference = (reference: Reference) => {
         return (
             <li key={reference.id}>
                 {renderTypeEmoji(reference.type)}{' '}
-                <em>"{reference.title}"</em>,{' '}
-                {`${reference.author}, `}
+                <em>"{reference.title}"</em>.{' '}
+                {`En ${reference.author}, `}
                 {reference.bookTitle && (<>en <em>{reference.bookTitle},</em></>)}{' '}
-                {reference.edition && `${reference.edition}, `}
-                {reference.series && `en ${reference.series}, `}
-                {reference.location && reference.publisher && `${reference.location}: ${reference.publisher}, `}
-                {reference.year},{' '}
-                {reference.pages && `pp. ${reference.pages}`}.{' '}
+                {reference.pages && `(pp. ${reference.pages}). `}
+                {reference.publisher && `${reference.publisher}. `}
             </li>
         );
     }

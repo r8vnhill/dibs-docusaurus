@@ -1,0 +1,146 @@
+---
+title: Iterator pattern en JavaScript
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import LanguageCard from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+En JavaScript, el **patrón iterador** se implementa mediante objetos que cumplen con el protocolo de iteración. Los objetos iterables deben tener un método `Symbol.iterator` que devuelva un objeto iterador. Este objeto iterador debe tener un método `next` que retorne un objeto con dos propiedades: `value` (el valor actual) y `done` (un booleano que indica si se ha terminado de iterar).
+
+```javascript showLineNumbers
+const library = {
+    books: [
+        { title: "Red Dragon", author: "Thomas Harris" },
+        { title: "At the Mountains of Madness", author: "H.P. Lovecraft" },
+        { title: "The Fellowship of the Ring", author: "J.R.R. Tolkien" }
+    ],
+    [Symbol.iterator]() {
+        let index = 0;
+        const books = this.books;
+        return {
+        next() {
+            if (index < books.length) {
+            return { value: books[index++], done: false };
+            }
+            return { done: true };
+        }
+        };
+    }
+};
+
+for (const book of library) {
+    console.log(book);
+}
+```
+
+<Explanation>
+    - **[1-19]**: `library` es un objeto que contiene una colección de libros.
+    - **[7-18]**: El método `[Symbol.iterator]` devuelve un objeto que implementa el método `next`, el cual gestiona el estado del recorrido.    
+</Explanation>
+
+## Iteradores Asíncronos
+
+En **JavaScript**, el soporte para iteradores asíncronos es nativo y está basado en la combinación de `async` y `await`. Esto permite manejar flujos de datos asíncronos de manera elegante y eficiente, especialmente en casos donde se necesita esperar a que lleguen elementos de una fuente externa, como una API o una transmisión de datos en tiempo real. 
+
+La implementación de un iterador asíncrono se realiza utilizando el protocolo de iteración asíncrona, que es muy similar al protocolo de iteración estándar, pero con algunas diferencias clave:
+
+1. El método `next` debe devolver una **promesa** que resuelve un objeto con dos propiedades: `value` (el valor actual) y `done` (un booleano que indica si se ha completado la iteración).
+2. Se utiliza la palabra clave `async` para definir funciones que devuelvan promesas y se combina con `await` para gestionar flujos asíncronos de manera secuencial.
+
+#### Ejemplo de Iterador Asíncrono
+
+Veamos un ejemplo de cómo podríamos definir un iterador asíncrono en JavaScript que simula recibir libros de una API de forma retardada:
+
+```javascript showLineNumbers
+const library = {
+    books: [
+        { title: "Red Dragon", author: "Thomas Harris" },
+        { title: "At the Mountains of Madness", author: "H.P. Lovecraft" },
+        { title: "The Fellowship of the Ring", author: "J.R.R. Tolkien" }
+    ],
+    async *[Symbol.asyncIterator]() {
+        for (const book of this.books) {
+            // Simula un retardo en recibir cada libro (por ejemplo, de una API)
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            yield book;
+        }
+    }
+};
+
+(async () => {
+    for await (const book of library) {
+        console.log(book);
+    }
+})();
+```
+
+<Explanation>
+   - **[1-14]**: `library` es un objeto que contiene una colección de libros y un iterador asíncrono.
+   - **[7-13]**: La función generadora asíncrona `*[Symbol.asyncIterator]` devuelve un iterador que produce libros con un retardo simulado.
+   - **[16-20]**: La función asíncrona consume el iterador utilizando `for await...of` para manejar la secuencia asíncrona.
+</Explanation>
+
+## Comparación final
+
+| **Característica**           | **JavaScript**                                                                                         | **Kotlin**                                                                                                      |
+|-----------------------------|-------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| **Protocolo de Iteración**  | Utiliza `Symbol.iterator` para definir iteradores en cualquier objeto.                                  | Usa interfaces específicas como `Iterator` y `Iterable` para definir colecciones iterables.                    |
+| **Tipado**                  | Lenguaje dinámico, no garantiza la integridad del tipo durante el recorrido.                            | Tipado estático, garantiza la seguridad y coherencia de tipos en tiempo de compilación.                        |
+| **Colecciones nativas**     | Arrays, maps y sets ya son iterables por defecto y funcionan con `for...of` sin implementación extra.   | Colecciones estándar como listas, sets y arrays implementan `Iterable` de forma nativa, facilitando su uso.   |
+| **Iteradores Asíncronos**   | Soporte nativo para iteradores asíncronos usando `async` y `await`.                                     | Los iteradores asíncronos requieren el uso de coroutines y no están disponibles de forma nativa en el patrón.  |
+| **Flexibilidad**            | Permite que cualquier objeto sea iterable, proporcionando alta flexibilidad.                            | Requiere seguir interfaces específicas, lo que garantiza estructura pero limita la flexibilidad comparativa.   |
+| **Implementación**          | La implementación puede ser menos estructurada y depende de seguir las convenciones del protocolo.      | Estructura clara basada en interfaces, asegurando consistencia y facilidad de uso en diferentes colecciones.   |
+
+<ProCons>
+   <Pros>
+      - **Soporte Asíncrono Nativo**: JavaScript ofrece soporte nativo para iteradores asíncronos utilizando `async` y `await`, lo que permite manejar flujos de datos asíncronos de manera simple y eficiente sin necesidad de bibliotecas adicionales.
+      - **Flexibilidad**: Cualquier objeto en JavaScript puede convertirse en iterable al implementar el protocolo de iteración, proporcionando una gran flexibilidad para crear estructuras personalizadas que se ajusten a las necesidades específicas de cada proyecto.
+      - **Integración con Sintaxis Moderna**: La integración del patrón iterador con `for...of` y `for await...of` facilita la iteración sobre colecciones, haciendo el código más limpio y fácil de entender.
+      - **Iteración Simplificada**: Las colecciones nativas como arrays, sets y maps ya soportan iteradores por defecto, permitiendo su uso inmediato sin necesidad de configuraciones adicionales.
+   </Pros>
+   <Cons>
+      - **Falta de Tipado Estático**: Como JavaScript es un lenguaje de tipado dinámico, no se garantiza la integridad del tipo en tiempo de compilación durante el uso de iteradores, lo que puede llevar a errores en tiempo de ejecución si no se gestionan adecuadamente los tipos.
+      - **Dependencia de Convenciones**: La implementación de iteradores en JavaScript depende del cumplimiento correcto del protocolo de iteración, lo que puede llevar a inconsistencias si no se sigue adecuadamente, dificultando la lectura y mantenimiento del código.
+      - **Sobrecarga de Implementación**: A diferencia de lenguajes con estructuras más definidas como Kotlin, en JavaScript es necesario implementar manualmente los métodos `next` y `Symbol.iterator`, lo que puede resultar tedioso para estructuras complejas.
+      - **Menor Estructura Comparada**: Aunque la flexibilidad es alta, la falta de una estructura más formal basada en interfaces (como en Kotlin) puede dificultar la reutilización y mantenimiento de iteradores en proyectos más grandes.
+   </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos cómo el patrón **Iterator** se implementa en **JavaScript** y lo comparamos con su implementación en **Kotlin**, destacando sus diferencias y similitudes.
+
+### Puntos Clave
+
+1. **Flexibilidad en JavaScript**: JavaScript ofrece una gran flexibilidad al permitir que cualquier objeto implemente el protocolo de iteración mediante `Symbol.iterator`, facilitando la creación de iteradores personalizados para diversas estructuras de datos.
+2. **Soporte Asíncrono Nativo**: JavaScript soporta iteradores asíncronos de manera nativa utilizando `async` y `await`, lo que permite gestionar flujos de datos en tiempo real o respuestas de API con facilidad. Esta capacidad no está presente de forma nativa en Kotlin y requiere el uso de coroutines.
+3. **Limitaciones del Tipado Dinámico**: A pesar de su flexibilidad, JavaScript no garantiza la integridad de tipos durante la iteración, lo que puede llevar a errores en tiempo de ejecución si no se manejan correctamente los tipos de datos. En contraste, Kotlin asegura la coherencia de tipos gracias a su sistema de tipado estático.
+4. **Simplicidad en el Uso de Colecciones**: Tanto en JavaScript como en Kotlin, las colecciones nativas son iterables por defecto, lo que facilita el recorrido de elementos sin necesidad de implementaciones adicionales. Sin embargo, la implementación de iteradores personalizados en JavaScript puede ser más laboriosa debido a la falta de una estructura formal basada en interfaces.
+
+---
+
+El patrón **Iterator** en **JavaScript** ofrece una gran versatilidad, especialmente con su soporte nativo para iteradores asíncronos, pero también conlleva ciertos desafíos en términos de tipado y estructura. Por otro lado, **Kotlin** proporciona una implementación más estructurada y segura en términos de tipos, pero carece del soporte asíncrono nativo que JavaScript ofrece. 
+
+Ambos lenguajes presentan ventajas y desventajas, y la elección de uno sobre otro dependerá del contexto y los requisitos específicos del proyecto.
+
+<References references={[
+    {
+        title: "Iterators and generators—JavaScript | MDN",
+        url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_generators",
+        accessedDate: "31 de agosto de 2024",
+        type: "web",
+    },
+]} />

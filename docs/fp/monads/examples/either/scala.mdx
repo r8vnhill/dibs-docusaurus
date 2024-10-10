@@ -1,43 +1,42 @@
-## Scala
+---
+title: Mónada Either en Scala
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import LanguageCard from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
 
-En **Scala**, el manejo de operaciones que pueden fallar se realiza de manera similar a **Kotlin**, utilizando la clase `Either`, la cual puede representar dos posibles valores: `Left` (que generalmente indica un error) y `Right` (que indica un valor exitoso). Esta estructura permite un manejo explícito de los errores y fomenta un estilo de programación más funcional y controlado.
-
-### `Either` en Scala
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
 
 Al igual que en Kotlin, el tipo `Either` en Scala también modela un valor que puede ser uno de dos posibles casos, generalmente utilizado para distinguir entre éxito (`Right`) y falla (`Left`).
 
-```scala
+```scala showLineNumbers
 sealed trait Either[+L, +R]
 
 case class Left[+L](value: L) extends Either[L, Nothing]
 case class Right[+R](value: R) extends Either[Nothing, R]
 ```
 
-- **Left**: Representa un valor de tipo `L` que comúnmente indica un error.
-- **Right**: Representa un valor de tipo `R` que indica un resultado exitoso.
+<Explanation>
+  - **Left**: Representa un valor de tipo `L` que comúnmente indica un error.
+  - **Right**: Representa un valor de tipo `R` que indica un resultado exitoso.
+</Explanation>
 
-<details>
-    <summary>Covarianza en `L`</summary>
-
-    A diferencia de la versión que vimos en Kotlin, en Scala el tipo `L` es covariante. Esto es posible gracias a una pequeña diferencia en la definición de la función `flatMap`. En Scala, `flatMap` se define de la siguiente manera:
-
-    ```scala
-    def flatMap[L1 >: L, R1](f: R => Either[L1, R1]): Either[L1, R1] = this match {
-        case Right(b) => f(b)
-        case _        => this.asInstanceOf[Either[L1, R1]]
-    }
-    ```
-
-    Aquí, el parámetro `L` (representado como `A`) es covariante porque `flatMap` no modifica ni depende directamente de `L` en su implementación. Esto permite que `L` sea flexible y compatible con tipos más generales, lo que facilita el uso de `Either` en diferentes contextos sin perder seguridad de tipos.
-
-    En Kotlin podríamos lograr un comportamiento similar, pero las cotas inferiores (``>:``) no son tan comunes en la práctica y podrían requerir un diseño más cuidadoso para mantener la seguridad de tipos.
-</details>
-
-### Ejemplo de Uso
+### Ejemplo de uso
 
 A continuación, veamos un ejemplo de cómo se podría utilizar `Either` en Scala para manejar errores al leer un archivo:
 
-```scala
+```scala showLineNumbers
 def readFileEither(path: Option[String]): Either[Error, String] = {
   path match {
     case None => Left(new Exception("Invalid file path"))
@@ -59,25 +58,57 @@ processFile(None) // Error: Invalid file path
 processFile(Some("validPath.txt")) // File content
 ```
 
-En este ejemplo, la función `divide` devuelve un `Either[String, Int]`, donde `Left` contiene un mensaje de error y `Right` contiene el valor resultante de la división.
-
-### Comparación entre Scala y Kotlin
-
-1. **Definición**: Tanto Scala como Kotlin usan `sealed classes` (o `traits` en Scala) para definir el tipo `Either`, con dos subtipos: `Left` y `Right`.
-
-2. **Uso**: En ambos lenguajes, `Either` se usa de manera similar para manejar resultados exitosos o errores, pero Scala permite un uso más extendido de patrones de coincidencia (`match`), lo que facilita el manejo de los casos.
-
-3. **Facilidad de uso**: Scala ofrece métodos adicionales como `map`, `flatMap`, y `fold` directamente en la clase `Either`, lo que facilita la composición de operaciones. Kotlin también puede definir estos métodos, pero requieren una implementación personalizada o el uso de bibliotecas como Arrow.
+<Explanation>
+    - **[1-6]**: La función `readFileEither` recibe una ruta de archivo opcional y devuelve un `Either` que contiene un error (`Left`) si la ruta es nula o el contenido del archivo (`Right`) si la ruta es válida.
+    - **[8-15]**: La función `processFile` maneja el resultado de `readFileEither` e imprime el contenido del archivo o el mensaje de error.
+    - **[18-19]**: Al llamar a `processFile` con una ruta nula, se imprime un mensaje de error, y con una ruta válida, se imprime el contenido del archivo.
+</Explanation>
 
 ### Comparación final
 
 | **Aspecto**                  | **Scala**                                                          | **Kotlin**                                                                               |
 |------------------------------|--------------------------------------------------------------------|------------------------------------------------------------------------------------------|
 | **Definición**               | `sealed trait Either[+L, +R]` con subclases `Left` y `Right`       | `sealed class Either<L, out R>` con subclases `Left` y `Right`                           |
-| **Covarianza**               | Covariante en el tipo de error (`L`)                               | Invariante en el tipo de error (`L`)                                                     |
 | **Manejo de errores**        | Uso de `match` para manejo explícito de casos `Left` y `Right`     | Uso de `when` para manejo de los casos `Left` y `Right`                                  |
 | **Métodos nativos**          | Métodos como `map`, `flatMap`, `fold` están incluidos en `Either`  | Requiere implementación manual o el uso de una biblioteca como **Arrow**                 |
 | **Patrones de coincidencia** | `match` es nativo y más expresivo                                  | Se usa `when`, pero no tan extendido como en Scala                                       |
 | **Composición**              | Scala permite una composición más fluida de funciones con `Either` | Requiere implementación o bibliotecas externas para composición fluida                   |
 | **Bibliotecas de apoyo**     | `Either` es parte del estándar de Scala                            | Se recomienda el uso de **Arrow** en Kotlin para ampliar las funcionalidades de `Either` |
 
+<ProCons>
+   <Pros>
+      - **Manejo Claro de Errores**: Tanto en Scala como en Kotlin, `Either` permite modelar errores de manera explícita, diferenciando entre éxito y falla en una misma estructura, mejorando la legibilidad y el control de flujo en el código.
+      - **Patrones de coincidencia nativos en Scala**: Scala facilita el uso de `match`, haciendo que el manejo de casos sea más natural y conciso, especialmente para estructurar operaciones complejas sobre tipos `Either`.
+      - **Soporte Funcional Nativo en Scala**: Métodos como `map`, `flatMap`, y `fold` están incluidos en `Either` en Scala, lo que permite transformar y componer valores sin depender de bibliotecas externas, haciéndolo más integrado y fluido.
+   </Pros>
+   <Cons>
+      - **Curva de Aprendizaje**: Scala tiene una curva de aprendizaje más pronunciada debido a su sistema avanzado de coincidencia de patrones y sus capacidades funcionales nativas, lo que puede ser un desafío para desarrolladores que provienen de otros lenguajes orientados a objetos.
+   </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos la **mónada `Either`** en **Scala** y su comparación con Kotlin. Aprendimos cómo `Either` modela situaciones que pueden tener dos resultados, como éxito o error, proporcionando una manera estructurada y explícita de manejar estos casos. 
+
+### Puntos clave
+
+1. **Definición y Manejo de Errores**: Vimos cómo `Either` se utiliza para encapsular resultados exitosos (`Right`) o errores (`Left`), y cómo Scala usa el `match` para manejar estos casos de manera nativa, lo que lo hace más expresivo que Kotlin.
+2. **Métodos Funcionales en Scala**: Scala integra métodos como `map`, `flatMap`, y `fold` en su implementación de `Either`, permitiendo transformar y componer funciones de manera fluida y sin necesidad de bibliotecas externas, a diferencia de Kotlin, que se apoya en **Arrow** para estas capacidades.
+3. **Comparación y Diferencias**: Discutimos las ventajas y desventajas de cada enfoque, destacando cómo Scala facilita la composición y manejo de casos de `Either` con menos dependencia externa y cómo Kotlin puede requerir bibliotecas adicionales para lograr un nivel similar de funcionalidad.
+
+---
+
+La lección nos proporciona una comprensión clara sobre cómo estructurar errores y manejar flujos en lenguajes funcionales como Scala, permitiéndonos elegir el enfoque más adecuado para nuestros proyectos y mejorar la claridad del código.
+
+<References references={[
+    {
+        title: "4. Handling errors without exceptions",
+        bookTitle: "Functional programming with Scala (Second edition)",
+        publisher: "Manning Publications Co",
+        location: "Shelter Island",
+        pages: "140–181",
+        year: "2023",
+        author: "M. Pilquist, R. Bjarnason, P. Chiusano, M. Odersky, & D. Spiewak",
+        type: "book",
+    },
+]}/>

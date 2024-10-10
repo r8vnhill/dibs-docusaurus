@@ -1,0 +1,109 @@
+---
+title: Tareas personalizadas en SBT
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import LanguageCard from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+Tanto Gradle como SBT permiten definir tareas personalizadas que ejecutan acciones específicas dentro del proyecto. Sin embargo, la forma en que estas tareas se configuran difiere en ciertos aspectos.
+
+En SBT, las tareas personalizadas se definen usando `TaskKey` y `:=` para asignar una acción a la tarea. Una tarea básica en SBT podría ser configurada de la siguiente manera:
+
+```scala showLineNumbers
+lazy val greet = taskKey[Unit]("Prints a greeting message")
+greet := {
+  println("Hello, SBT!")
+}
+```
+
+Aquí estamos creando una tarea llamada `greet` que imprime un mensaje, similar a lo que hicimos en Gradle. El equivalente de `doFirst` y `doLast` en SBT es más explícito, pero generalmente se maneja mediante la composición de tareas.
+
+## Acciones en SBT
+
+Al igual que en Gradle, SBT permite agregar acciones adicionales a las tareas. Sin embargo, en SBT, esto se hace mediante la composición de tareas, usando operadores como `dependsOn` para controlar el orden de ejecución.
+
+Por ejemplo, una tarea que imprime un mensaje antes de calcular la secuencia de Fibonacci podría definirse en SBT de la siguiente manera:
+
+```scala
+lazy val message = taskKey[Unit]("Prints a message before the Fibonacci sequence")
+lazy val fib = taskKey[Unit]("Calculates the Fibonacci sequence")
+
+message := {
+  println("Calculating the Fibonacci sequence...")
+}
+
+fib := {
+  var first = 0
+  var second = 1
+  (1 to 10).foreach { _ =>
+    print(s"$first ")
+    val temp = first
+    first = second
+    second += temp
+  }
+  println(s"\nThe 10th Fibonacci number is: $first")
+}
+
+fib.dependsOn(message)
+```
+
+## Comparación final
+
+| **Característica**               | **SBT**                                                        | **Gradle**                                                   |
+|---------------------------------|----------------------------------------------------------------|--------------------------------------------------------------|
+| **Definición de tareas**        | Usa `taskKey` y `:=` para definir acciones directamente.       | Utiliza `tasks.register` para tareas con ejecución diferida y `tasks.create` para configuración inmediata.  |
+| **Ejecución diferida**          | No tiene un equivalente directo; todas las tareas se configuran al inicio. | Soporta ejecución diferida con `tasks.register`, lo que mejora el rendimiento al no configurar tareas innecesarias.  |
+| **Composición de tareas**       | Usa operadores como `dependsOn` para controlar la secuencia de ejecución. | También utiliza `dependsOn`, pero permite acciones como `doFirst` y `doLast` para mayor control en la ejecución.   |
+| **Flexibilidad de DSL**         | DSL basado en Scala, óptimo para proyectos en este lenguaje pero menos flexible en otros entornos. | Ofrece DSL en Kotlin y Groovy, lo que lo hace adaptable a diversos lenguajes (Kotlin, Java, Groovy).               |
+| **Soporte para el ecosistema**  | Integración profunda con el ecosistema de Scala, optimizando la configuración en proyectos Scala. | Adaptable a múltiples lenguajes de programación, especialmente eficiente en proyectos Kotlin y Java.               |
+
+<ProCons>
+   <Pros>
+      - **Integración nativa con Scala**: SBT se integra profundamente con el ecosistema de Scala, facilitando la configuración y ejecución de tareas en proyectos de Scala sin necesidad de configuraciones adicionales.
+      - **Composición flexible**: La capacidad de componer tareas mediante operadores como `dependsOn` permite estructurar tareas complejas de manera clara y controlada, asegurando que las tareas se ejecuten en el orden adecuado.
+      - **Compatibilidad con tareas predeterminadas**: SBT permite extender y combinar tareas existentes fácilmente, lo que resulta útil para personalizar comportamientos sin necesidad de reescribir código.
+      - **Simplicidad en la definición**: La sintaxis para definir tareas es concisa y clara, utilizando `:=` para asignar acciones de manera directa, lo que hace que las tareas simples sean rápidas de implementar.
+   </Pros>
+   <Cons>
+      - **Sin ejecución diferida**: A diferencia de Gradle, SBT no soporta ejecución diferida, lo que significa que todas las tareas se configuran al inicio del build, potencialmente afectando el rendimiento en proyectos grandes.
+      - **Verbosidad en tareas complejas**: Para tareas más avanzadas que requieren múltiples acciones en diferentes momentos, la composición en SBT puede volverse más verbosa y menos directa en comparación con otros sistemas como Gradle que ofrecen `doFirst` y `doLast`.
+      - **Limitada flexibilidad multilingüística**: SBT es ideal para proyectos de Scala, pero puede ser menos flexible o eficiente en proyectos que involucran otros lenguajes como Java o Kotlin, donde Gradle podría ser una opción más versátil.
+   </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos cómo crear y configurar **tareas personalizadas** en SBT y las comparamos con Gradle para entender sus diferencias y particularidades, especialmente en el contexto de proyectos Scala. 
+
+## Puntos clave
+
+1. **Definición de tareas**: SBT utiliza `taskKey` y `:=` para asignar acciones directamente a las tareas, lo que ofrece una forma clara y concisa de definirlas.
+2. **Composición de tareas**: SBT permite estructurar y organizar tareas mediante operadores como `dependsOn`, asegurando un flujo secuencial controlado en la ejecución de tareas.
+3. **Diferencias en ejecución diferida**: Gradle soporta ejecución diferida con `tasks.register`, mejorando el rendimiento al no configurar tareas innecesarias, algo que SBT no ofrece de manera nativa.
+4. **Flexibilidad y compatibilidad**: SBT se integra de manera nativa con Scala, siendo óptimo para proyectos en este lenguaje, mientras que Gradle ofrece un DSL más adaptable para otros lenguajes como Java y Kotlin.
+
+---
+
+En resumen, elegir entre SBT y Gradle para la configuración de tareas personalizadas depende de las necesidades del proyecto y del ecosistema en el que se esté trabajando. SBT es altamente eficaz y conciso en proyectos Scala, pero puede carecer de la flexibilidad multilingüística y las optimizaciones de ejecución diferida que Gradle proporciona, especialmente en entornos mixtos o en proyectos que involucren lenguajes como Kotlin y Java.
+
+<References references={[
+  {
+      title: "sbt Reference Manual—Tasks",
+      url: "https://www.scala-sbt.org/1.x/docs/Tasks.html",
+      accessedDate: "9 de octubre de 2024",
+      type: "web",
+  },  
+]}/>

@@ -1,0 +1,149 @@
+---
+title: Varianza en sitio de uso
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import LanguageCard from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+La **varianza** es un concepto esencial en la programación genérica que determina cómo los tipos genéricos se comportan en relación con sus subtipos y supertipos. En **Kotlin**, además de la **varianza en sitio de declaración** que ya conoces, existe la **varianza en sitio de uso**, que nos permite especificar la varianza de un tipo genérico en el punto donde lo utilizamos, sin modificar su declaración original.
+
+Este enfoque es particularmente útil cuando trabajamos con **bibliotecas de software** que utilizan clases o interfaces genéricas invariables, y necesitamos flexibilidad adicional al utilizarlas en nuestros propios proyectos.
+
+## ¿Por qué necesitamos Varianza en Sitio de Uso?
+
+Imagina que estás utilizando una biblioteca que define una clase genérica invariante:
+
+```kotlin showLineNumbers
+class Box<T>(val value: T)
+```
+
+Si queremos escribir una función que pueda aceptar un `Box` de cualquier subtipo de `Animal`, no podemos hacerlo directamente debido a la **invarianza**. Aquí es donde la varianza en sitio de uso entra en juego.
+
+## Proyecciones de Tipo
+
+La **varianza en sitio de uso** se logra mediante **proyecciones de tipo**, que nos permiten adaptar la varianza de un tipo genérico en el punto de uso.
+
+### Sintaxis de Proyecciones
+
+- **Covarianza en sitio de uso**: `out T`
+- **Contravarianza en sitio de uso**: `in T`
+
+Estas palabras clave se utilizan al especificar el tipo genérico en una función o clase.
+
+## Ejemplo Práctico: Procesamiento de Eventos
+
+Supongamos que estamos trabajando con una biblioteca que define una clase `EventHandler` invariante:
+
+```kotlin showLineNumbers
+class EventHandler<T> {
+    fun handle(event: T) {
+        // Manejo del evento
+    }
+}
+```
+
+Queremos escribir una función que pueda registrar un `EventHandler` para cualquier supertipo de `ClickEvent`.
+
+```kotlin showLineNumbers
+open class Event
+class ClickEvent : Event()
+class HoverEvent : Event()
+```
+
+```kotlin showLineNumbers
+fun registerClickHandler(handler: EventHandler<ClickEvent>) {
+    // Registro del manejador
+}
+```
+
+El problema aquí es que no podemos pasar un `EventHandler<Event>` a esta función, debido a la invarianza.
+
+### Solución con Varianza en Sitio de Uso
+
+Podemos utilizar una proyección de tipo para permitir que la función acepte `EventHandler` de tipos más generales:
+
+```kotlin showLineNumbers
+fun registerClickHandler(handler: EventHandler<in ClickEvent>) {
+    // Registro del manejador
+}
+```
+
+Ahora, podemos pasar un `EventHandler<Event>` a esta función:
+
+```kotlin showLineNumbers
+val generalHandler = EventHandler<Event>()
+registerClickHandler(generalHandler) // Funciona correctamente
+```
+
+## Proyecciones de Estrella (`*`)
+
+En ocasiones, no nos importa el tipo genérico específico, y solo queremos acceder a los miembros que no dependen de él. Para estos casos, Kotlin ofrece las **proyecciones de estrella**.
+
+### Ejemplo con Proyección de Estrella
+
+Supongamos que queremos imprimir el tamaño de una lista, sin importar su tipo de elemento:
+
+```kotlin showLineNumbers
+fun printListSize(list: List<*>) {
+    println("La lista tiene ${list.size} elementos")
+}
+```
+
+Aquí, `List<*>` es una lista de algún tipo desconocido, y solo podemos acceder a los miembros que no dependen del tipo genérico `T`.
+
+<Exercise>
+    Imagina que estás usando una biblioteca que define una interfaz `Serializer` invariante:
+
+    ```kotlin showLineNumbers
+    interface Serializer<T> {
+        fun serialize(value: T): String
+    }
+    ```
+
+    Escribe una función `serializeValue` que pueda aceptar un `Serializer` de modo que el siguiente código funcione correctamente:
+
+    ```kotlin
+    val anySerializer = object : Serializer<Any> {
+        override fun serialize(value: Any): String {
+            return value.toString()
+        }
+    }
+
+    serializeValue(anySerializer, 42) // Debería imprimir "42"
+    serializeValue(anySerializer, "Hello") // Debería imprimir "Hello"
+    ```
+    <Solution>
+    ```kotlin
+    ```
+    </Solution>
+</Exercise>
+
+<References references={[
+    {
+        accessedDate: '10 de octubre de 2024',
+        siteOrAuthor: 'Kotlin Documentation',
+        title: 'Type Projections',
+        type: 'web',
+        url: 'https://kotlinlang.org/docs/generics.html#type-projections'
+    },
+    {
+        accessedDate: '10 de octubre de 2024',
+        siteOrAuthor: 'Kotlin Documentation',
+        title: 'Generics',
+        type: 'web',
+        url: 'https://kotlinlang.org/docs/generics.html'
+    }
+]} />
