@@ -22,11 +22,142 @@ Ya vimos que un **funtor** es una estructura que puede ser mapeada, es decir, qu
 
 Sin embargo, existe un tipo de funtor que es menos obvio, pero igualmente poderoso: el **funtor función**. En esta lección, exploraremos cómo las **funciones** mismas pueden ser consideradas funtores y cómo esto nos permite componer y transformar funciones de manera elegante y eficiente.
 
-## El Funtor Función
+## El funtor función
 
 En el contexto de programación funcional y teoría de categorías, una función de tipo `(T) -> R` puede ser considerada como un funtor en `R` cuando fijamos `T`. Esto significa que podemos definir una operación de mapeo sobre funciones que nos permite transformar su **salida** sin modificar su **entrada**.
 
+### Propiedades del funtor función
+
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $Group = "com\github\username"
+            ```
+
+            ```powershell
+            $FunctionTestDir = "functors\src\test\kotlin\$Group\functors\function"
+            New-Item -Path "$FunctionTestDir\FunctionFunctorTest.kt" `
+                -ItemType "file" -Force
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            $Group = "com\github\username"
+            ```
+
+            ```powershell
+            $FunctionTestDir = "functors\src\test\kotlin\$Group\functors\function"
+            ni "$FunctionTestDir\FunctionFunctorTest.kt" -i f -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            GROUP="com/github/username"
+            ```
+
+            ```bash
+            FUNCTION_TEST_DIR="functors/src/test/kotlin/$GROUP/functors/function"
+            mkdir -p $FUNCTION_TEST_DIR
+            touch "$FUNCTION_TEST_DIR/FunctionFunctorTest.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+El funtor función debe cumplir con las dos propiedades fundamentales de los funtores:
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        #### Identidad
+
+        Mapear la función identidad sobre un funtor no cambia el funtor.
+
+        ```kotlin showLineNumbers
+        val identity = function.map { it }
+        identity(420) shouldBe function(420)
+        ```
+
+        #### Composición
+        
+        Mapear la composición de dos funciones es lo mismo que mapear una función y luego mapear la otra.
+
+        ```kotlin showLineNumbers
+        val composition = function.map { it + 1 }.map { it * 2 }
+        val composed = function.map { (it + 1) * 2 }
+        composition(420) shouldBe composed(420)
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        package com.github.username.functors.function
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        class FunctionFunctorTest : FreeSpec({
+            "A function functor" - {
+                "when mapped with the identity function" - {
+                    "should return the same function" {
+                        with(FunctionFunctor<Int>()) {
+                            val function = { x: Int -> x * 2 }
+                            val identity = function.map { it }
+                            identity(420) shouldBe function(420)
+                        }
+                    }
+                }
+
+                "when composed with two functions" - {
+                    "should return the same function as the composition" {
+                        with(FunctionFunctor<Int>()) {
+                            val function = { x: Int -> x * 2 }
+                            val composition = function.map { it + 1 }.map { it * 2 }
+                            val composed = function.map { (it + 1) * 2 }
+                            composition(420) shouldBe composed(420)
+                        }
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
+
+Estas propiedades garantizan que el funtor función se comporte de manera coherente con las expectativas matemáticas de un funtor.
+
 ### Definición
+
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $Group = "com\github\username"
+            ```
+
+            ```powershell
+            $FunctionMainDir = "functors\src\main\kotlin\$Group\functors\function"
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            $Group = "com\github\username"
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            GROUP="com/github/username"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
 
 Consideremos una función `f: (T) -> R`. Queremos aplicar una transformación `g: (R) -> S` a la salida de `f`, obteniendo una nueva función `h: (T) -> S`. Esto es posible gracias a la composición de funciones.
 
@@ -39,24 +170,6 @@ class FunctionFuntor<T> {
 ```
 
 Aquí, `this` es la función original de tipo `(T) -> R`, y `f` es la función que queremos aplicar a su resultado.
-
-### Propiedades del Funtor Función
-
-El funtor función cumple con las dos **leyes fundamentales** de los funtores:
-
-1. **Identidad**: Mapear la función identidad sobre un funtor no cambia el funtor.
-
-    ```kotlin showLineNumbers
-    function.map { it } == function
-    ```
-
-2. **Composición**: Mapear la composición de dos funciones es lo mismo que mapear una función y luego mapear la otra.
-
-    ```kotlin showLineNumbers
-    function.map { f(g(it)) } == function.map(g).map(f)
-    ```
-
-Estas propiedades garantizan que el funtor función se comporte de manera coherente con las expectativas matemáticas de un funtor.
 
 ## Ejemplos Prácticos
 

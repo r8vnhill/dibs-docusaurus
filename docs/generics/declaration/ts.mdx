@@ -1,0 +1,110 @@
+---
+title: Varianza en sitio de declaración en TypeScript
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import LanguageCard from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+En lenguajes como **TypeScript**, los conceptos de varianza no son tan explícitos como en **Kotlin**, pero se logran mediante restricciones y comportamientos inherentes de los tipos genéricos. En esta lección, compararemos cómo funciona la **varianza en sitio de declaración** en Kotlin con su equivalente (o falta de equivalente) en **TypeScript**.
+
+## Covarianza y Contravarianza en TypeScript
+
+En TypeScript, los tipos genéricos son **invariantes** por defecto, lo que significa que no pueden aceptar ni subtipos ni supertipos sin una intervención explícita. Sin embargo, TypeScript tiene mecanismos implícitos para permitir la covarianza y la contravarianza dependiendo del contexto.
+
+### Covarianza Implícita
+
+En TypeScript, cuando un tipo solo **produce** valores de un tipo genérico `T`, el sistema de tipos puede tratar ese tipo como covariante. Por ejemplo, si tienes una función que devuelve un valor de tipo `T`, el compilador asume que `T` es covariante.
+
+```typescript showLineNumbers
+interface Producer<T> {
+    produce(): T;
+}
+
+const textProducer: Producer<string> = { produce: () => "Hello" };
+const anyProducer: Producer<any> = textProducer; // Esto es válido
+```
+
+TypeScript permite asignar `Producer<string>` a `Producer<any>` porque `string` es un subtipo de `any`, lo que implica una **covarianza implícita** en la dirección de los tipos.
+
+### Contravarianza en TypeScript
+
+La **contravarianza** ocurre cuando los tipos son usados como entradas. Si una función **consume** valores de tipo `T`, TypeScript trata esos tipos como contravariantes.
+
+```typescript showLineNumbers
+interface Consumer<T> {
+    consume(item: T): void;
+}
+
+const stringConsumer: Consumer<string> = { consume: (item) => console.log(item) };
+const anyConsumer: Consumer<any> = stringConsumer; // Error: no se puede asignar
+```
+
+Aquí TypeScript no permite asignar `Consumer<any>` a `Consumer<string>`, ya que podría generar problemas de tipo en tiempo de ejecución si el `Consumer<string>` intentara consumir algo que no fuera un `string`.
+
+### Comparación final
+
+| **Característica**            | **TypeScript**                                                                                   | **Kotlin**                                                                                                     |
+|------------------------------|-------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| **Manejo de varianza**       | Implícita: no hay palabras clave directas para definir `in` o `out` en la declaración de tipos.  | Explícita: usa las palabras clave `in` y `out` en la declaración de tipos genéricos para definir varianza.   |
+| **Covarianza**               | Implícita en funciones que **producen** valores (`Producer<T>`). Depende del contexto de uso.    | Declarada explícitamente con `out`. Permite que subtipos se usen en lugares donde se espera un supertipo.     |
+| **Contravarianza**           | Implícita en funciones que **consumen** valores (`Consumer<T>`). Puede ser limitada en algunos casos. | Declarada explícitamente con `in`. Permite que supertipos se usen en lugares donde se espera un subtipo.    |
+| **Flexibilidad en el uso**   | Mayor flexibilidad debido a la inferencia de tipos, pero puede ser menos segura en ciertos contextos. | Mayor control y seguridad al definir varianza en la declaración, asegurando consistencia y seguridad de tipos en tiempo de compilación. |
+| **Seguridad de tipos**       | Puede ser menos estricta, permitiendo posibles errores en tiempo de ejecución si no se gestiona adecuadamente. | Estricta en tiempo de compilación gracias a la declaración explícita de varianza, reduciendo errores en tiempo de ejecución. |
+| **Soporte para tipos complejos** | Compatible con tipos condicionales y mapeados, pero la varianza puede no aplicarse siempre de manera intuitiva. | El sistema de tipos permite la creación y manejo explícito de tipos complejos mediante la varianza declarada. |
+
+<ProCons>
+   <Pros>
+      - **Flexibilidad de Inferencia de Tipos**: En TypeScript, la varianza se maneja de manera implícita, lo que permite que el lenguaje sea más flexible y adaptable. Esto facilita la creación de funciones y estructuras sin necesidad de especificar explícitamente la varianza, haciendo el código más sencillo en muchos casos.
+      - **Menos Verbosidad**: A diferencia de Kotlin, no es necesario utilizar palabras clave como `in` o `out` para manejar la varianza, lo que resulta en una sintaxis más limpia y menos verbosa.
+      - **Compatibilidad con Tipos Condicionales y Mapeados**: TypeScript permite combinar tipos genéricos con tipos condicionales y mapeados, ofreciendo un nivel de flexibilidad y poder que no siempre es fácil de replicar en Kotlin, especialmente con varianza explícita.
+      - **Integración Sencilla con JavaScript**: TypeScript, al ser un superconjunto de JavaScript, se adapta fácilmente a la naturaleza dinámica del lenguaje, lo que permite trabajar con varianza sin imponer restricciones fuertes, alineándose mejor con la flexibilidad que ofrece el ecosistema de JavaScript.
+
+   </Pros>
+   <Cons>
+      - **Seguridad de Tipos Limitada**: La varianza implícita en TypeScript puede ser menos estricta, lo que puede llevar a errores en tiempo de ejecución si no se gestionan correctamente los tipos. Esto puede resultar en una experiencia de desarrollo menos segura comparada con la explicitud que ofrece Kotlin.
+      - **Falta de Control Explícito**: No tener palabras clave como `in` y `out` limita la capacidad de controlar explícitamente cómo se debe comportar un tipo genérico, lo que puede ser un inconveniente en proyectos grandes donde la claridad y la seguridad son fundamentales.
+      - **Complejidad en Casos Complejos**: En casos donde se requiere un manejo específico de la varianza, como en colecciones complejas o APIs avanzadas, TypeScript puede volverse confuso al no tener un sistema explícito para manejar estas situaciones, aumentando la dificultad para otrxs desarrolladorxs de entender y mantener el código.
+      - **Menor Consistencia en Tiempo de Compilación**: Debido a que la varianza se maneja de manera implícita, es posible que el comportamiento del compilador no sea siempre intuitivo, y las inconsistencias en la inferencia de tipos pueden generar comportamientos inesperados que dificultan la depuración.
+
+   </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos las diferencias y similitudes entre la varianza en sitio de declaración en **TypeScript** y **Kotlin**, destacando cómo cada lenguaje maneja los tipos genéricos y la varianza:
+
+### Puntos Clave
+
+- **Kotlin** proporciona un enfoque explícito para manejar la varianza con las palabras clave `in` y `out`, lo que permite un control preciso y seguridad en tiempo de compilación, ideal para bibliotecas que requieren una estructura estricta y predecible.
+- **TypeScript**, por otro lado, maneja la varianza de forma implícita basada en el uso de los tipos como productores o consumidores, ofreciendo una mayor flexibilidad en la sintaxis, pero a expensas de la seguridad de tipos estricta en algunos casos.
+- **Kotlin** ofrece mayor control y seguridad en la declaración de tipos genéricos, pero a costa de ser más explícito y verboso. Es excelente para contextos donde se necesita asegurar la consistencia y la integridad de tipos a lo largo del desarrollo.
+- **TypeScript** proporciona una experiencia más flexible y menos estructurada, permitiendo que lxs desarrolladorxs se beneficien de una sintaxis más sencilla y de la integración natural con JavaScript, aunque esto puede implicar menos seguridad y mayores riesgos en tiempo de ejecución.
+
+---
+
+Ambos enfoques tienen sus ventajas y desventajas, y la elección entre ellos dependerá del contexto y los requisitos del proyecto. Si trabajas con bibliotecas de software donde la precisión y seguridad de tipos son fundamentales, **Kotlin** puede ser la mejor opción. Por otro lado, si necesitas flexibilidad y facilidad para integrar tu código con el ecosistema JavaScript, **TypeScript** te proporcionará una experiencia más ágil y adaptable.
+
+Al final, comprender cómo y cuándo utilizar estos mecanismos en ambos lenguajes te permitirá aprovechar al máximo sus capacidades y diseñar soluciones genéricas robustas y eficientes.
+
+<References references={[
+    {
+        title: "Covariant, Contravariant, and Invariant in Typescript",
+        url: "https://www.sandromaglione.com/articles/covariant-contravariant-and-invariant-in-typescript",
+        type: "article",
+        author: "Sandro Maglione",
+        publishedDate: "27 de octubre de 2023",
+    },
+]}/>

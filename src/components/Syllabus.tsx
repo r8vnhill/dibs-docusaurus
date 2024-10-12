@@ -30,6 +30,16 @@ const sections: CourseSection[] = [
         ],
     },
     {
+        title: "Programación genérica",    // 1 semana    total: 8/15 semanas
+        contents: [
+            "Polimorfismo paramétrico",
+            "Varianza en sitio de declaración",
+            "Varianza en sitio de uso",
+            "Borrado de tipos",
+            "Reificación de tipos",
+        ],
+    },
+    {
         title: "Programación orientada a objetos",  // 2 semanas    total: 7/15 semanas
         contents: [
             "Problema de la base débil",
@@ -40,16 +50,6 @@ const sections: CourseSection[] = [
             "Variables y funciones estáticas",
             "Herencia múltiple",
             "Soluciones al problema del diamante",
-        ],
-    },
-    {
-        title: "Programación genérica",    // 1 semana    total: 8/15 semanas
-        contents: [
-            "Polimorfismo paramétrico",
-            "Varianza en sitio de declaración",
-            "Varianza en sitio de uso",
-            "Borrado de tipos",
-            "Reificación de tipos",
         ],
     },
     {

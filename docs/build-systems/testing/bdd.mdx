@@ -1,0 +1,436 @@
+---
+title: BDD by example
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import LanguageCard from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="kotest-intro" />
+
+<details>
+    <summary>
+        Comencemos por crear un módulo para la lección...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path 'bdd' -ItemType 'directory'
+            '// Intentionally left blank' |
+                Out-File -FilePath 'bdd/build.gradle.kts'
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            md bdd
+            '// Intentionally left blank' > bdd/build.gradle.kts
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            mkdir bdd
+            touch bdd/build.gradle.kts
+            ```
+        </TabItem>
+    </Tabs>
+
+    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
+</details>
+
+El **Desarrollo Dirigido por Comportamiento** (*Behavior-Driven Development*, BDD) es una metodología ágil que extiende el **Desarrollo Dirigido por Pruebas** (*Test-Driven Development*, TDD) al enfatizar la colaboración entre desarrolladorxs, QA y partes interesadas no técnicas. BDD se centra en el comportamiento esperado del software desde la perspectiva del usuario final.
+
+En esta lección, exploraremos cómo implementar BDD utilizando **Kotest**, un marco de pruebas para Kotlin que facilita escribir pruebas legibles y expresivas. Suponemos que ya estás familiarizadx con TDD y ahora quieres integrar BDD en tu flujo de trabajo.
+
+## Introducción al BDD (Behavior-Driven Development)
+
+El **Behavior-Driven Development (BDD)** es una metodología que busca:
+
+- **Fomentar la colaboración** entre todas las partes involucradas en el desarrollo, como desarrolladorxs, testers, y stakeholders.
+- **Definir el comportamiento** esperado del sistema utilizando un lenguaje claro y accesible, cercano al lenguaje natural.
+- **Guiar el desarrollo** mediante ejemplos y escenarios específicos que ilustran cómo debería comportarse el sistema bajo diferentes circunstancias.
+
+En BDD, las pruebas se estructuran para describir **características** y **escenarios** que se alinean con los requisitos del negocio, permitiendo que las pruebas actúen como documentación viviente del sistema.
+
+### Estructura de una Prueba BDD
+
+Un test BDD típico sigue la siguiente estructura:
+
+1. **Given**: Describe el estado inicial o las condiciones previas del sistema.
+2. **When**: Describe la acción o evento que se está probando.
+3. **Then**: Describe el resultado o comportamiento esperado como consecuencia de la acción.
+
+## Caso de Estudio: Biblioteca de Gestión de Usuarios
+
+Supongamos que estamos desarrollando una biblioteca de software para la gestión de usuarios. Queremos implementar funcionalidades clave, como:
+
+- Registrar nuevos usuarios en el sistema.
+- Manejar situaciones excepcionales, como el intento de registro de un usuario que ya existe (duplicado).
+
+Utilizaremos BDD para guiar el desarrollo de estas funcionalidades, escribiendo especificaciones que detallen el comportamiento esperado del sistema en diferentes escenarios.
+
+## Escribiendo Especificaciones con Kotest
+
+Kotest proporciona varios estilos para escribir pruebas en un formato BDD. En esta lección, utilizaremos el estilo `FreeSpec`, que es flexible y legible, permitiendo estructurar las pruebas en una jerarquía que imita el lenguaje natural y facilita la comprensión del flujo de escenarios. Aunque en esta lección utilizamos `FreeSpec`, puedes optar por otros estilos según tus necesidades y preferencias.
+
+## Primer Escenario: Registro de Usuarixs Exitoso
+
+### Especificación
+
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $Group = 'com\github\username'
+            ```
+
+            ```powershell
+            $UsersTestPath = "bdd\src\test\kotlin\$Group\users"
+            New-Item -Path "$UsersTestPath\UserServiceTest.kt" `
+                -ItemType "file" -Force
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            $Group = 'com\github\username'
+            ```
+
+            ```powershell
+            $UsersTestPath = "bdd\src\test\kotlin\$Group\users"
+            ni "$UsersTestPath\UserServiceTest.kt" -i f -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            GROUP="com/github/username"
+            ```
+
+            ```bash
+            USERS_TEST_PATH="bdd/src/test/kotlin/$GROUP/users"
+            mkdir -p $USERS_TEST_PATH
+            touch $USERS_TEST_PATH/UserServiceTest.kt
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+Comenzamos escribiendo una especificación para un caso común en el que un usuario se registra correctamente. La estructura de BDD con Kotest nos permite expresar el comportamiento de forma natural:
+
+```kotlin
+"A user service" - {
+    "when registering a new user" - {
+        "should add the user to the database" { }
+    }
+}
+```
+
+Esta es la estructura básica de nuestra especificación BDD. Ahora, agregaremos los detalles que prueban si el usuario se registra correctamente en el sistema.
+
+<Tabs>
+    <TabItem label="Código esencial" value="Código esencial">
+        ```kotlin showLineNumbers title="bdd/src/test/kotlin/com/github/username/users/UserServiceTest.kt"
+        lateinit var userService: UserService
+
+        beforeEach {
+            userService = UserService()
+        }
+
+        "A user service" - {
+            "when registering a new user" - {
+                "should add the user to the database" {
+                    userService.register(USER, PASSWORD)
+                    userService.users.contains(USER) shouldBe true
+                }
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label="Código completo" value="Código completo">
+        ```kotlin showLineNumbers title="bdd/src/test/kotlin/com/github/username/users/UserServiceTest.kt"
+        package com.github.username.users
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        private const val USER = "ichigo"
+        private const val PASSWORD = "shinigami123"
+
+        class UserServiceTest : FreeSpec({
+            lateinit var userService: UserService
+
+            // Inicializa el servicio antes de cada test
+            beforeEach {
+                userService = UserService()
+            }
+
+            "A user service" - {
+                "when registering a new user" - {
+                    "should add the user to the database" {
+                        userService.register(USER, PASSWORD)
+                        userService.users.contains(USER) shouldBe true
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
+
+<Explanation>
+    - **Estructura BDD**: Hemos utilizado la sintaxis `given/when/then` implícita con el estilo `FreeSpec` de Kotest. Esto facilita la escritura de pruebas de comportamiento enfocadas en casos de uso del sistema.
+    - **`lateinit`**: La variable `userService` se declara como `lateinit`, lo que significa que no se inicializa inmediatamente, sino antes de cada prueba. Esto es una alternativa más segura a la inicialización como `null`.
+    - **Inicialización**: El servicio de usuarios (`UserService`) se reinicializa antes de cada prueba para asegurar que cada prueba se ejecute en un entorno limpio.
+    - **Prueba esencial**: La prueba verifica que, al registrar un nuevo usuario, este se guarda correctamente en la "base de datos" (representada por una colección `users`).
+</Explanation>
+
+Este enfoque BDD ayuda a que las pruebas reflejen el comportamiento esperado de la biblioteca de software desde una perspectiva clara y centrada en el usuario.
+
+### Implementación Mínima
+
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $UsersMainPath = "bdd\src\main\kotlin\$Group\users"
+            New-Item -Path "$UsersMainPath\UserService.kt" `
+                -ItemType "file" -Force
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            $UsersMainPath = "bdd\src\main\kotlin\$Group\users"
+            ni "$UsersMainPath\UserService.kt" -i f -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            USERS_MAIN_PATH="bdd/src/main/kotlin/$GROUP/users"
+            mkdir -p $USERS_MAIN_PATH
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+Ahora, implementamos el código mínimo para que la prueba pase.
+
+```kotlin showLineNumbers title="bdd/src/main/kotlin/com/github/username/users/UserService.kt"
+package com.github.username.users
+
+class UserService {
+    private val _users = mutableMapOf<String, String>()
+    val users: List<String> = _users.keys.toList()
+
+    fun register(username: String, password: String) {
+        _users[username] = password
+    }
+}
+```
+
+La prueba debe pasar ahora, confirmando que un usuario puede registrarse exitosamente.
+
+<Exercise>
+    Extiene la clase `UserService` para manejar la autenticación exitosa de un usuario. Escribe una especificación BDD y una prueba que verifique que un usuario registrado pueda autenticarse correctamente con su nombre de usuario y contraseña.
+    
+    <Solution>
+        ```kotlin showLineNumbers title="bdd/src/test/kotlin/com/github/username/users/UserServiceTest.kt"
+        "when authenticating an existing user" - {
+            "should return true for valid credentials" {
+                userService.register(USER, PASSWORD)
+                userService.authenticate(USER, PASSWORD) shouldBe true
+            }
+        }
+        ```
+
+        ```kotlin showLineNumbers title="bdd/src/main/kotlin/com/github/username/users/UserService.kt"
+        fun authenticate(username: String, password: String): Boolean {
+            return _users[username] == password
+        }
+        ```    
+    </Solution>
+</Exercise>
+## Segundo Escenario: Registro de Usuario Duplicado
+
+### Especificación
+
+Escribimos una especificación para manejar el caso excepcional donde un usuario intenta registrarse con un nombre de usuario ya existente.
+
+```kotlin
+class UserServiceTest : FreeSpec({
+    "A user service" - {
+        "when registering a new user" - {
+            "should have the user in the database" { }
+        }
+
+        "when registering an existing user" - {
+            "should throw an exception" { }
+        }
+    }
+})
+```
+
+Con el escenario definido, podemos llenar los detalles específicos.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        "when registering an existing user" - {
+            "should throw an exception" {
+                userService.register(USER, PASSWORD)
+                shouldThrow<IllegalArgumentException> {
+                    userService.register(USER, PASSWORD)
+                }.message shouldBe "User already exists"
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        package cl.ravenhill.users
+
+        import io.kotest.assertions.throwables.shouldThrow
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        private const val USER = "ichigo"
+        private const val PASSWORD = "shinigami123"
+
+        class UserServiceTest : FreeSpec({
+            lateinit var userService: UserService
+
+            beforeEach {
+                userService = UserService()
+            }
+
+            "A user service" - {
+                "when registering a new user" - {
+                    "should have the user in the database" {
+                        userService.register(USER, PASSWORD)
+                        userService.users.contains(USER) shouldBe true
+                    }
+                }
+
+                "when registering an existing user" - {
+                    "should throw an exception" {
+                        userService.register(USER, PASSWORD)
+                        shouldThrow<IllegalArgumentException> {
+                            userService.register(USER, PASSWORD)
+                        }.message shouldBe "User already exists"
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
+
+### Implementación Mínima
+
+Lo siguiente es implementar el código mínimo para que la prueba pase.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        fun register(username: String, password: String) {
+            require(username !in _users) { "User already exists" }
+            _users[username] = password
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        class UserService {
+            private val _users = mutableMapOf<String, String>()
+            val users: List<String>
+                get() = _users.keys.toList()
+
+            fun register(username: String, password: String) {
+                require(username !in _users) { "User already exists" }
+                _users[username] = password
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+<Exercise>
+    Extiende la clase `UserService` para manejar la autenticación fallida de un usuario. Escribe una especificación BDD y una prueba que verifique que un usuario no registrado no pueda autenticarse.
+
+    La autenticación puede fallar si el usuario no existe en la base de datos o si la contraseña no coincide. Arroja una excepción `IllegalArgumentException` con un mensaje adecuado en caso de autenticación fallida.
+
+    <Solution>
+        ```kotlin showLineNumbers title="bdd/src/test/kotlin/com/github/username/users/UserServiceTest.kt"
+        "when authenticating a non-existing user" - {
+            "should return false" {
+                val wrongPassword = "wrongpassword"
+                wrongPassword shouldNotBe PASSWORD
+                userService.authenticate(USER, "wrongpassword") shouldBe false
+            }
+
+            "should throw an exception" {
+                shouldThrow<IllegalArgumentException> {
+                    userService.authenticate("nonexistent", "password")
+                }.message shouldBe "User not found"
+            }
+        }
+        ```
+
+        ```kotlin showLineNumbers title="bdd/src/main/kotlin/com/github/username/users/UserService.kt"
+        fun authenticate(username: String, password: String): Boolean {
+            require(username in _users) { "User not found" }
+            return _users[username] == password
+        }
+        ```
+    </Solution>
+</Exercise>
+
+## Ventajas y desventajas de BDD
+
+<ProCons>
+   <Pros>
+      - **Colaboración mejorada**: BDD promueve una comunicación clara entre desarrolladorxs, testers y stakeholders no técnicxs, asegurando que todos compartan un entendimiento común de los requisitos y el comportamiento esperado del sistema.
+      - **Documentación viviente**: Las especificaciones BDD actúan como documentación que refleja el comportamiento actual del sistema, lo que facilita el mantenimiento y la actualización del software a lo largo del tiempo.
+      - **Enfoque en lx usuarix final**: Al definir los escenarios en términos de comportamiento, BDD mantiene el enfoque en cómo el sistema debe funcionar desde la perspectiva de lx usuarix final, mejorando así la alineación con los objetivos del negocio.
+      - **Mayor legibilidad**: Las pruebas BDD escritas con Kotest o marcos similares utilizan un lenguaje cercano al natural, lo que las hace más comprensibles para todas las partes involucradas en el proyecto, incluso aquellas sin conocimientos técnicos profundos.
+      - **Prevención de errores**: Al especificar los escenarios antes de implementar el código, BDD ayuda a identificar y manejar casos excepcionales de forma proactiva, lo que reduce la probabilidad de errores en tiempo de ejecución.
+   </Pros>
+   <Cons>
+      - **Curva de aprendizaje**: Implementar BDD efectivamente puede requerir un cambio de mentalidad y aprendizaje de nuevas herramientas y técnicas, lo que podría ser un desafío para equipos que no estén familiarizados con esta metodología.
+      - **Tiempo adicional**: Escribir especificaciones detalladas y mantenerlas actualizadas puede llevar tiempo, lo que podría ralentizar el proceso de desarrollo inicial en comparación con otros enfoques menos estructurados.
+      - **Dependencia de colaboración**: El éxito de BDD depende en gran medida de la colaboración efectiva entre equipos técnicos y no técnicos. Si esta colaboración no es fluida, el proceso podría resultar ineficaz.
+      - **Sobrecarga en proyectos pequeños**: Para proyectos simples o de corta duración, el enfoque detallado y estructurado de BDD puede resultar excesivo y generar una sobrecarga innecesaria en comparación con TDD o pruebas unitarias tradicionales.
+      - **Complejidad en casos complejos**: En proyectos grandes con múltiples escenarios y flujos de negocio, la gestión de especificaciones BDD puede volverse compleja, requiriendo un enfoque disciplinado para mantener la claridad y la consistencia.
+   </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos cómo el **Behavior-Driven Development (BDD)**, en combinación con **Test-Driven Development (TDD)**, puede transformar la manera en que desarrollamos bibliotecas de software, especialmente en un lenguaje como **Kotlin** utilizando **Kotest**.
+
+### Puntos clave
+
+- BDD no solo se enfoca en probar la funcionalidad, sino también en capturar y expresar el **comportamiento** esperado desde la perspectiva de lx usuarix final, utilizando un lenguaje claro y natural.
+- La estructura **Given-When-Then** de BDD nos permite definir escenarios de manera ordenada y comprensible, alineando las pruebas con los **requisitos del negocio**.
+- Integramos BDD en el desarrollo de una **biblioteca de gestión de usuarixs**, demostrando cómo se utilizan especificaciones para guiar la implementación y refactorización del código.
+- Utilizando Kotest, exploramos cómo escribir pruebas que son legibles y estructuradas, facilitando tanto la colaboración en equipo como el mantenimiento a largo plazo del software.
+
+---
+
+Al final, BDD nos ayuda a mejorar la calidad del software, asegurando que cada característica se implemente con un claro entendimiento de su propósito y comportamiento esperado. Es una metodología que, aunque puede implicar una mayor inversión inicial en tiempo y esfuerzo, proporciona un **valor significativo** en términos de colaboración, claridad y reducción de errores a lo largo del ciclo de vida del desarrollo de software.

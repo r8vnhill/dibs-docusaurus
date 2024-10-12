@@ -1,0 +1,429 @@
+---
+title: Cotas
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import LanguageCard from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import Tooltip from '@site/src/components/Tooltip'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+<details>
+    <summary>
+        Comencemos por crear un módulo para la lección...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path 'bounds' -ItemType 'directory'
+            '// Intentionally left blank' | `
+                Out-File -FilePath '.\bounds\build.gradle.kts'
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            md 'bounds'
+            '// Intentionally left blank' > '.\bounds\build.gradle.kts'
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            mkdir bounds
+            echo '// Intentionally left blank' > './bounds/build.gradle.kts'
+            ```
+        </TabItem>
+    </Tabs>
+    
+    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
+</details>
+
+La **programación genérica** en Kotlin nos permite crear clases y funciones que pueden trabajar con cualquier tipo, proporcionando una gran flexibilidad y reutilización de código. Sin embargo, a veces necesitamos restringir los tipos que pueden ser utilizados con un genérico. Aquí es donde entran las **cotas superiores** y **cotas inferiores**.
+
+En esta lección, exploraremos:
+
+- Cómo declarar **cotas superiores** en genéricos de Kotlin.
+- Las dos formas de declarar cotas superiores y cómo utilizar `where` para múltiples cotas.
+- Notas sobre **cotas inferiores**, cómo Kotlin no las soporta nativamente, pero cómo podemos emularlas hasta cierto punto usando **varianza en sitio de uso**.
+- Ejemplos contextualizados en el desarrollo de **bibliotecas de software**.
+
+## Cotas Superiores en Genéricos
+
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $Group = 'com\github\username'
+            ```
+
+            ```powershell
+            $SrcMainDir = "bounds\src\main\kotlin\$Group"
+            $SrcTestDir = "bounds\src\test\kotlin\$Group"
+            $RepoMainDir = "$SrcMainDir\repo"
+            $RepoTestDir = "$SrcTestDir\repo"
+            New-Item -Path "$RepoMainDir\Repository.kt" -ItemType 'file' -Force
+            New-Item -Path "$RepoMainDir\Entity.kt" -ItemType 'file' -Force
+            New-Item -Path "$RepoMainDir\Serializable.kt" -ItemType 'file' -Force
+            New-Item -Path "$RepoTestDir\RepositoryTest.kt" -ItemType 'file' -Force
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            $Group = 'com\github\username'
+            ```
+
+            ```powershell
+            $SrcMainDir = "bounds\src\main\kotlin\$Group"
+            $SrcTestDir = "bounds\src\test\kotlin\$Group"
+            $RepoMainDir = "$SrcMainDir\repo"
+            $RepoTestDir = "$SrcTestDir\repo"
+            ni "$RepoMainDir\Repository.kt" -i 'f' -f
+            ni "$RepoMainDir\Entity.kt" -i 'f' -f
+            ni "$RepoMainDir\Serializable.kt" -i 'f' -f
+            ni "$RepoTestDir\RepositoryTest.kt" -i 'f' -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            GROUP='com/github/username'
+            ```
+
+            ```bash
+            SRC_MAIN_DIR="bounds/src/main/kotlin/$GROUP"
+            SRC_TEST_DIR="bounds/src/test/kotlin/$GROUP"
+            REPO_MAIN_DIR="$SRC_MAIN_DIR/repo"
+            REPO_TEST_DIR="$SRC_TEST_DIR/repo"
+            mkdir -p "$REPO_MAIN_DIR"
+            mkdir -p "$REPO_TEST_DIR"
+            touch "$REPO_MAIN_DIR/Repository.kt"
+            touch "$REPO_MAIN_DIR/Entity.kt"
+            touch "$REPO_MAIN_DIR/Serializable.kt"
+            touch "$REPO_TEST_DIR/RepositoryTest.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+Una **cota superior** restringe el tipo genérico a un subtipo específico. Esto significa que el tipo genérico debe ser la cota superior o un subtipo de ella.
+
+Imaginemos que estamos desarrollando una biblioteca de persistencia y queremos crear una clase genérica `Repository` que solo acepte tipos que implementen la interfaz `Entity`. Esto garantiza que todas las entidades manejadas por la biblioteca sigan un contrato común, facilitando la manipulación y persistencia de datos.
+
+Queremos que el comportamiento de nuestra clase `Repository` sea el siguiente:
+
+<Tabs>
+    <TabItem label="Código esencial" value="Código esencial">
+        ```kotlin showLineNumbers
+        with(repository) {
+            entities.isEmpty() shouldBe true
+            save(entity)
+            entities.size shouldBe 1
+            entities.last() shouldBe entity
+            serializeAll() shouldBe "[MockEntity(id=1)]"
+        }
+        ```
+    </TabItem>
+    <TabItem label="Código completo" value="Código completo">
+        ```kotlin showLineNumbers title="bounds/src/test/kotlin/com/github/username/repo/RepositoryTest.kt"
+        package com.github.username.repo
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        private class MockEntity(override val id: Int) : Entity, Serializable {
+
+            override fun serialize() = "MockEntity(id=$id)"
+
+            override fun deserialize(serialized: String) = serialized
+                .substringAfter("id=").toInt()
+                .let(::MockEntity)
+        }
+
+        class RepositoryTest : FreeSpec({
+            "A repository" - {
+                "can save an entity" {
+                    val repository = Repository<MockEntity>()
+                    val entity = MockEntity(1)
+                    with(repository) {
+                        entities.isEmpty() shouldBe true
+                        save(entity)
+                        entities.size shouldBe 1
+                        entities.last() shouldBe entity
+                        serializeAll() shouldBe "[MockEntity(id=1)]"
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
+
+En este test, estamos verificando que el repositorio pueda almacenar una entidad correctamente. Después de guardar la entidad, comprobamos que la lista de entidades tenga un tamaño de `1` y que la última entidad en la lista sea la misma que hemos guardado. Este comportamiento es esencial para asegurar que la biblioteca de persistencia maneja las entidades de manera consistente y segura.
+
+### Primera Forma: Declaración Directa en el Parámetro Genérico
+
+La forma más común de declarar una cota superior es directamente en la declaración del parámetro genérico usando `T : UpperBound`.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="bounds/src/main/kotlin/com/github/username/repo/Repository.kt"
+        class Repository<T : Entity>
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="src/main/kotlin/com/github/username/repo/Entity.kt"
+        package com.github.username.repo
+
+        interface Entity {
+            val id: Int
+        }
+        ```
+
+        ```kotlin showLineNumbers title="src/main/kotlin/com/github/username/repo/Repository.kt"
+        package com.github.username.repo
+
+        class Repository<T : Entity> {
+            private val _entities: MutableList<T> = mutableListOf()
+            val entities: List<T> = _entities
+
+            fun save(entity: T) {
+                _entities += entity
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+<Explanation>
+    - **`Entity`** es la cota superior.
+    - **`T : Entity`** significa que `T` debe ser `Entity` o una clase que herede de `Entity`.
+</Explanation>
+
+### Segunda Forma: Usar la Cláusula `where` para Múltiples Cotas
+
+Cuando es necesario aplicar **múltiples restricciones** a un tipo genérico en Kotlin, la cláusula `where` proporciona una forma clara y organizada de hacerlo. Esta técnica es útil cuando un tipo debe cumplir con más de una condición, garantizando que todas las restricciones se definan de manera explícita y comprensible.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        class Repository<T> where T : Entity,
+                                  T : Serializable
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="src/main/kotlin/com/github/username/repo/Repository.kt"
+        package com.github.username.repo
+
+        class Repository<T> where T : Entity,
+                                  T : Serializable {
+            private val _entities: MutableList<T> = mutableListOf()
+            val entities: List<T> = _entities
+
+            fun save(entity: T) {
+                _entities += entity
+            }
+
+            fun serializeAll() = entities
+                .joinToString(prefix = "[", postfix = "]") {
+                    it.serialize()
+                }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+<Explanation>
+   - En este caso, `T` debe ser un subtipo de `Entity` **y** también implementar la interfaz `Serializable`. De esta manera, cualquier tipo que se utilice con esta función cumplirá ambas restricciones.
+   - La cláusula `where` se coloca después de la lista de parámetros genéricos y antes del cuerpo de la función, proporcionando una estructura clara que facilita la lectura y comprensión de las restricciones aplicadas.
+</Explanation>
+
+:::tip ¿Cuál elegir?
+
+La elección entre usar la **declaración directa** y la **cláusula `where`** depende de la complejidad de las restricciones y de la claridad del código. Para restricciones simples, la **declaración directa** es más concisa y fácil de entender. En cambio, cuando hay múltiples restricciones o condiciones más complejas, la **cláusula `where`** mejora la legibilidad y organiza mejor las relaciones entre tipos.
+
+Por ejemplo, el siguiente código que utiliza la **declaración directa** para establecer cotas superiores puede resultar menos legible:
+
+```kotlin showLineNumbers
+interface Evolver<T, F : Feature<T, F>, R : Representation<T, F>, S : EvolutionState<T, F, R, S>>
+```
+
+En comparación con el uso de la **cláusula `where`**, que distribuye las restricciones de forma más clara:
+
+```kotlin showLineNumbers
+interface Evolver<T, F, R, S> 
+    where F : Feature<T, F>, 
+          R : Representation<T, F>,
+          S : EvolutionState<T, F, R, S>
+```
+
+En última instancia, la elección se basa en las preferencias de lx desarrolladorx y en el enfoque que maximice la claridad y mantenibilidad del código.
+
+:::
+ 
+### Ventajas y desventajas de las cotas superiores
+
+<ProCons>
+   <Pros>
+      - **Seguridad de Tipos en Tiempo de Compilación**: Las cotas superiores aseguran que solo se acepten tipos que cumplan con ciertas restricciones, lo que permite detectar errores en tiempo de compilación y garantiza que las operaciones solo se realicen sobre tipos compatibles.
+      - **Flexibilidad y Reutilización**: Al definir cotas superiores, se puede crear código genérico flexible que funcione con cualquier subtipo que cumpla las restricciones, permitiendo reutilizar clases y funciones sin necesidad de reescribirlas para cada caso específico.
+      - **Clara Intención de Uso**: Especificar cotas superiores hace explícitas las expectativas y restricciones de una clase o función, lo que mejora la legibilidad y el mantenimiento del código, ya que otros desarrolladorxs pueden entender rápidamente qué tipos se esperan.
+      - **Integridad de la API**: En el contexto de bibliotecas de software, las cotas superiores ayudan a asegurar que solo los tipos adecuados interactúen con la API, previniendo usos incorrectos que podrían llevar a errores en tiempo de ejecución.
+
+   </Pros>
+   <Cons>
+      - **Complejidad Adicional**: Usar cotas superiores y múltiples restricciones puede hacer que las definiciones de funciones y clases genéricas sean más complicadas, lo que puede ser intimidante para desarrolladorxs menos experimentados.
+      - **Rigidez**: Aunque las cotas superiores proporcionan flexibilidad dentro de ciertos límites, también imponen restricciones que podrían no ser necesarias en todos los contextos. Esto puede hacer que el código sea menos adaptable en casos que no cumplan exactamente con las restricciones impuestas.
+      - **Mensajes de Error Difíciles de Interpretar**: Los errores relacionados con restricciones genéricas y cotas superiores pueden ser complicados de diagnosticar y entender, lo que puede ralentizar el proceso de depuración y desarrollo.
+   </Cons>
+</ProCons>
+
+## Cotas Inferiores
+
+En Kotlin, las **cotas inferiores** no son compatibles de forma nativa, lo que significa que no se pueden declarar directamente en la definición de un genérico. Sin embargo, es posible **emular** las cotas inferiores utilizando **varianza en sitio de uso**.
+
+### Emulando Cotas Inferiores con Varianza en Sitio de Uso
+
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $NotificationsMainDir = "$SrcMainDir\notifications"
+            $NotificationsTestDir = "$SrcTestDir\notifications"
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            $NotificationsMainDir = "$SrcMainDir\notifications"
+            $NotificationsTestDir = "$SrcTestDir\notifications"
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            NOTIFICATIONS_MAIN_DIR="$SRC_MAIN_DIR/notifications"
+            NOTIFICATIONS_TEST_DIR="$SRC_TEST_DIR/notifications"
+            mkdir -p "$NOTIFICATIONS_MAIN_DIR"
+            mkdir -p "$NOTIFICATIONS_TEST_DIR"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+La varianza en Kotlin permite especificar cómo los subtipos y supertipos se relacionan entre sí en el contexto de una clase genérica. Al utilizar la varianza de manera estratégica, podemos **emular** el comportamiento de las cotas inferiores.
+
+Por ejemplo, supongamos que estamos desarrollando una biblioteca de notificaciones y queremos crear un sistema que pueda manejar diferentes tipos de notificaciones.
+
+Imaginemos que tenemos una clase `NotificationHandler` que puede manejar notificaciones de diferentes tipos. Para poder reusar un mismo handler para múltiples notificaciones, definimos un campo mutable `notification` que puede ser de cualquier tipo de notificación, o nulo.
+
+```kotlin showLineNumbers
+package com.github.username.notifications
+
+class NotificationHandler<N: Notification> {
+    var notification: N? = null
+}
+```
+
+Supongamos que queremos crear un sistema que maneje exclusivamente notificaciones de correos electrónicos. Para ello, definiremos una clase `EmailNotificationSystem` que registre un `NotificationHandler` diseñado específicamente para notificaciones de correos electrónicos. Dado que un correo electrónico es un subtipo de notificación, esperaríamos poder utilizar un `NotificationHandler<Notification>` (que maneja cualquier tipo de notificación) para procesar notificaciones de correo electrónico sin problemas.
+
+Esto quiere decir que necesitamos un método `registerHandler` en `EmailNotificationSystem` que acepte un `NotificationHandler<T>` donde `T` es un supertipo de `EmailNotification`. Es decir, necesitamos una **cota inferior** en el parámetro genérico de `registerHandler`.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        val system = EmailNotificationSystem()
+        val generalHandler = NotificationHandler<Notification>()
+        system.registerHandler(generalHandler)
+        system.handlers.size shouldBe 1
+        system.handlers.last() shouldBe generalHandler
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        package com.github.username.notifications
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        class NotificationSystemTest : FreeSpec({
+            "A notification system" - {
+                "can register a handler" {
+                    val system = EmailNotificationSystem()
+                    val generalHandler = NotificationHandler<Notification>()
+                    system.registerHandler(generalHandler)
+                    system.handlers.size shouldBe 1
+                    system.handlers.last() shouldBe generalHandler
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
+
+Del concepto de **contravarianza**, sabemos que si `A` es un subtipo de `B`, entonces `Consumer<B>` es un subtipo de `Consumer<A>`. Aplicando esto, si `EmailNotification` es un subtipo de `Notification`, entonces un `NotificationHandler<Notification>` puede ser utilizado en cualquier lugar donde se espere un `NotificationHandler<EmailNotification>`. Esto nos permite aceptar un `NotificationHandler<Notification>` en contextos que requieren un `NotificationHandler<EmailNotification>`, emulando efectivamente una **cota inferior** en Kotlin.
+
+```kotlin showLineNumbers
+package com.github.username.notifications
+
+typealias EmailNotificationHandler = 
+        NotificationHandler<in EmailNotification>
+
+class EmailNotificationSystem {
+    private val _handlers = mutableListOf<EmailNotificationHandler>()
+    val handlers: List<EmailNotificationHandler> = _handlers
+
+    fun registerHandler(handler: EmailNotificationHandler) {
+        _handlers += handler
+    }
+}
+```
+
+### Ventajas y desventajas de emular cotas inferiores
+
+<ProCons>
+   <Pros>
+      - **Flexibilidad y reutilización de código**: Emular cotas inferiores mediante la contravarianza permite que los mismos handlers genéricos puedan ser reutilizados en múltiples contextos, ampliando la flexibilidad de la biblioteca y evitando la duplicación de código.
+      - **Compatibilidad con jerarquías de tipos**: Esta técnica permite que sistemas o clases que trabajan con jerarquías de tipos puedan aceptar handlers que funcionen con tipos más generales. Esto es especialmente útil cuando se manejan entidades o eventos que tienen múltiples subtipos.
+      - **Seguridad de tipos en tiempo de compilación**: A pesar de no soportar cotas inferiores nativamente, el uso de contravarianza sigue siendo seguro en tiempo de compilación, garantizando que solo se acepten tipos válidos según las restricciones establecidas.
+   </Pros>
+   <Cons>
+      - **Complejidad conceptual**: La emulación de cotas inferiores usando varianza en sitio de uso puede ser difícil de entender para desarrolladorxs que no están familiarizadxs con la contravarianza y sus implicaciones, lo que puede llevar a errores o malentendidos en el diseño de la API.
+      - **Limitaciones en la flexibilidad**: A diferencia de las cotas inferiores nativas, esta técnica tiene limitaciones, ya que solo se aplica en situaciones específicas donde es posible usar contravarianza. En casos más complejos, puede que no sea suficiente o se requiera un enfoque alternativo.
+      - **Mensajes de error difíciles de diagnosticar**: Los mensajes de error del compilador relacionados con la contravarianza y las restricciones de tipos pueden ser difíciles de interpretar, lo que puede hacer que la depuración y el desarrollo sean más complicados y menos intuitivos.
+   </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos cómo utilizar **cotas superiores** y cómo **emular cotas inferiores** en Kotlin para mejorar la flexibilidad y seguridad de nuestras bibliotecas de software. Las cotas superiores nos permiten restringir los tipos genéricos a subtipos específicos, garantizando la integridad y coherencia de los tipos en tiempo de compilación. Vimos que existen dos formas de declarar cotas superiores:
+
+- **Declaración directa**: Útil para restricciones simples y concisas.
+- **Cláusula `where`**: Ideal para múltiples restricciones, mejorando la legibilidad.
+
+Por otro lado, aprendimos que, aunque Kotlin no soporta cotas inferiores de forma nativa, podemos **emular** este comportamiento utilizando **contravarianza**. Esto nos permite aceptar supertipos en contextos donde se esperan tipos más específicos, ofreciendo flexibilidad sin comprometer la seguridad de tipos en tiempo de compilación.
+
+### Puntos clave
+
+- **Cotas superiores**: Restringen un genérico a un subtipo específico, asegurando que las operaciones solo se realicen sobre tipos compatibles.
+- **Cotas inferiores emuladas**: Usando **contravarianza**, es posible aceptar supertipos en ciertos contextos, permitiendo mayor flexibilidad en las APIs sin sacrificar la seguridad.
+- La **varianza en sitio de uso** juega un papel crucial para emular cotas inferiores y permitir una interacción segura y flexible con jerarquías de tipos.
+
+---
+
+Estas técnicas y conocimientos son fundamentales para diseñar bibliotecas genéricas robustas y reutilizables, asegurando que las APIs se mantengan flexibles pero seguras para lxs desarrolladorxs que las utilicen.

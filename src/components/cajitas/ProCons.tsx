@@ -15,7 +15,7 @@ class Pros extends React.Component<ProConsProps> {
     render() {
         return (
             <div className="pros">
-                <h3>Ventajas</h3>
+                <h3>Beneficios</h3>
                 {this.props.children}
             </div>
         );
@@ -26,7 +26,7 @@ class Cons extends React.Component<ProConsProps> {
     render() {
         return (
             <div className="cons">
-                <h3>Desventajas</h3>
+                <h3>Limitaciones</h3>
                 {this.props.children}
             </div>
         );

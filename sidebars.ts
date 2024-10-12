@@ -109,14 +109,27 @@ const sidebars: SidebarsConfig = {
                         id: 'build-systems/testing/kotest',
                     },
                     items: [
-                        
+                        'build-systems/testing/bdd',
                     ],
                 }
             ],
         },
         {
+            label: 'Unidad 3: Programación Genérica',
             type: 'category',
-            label: 'Unidad 3: Programación Orientada a Objetos',
+            link: {
+                type: 'doc',
+                id: 'generics/index',
+            },
+            items: [
+                'generics/declaration/kt',
+                'generics/use/kt',
+                'generics/bounds/kt',
+            ],
+        },
+        {
+            type: 'category',
+            label: 'Unidad 4: Programación Orientada a Objetos',
             link: {
                 type: 'doc',
                 id: 'oop/index',
@@ -129,18 +142,6 @@ const sidebars: SidebarsConfig = {
                 'oop/infix',
                 'oop/companion',
                 'oop/inheritance-2',
-            ],
-        },
-        {
-            label: 'Unidad 4: Programación Genérica',
-            type: 'category',
-            link: {
-                type: 'doc',
-                id: 'generics/index',
-            },
-            items: [
-                'generics/declaration/kt',
-                'generics/use/kt',
             ],
         },
         {

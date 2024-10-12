@@ -1,94 +1,168 @@
 ---
-title: Uniones Discriminadas en Typescript
+title: Tipos discriminados en TypeScript
 ---
-import References from "/src/components/ReferencesComponent";
-import ReadingTime from '/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
 import Tabs from '@theme/Tabs'
 import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import LanguageCard from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
 
-**Typescript** ofrece una funcionalidad similar a las clases selladas de **Kotlin** mediante el uso de **uniones discriminadas** o **uniones etiquetadas**. Aunque Typescript no tiene clases selladas como tal, las uniones discriminadas permiten definir un conjunto limitado de opciones en un tipo de unión, similar a cómo las clases selladas controlan las subclases permitidas.
+Los tipos discriminados en TypeScript permiten modelar variantes limitadas mediante la combinación de **type aliases** y **uniones**. Esto es útil cuando se desea controlar las variantes posibles, pero no ofrece el mismo nivel de restricción que las clases selladas de Kotlin, ya que estas variantes pueden ser extendidas en cualquier parte del código.
 
-En **Typescript**, puedes usar tipos de unión para representar un conjunto limitado de estados, y cada estado está etiquetado con una propiedad discriminante que permite al compilador hacer inferencias de tipo exhaustivas.
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```typescript showLineNumbers title="src/fp/adt/sum/delivery-state.ts"
+        export type DeliveryState =
+          | { type: "Pending" }
+          | { type: "Shipped"; trackingNumber: string };
 
-### Ejemplo: Sistema de Pagos
+        export function signal(state: DeliveryState): string {
+          switch (state.type) {
+            case "Pending":
+              return "Order is pending";
+            case "Shipped":
+              return `Order is shipped with tracking number ${state.trackingNumber}`;
+          }
+        }
+        ```
 
-```typescript showLineNumbers
-type Payment =
-  | { type: "CreditCard"; number: string }
-  | { type: "Cash"; amount: number }
-  | { type: "Unpaid" };
+        ```typescript	showLineNumbers title="test/fp/adt/sum/delivery-state.test.ts"
+        const state: DeliveryState = {
+          type: 'Shipped',
+          trackingNumber: '1234'
+        };
+        expect(signal(state))
+          .toBe('Order is shipped with tracking number 1234');
+        ```	
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```typescript showLineNumbers title="src/fp/adt/sum/delivery-state.ts"
+        export type DeliveryState =
+          | { type: "Pending" }
+          | { type: "Paid" }
+          | { type: "Shipped"; trackingNumber: string }
+          | { type: "Delivered" }
+          | { type: "Cancelled"; reason: string };
+
+        export function signal(state: DeliveryState): string {
+          switch (state.type) {
+            case "Pending":
+              return "Order is pending";
+            case "Paid":
+              return "Order is paid";
+            case "Shipped":
+              return `Order is shipped with tracking number ${state.trackingNumber}`;
+            case "Delivered":
+              return "Order is delivered";
+            case "Cancelled":
+              return `Order is cancelled because ${state.reason}`;
+          }
+        }
+        ```
+
+        ```typescript showLineNumbers title="test/fp/adt/sum/delivery-state.test.ts"
+        import { describe, expect, test } from '@jest/globals';
+        import { DeliveryState, signal } from '../../../../src/fp/adt/sum/delivery-state';
+
+        describe('a delivery state', () => {
+          test('can be pending', () => {
+            const state: DeliveryState = { type: 'Pending' };
+            expect(signal(state))
+              .toBe('Order is pending');
+          });
+          test('can be paid', () => {
+            const state: DeliveryState = { type: 'Paid' };
+            expect(signal(state))
+              .toBe('Order is paid');
+          });
+          test('can be shipped', () => {
+            const state: DeliveryState = {
+              type: 'Shipped',
+              trackingNumber: '1234'
+            };
+            expect(signal(state))
+              .toBe('Order is shipped with tracking number 1234');
+          });
+          test('can be delivered', () => {
+            const state: DeliveryState = { type: 'Delivered' };
+            expect(signal(state))
+              .toBe('Order is delivered');
+          });
+          test('can be cancelled', () => {
+            const state: DeliveryState = { type: 'Cancelled', reason: 'out of stock' };
+            expect(signal(state))
+              .toBe('Order is cancelled because out of stock');
+          });
+        });
+        ```
+    </TabItem>
+</Tabs>
+
+## Extensión de variantes
+
+Supongamos que unx desarrolladorx, sin consultar el diseño original, decide agregar una nueva variante desde otra parte del código:
+
+```typescript
+export type ExtendedDeliveryState = DeliveryState 
+  | { type: "Returned"; reason: string };
 ```
 
-Aquí, `Payment` es un tipo de unión que solo permite tres variantes posibles: `CreditCard`, `Cash` y `Unpaid`. La propiedad `type` actúa como el discriminante que identifica el tipo específico de pago.
+### Problemas Potenciales
 
-### Ejemplo: Modelado de Estados
+1. **Manejo Incompleto de Casos**: Si el desarrollador olvida agregar un caso para la nueva variante en la función `signal` original, esto podría resultar en un error en tiempo de ejecución, ya que el `switch` no manejará el nuevo estado.
+2. **Confusión en la Jerarquía de Tipos**: Otros desarrolladores que lean el código original podrían no darse cuenta de que existe una variante adicional en otro archivo, lo que podría llevar a confusión y errores de mantenimiento.
+3. **Validación en Tiempo de Compilación**: A diferencia de las clases selladas en Kotlin, donde el compilador garantiza que todas las variantes sean conocidas y controladas, los tipos discriminados en TypeScript no imponen estas restricciones, permitiendo que se agreguen variantes en cualquier lugar.
 
-Este es un ejemplo de cómo las uniones discriminadas pueden modelar los estados de un pedido en una tienda en línea:
+## Comparación final
 
-```typescript showLineNumbers
-type DeliveryState =
-  | { type: "Pending" }
-  | { type: "Paid" }
-  | { type: "Shipped"; trackingNumber: string }
-  | { type: "Delivered" }
-  | { type: "Cancelled"; reason: string };
+| **Característica**            | **Kotlin**                                                                 | **TypeScript**                                                                 |
+|------------------------------|----------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| **Control de Jerarquía**     | Las clases selladas imponen restricciones fuertes, permitiendo la herencia solo dentro del mismo paquete y módulo, garantizando control total sobre las variantes posibles. | Los tipos discriminados no imponen las mismas restricciones, permitiendo que cualquier parte del código agregue nuevas variantes. Esto puede llevar a un mantenimiento más difícil y propenso a errores. |
+| **Exhaustividad en Patrones** | El compilador obliga a manejar todas las variantes en un `when`, asegurando que ninguna variante se quede sin manejar. | En TypeScript, se puede usar `switch`, pero no es obligatorio manejar todas las variantes, aunque el compilador puede advertir si se omite un caso. |
+| **Reflexión y Listado de Subclases** | Kotlin permite listar todas las subclases de una clase sellada utilizando reflexión, facilitando la validación de estados en tiempo de ejecución. | TypeScript no tiene soporte nativo para reflexión, lo que requiere mantener manualmente una lista de variantes, lo que puede ser propenso a errores. |
+| **Interoperabilidad y Flexibilidad** | Kotlin ofrece un fuerte control de tipos y coherencia, pero puede ser menos flexible para extender dinámicamente el sistema. | TypeScript permite mayor flexibilidad y dinamismo, ideal para aplicaciones que necesitan extensibilidad en tiempo de ejecución, pero a costa de un control más laxo sobre las variantes. |
+| **Manejo de Errores**        | El uso de clases selladas facilita la detección de errores en tiempo de compilación, ya que todas las variantes son conocidas y controladas. | TypeScript puede permitir la introducción de variantes no controladas, lo que podría dar lugar a errores en tiempo de ejecución si no se manejan adecuadamente. |
 
-function handleOrderState(state: DeliveryState) {
-  switch (state.type) {
-    case "Pending":
-      console.log("Order is pending");
-      break;
-    case "Paid":
-      console.log("Order is paid");
-      break;
-    case "Shipped":
-      console.log(`Order is shipped with tracking number ${state.trackingNumber}`);
-      break;
-    case "Delivered":
-      console.log("Order is delivered");
-      break;
-    case "Cancelled":
-      console.log(`Order is cancelled because ${state.reason}`);
-      break;
-  }
-}
-```
+### Beneficios y limitaciones
 
-## Comparación entre Kotlin y Typescript
+<ProCons>
+   <Pros>
+      - **Flexibilidad en la adición de variantes**: Los tipos discriminados permiten agregar nuevas variantes en cualquier lugar del código, lo que proporciona una mayor flexibilidad al modelar diferentes estados o tipos de datos.
+      - **Simplicidad en la sintaxis**: La combinación de **type aliases** y **uniones** en TypeScript hace que la definición de tipos discriminados sea sencilla y fácil de entender, lo que facilita su uso y mantenimiento.
+      - **Interoperabilidad con JavaScript**: Al estar basado en JavaScript, TypeScript permite que los tipos discriminados se integren fácilmente en proyectos existentes, lo que facilita la migración y adaptación de código.
+      - **Capacidad de inferencia de tipos**: TypeScript puede inferir tipos en muchas situaciones, lo que significa que lxs desarrolladorxs pueden beneficiarse de la verificación de tipos sin tener que especificar cada detalle.
+   </Pros>
+   <Cons>
+      - **Falta de restricciones fuertes**: A diferencia de las clases selladas en Kotlin, los tipos discriminados no imponen restricciones fuertes sobre las variantes, lo que puede permitir la introducción de variantes no controladas y complicar el mantenimiento del código.
+      - **Menor seguridad en tiempo de compilación**: La posibilidad de agregar variantes en cualquier parte del código puede dar lugar a errores que no se detectan hasta que se ejecuta el programa, aumentando el riesgo de fallos en tiempo de ejecución.
+      - **Manejo incompleto de casos**: Si lxs desarrolladorxs no manejan todas las variantes en un `switch` o `if`, puede dar lugar a comportamientos inesperados o errores que no se detectan hasta que se ejecuta el código.
+      - **No hay soporte nativo para reflexión**: A diferencia de Kotlin, TypeScript carece de un mecanismo de reflexión que permita listar las variantes de un tipo discriminado, lo que puede complicar ciertas tareas de validación o introspección en tiempo de ejecución.
+   </Cons>
+</ProCons>
 
-| **Característica**             | **Kotlin (Clases Selladas)**                            | **Typescript (Uniones Discriminadas)**                    |
-|--------------------------------|---------------------------------------------------------|-----------------------------------------------------------|
-| **Restricción de Subtipos**    | Los subtipos deben definirse en el mismo archivo/módulo | Los tipos permitidos se definen en el mismo tipo de unión |
-| **Exhaustividad**              | `when` exhaustivo obliga a manejar todos los casos      | El `switch` exhaustivo es verificado por el compilador    |
-| **Instanciación de Subclases** | Usa clases e interfaces selladas                        | Usa tipos de unión etiquetados                            |
-| **Reflexión**                  | Soporte nativo para la reflexión de clases selladas     | No hay soporte nativo para la reflexión de tipos          |
-| **Legibilidad y Expresividad** | Sintaxis clara con patrones de herencia                 | Sintaxis más ligera usando tipos discriminados            |
+## ¿Qué aprendimos?
 
-:::tip Ventajas de Typescript
+En esta lección, hemos explorado cómo los **tipos discriminados** en TypeScript nos permiten modelar variantes limitadas mediante la combinación de **type aliases** y **uniones**.
 
-1. **Sintaxis Ligera**: Typescript permite definir uniones discriminadas de forma concisa y fácil de leer, sin necesidad de clases o interfaces formales.
-2. **Flexibilidad**: Los tipos de unión son más flexibles que las clases selladas, ya que no requieren un diseño de clases rígido y pueden modelar estados variados sin herencia.
+### Puntos clave
 
-:::
+1. **Control de Variantes**: Aunque los tipos discriminados son útiles para manejar variantes, no ofrecen el mismo nivel de control que las clases selladas en Kotlin. En TypeScript, cualquier parte del código puede agregar nuevas variantes, lo que puede complicar el mantenimiento y la legibilidad del código.
+2. **Manejo de Patrones**: Mientras que Kotlin exige que se manejen todas las variantes en un `when`, TypeScript permite usar `switch`, pero no obliga a manejar todos los casos. Esto puede llevar a errores en tiempo de ejecución si no se tienen en cuenta todas las variantes posibles.
+3. **Falta de Soporte para Reflexión**: A diferencia de Kotlin, que permite listar todas las subclases de una clase sellada, TypeScript no tiene soporte nativo para reflexión. Esto puede complicar la validación de variantes en tiempo de ejecución y requiere un manejo manual de las variantes.
+4. **Flexibilidad y Simplicidad**: La flexibilidad de los tipos discriminados en TypeScript es una ventaja en aplicaciones que requieren una estructura más dinámica. Además, la sintaxis es simple y fácil de entender, lo que facilita su implementación y uso.
+5. **Beneficios y Limitaciones**: Hemos discutido los beneficios de los tipos discriminados, como su flexibilidad y la capacidad de inferencia de tipos, así como sus limitaciones, incluyendo la falta de restricciones y la menor seguridad en tiempo de compilación.
 
-:::danger Desventajas de Typescript
+---
 
-1. **Falta de Reflexión**: Typescript no ofrece reflexión en tiempo de ejecución, lo que dificulta listar todas las posibles variantes de un tipo de unión.
-2. **Control Menos Rígido**: A diferencia de Kotlin, Typescript no ofrece un mecanismo para restringir los tipos fuera de los tipos de unión en un archivo o módulo.
-
-:::
-
-## ¿Qué Aprendimos?
-
-En esta lección, vimos cómo **Typescript** implementa funcionalidades similares a las **clases selladas** de Kotlin usando **uniones discriminadas**. Aunque no existe una implementación directa de clases selladas, las uniones discriminadas permiten controlar las variantes de un tipo y verificar exhaustividad.
-
-### Puntos Clave:
-- **Uniones Discriminadas**: Definen variantes limitadas en un tipo, etiquetadas con una propiedad discriminante.
-- **Exhaustividad**: Typescript verifica la exhaustividad de `switch`, similar a Kotlin con `when`.
-- **Reflexión**: Kotlin soporta reflexión en clases selladas; Typescript no ofrece reflexión nativa en tiempo de ejecución.
-- **Flexibilidad**: Typescript es más flexible y ligero en la definición de tipos, mientras que Kotlin utiliza una estructura más formal.
-
-### Conclusión:
-Ambos lenguajes ofrecen enfoques robustos para modelar estados finitos, con diferentes ventajas en flexibilidad, legibilidad y seguridad en tiempo de compilación.
+En resumen, los tipos discriminados son una herramienta poderosa en TypeScript para modelar variantes de datos, pero es esencial ser consciente de sus limitaciones y de cómo pueden afectar el mantenimiento y la seguridad del código. Este entendimiento nos permitirá tomar decisiones informadas sobre cuándo y cómo utilizarlos eficazmente en nuestros proyectos.

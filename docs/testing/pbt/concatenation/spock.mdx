@@ -1,0 +1,116 @@
+---
+title: "PBT: Concatenación de Strings con Spock"
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import LanguageCard from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+En esta lección, compararemos cómo se pueden probar propiedades de concatenación de strings utilizando **Kotest** en Kotlin y **Spock** en Groovy. Ambos frameworks son herramientas poderosas para realizar pruebas, pero presentan diferencias importantes en su uso y en las características que ofrecen.
+
+## Diferencias principales
+
+1. **Sintaxis y Lenguaje**:
+   - **Kotest** se usa en Kotlin, que tiene una sintaxis concisa y orientada a la programación funcional.
+   - **Spock**, por otro lado, se utiliza en Groovy y se enfoca en un estilo más descriptivo y fluido, basado en bloques como `given`, `when`, y `then`.
+
+2. **Testing Basado en Propiedades**:
+   - **Kotest** ofrece un enfoque específico para **Property-Based Testing**, utilizando generadores como `Arb` para crear valores aleatorios y verificar propiedades.
+   - **Spock**, si bien es muy potente para pruebas unitarias y de integración, no ofrece nativamente una funcionalidad de **Property-Based Testing**. Para hacerlo, se requiere integración con bibliotecas adicionales como **Jqwik** o **QuickTheories**.
+
+## Ejemplo de concatenación de strings con Spock
+
+Utilizaremos **Jqwik** para generar valores aleatorios de strings y verificar propiedades de concatenación en Spock. A continuación, se muestra un ejemplo de cómo se pueden probar las propiedades de la concatenación de strings en Spock:
+
+```groovy showLineNumbers
+import net.jqwik.api.*
+import spock.lang.Specification
+
+class StringConcatenationSpec extends Specification {
+
+    @Property
+    def "longitud de la concatenación"(@ForAll String s1, @ForAll String s2) {
+        expect:
+        (s1 + s2).length() == s1.length() + s2.length()
+    }
+
+    @Property
+    def "identidad izquierda"(@ForAll String s) {
+        expect:
+        "" + s == s
+    }
+
+    @Property
+    def "identidad derecha"(@ForAll String s) {
+        expect:
+        s + "" == s
+    }
+
+    @Property
+    def "asociatividad"(@ForAll String s1, @ForAll String s2, @ForAll String s3) {
+        expect:
+        (s1 + s2 + s3) == (s1 + (s2 + s3))
+    }
+}
+```
+
+<Explanation>
+    - **Generación de datos**: En Spock, integramos **Jqwik** para generar valores aleatorios de strings. Esto se especifica con la anotación `@ForAll`, que funciona de manera similar a `Arb.string()` en Kotest.
+    - **Estructura**: Spock utiliza un enfoque basado en bloques como `expect` para definir las expectativas y comportamientos de las pruebas, lo que resulta en una lectura fluida y descriptiva, pero requiere bibliotecas externas para realizar pruebas basadas en propiedades.
+    - **Acceso directo a propiedades del monoide**: Al igual que en Kotlin, en Spock podemos verificar que la concatenación respete las propiedades de identidad y asociatividad, garantizando que los strings se comportan correctamente bajo la operación de concatenación.
+</Explanation>
+
+## Comparación final
+
+| **Característica**               | **Kotest**                                                                 | **Spock**                                                                 |
+|---------------------------------|----------------------------------------------------------------------------|---------------------------------------------------------------------------|
+| **Sintaxis**                    | Concisa y funcional, enfocada en la programación funcional y expresividad  | Descriptiva y fluida, con bloques claros como `given`, `when`, y `then`  |
+| **Property-Based Testing**      | Integrado nativamente, permite generar datos y probar propiedades sin bibliotecas adicionales | No soporta nativamente Property-Based Testing; requiere integración con bibliotecas externas como **Jqwik** para este tipo de pruebas |
+| **Ecosistema**                  | Orientado al ecosistema de Kotlin, con fácil integración de lambdas y DSLs específicos | Altamente compatible con Java y otras bibliotecas del ecosistema JVM, facilitando la integración en proyectos existentes |
+| **Configuración**               | Directa, con un soporte amplio para testing y generación de datos mediante la misma biblioteca | Necesita configuraciones adicionales para integrar bibliotecas externas para Property-Based Testing, lo que puede aumentar la complejidad inicial |
+| **Extensiones y Flexibilidad**  | Uso de funciones de extensión y DSLs que permiten personalizar pruebas y flujos de una manera concisa | Uso extensivo de Groovy y bloques de estructura para lograr flexibilidad, pero puede ser menos directa en comparación con la concisión de Kotlin |
+| **Interoperabilidad**           | Compatible con APIs de Kotlin y Java, pero optimizado para entornos Kotlin | Excelente interoperabilidad con Java, lo que facilita la migración o integración en proyectos basados en Java |
+
+### Ventajas y desventajas
+
+<ProCons>
+   <Pros>
+        - **Alta interoperabilidad con el ecosistema Java**: Al estar basado en Groovy, permite utilizar y extender bibliotecas Java sin problemas, lo que es ideal para proyectos que dependen de componentes Java.
+        - **Estructura descriptiva y clara**: Su enfoque basado en bloques como `given`, `when`, y `then` facilita la lectura y mantenimiento de las pruebas, haciendo que el código sea más comprensible para quienes se integren al proyecto.
+   </Pros>
+   <Cons>
+        - **Falta de soporte nativo para Property-Based Testing**: Necesita integrar bibliotecas externas como **Jqwik**, lo que añade complejidad y configuración adicional para realizar pruebas basadas en propiedades.
+   </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, hemos comparado las capacidades de **Kotest** y **Spock** para realizar **Property-Based Testing**, centrándonos en la concatenación de strings como ejemplo.
+
+### Puntos clave
+
+1. **Testing basado en propiedades**:
+   - **Kotest** ofrece soporte nativo para **Property-Based Testing**, lo que facilita la generación de datos y la verificación de propiedades sin necesidad de bibliotecas externas.
+   - **Spock**, aunque muy poderoso para pruebas unitarias y de integración, no cuenta con soporte nativo para Property-Based Testing, por lo que necesita herramientas como **Jqwik** para implementar este tipo de pruebas, lo que introduce una mayor complejidad.
+2. **Sintaxis y estilo**:
+   - **Kotest** sigue una sintaxis más funcional y concisa, lo que es ideal para quienes están familiarizadxs con Kotlin y prefieren un enfoque más minimalista y expresivo en sus pruebas.
+   - **Spock** se basa en un estilo descriptivo y estructurado, con bloques como `given`, `when`, y `then`, lo que facilita la lectura y comprensión de las pruebas, especialmente en equipos que trabajan con Groovy y Java.
+3. **Interoperabilidad y ecosistema**:
+   - **Spock** destaca por su gran compatibilidad con el ecosistema Java, lo que permite integrar componentes y bibliotecas de Java sin esfuerzo, siendo una opción ideal para proyectos Java existentes.
+   - **Kotest**, aunque también es compatible con Java, está más alineado con el ecosistema de Kotlin, aprovechando funciones como lambdas y DSLs específicos para pruebas más concisas y expresivas.
+
+---
+
+En resumen, si buscas realizar **Property-Based Testing** en un entorno Kotlin, **Kotest** es la opción más directa y nativa. Por otro lado, si trabajas en un proyecto Java y prefieres una estructura descriptiva y extensible, **Spock** con la integración de **Jqwik** puede ser una opción poderosa, aunque más compleja.
