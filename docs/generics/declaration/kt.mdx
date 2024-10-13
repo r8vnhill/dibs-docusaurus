@@ -12,7 +12,10 @@ import Hint from '@site/src/components/exercise/Hint'
 import Definition from '@site/src/components/Definition'
 import Corollary from '@site/src/components/Corollary'
 import GithubRepoLink from '@site/src/components/GithubRepoLink'
-import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import { 
+    LanguageCard,
+    TypeScriptCard
+} from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
 
 <ReadingTime />
@@ -22,9 +25,7 @@ La **varianza** es un concepto fundamental en lenguajes de programación genéri
 
 Este enfoque contrasta con la **varianza en sitio de uso**, donde especificamos la varianza al utilizar el tipo genérico. En esta lección, exploraremos la varianza en sitio de declaración en Kotlin y cómo aplicarla en el contexto de bibliotecas de software, para crear APIs más seguras y flexibles.
 
-## Conceptos Básicos
-
-### Covarianza y Contravarianza
+## Varianza
 
 - **Covarianza** (`out`): Permite que un tipo genérico acepte subtipos del parámetro de tipo especificado. Se utiliza cuando el tipo genérico produce valores de tipo `T`.
     <center>
@@ -38,7 +39,7 @@ Este enfoque contrasta con la **varianza en sitio de uso**, donde especificamos 
 
 ## Varianza en Sitio de Declaración
 
-En Kotlin, podemos declarar la varianza de un parámetro de tipo directamente en la definición de una clase o interfaz genérica, usando las palabras clave `out` y `in`. Esto se conoce como **varianza en sitio de declaración**.
+En Kotlin, podemos declarar la varianza de un parámetro de tipo directamente en la definición de una clase o interfaz genérica, usando las palabras clave `in` y `out`. Esto se conoce como **varianza en sitio de declaración**.
 
 ```kotlin showLineNumbers
 interface Producer<out T> {
@@ -78,11 +79,12 @@ Aquí, usamos `in T` para indicar que `T` es contravariante, ya que `DataProcess
 Gracias a la contravarianza, podemos hacer lo siguiente:
 
 ```kotlin showLineNumbers
-val generalProcessor: DataProcessor<Data> = object : DataProcessor<Data> {
-    override fun process(data: Data) {
+class GeneralProcessor : DataProcessor<Data> {
+    override fun process(data: Data) =
         println("Processing data")
-    }
 }
+
+val generalProcessor: DataProcessor<Data> = GeneralProcessor()
 
 val textProcessor: DataProcessor<TextData> = generalProcessor
 ```
@@ -118,22 +120,21 @@ val dataList: List<Data> = textDataList  // Válido gracias a la covarianza
 <ProCons>
    <Pros>
       - **Flexibilidad de APIs**: La varianza en sitio de declaración permite diseñar APIs más flexibles que pueden trabajar con jerarquías de tipos más amplias. Esto facilita que las bibliotecas sean más adaptables y reutilizables en diferentes contextos, mejorando la experiencia de lxs desarrolladorxs que las utilizan.
-      - **Seguridad de Tipos en Tiempo de Compilación**: Al especificar la varianza en la declaración, el compilador puede garantizar la seguridad de tipos, evitando errores en tiempo de ejecución relacionados con incompatibilidades de tipos. Esto resulta en código más robusto y confiable.
-      - **Código Más Claro y Mantenible**: Declarar la varianza directamente en la definición de clases o interfaces hace que las intenciones del código sean más explícitas. Esto mejora la legibilidad y facilita el mantenimiento, ya que otrxs desarrolladorxs pueden entender rápidamente cómo se espera que se utilicen los tipos genéricos.
-      - **Reutilización de Implementaciones Genéricas**: Permite reutilizar implementaciones generales en contextos más específicos sin necesidad de duplicar código. Por ejemplo, un `DataProcessor<Data>` puede ser utilizado como `DataProcessor<TextData>` gracias a la contravarianza.
+      - **Seguridad de tipos en tiempo de compilación**: Al especificar la varianza en la declaración, el compilador puede garantizar la seguridad de tipos, evitando errores en tiempo de ejecución relacionados con incompatibilidades de tipos. Esto resulta en código más robusto y confiable.
+      - **Código más claro y mantenible**: Declarar la varianza directamente en la definición de clases o interfaces hace que las intenciones del código sean más explícitas. Esto mejora la legibilidad y facilita el mantenimiento, ya que otrxs desarrolladorxs pueden entender rápidamente cómo se espera que se utilicen los tipos genéricos.
+      - **Reutilización de implementaciones genéricas**: Permite reutilizar implementaciones generales en contextos más específicos sin necesidad de duplicar código. Por ejemplo, un `DataProcessor<Data>` puede ser utilizado como `DataProcessor<TextData>` gracias a la contravarianza.
    </Pros>
    <Cons>
-      - **Complejidad Conceptual**: Entender y aplicar correctamente la varianza en sitio de declaración puede ser complicado, especialmente para desarrolladorxs menos experimentadxs. Esto puede llevar a confusiones y errores sutiles si no se comprende completamente cómo funciona.
-      - **Restricciones en el Uso de Tipos Genéricos**: Las restricciones impuestas por la varianza pueden limitar cómo se utilizan los parámetros de tipo dentro de la clase o interfaz. Por ejemplo, en una clase covariante (`out T`), no puedes usar `T` en posiciones de entrada, lo que puede ser limitante en ciertos casos.
-      - **Mensajes de Error Difíciles de Interpretar**: Los errores del compilador relacionados con varianza pueden ser difíciles de entender y diagnosticar, lo que puede aumentar el tiempo de desarrollo y depuración.
-      - **Menor Flexibilidad en Casos Específicos**: En situaciones donde se necesita tanto consumir como producir valores de tipo `T`, la varianza en sitio de declaración puede no ser adecuada, obligando a utilizar tipos invariantes o proyectados, lo que añade complejidad adicional.
+      - **Complejidad conceptual**: Entender y aplicar correctamente la varianza en sitio de declaración puede ser complicado, especialmente para desarrolladorxs menos experimentadxs. Esto puede llevar a confusiones y errores sutiles si no se comprende completamente cómo funciona.
+      - **Restricciones en el uso de tipos genéricos**: Las restricciones impuestas por la varianza pueden limitar cómo se utilizan los parámetros de tipo dentro de la clase o interfaz. Por ejemplo, en una clase covariante (`out T`), no puedes usar `T` en posiciones de entrada, lo que puede ser limitante en ciertos casos.
+      - **Mensajes de error difíciles de interpretar**: Los errores del compilador relacionados con varianza pueden ser difíciles de entender y diagnosticar, lo que puede aumentar el tiempo de desarrollo y depuración.
    </Cons>
 </ProCons>
 
 <Exercise>
     Implementa una interfaz `Logger` para una biblioteca de registro de eventos.
 
-    1. Declara un método `log(): M` que devuelve un mensaje de tipo `M`.
+    1. Declara un método `log: () -> M` que devuelve un mensaje de tipo `M`.
     2. ¿Qué tipo de varianza debería tener `Logger` en `M` y por qué?
     
     <Solution>
@@ -143,22 +144,17 @@ val dataList: List<Data> = textDataList  // Válido gracias a la covarianza
                 fun log(): M
             }
             ```
-
         2. `Logger` debe ser covariante en `M`. Esto permite que un `Logger<String>` sea asignado a un `Logger<Any>`, ya que un `Logger<String>` puede producir mensajes de tipo `String`, que es un subtipo de `Any`.
     </Solution>
 </Exercise>
 
 <div className="language-card-container">
-    <LanguageCard
-        logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Typescript_logo_2020.svg/2048px-Typescript_logo_2020.svg.png"
-        language="TypeScript"
-        link="/docs/generics/declaration/ts"
-    />
+    <TypeScriptCard link="/docs/generics/declaration/ts" />
 </div>
 
 <References references={[
     {
-        title: "9. Generics",
+        title: "Generics",
         bookTitle: "Kotlin in Action",
         publisher: "Manning Publications Co",
         pages: "223–253",

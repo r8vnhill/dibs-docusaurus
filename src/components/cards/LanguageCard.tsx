@@ -88,3 +88,11 @@ export const RakeCard = ({ link }) => {
     link={link}
   />
 }
+
+export const TypeScriptCard = ({ link }) => {
+  return <LanguageCard
+    logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Typescript_logo_2020.svg/2048px-Typescript_logo_2020.svg.png"
+    language="TypeScript"
+    link={link}
+  />
+}

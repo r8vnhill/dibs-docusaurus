@@ -101,17 +101,6 @@ const sidebars: SidebarsConfig = {
                         },
                     ],
                 },
-                {
-                    label: 'Testing',
-                    type: 'category',
-                    link: {
-                        type: 'doc',
-                        id: 'build-systems/testing/kotest',
-                    },
-                    items: [
-                        'build-systems/testing/bdd',
-                    ],
-                }
             ],
         },
         {
@@ -119,10 +108,10 @@ const sidebars: SidebarsConfig = {
             type: 'category',
             link: {
                 type: 'doc',
-                id: 'testing/index',
+                id: 'testing/kotest',
             },
             items: [
-                "testing/tdd",
+                'testing/bdd',
                 'testing/exceptions-kt',
                 'testing/ddt/kt',
                 "testing/assertions/assertions-kt",
@@ -148,6 +137,7 @@ const sidebars: SidebarsConfig = {
                     },
                     items: [
                         'testing/pbt/concatenation/str-cat',
+                        'testing/pbt/biggest/kt',
                     ],
                 },
             ],
@@ -274,17 +264,7 @@ const sidebars: SidebarsConfig = {
                                 description: 'Las mónadas son un concepto fundamental en programación funcional. Aquí se presentan algunos ejemplos comunes',
                             },
                             items: [
-                                {
-                                    label: 'Option',
-                                    type: 'category',
-                                    link: {
-                                        type: 'doc',
-                                        id: 'fp/monads/examples/option-kt',
-                                    },
-                                    items: [
-                                        'fp/monads/examples/option-langs',
-                                    ],
-                                },
+                                'fp/monads/examples/option/kt',
                                 'fp/monads/examples/either/kt',
                                 // 'fp/monads/examples/result/result-kt'
                             ],

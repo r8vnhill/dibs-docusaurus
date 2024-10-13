@@ -1,17 +1,399 @@
 ---
-title: kt
+title: "Ejemplo: Obtener el máximo de una lista"
 ---
-import References from "/src/components/ReferencesComponent";
-import ReadingTime from '/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
 import Tabs from '@theme/Tabs'
 import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="property-based-testing-kt" />
 
-Otro ejemplo es obtener el máximo de una lista de enteros
-La complejidad aquí es encontrar una propiedad que no sea exactamente nuestra implementación
-Una manera de definir propiedades es pensar en implementaciones alternativas a nuestras funciones, en general estas implementaciones serán más verbosas o ineficientes
+<details>
+    <summary>
+        Comencemos por crear un módulo para la lección...
+    </summary>
 
-Obtener el máximo de una lista puede ser obtenido en 𝑂(𝑛) mediante una búsqueda secuencial
-Un equivalente puede ser ordenar la lista en orden creciente en 𝑂(𝑛⋅𝑙𝑜𝑔(𝑛)) y obteniendo el último elemento en 𝑂(1)
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path 'biggest' -ItemType 'directory'
+            '// Intentionally left blank' |
+                Out-File -FilePath 'biggest/build.gradle.kts'
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            md 'biggest'
+            '// Intentionally left blank' > 'biggest/build.gradle.kts'
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            mkdir biggest
+            echo '// Intentionally left blank' > biggest/build.gradle.kts
+            ```
+        </TabItem>
+    </Tabs>
 
+    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
+</details>
+
+Otro ejemplo es encontrar el máximo de una lista de enteros. La dificultad aquí radica en definir una propiedad que no coincida exactamente con nuestra implementación, pero que siga validando su correctitud. Una forma eficaz de definir estas propiedades es pensar en implementaciones alternativas, que aunque más verbosas o ineficientes, nos ayuden a verificar el comportamiento de la función.
+
+Por ejemplo, obtener el máximo de una lista puede lograrse en $O(n)$ mediante una búsqueda secuencial. Una implementación equivalente, aunque menos eficiente, sería ordenar la lista en orden creciente en  $O(n \log n)$ y luego tomar el último elemento en $O(1)$.
+
+## Test
+
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $Group = "com\github\username"
+            ```
+
+            ```powershell
+            $BiggestTestDir = "biggest\src\test\kotlin\$Group\biggest"
+            $BiggestMainDir = "biggest\src\main\kotlin\$Group\biggest"
+            New-Item -Path "$BiggestTestDir\BiggestTest.kt" `
+                -ItemType "file" -Force
+            New-Item -Path "$BiggestMainDir\Biggest.kt" `
+                -ItemType "file" -Force
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            $Group = "com\github\username"
+            ```
+
+            ```powershell
+            $BiggestTestDir = "biggest\src\test\kotlin\$Group\biggest"
+            $BiggestMainDir = "biggest\src\main\kotlin\$Group\biggest"
+            ni "$BiggestTestDir\BiggestTest.kt" -i 'f' -f
+            ni "$BiggestMainDir\Biggest.kt" -i 'f' -f
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            GROUP=com/github/username
+            ```
+
+            ```bash
+            BIGGEST_TEST_DIR=biggest/src/test/kotlin/$GROUP/biggest
+            BIGGEST_MAIN_DIR=biggest/src/main/kotlin/$GROUP/biggest
+            mkdir -p $BIGGEST_TEST_DIR
+            mkdir -p $BIGGEST_MAIN_DIR
+            touch $BIGGEST_TEST_DIR/BiggestTest.kt
+            touch $BIGGEST_MAIN_DIR/Biggest.kt
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+Siguiendo el enfoque BDD, comenzamos declarando la estructura básica de nuestro test.
+
+```kotlin
+"Given an integer list" - {
+    "when getting the biggest element" - {
+        "should return the last element of the sorted list" {}
+    }
+}
+```
+
+A continuación, definimos la propiedad que queremos verificar, utilizando generadores para listas de enteros.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        checkAll(Arb.list(Arb.int())) { list ->
+            biggest(list) shouldBe list.sorted().last()
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="biggest/src/main/kotlin/com/github/username/biggest/Biggest.kt"
+        package com.github.username.biggest
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.int
+        import io.kotest.property.arbitrary.list
+        import io.kotest.property.checkAll
+
+        class BiggestTest : FreeSpec({
+            "Given an integer list" - {
+                "when getting the cl.ravenhill.biggest.biggest element" - {
+                    "should return the last element of the sorted list" {
+                        checkAll(Arb.list(Arb.int())) { list ->
+                            @Suppress("SimplifiableCallChain")
+                            biggest(list) shouldBe list.sorted().last()
+                        }
+                    }
+                }
+            }
+        })
+
+        ```
+    </TabItem>
+</Tabs>
+
+<Explanation>
+    - Utilizamos `Arb.list(Arb.int())` para generar listas de enteros arbitrarias, lo que nos permite probar diferentes escenarios automáticamente.
+    - Comprobamos que `biggest(list)` devuelva el mismo valor que el último elemento de la lista ordenada.
+</Explanation>
+
+## Implementación
+
+La siguiente función `biggest` busca el mayor valor dentro de una lista de enteros. Utiliza un enfoque iterativo para recorrer la lista y actualizar el valor máximo encontrado hasta el momento.
+
+```kotlin showLineNumbers title="biggest/src/main/kotlin/com/github/username/biggest/Biggest.kt"
+package com.github.username.biggest
+
+fun biggest(list: List<Int>): Int {
+    var biggest = list[0]
+    for (number in list) {
+        if (number > biggest) {
+            biggest = number
+        }
+    }
+    return biggest
+}
+```
+
+## Ejecución
+
+Si ahora ejecutamos los tests con `./gradlew test`, deberíamos ver un error como el siguiente:
+
+```plaintext showLineNumbers
+Property failed after 76 attempts
+
+	Arg 0: []
+
+Repeat this test by using seed 6060908536876112051
+```
+
+<Explanation>
+    - **[1]**: La propiedad falla después de 76 intentos, lo que indica que hay un problema con nuestra implementación.
+    - **[3]**: El argumento con el que falló la propiedad es una lista vacía.
+    - **[5]**: La semilla usada para generar los valores aleatorios. Podemos repetir la prueba con esta semilla para depurar el error.
+</Explanation>
+
+## Corrigiendo el test
+
+Para solucionar el problema en nuestro test, es necesario segmentar el espacio de búsqueda de manera más precisa. Debemos considerar dos casos distintos:
+
+1. **Lista vacía**: Cuando la lista no contiene elementos, la función debería manejar este caso de manera adecuada.
+2. **Lista no vacía**: Cuando la lista tiene al menos un elemento, la función debería devolver el mayor de ellos.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        "when getting the biggest element of a non-empty list" - {
+            "should return the last element of the sorted list" {
+                checkAll(Arb.list(Arb.int(), 1..100)) { list -> 
+                    biggest(list) shouldBe list.sorted().last()
+                }
+            }
+        }
+
+        "when getting the biggest element of an empty list" - {
+            "should return the smallest integer" {
+                biggest(emptyList()) shouldBe Int.MIN_VALUE
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="biggest/src/test/kotlin/com/github/username/biggest/BiggestTest.kt"
+        package com.github.username.biggest
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.int
+        import io.kotest.property.arbitrary.list
+        import io.kotest.property.checkAll
+
+        class BiggestTest : FreeSpec({
+            "Given an integer list" - {
+                "when getting the biggest element of a non-empty list" - {
+                    "should return the last element of the sorted list" {
+                        checkAll(Arb.list(Arb.int(), 1..100)) { list ->
+                            @Suppress("SimplifiableCallChain")
+                            biggest(list) shouldBe list.sorted().last()
+                        }
+                    }
+                }
+
+                "when getting the biggest element of an empty list" - {
+                    "should return the smallest integer" {
+                        biggest(emptyList()) shouldBe Int.MIN_VALUE
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
+
+<Explanation>
+    - **Caso no vacío**: Generamos listas con al menos un elemento utilizando `Arb.list(Arb.int(), 1..100)` y verificamos que el resultado de `biggest(list)` coincida con el último elemento de la lista ordenada.
+    - **Caso vacío**: Cuando la lista está vacía, verificamos que la función `biggest(emptyList())` devuelva `Int.MIN_VALUE`, manejando así correctamente la lista vacía.
+</Explanation>
+
+## Implementación corregida
+
+Para manejar el caso de una lista vacía, podemos devolver `Int.MIN_VALUE` como valor predeterminado. De esta manera, si la lista está vacía, el resultado será el menor valor posible para un entero.
+
+```kotlin showLineNumbers title="biggest/src/main/kotlin/com/github/username/biggest/Biggest.kt"
+package com.github.username.biggest
+
+fun biggest(list: List<Int>) = if (list.isEmpty()) {
+    Int.MIN_VALUE
+} else {
+    var biggest = list[0]
+    for (number in list) {
+        if (number > biggest) {
+            biggest = number
+        }
+    }
+    biggest
+}
+```
+
+Si ejecutamos nuevamente los tests con `./gradlew test`, deberíamos ver que todos los tests pasan correctamente.
+
+<Exercise>
+    Escribe un test basado en propiedades para una función `reverse: (List<Int>) -> List<Int>` que toma una lista y retorna la misma lista en orden inverso
+
+    <Hint hints={[
+        "Utiliza dos listas y verifica el resultado de invertir la concatenación",
+    ]} />
+    
+    <Solution>
+        ```kotlin showLineNumbers
+        class ReverseTest : FreeSpec({
+            "Given two integer lists" - {
+                "when reversing the concatenation of the lists" - {
+                    ("should return the reverse of the second list" + 
+                            "concatenated with the reverse of the first list") {
+                        checkAll(
+                            Arb.list(Arb.int()),
+                            Arb.list(Arb.int())
+                        ) { list1, list2 ->
+                            reverse(list1 + list2) shouldBe
+                                    (reverse(list2) + reverse(list1))
+                        }
+                    }
+                }
+            }
+        })
+        ```    
+    </Solution>
+</Exercise>
+
+<Exercise>
+    Diseña propiedades para probar la función `capitalizeWords: (String) -> String` que toma una cadena y capitaliza la primera letra de cada palabra utilizando PBT.
+
+
+    Las propiedades por probar son:
+    
+    - El número de palabras no cambia.
+    - Idempotencia (aplicar la función dos veces no cambia el resultado después de la primera aplicación)
+    - Sólo la primera letra de cada palabra debe estar en mayúsculas (no consideres palabras vacías)
+
+    Utiliza `Arb.string(0..100, Codepoint.az())` para generar los strings a probar.
+
+    <Hint hints={[
+        <>
+            Utiliza la función <code>split: String.(String) -&gt; List&lt;String&gt;</code> para dividir la cadena en palabras.
+        </>,
+        <>
+            Puedes utilizar la función <code>count: Iterable&lt;T&gt;.((T) -&gt; Boolean) -&gt; Int</code> para contar el número de palabras en una lista. Para contar el número de palabras puedes contar la cantidad de elementos no vacíos haciendo <code>.count &#123; it.isNotEmpty() &#125;</code>.
+        </>,
+        <>
+            Puedes utilizar la función <code>isUpperCase: Char.() -&gt; Boolean</code> para verificar si la primera letra de una palabra está en mayúsculas.
+        </>,
+        <>
+            Puedes utilizar la función <code>isLowerCase: Char.() -&gt; Boolean</code> para verificar si el resto de las letras de una palabra están en minúsculas.
+        </>,
+    ]}/>
+
+    <Solution>
+        ```kotlin showLineNumbers
+        class CapitalizeTest : FreeSpec({
+            "A String" - {
+                "when capitalizing its words" - {
+                    "should not change the number of words" {
+                        checkAll(Arb.string(1..100, Codepoint.az())) { string ->
+                            countWords(string) shouldBe countWords(capitalizeWords(string))
+                        }
+                    }
+
+                    "should be idempotent" {
+                        checkAll(Arb.string(1..100, Codepoint.az())) { string ->
+                            capitalizeWords(capitalizeWords(string)) shouldBe capitalizeWords(string)
+                        }
+                    }
+
+                    "should contain only words with the first letter capitalized" {
+                        checkAll(Arb.string(1..100, Codepoint.az())) { string ->
+                            for (word in capitalizeWords(string).split(" ")) {
+                                word.first().isUpperCase().shouldBeTrue()
+                                for (i in 1..<word.length) {
+                                    word[i].isLowerCase().shouldBeTrue()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        })
+
+        private fun countWords(string: String) =
+            string.split(" ")
+                .count { it.isNotBlank() }
+        ```
+    </Solution>
+</Exercise>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos cómo utilizar **Property-Based Testing (PBT)** para validar funciones, específicamente aquellas que operan sobre colecciones como listas. Además, corregimos errores comunes en los tests y mejoramos la implementación de nuestras funciones para manejar adecuadamente casos límite, como listas vacías.
+
+### Puntos clave
+
+- **Segmentación de pruebas**: Es importante manejar casos especiales como listas vacías, asegurándonos de que nuestra función implemente una solución adecuada para cada escenario.
+- **Uso de generadores arbitrarios**: Al utilizar generadores como `Arb.list(Arb.int())`, podemos automatizar las pruebas para múltiples escenarios sin necesidad de escribir cada caso manualmente.
+- **Validación de propiedades**: Aseguramos que el comportamiento de la función bajo prueba coincida con una implementación alternativa que, aunque menos eficiente, garantiza la corrección.
+
+---
+
+El enfoque con **Property-Based Testing** nos ofrece una forma poderosa y escalable para garantizar la fiabilidad de nuestras implementaciones, especialmente cuando trabajamos con grandes conjuntos de datos o casos límite difíciles de prever con pruebas manuales.
+
+<References references={[
+    {
+        title: "Writing Properties",
+        bookTitle: "Property-based testing with PropEr, Erlang, and Elixir: Find bugs before your users do",
+        publisher: "The Pragmatic Bookshelf",
+        pages: "17-32",
+        year: "2019",
+        author: "Fred Hébert",
+        type: "book",
+    },
+]}/>
