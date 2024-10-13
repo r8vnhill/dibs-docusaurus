@@ -1,63 +1,112 @@
 ---
 title: Propiedades en Python
 ---
-import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import LanguageCard from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
 
 En **Python**, las propiedades se gestionan utilizando la función integrada `property()` o el decorador `@property`, que permite definir getters y setters de manera similar a **Kotlin**. Aunque Python no tiene un mecanismo de campos como Kotlin, las propiedades controlan el acceso a los atributos y permiten personalizar cómo se accede o modifica su valor.
 
-### Propiedades con `@property` en Python
+## Propiedades con `@property` en Python
 
 En Python, es común usar el decorador `@property` para definir un getter, y luego usar el decorador `@<property_name>.setter` para definir el setter asociado. Esto proporciona una interfaz limpia para los atributos de la clase, permitiendo un comportamiento personalizado cuando se accede o modifica una propiedad.
 
-### Ejemplo de Propiedad con Getter y Setter en Python
+## Ejemplo de propiedad con getter y setter en Python
 
-```python
-class Person:
-    def __init__(self, name: str):
-        self._name = name
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers title="people/person.py"
+        class Person:
+            @property
+            def name(self) -> str:
+                return self._name
+            
+            @name.setter
+            def name(self, value: str) -> None:
+                self._name = value
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="people/person.py"
+        class Person:
+            _name: str
 
-    @property
-    def name(self) -> str:
-        return self._name
+            def __init__(self, name: str):
+                self._name = name
 
-    @name.setter
-    def name(self, value: str) -> None:
-        self._name = value
+            @property
+            def name(self) -> str:
+                return self._name
 
-# Uso
-person = Person("John")
-print(person.name)  # Getter
-person.name = "Doe"  # Setter
-print(person.name)
-```
+            @name.setter
+            def name(self, value: str) -> None:
+                self._name = value
 
-En este ejemplo:
-- **`@property`**: Define el getter para la propiedad `name`.
-- **`@name.setter`**: Define el setter asociado para la propiedad `name`.
+        if __name__ == "__main__":
+            person = Person("Rockman")
+            print(person.name)
+            person.name = "Mega Man"
+            print(person.name)
+            # Output:
+            # Rockman
+            # Mega Man
+        ```
+    </TabItem>
+</Tabs>
 
-### Propiedad Calculada en Python
+<Explanation>
+    - **[2-4]**: `@property` define el getter para la propiedad `name`.
+    - **[6-8]**: `@name.setter` define el setter asociado para la propiedad `name`.
+</Explanation>
+
+## Propiedad calculada en Python
 
 Al igual que en Kotlin, en Python también puedes crear una **propiedad calculada**. Cada vez que se accede a la propiedad, se realiza un cálculo o se genera un valor dinámico.
 
-```python
-from datetime import datetime
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers title="time/clock.py"
+        class Clock:
+            @property
+            def now(self) -> str:
+                return datetime.now().strftime("%H:%M:%S")
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="time/clock.py"
+        from datetime import datetime
 
-class Clock:
-    @property
-    def now(self) -> str:
-        return datetime.now().strftime("%H:%M:%S")
 
-# Uso
-clock = Clock()
-print(clock.now)  # La hora actual se genera dinámicamente
-```
+        class Clock:
+            @property
+            def now(self) -> str:
+                return datetime.now().strftime("%H:%M:%S")
+
+        if __name__ == '__main__':
+            clock = Clock()
+            print(clock.now)
+            # Output: 12:34:56
+        ```
+    </TabItem>
+</Tabs>
 
 Cada vez que se accede a `now`, se obtiene la hora actual.
 
-### Propiedad con Setter Privado
+## Propiedad con setter privado
 
 En Python, no hay visibilidad explícita como en Kotlin (p. ej., `private`), pero puedes emular un **setter privado** usando convenciones de nombres o no definir el setter. Un atributo con guion bajo (`_`) en el nombre sugiere que es privado, aunque no es una restricción formal. También se pueden utilizar dos guiones bajos (`__`) para hacer que el atributo sea "más privado", esto tampoco restringirá el acceso, pero lo hará más difícil de acceder desde fuera de la clase (se accede como `_Clase__atributo`).
 
@@ -75,7 +124,7 @@ class Person:
 
 En este ejemplo, la propiedad `age` tiene un getter, pero no un setter, lo que sugiere que es de solo lectura.
 
-### Comparación entre Kotlin y Python
+## Comparación final
 
 | **Característica**      | **Kotlin**                                 | **Python**                                                 |
 |-------------------------|--------------------------------------------|------------------------------------------------------------|
@@ -83,3 +132,46 @@ En este ejemplo, la propiedad `age` tiene un getter, pero no un setter, lo que s
 | **Propiedad Calculada** | Uso de `get()` en propiedades              | Uso de `@property` para implementar getters dinámicos      |
 | **Setter Privado**      | Definido con `private set`                 | No definir el setter o usar convención de guion bajo (`_`) |
 | **Backing Field**       | Uso de `field` en getters y setters        | Se accede directamente al atributo privado (`_atributo`)   |
+
+Aquí tienes la sección sobre los beneficios y limitaciones de las propiedades en Python:
+
+### Beneficios y limitaciones
+
+<ProCons>
+   <Pros>
+      - **Encapsulación**: Las propiedades permiten encapsular la lógica de acceso a los atributos, lo que facilita la validación y transformación de datos al establecer valores. Esto ayuda a mantener la integridad del estado del objeto.
+      - **Interfaz limpia**: Usar `@property` proporciona una interfaz más limpia para acceder a los atributos, lo que mejora la legibilidad del código. Lxs usuarixs de la clase no necesitan preocuparse por los detalles de implementación, ya que pueden acceder a los atributos como si fueran simples propiedades.
+      - **Propiedades calculadas**: La capacidad de definir propiedades calculadas permite que se genere un valor dinámico en tiempo de acceso, lo que puede ser útil para proporcionar información actualizada sin necesidad de recalcular valores de manera explícita.
+   </Pros>
+   <Cons>
+      - **Falta de visibilidad**: Python no tiene modificadores de acceso estrictos como `private`, `protected`, o `public`. La convención de usar guiones bajos es solo un indicativo y no impide el acceso, lo que puede llevar a un uso indebido de atributos "privados".
+      - **Confusión en el uso**: Al utilizar `@property`, puede ser menos evidente para algunxs desarrolladorxs que un atributo está siendo manejado a través de un getter y setter, lo que puede dar lugar a confusiones sobre cómo se espera que se manipule el estado del objeto.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos el uso de propiedades en Python y cómo se comparan con las propiedades en Kotlin.
+
+### Puntos clave
+
+- **Encapsulación y control de acceso**: Las propiedades en Python permiten encapsular la lógica de acceso a los atributos, mejorando la integridad de los datos al permitir validaciones al establecer valores. Esto es similar a los getters y setters en Kotlin, donde se proporciona control sobre cómo se accede y se modifican los atributos.
+- **Interfaz limpia**: Utilizando el decorador `@property`, se logra una interfaz limpia y legible para interactuar con los atributos de la clase. Esto facilita la comprensión del código, ya que lxs usuarixs de la clase pueden acceder a los atributos como si fueran propiedades simples.
+- **Propiedades calculadas**: Python permite la creación de propiedades calculadas que se evalúan dinámicamente cada vez que se accede a ellas. Esto proporciona flexibilidad y permite que la lógica de negocio se ejecute en tiempo de acceso, similar a las propiedades derivadas en Kotlin.
+- **Limitaciones en la visibilidad**: A diferencia de Kotlin, Python no impone restricciones estrictas sobre la visibilidad de los atributos. Esto puede llevar a un uso indebido de atributos "privados" si otrxs desarrolladorxs no son conscientes de las convenciones de nomenclatura.
+
+---
+
+En resumen, las propiedades en Python ofrecen un poderoso mecanismo para gestionar el acceso a los atributos, permitiendo una mejor encapsulación y una interfaz más limpia. Sin embargo, lxs desarrolladorxs deben ser conscientes de las limitaciones del lenguaje y las convenciones de diseño para evitar problemas comunes relacionados con el uso indebido de atributos.
+
+<References references={[
+    {
+        title: "A Pythonic Object",
+        bookTitle: "Fluent Python: Clear, concise, and effective programming",
+        publisher: "O’Reilly",
+        pages: "363–396",
+        year: "2022",
+        author: "Luciano Ramalho",
+        type: "book",
+    },
+]}/>

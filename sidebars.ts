@@ -301,7 +301,7 @@ const sidebars: SidebarsConfig = {
                 id: 'collections/index',
             },
             items: [
-                'collections/iterator-kt',
+                'collections/iterator/kt',
                 'collections/types/immutable-kt',
                 'collections/types/mutable-kt',
                 'collections/types/lazy-kt',

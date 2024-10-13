@@ -1,0 +1,209 @@
+---
+title: Iterator pattern en Python
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import LanguageCard from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+En **Python**, el **Iterator Pattern** está implementado de manera nativa a través del protocolo de iteradores, que utiliza los métodos `__iter__()` y `__next__()`. La diferencia más notable con Kotlin es que Python utiliza un protocolo más flexible y dinámico, lo que significa que cualquier objeto que implemente estos métodos puede ser iterado usando un bucle `for`.
+
+<details>
+    <summary>Duck typing</summary>
+
+    En Python, se sigue el principio de "duck typing", que se basa en la idea de que "si camina como un pato y suena como un pato, entonces es un pato". Esto significa que Python no requiere que los objetos hereden de una clase específica para ser iterables, sino que simplemente deben implementar los métodos necesarios para comportarse como un iterador.
+</details>
+
+## Implementación del patrón iterator en Python
+
+En Python, un objeto es **iterable** si implementa el método `__iter__()` que devuelve un iterador. Un **iterador**, a su vez, debe implementar el método `__next__()`, que devuelve el siguiente elemento de la colección y lanza la excepción `StopIteration` cuando se terminan los elementos.
+
+## Ejemplo de implementación
+
+Veamos un ejemplo similar al caso de Kotlin, en el que creamos una colección de libros y definimos un iterador para recorrerlos.
+
+### 1. Clase `Book` y la colección `Library`
+
+Primero, creamos una clase `Book` para representar los libros, y una clase `Library` que será iterable.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers title="collections/iterator/library.py"
+        class Book:
+            pass
+
+
+        class Library:
+            __books: list
+            
+            def __iter__(self) -> 'LibraryIterator':
+                return LibraryIterator(*self.__books)
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="collections/iterator/library.py"
+        class Book:
+            __title: str
+            __author: str
+
+            def __init__(self, title: str, author: str):
+                self.__title = title
+                self.__author = author
+
+            @property
+            def title(self) -> str:
+                return self.__title
+
+            @property
+            def author(self) -> str:
+                return self.__author
+
+
+        class Library:
+            __books: list
+
+            def __init__(self, *books: Book):
+                self.__books = list(books)
+
+            def __iter__(self) -> 'LibraryIterator':
+                return LibraryIterator(*self.__books)
+        ```
+    </TabItem>
+</Tabs>
+
+<Explanation>
+    - La clase `Book` representa un libro con un título y un autor.
+    - La clase `Library` contiene una colección de libros y devuelve un iterador para recorrerlos.
+    - El método `__iter__()` de `Library` devuelve una instancia de `LibraryIterator` que recorrerá los libros.
+</Explanation>
+
+### 2. Implementación del Iterador
+
+Ahora implementamos la clase `LibraryIterator` que seguirá el protocolo de iteradores en Python, es decir, implementará los métodos `__iter__()` y `__next__()`.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers title="collections/iterator/library.py"
+        class LibraryIterator:
+            def __next__(self) -> Book:
+                if self.__index < len(self.__books):
+                    book = self.__books[self.__index]
+                    self.__index += 1
+                    return book
+                raise StopIteration()
+            
+            def __iter__(self) -> 'LibraryIterator':
+                return self
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="collections/iterator/library.py"
+        class LibraryIterator:
+            __books: list
+            __index: int
+
+            def __init__(self, *books: Book):
+                self.__books = list(books)
+                self.__index = 0
+
+            def __next__(self) -> Book:
+                if self.__index < len(self.__books):
+                    book = self.__books[self.__index]
+                    self.__index += 1
+                    return book
+                raise StopIteration()
+
+            def __iter__(self) -> 'LibraryIterator':
+                return self
+        ```
+    </TabItem>
+</Tabs>
+
+<Explanation>
+    - **[2-7]**: El método `__next__()` devuelve el siguiente libro de la colección y actualiza la posición interna del iterador.
+    - **[9-10]**: El método `__iter__()` simplemente devuelve el iterador, que es el propio objeto.
+</Explanation>
+
+### 3. Uso del Iterador
+
+El iterador se puede utilizar directamente en un bucle `for` gracias a que Python implementa el protocolo de iteración de manera automática:
+
+```python title="collections/iterator/library.py"
+if __name__ == '__main__':
+    LIBRARY = Library(
+        Book("Red Dragon", "Thomas Harris"),
+        Book("At the Mountains of Madness", "H.P. Lovecraft"),
+        Book("The Fellowship of the Ring", "J.R.R. Tolkien")
+    )
+
+    for BOOK in LIBRARY:
+        print(f"{BOOK.title} by {BOOK.author}")
+    # Output:
+    # Red Dragon by Thomas Harris
+    # At the Mountains of Madness by H.P. Lovecraft
+    # The Fellowship of the Ring by J.R.R. Tolkien
+```
+
+## Comparación final
+
+| **Característica**          | **Kotlin**                                 | **Python**                                                 |
+|-----------------------------|--------------------------------------------|------------------------------------------------------------|
+| **Implementación**          | Usa la interfaz `Iterable` e `Iterator` para implementar iteradores. | Implementa el patrón mediante métodos `__iter__()` y `__next__()`. |
+| **Flexibilidad**            | Requiere que las clases implementen explícitamente las interfaces de iteración. | Utiliza el principio de "duck typing", permitiendo que cualquier objeto que implemente los métodos necesarios sea iterable. |
+| **Manejo de fin de iteración** | Utiliza `hasNext()` para comprobar si hay más elementos antes de llamar a `next()`. | Usa la excepción `StopIteration` para indicar que no hay más elementos. |
+| **Bucle de iteración**      | El bucle `for` se basa en `iterator()` para realizar la iteración. | El bucle `for` maneja automáticamente la iteración utilizando el protocolo de iteración. |
+
+### Beneficios y limitaciones
+
+<ProCons>
+   <Pros>
+      - **Flexibilidad en la implementación**: El uso de "duck typing" permite que cualquier objeto que implemente los métodos `__iter__()` y `__next__()` sea iterable, lo que brinda una gran flexibilidad en la creación de iteradores personalizados sin necesidad de heredar de clases específicas.
+      - **Simplicidad en la iteración**: La integración del patrón iterador en el bucle `for` de Python permite una sintaxis limpia y simple para recorrer colecciones, mejorando la legibilidad del código.
+      - **Manejo automático del ciclo de vida del iterador**: Python gestiona automáticamente el ciclo de vida del iterador, evitando la necesidad de que los desarrolladores gestionen manualmente el estado del iterador.
+   </Pros>
+   <Cons>
+      - **Falta de restricciones de tipo**: La flexibilidad del "duck typing" puede llevar a errores si un objeto no cumple con las expectativas de la interfaz esperada, lo que puede dificultar el diagnóstico de problemas en tiempo de ejecución.
+   </Cons>
+</ProCons>
+
+### ¿Qué aprendimos?
+
+En esta lección, exploramos cómo se implementa el **Iterator Pattern** en Python a través del protocolo nativo de iteradores. A lo largo del proceso, identificamos varias similitudes y diferencias con Kotlin, así como los beneficios y limitaciones de este patrón en Python.
+
+### Puntos clave
+
+- **Protocolo de iteración en Python**: Aprendimos que cualquier objeto en Python puede implementar los métodos `__iter__()` y `__next__()` para volverse iterable, lo que permite flexibilidad en el diseño de colecciones personalizadas y su recorrido.
+- **Flexibilidad con duck typing**: Python se basa en "duck typing", lo que significa que los objetos no necesitan heredar de una clase específica para ser iterables; simplemente necesitan implementar los métodos correctos. Esto proporciona flexibilidad pero también introduce posibles riesgos de errores en tiempo de ejecución si no se implementa correctamente.
+- **Manejo de la iteración**: Python utiliza la excepción `StopIteration` para señalar el final de una colección, mientras que en Kotlin se utiliza el método `hasNext()` para verificar si hay más elementos. Este enfoque en Python permite que el ciclo `for` maneje automáticamente el fin de la iteración.
+- **Iteradores personalizados**: Vimos cómo crear un iterador personalizado para una colección como `Library`, implementando el protocolo de iteración en Python, lo que facilita la separación de la lógica de iteración de la estructura interna de los datos.
+
+---
+
+Este enfoque en Python hace que el **Iterator Pattern** sea una herramienta poderosa y flexible para diseñar colecciones iterables personalizadas, con las ventajas de una sintaxis simple y el manejo automático de la iteración en bucles `for`. Sin embargo, la falta de restricciones de tipo estrictas puede presentar desafíos cuando se implementan sistemas más complejos.
+
+Special Methods for Sequences. (2022). En L. Ramalho, Fluent Python: Clear, concise, and effective programming (Second edition, pp. 397–430). O’Reilly.
+
+<References references={[
+    {
+        title: "Special Methods for Sequences",
+        bookTitle: "Fluent Python: Clear, concise, and effective programming",
+        publisher: "O’Reilly",
+        pages: "397–430",
+        year: "2022",
+        author: "Luciano Ramalho",
+        type: "book",
+    },
+]}/>
