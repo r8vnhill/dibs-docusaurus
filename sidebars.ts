@@ -115,7 +115,45 @@ const sidebars: SidebarsConfig = {
             ],
         },
         {
-            label: 'Unidad 3: Programación Genérica',
+            label: 'Unidad 3: Testing',
+            type: 'category',
+            link: {
+                type: 'doc',
+                id: 'testing/index',
+            },
+            items: [
+                "testing/tdd",
+                'testing/exceptions-kt',
+                'testing/ddt/kt',
+                "testing/assertions/assertions-kt",
+                {
+                    label: 'Matchers',
+                    type: 'category',
+                    link: {
+                        type: 'doc',
+                        id: 'testing/matchers/index',
+                    },
+                    items: [
+                        'testing/matchers/common/kt',
+                        'testing/matchers/custom/custom',
+                        'testing/matchers/composed/composition',
+                    ]
+                },
+                {
+                    label: 'Property-Based Testing',
+                    type: 'category',
+                    link: {
+                        type: 'doc',
+                        id: 'testing/pbt/index',
+                    },
+                    items: [
+                        'testing/pbt/concatenation/str-cat',
+                    ],
+                },
+            ],
+        },
+        {
+            label: 'Unidad 4: Programación Genérica',
             type: 'category',
             link: {
                 type: 'doc',
@@ -129,7 +167,7 @@ const sidebars: SidebarsConfig = {
         },
         {
             type: 'category',
-            label: 'Unidad 4: Programación Orientada a Objetos',
+            label: 'Unidad 5: Programación Orientada a Objetos',
             link: {
                 type: 'doc',
                 id: 'oop/index',
@@ -145,7 +183,7 @@ const sidebars: SidebarsConfig = {
             ],
         },
         {
-            label: 'Unidad 5: Programación Funcional',
+            label: 'Unidad 6: Programación Funcional',
             type: 'category',
             link: {
                 type: 'doc',
@@ -252,44 +290,6 @@ const sidebars: SidebarsConfig = {
                             ],
                         },
                     ]
-                },
-            ],
-        },
-        {
-            label: 'Unidad 6: Testing',
-            type: 'category',
-            link: {
-                type: 'doc',
-                id: 'testing/index',
-            },
-            items: [
-                "testing/tdd",
-                'testing/exceptions-kt',
-                'testing/ddt/kt',
-                "testing/assertions/assertions-kt",
-                {
-                    label: 'Matchers',
-                    type: 'category',
-                    link: {
-                        type: 'doc',
-                        id: 'testing/matchers/index',
-                    },
-                    items: [
-                        'testing/matchers/common/kt',
-                        'testing/matchers/custom/custom',
-                        'testing/matchers/composed/composition',
-                    ]
-                },
-                {
-                    label: 'Property-Based Testing',
-                    type: 'category',
-                    link: {
-                        type: 'doc',
-                        id: 'testing/pbt/index',
-                    },
-                    items: [
-                        'testing/pbt/concatenation/str-cat',
-                    ],
                 },
             ],
         },

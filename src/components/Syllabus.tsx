@@ -8,7 +8,7 @@ type CourseSection = {
 
 const sections: CourseSection[] = [
     {
-        title: "Introducción", // 1.5 semanas   total: 1.5/15 semanas
+        title: "Introducción (1.5 semanas)",    // total: 1.5/15 semanas
         contents: [
             "Introducción a bibliotecas de software",
             "Principios de código limpio y mantenible",
@@ -18,7 +18,7 @@ const sections: CourseSection[] = [
         ],
     },
     {
-        title: "Build systems", // 3.5 semanas    total: 5/15 semanas
+        title: "Build systems (3 semanas)",    // total: 4.5/15 semanas
         contents: [
             "Introducción a build systems",
             "Manejo de dependencias",
@@ -26,11 +26,22 @@ const sections: CourseSection[] = [
             "Compilación y empaquetado de aplicaciones",
             "Compilación y empaquetado de bibliotecas",
             "Publicación de bibliotecas",
-            "Introducción a la automatización de pruebas",
         ],
     },
     {
-        title: "Programación genérica",    // 1 semana    total: 8/15 semanas
+        title: "Testing (3 semanas)",    // total: 7.5/15 semanas
+        contents: [
+            "Behavior-driven development",
+            "Data-driven testing",
+            "Aserciones avanzadas",
+            "Property-based testing",
+            "Generadores arbitrarios",
+            "Técnicas de desarrollo de propiedades",
+            "Reducción de casos de prueba"
+        ],
+    },
+    {
+        title: "Programación genérica (1 semana)",    // total: 8.5/15 semanas
         contents: [
             "Polimorfismo paramétrico",
             "Varianza en sitio de declaración",
@@ -40,10 +51,9 @@ const sections: CourseSection[] = [
         ],
     },
     {
-        title: "Programación orientada a objetos",  // 2 semanas    total: 7/15 semanas
+        title: "Programación orientada a objetos (2 semanas)",    // total: 10.5/15 semanas
         contents: [
             "Problema de la base débil",
-
             "Métodos de extensión",
             "Tipos anónimos",
             "Sobrecarga de operadores",
@@ -53,7 +63,7 @@ const sections: CourseSection[] = [
         ],
     },
     {
-        title: "Programación funcional",    // 3.5 semanas    total: 11.5/15 semanas
+        title: "Programación funcional (3.5 semanas)",    // total: 14/15 semanas
         contents: [
             "Funciones puras y efectos secundarios",
             "Funciones de alto orden",
@@ -65,18 +75,7 @@ const sections: CourseSection[] = [
         ],
     },
     {
-        title: "Testing",   // 2.5 semanas    total: 14/15 semanas
-        contents: [
-            "Data-driven testing",
-            "Aserciones avanzadas",
-            "Property-based testing",
-            "Generadores arbitrarios",
-            "Técnicas de desarrollo de propiedades",
-            "Reducción de casos de prueba"
-        ],
-    },
-    {
-        title: "Colecciones",   // 1 semana    total: 15/15 semanas
+        title: "Colecciones (1 semana)",    // total: 15/15 semanas
         contents: [
             "Iterator pattern",
             "Colecciones inmutables",

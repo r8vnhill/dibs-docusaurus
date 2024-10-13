@@ -1,117 +1,59 @@
 ---
 title: Matchers personalizados
 ---
-import Exercise from "@site/src/components/exercise/Exercise";
-import GithubRepoLink from "@site/src/components/GithubRepoLink";
-import Hint from "@site/src/components/exercise/Hint";
-import LanguageCard from "@site/src/components/cards/LanguageCard";
-import ReadingTime from "@site/src/components/ReadingTime";
-import References from "@site/src/components/ReferencesComponent";
-import Solution from "@site/src/components/exercise/Solution";
-import TabItem from "@theme/TabItem";
-import Tabs from "@theme/Tabs";
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
 <ReadingTime/>
 <GithubRepoLink user={"r8vnhill"} repo={"assertions-kt"}/>
 
-Los **Matchers personalizados** permiten definir condiciones específicas que no están cubiertas por los matchers estándar de Kotest.
-
-En Kotest, todos los matchers implementan la interfaz `Matcher<T>`, donde `T` es el tipo de valor que se está probando. Esta interfaz contiene un método abstracto `test(T)`, que retorna un objeto `MatcherResult`.
-
-
-### Estructura de `Matcher` y `MatcherResult`
-
-
-La interfaz `Matcher<T>` se define de la siguiente manera:
-
-
-```kotlin showLineNumbers
-interface Matcher<in T> {
-   fun test(value: T): MatcherResult
-
-   companion object {
-      inline operator fun <T> invoke(crossinline tester: (T) -> MatcherResult) = object : Matcher<T> {
-         override fun test(value: T) = tester(value)
-      }
-   }
-}
-```
-
-:::info Explicación del Código
-
-- **[1]** La interfaz ``Matcher<T>`` se define como contravariante en ``T``, lo que significa que un ``Matcher<Number>`` puede ser asignado a un ``Matcher<Int>``.
-- **[2]** El método ``test(value: T)`` verifica si el valor ``value`` cumple con la condición del matcher y retorna un objeto ``MatcherResult``.
-- **[5-7]** Se sobrecarga el operador ``invoke`` para crear un ``Matcher`` a partir de una función lambda que toma un valor de tipo ``T`` y retorna un ``MatcherResult``. El modificador ``inline`` se utiliza para mejorar el rendimiento de la función lambda.
-
-:::
-
 <details>
     <summary>
-        ``crossinline``
-    </summary>
-
-    El modificador **`crossinline`** se utiliza en las funciones lambda que se pasan a funciones en línea (`inline`). Garantiza que la función lambda no se utilice para saltar fuera del contexto de la función (`noinline`). En este caso, `crossinline` asegura que el bloque lambda dentro de `invoke` no termine de forma prematura, lo que podría romper el flujo de la función in-line.
-</details>
-
-La interfaz `MatcherResult` contiene la lógica de verificación del matcher, especificando si la prueba ha pasado y proporcionando mensajes de error cuando falla:
-
-```kotlin showLineNumbers
-interface MatcherResult {
-    fun passed(): Boolean
-
-    fun failureMessage(): String
-
-    fun negatedFailureMessage(): String
-
-    companion object {
-        operator fun invoke(
-            passed: Boolean,
-            failureMessageFn: () -> String,
-            negatedFailureMessageFn: () -> String
-        ): MatcherResult = object : MatcherResult {
-            override fun passed(): Boolean = passed
-            override fun failureMessage(): String = failureMessageFn()
-            override fun negatedFailureMessage(): String = negatedFailureMessageFn()
-      }
-   }
-}
-```
-
-:::info Explicación del Código
-
-- **[2-6]** La interfaz ``MatcherResult`` define tres métodos abstractos: ``passed()``, ``failureMessage()``, y ``negatedFailureMessage()``, que representan la condición de aprobación, el mensaje de error en caso de fallo, y el mensaje de error negado (para el caso de ``shouldNot``), respectivamente.
-- **[9-16]** Se sobrecarga el operador ``invoke`` para crear un ``MatcherResult`` a partir de un booleano ``passed``, y dos funciones lambda que retornan los mensajes de error. Esto permite crear un ``MatcherResult`` de forma más concisa.
-
-:::
-
-### Ejemplo de Matcher Personalizado
-
-<details>
-    <summary>
-        Para comenzar, crearemos un módulo llamado `matchers` que contendrá nuestro matcher personalizado...
+        Comencemos por crear un módulo para la lección...
     </summary>
 
     <Tabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell
-            New-Item -Path 'matchers\src\test\kotlin' -ItemType 'Directory' -Force
-            Set-Content -Path 'matchers\build.gradle.kts' -Value '// Intentionally left blank'
+            New-Item -Path 'matchers' -ItemType 'Directory' -Force
+            'Intentionally left blank' |
+                Out-File -FilePath 'matchers\build.gradle.kts'
             ```
         </TabItem>
         <TabItem value="Windows (corto)" label="Windows (corto)">
             ```powershell
-            mkdir -p 'matchers\src\test\kotlin'
-            '// Intentionally left blank' > 'matchers\build.gradle.kts'
+            md matchers
+            'Intentionally left blank' > 'matchers\build.gradle.kts'
             ```
         </TabItem>
         <TabItem value="Linux/Mac" label="Linux/Mac">
             ```bash
-            mkdir -p "matchers/src/test/kotlin"
-            echo "// Intentionally left blank" > "matchers/build.gradle.kts"
+            mkdir matchers
+            echo 'Intentionally left blank' > 'matchers/build.gradle.kts'
             ```
         </TabItem>
     </Tabs>
+
+    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
 </details>
+
+Los **matchers personalizados** permiten definir condiciones específicas que no están cubiertas por los matchers estándar de Kotest.
+
+En Kotest, todos los matchers implementan la interfaz `Matcher<T>`, donde `T` es el tipo de valor que se está probando. Esta interfaz contiene un método abstracto `test(T)`, que retorna un objeto `MatcherResult`.
+
+## Ejemplo de Matcher Personalizado
 
 :::note
 
@@ -119,7 +61,7 @@ Definiremos los matchers solo para el módulo `matchers`, pero podrías colocarl
 
 :::
 
-#### Definir un Matcher Personalizado
+### Definir un Matcher Personalizado
 
 <details>
     <summary>
@@ -129,21 +71,33 @@ Definiremos los matchers solo para el módulo `matchers`, pero podrías colocarl
     <Tabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell
-            $BaseDir = 'com\github\username'
-            New-Item -Path "matchers\src\test\kotlin\$BaseDir\matchers\BeEven.kt" -ItemType 'File' -Force
+            $Group = 'com\github\username'
+            ```
+            
+            ```powershell
+            $MatchersDir = "matchers\src\test\kotlin\$Group\matchers"
+            New-Item -Path "$MatchersDir\BeEven.kt" -ItemType 'File' -Force
             ```
         </TabItem>
         <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
             ```powershell
-            $BaseDir = 'com\github\username'
-            ni "matchers\src\test\kotlin\$BaseDir\matchers\BeEven.kt" -i 'File' -f
+            $Group = 'com\github\username'
+            ```
+            
+            ```powershell
+            $MatchersDir = "matchers\src\test\kotlin\$Group\matchers"
+            ni "$MatchersDir\BeEven.kt" -i 'f' -f
             ```
         </TabItem>
         <TabItem value="Linux/Mac" label="Linux/Mac">
             ```bash
-            BASE_DIR="com/github/username"
-            mkdir -p "matchers/src/test/kotlin/$BASE_DIR/matchers"
-            touch "matchers/src/test/kotlin/$BASE_DIR/matchers/BeEven.kt"
+            GROUP="com/github/username"
+            ```
+            
+            ```powershell
+            MATCHERS_DIR="matchers/src/test/kotlin/$GROUP/matchers"
+            mkdir -p $MATCHERS_DIR
+            touch "$MATCHERS_DIR/BeEven.kt"
             ```
         </TabItem>
     </Tabs>
@@ -181,7 +135,7 @@ A continuación, implementaremos un matcher personalizado en **Kotest** para ver
     </TabItem>
 </Tabs>
 
-#### Usar el Matcher Personalizado en Pruebas
+### Usar el Matcher Personalizado en Pruebas
 
 <details>
     <summary>
@@ -191,18 +145,17 @@ A continuación, implementaremos un matcher personalizado en **Kotest** para ver
     <Tabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell
-            New-Item -Path "matchers\src\test\kotlin\$BaseDir\BeEvenTest.kt" -ItemType 'File' -Force
+            New-Item -Path "$MatchersDir\BeEvenTest.kt" -ItemType 'File' -Force
             ```
         </TabItem>
         <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
             ```powershell
-            ni "matchers\src\test\kotlin\$BaseDir\BeEvenTest.kt" -i 'File' -f
+            ni "$MatchersDir\BeEvenTest.kt" -i 'File' -f
             ```
         </TabItem>
         <TabItem value="Linux/Mac" label="Linux/Mac">
             ```bash
-            mkdir -p "matchers/src/test/kotlin/$BASE_DIR"
-            touch "matchers/src/test/kotlin/$BASE_DIR/BeEvenTest.kt"
+            touch "$MATCHERS_DIR/BeEvenTest"
             ```
         </TabItem>
     </Tabs>
@@ -281,12 +234,12 @@ kotest = ["kotest-runner-junit5", "kotest-datatest", "kotest-assertions-core"]
                 passed = abs(value - expected) < tolerance,
                 failureMessageFn = {
                     "$value should be in the vicinity of $expected within a tolerance of ${
-                        expected - tolerance..expected + expected
+                        (expected - tolerance)..(expected + expected)
                     }"
                 },
                 negatedFailureMessageFn = {
                     "$value should not be in the vicinity of $expected within a tolerance of ${
-                        expected - tolerance..expected + expected
+                        (expected - tolerance)..(expected + expected)
                     }"
                 }
             )
@@ -297,9 +250,18 @@ kotest = ["kotest-runner-junit5", "kotest-datatest", "kotest-assertions-core"]
 
 ## ¿Qué Aprendimos?
 
-En esta lección, exploramos el concepto de **Matchers personalizados** en Kotest, que permiten crear validaciones específicas para nuestras pruebas más allá de las opciones estándar. Aprendimos a implementar y utilizar matchers personalizados mediante la interfaz `Matcher<T>` y la creación de `MatcherResult`. También cubrimos cómo estructurar estos matchers en un proyecto y cómo integrarlos en las pruebas de Kotest usando ejemplos como `beEven()` para números pares y un ejercicio para crear un matcher con tolerancia, `beCloseTo()`.
+En esta lección, hemos explorado los **matchers personalizados** en Kotest y su utilidad para crear condiciones específicas que no están cubiertas por los matchers estándar. Aprendimos cómo implementar y usar matchers personalizados para casos específicos, como la validación de números pares con el matcher `beEven()`.
 
-Además, vimos cómo utilizar las herramientas que Kotest proporciona para crear un sistema de aserciones poderoso y flexible, y cómo podemos extender este sistema cuando sea necesario. En la siguiente lección, aprenderemos cómo manejar la entrada de usuario para hacer nuestras pruebas más dinámicas y flexibles.
+### Puntos clave:
+
+1. **Matchers Personalizados**: Nos permiten definir reglas personalizadas para validar condiciones específicas que no están disponibles en los matchers predeterminados de Kotest. Estos matchers proporcionan mayor flexibilidad para adaptarse a escenarios particulares en las pruebas.
+2. **Interfaz `Matcher<T>`**: Todos los matchers en Kotest implementan la interfaz `Matcher<T>`, lo que facilita la creación de nuevos matchers reutilizables. La interfaz se basa en el método `test(T)` que devuelve un `MatcherResult`, indicando si la condición de prueba se ha cumplido o no.
+3. **Reutilización**: Aunque los matchers personalizados como `beEven()` o `beCloseTo()` pueden implementarse para casos particulares, también pueden organizarse en módulos compartidos como `test-utils` para que estén disponibles en otros proyectos o módulos.
+4. **Flexibilidad**: La posibilidad de definir matchers como `beCloseTo()` nos permite implementar comparaciones avanzadas (por ejemplo, la igualdad con tolerancia en valores numéricos) que son útiles en escenarios que requieren cálculos precisos.
+
+---
+
+Este enfoque no solo facilita la creación de pruebas más expresivas y adaptadas, sino que también promueve la reutilización del código, aumentando la robustez y flexibilidad de nuestras pruebas.
 
 <div className="language-card-container">
     <LanguageCard

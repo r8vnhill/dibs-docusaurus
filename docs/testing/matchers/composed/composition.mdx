@@ -1,15 +1,20 @@
 ---
 title: Matchers compuestos
 ---
-import LanguageCard from "../../../../src/components/cards/LanguageCard";
-import Solution from "../../../../src/components/exercise/Solution";
-import Hint from "../../../../src/components/exercise/Hint";
-import Exercise from "../../../../src/components/exercise/Exercise";
-import References from "../../../../src/components/ReferencesComponent";
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
-import GithubRepoLink from "../../../../src/components/GithubRepoLink";
-import ReadingTime from "../../../../src/components/ReadingTime";
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
 <ReadingTime/>
 <GithubRepoLink user={"r8vnhill"} repo={"assertions-kt"}/>
@@ -21,8 +26,31 @@ Existen dos operaciones lógicas clave para componer matchers:
 - **Suma lógica** (`Matcher.any` o `or`): Se satisface si al menos uno de los matchers es verdadero.
 - **Producto lógico** (`Matcher.all` o `and`): Se satisface solo si todos los matchers son verdaderos.
 
-### Ejemplo de composición de Matchers
+### Ejemplo de composición de matchers
 
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            Powershell (short)
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            Bash
+            ```
+        </TabItem>
+    </Tabs>
+</details>
 Vamos a implementar un matcher para verificar que una contraseña es "fuerte". En este contexto, una contraseña fuerte debe:
 
 - Contener al menos un número.
@@ -31,38 +59,64 @@ Vamos a implementar un matcher para verificar que una contraseña es "fuerte". E
 - Tener al menos 16 caracteres.
 
 <Tabs>
-    <TabItem value="and" label="and">
-        ```kotlin title="matchers/src/test/kotlin/com/github/tu_usuario/matchers/BeStrongPassword.kt"
-        package com.github.tu_usuario
-
-        import io.kotest.matchers.and
-        import io.kotest.matchers.string.contain
-        import io.kotest.matchers.string.containADigit
-        import io.kotest.matchers.string.haveMinLength
-
-        val beStrongPassword = containADigit() and
-                contain("[A-Z]".toRegex()) and
-                contain("[a-z]".toRegex()) and
-                haveMinLength(16)
-        ```
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        <Tabs>
+            <TabItem value="and" label="and">
+                ```kotlin
+                val beStrongPassword = containADigit() and
+                        contain("[A-Z]".toRegex()) and
+                        contain("[a-z]".toRegex()) and
+                        haveMinLength(16)
+                ```
+            </TabItem>
+            <TabItem value="all" label="all">
+                ```kotlin title="matchers/src/test/kotlin/com/github/username/matchers/BeStrongPassword.kt"
+                val beStrongPassword = Matcher.all(
+                    containADigit(),
+                    contain("[A-Z]".toRegex()),
+                    contain("[a-z]".toRegex()),
+                    haveMinLength(16)
+                )
+                ```
+            </TabItem>
+        </Tabs>
     </TabItem>
-    <TabItem value="all" label="all">
-        ```kotlin title="matchers/src/test/kotlin/com/github/tu_usuario/matchers/BeStrongPassword.kt"
-        package com.github.tu_usuario
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        <Tabs>
+            <TabItem value="and" label="and">
+                ```kotlin title="matchers/src/test/kotlin/com/github/username/matchers/BeStrongPassword.kt"
+                package com.github.username
 
-        import io.kotest.matchers.Matcher
-        import io.kotest.matchers.compose.all
-        import io.kotest.matchers.string.contain
-        import io.kotest.matchers.string.containADigit
-        import io.kotest.matchers.string.haveMinLength
+                import io.kotest.matchers.and
+                import io.kotest.matchers.string.contain
+                import io.kotest.matchers.string.containADigit
+                import io.kotest.matchers.string.haveMinLength
 
-        val beStrongPassword = Matcher.all(
-            containADigit(),
-            contain("[A-Z]".toRegex()),
-            contain("[a-z]".toRegex()),
-            haveMinLength(16)
-        )
-        ```
+                val beStrongPassword = containADigit() and
+                        contain("[A-Z]".toRegex()) and
+                        contain("[a-z]".toRegex()) and
+                        haveMinLength(16)
+                ```
+            </TabItem>
+            <TabItem value="all" label="all">
+                ```kotlin title="matchers/src/test/kotlin/com/github/username/matchers/BeStrongPassword.kt"
+                package com.github.username
+
+                import io.kotest.matchers.Matcher
+                import io.kotest.matchers.compose.all
+                import io.kotest.matchers.string.contain
+                import io.kotest.matchers.string.containADigit
+                import io.kotest.matchers.string.haveMinLength
+
+                val beStrongPassword = Matcher.all(
+                    containADigit(),
+                    contain("[A-Z]".toRegex()),
+                    contain("[a-z]".toRegex()),
+                    haveMinLength(16)
+                )
+                ```
+            </TabItem>
+        </Tabs>
     </TabItem>
 </Tabs>
 
@@ -70,8 +124,8 @@ Vamos a implementar un matcher para verificar que una contraseña es "fuerte". E
 
 Una vez que hemos definido el matcher `beStrongPassword`, podemos utilizarlo en nuestras pruebas para asegurarnos de que las contraseñas cumplen con los requisitos de fortaleza:
 
-```kotlin title="matchers/src/test/kotlin/com/github/tu_usuario/matchers/BeStrongPasswordTest.kt"
-package com.github.tu_usuario
+```kotlin title="matchers/src/test/kotlin/com/github/username/matchers/BeStrongPasswordTest.kt"
+package com.github.username
 
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.should
@@ -108,8 +162,8 @@ La composición de matchers es una herramienta poderosa que permite crear valida
     ]}/>
 
     <Solution>
-        ```kotlin title="matchers/src/test/kotlin/com/github/tu_usuario/matchers/BeValidEmail.kt"
-        package com.github.tu_usuario
+        ```kotlin title="matchers/src/test/kotlin/com/github/username/matchers/BeValidEmail.kt"
+        package com.github.username
 
         import io.kotest.matchers.Matcher
         import io.kotest.matchers.MatcherResult

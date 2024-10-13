@@ -1,18 +1,28 @@
 ---
 title: Tareas como clases
 ---
-import LanguageCard from "../../../src/components/cards/LanguageCard";
-import GithubRepoLink from "../../../src/components/GithubRepoLink";
-import ReadingTime from "../../../src/components/ReadingTime";
-import References from "../../../src/components/ReferencesComponent";
-import TabItem from "@theme/TabItem";
-import Tabs from "@theme/Tabs";
-import Exercise from "../../../src/components/exercise/Exercise";
-import Solution from "../../../src/components/exercise/Solution";
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { 
+    LanguageCard, 
+    AntCard,
+    MSBuildCard,
+    RakeCard
+} from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
-<ReadingTime/>
-<GithubRepoLink user={"r8vnhill"} repo={"echo-app-kt"} addLineBreak={false}/>
-<GithubRepoLink user={"r8vnhill"} repo={"echo-app-groovy"}/>
+<ReadingTime />
+<GithubRepoLink user={"r8vnhill"} repo={"echo-app-kt"} />
 
 A veces necesitamos definir tareas más complejas que requieren lógica más avanzada o necesitamos reutilizar tareas en
 diferentes contextos. En estos casos, es posible definir tareas como clases en Gradle, lo que permite encapsular la
@@ -23,7 +33,9 @@ Estas tareas pueden definirse en archivos `*.gradle.kts`, como se hace habitualm
 Esta separación no solo mejora la organización del proyecto, sino que también facilita el mantenimiento del código, al mantener los archivos de configuración más limpios y centrados exclusivamente en la configuración, delegando la lógica de las tareas a clases de Kotlin, lo que permite aplicar buenas prácticas de programación orientada a objetos y reutilización de código.
 
 :::info Single Responsibility Principle
+
 Recordemos que el **Principio de Responsabilidad Única** (SRP) establece que un componente (ya sea una clase, función, o módulo) debe tener **una sola razón para cambiar**. Al definir las tareas como clases independientes, seguimos este principio, ya que cada clase se encarga exclusivamente de la lógica de una tarea específica. Esto no solo mejora la claridad y mantenibilidad del código, sino que también facilita su evolución, ya que los cambios futuros solo afectarán a la clase encargada de esa tarea en particular.
+
 :::
 
 ## Ejemplo: Fibonacci Revisited
@@ -40,33 +52,29 @@ Dentro de este paquete, crearemos un archivo llamado `FibonacciTask.kt` con el s
     <Tabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell
-            New-Item -Path "convention-plugins\src\main\kotlin\tasks\FibonacciTask.kt" -ItemType "file"
+            $TasksDir = "convention-plugins\src\main\kotlin\tasks"
+            New-Item -Path "$TasksDir\FibonacciTask.kt" -ItemType "File" -Force
             ```
         </TabItem>
         <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
             ```powershell
-            ni convention-plugins\src\main\kotlin\tasks\FibonacciTask.kt
+            $TasksDir = "convention-plugins\src\main\kotlin\tasks"
+            ni "$TasksDir\FibonacciTask.kt" -i 'f' -f
             ```
         </TabItem>
         <TabItem value="Unix" label="Unix">
             ```bash
-            touch convention-plugins/src/main/kotlin/tasks/FibonacciTask.kt
+            TASKS_DIR="convention-plugins/src/main/kotlin/tasks"
+            mkdir -p "$TASKS_DIR"
+            touch "$TASKS_DIR/FibonacciTask.kt"
             ```
         </TabItem>
     </Tabs>
 </details>
 
 <Tabs>
-    <TabItem value="Implementación" label={"Implementación"}>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```kotlin title="convention-plugins/src/main/kotlin/tasks/FibonacciTask.kt" showLineNumbers
-        package tasks
-
-        import org.gradle.api.DefaultTask
-        import org.gradle.api.provider.Property
-        import org.gradle.api.tasks.Input
-        import org.gradle.api.tasks.StopExecutionException
-        import org.gradle.api.tasks.TaskAction
-
         abstract class FibonacciTask : DefaultTask() {
             @get:Input
             abstract val number: Property<Int>
@@ -89,51 +97,87 @@ Dentro de este paquete, crearemos un archivo llamado `FibonacciTask.kt` con el s
         }
         ```
 
-        ### Explicación
-
-        - [9-28] **Clase `FibonacciTask`**: Definimos una clase que extiende `DefaultTask`. Lo más común es que las tareas en Gradle hereden de `DefaultTask`. Notamos que la clase es **abstracta**, lo que indica que ciertos parámetros de la tarea, como el input, deben ser definidos antes de usarla.
-        - [10] **Anotación `@get:Input`**: Anotamos la propiedad `number` para indicarle a Gradle que este valor es un input de la tarea. Esto permite que Gradle detecte cambios y decida si es necesario ejecutar la tarea nuevamente.
-        - [11] **Propiedad `number`**: Utilizamos un `Property<Int>` para almacenar el número hasta el cual queremos calcular la secuencia de Fibonacci. `Property` es como una caja que contiene un valor mutable que Gradle puede monitorear.
-        - [13-27] **Método `@TaskAction`**: Este método contiene la lógica principal de la tarea. Gradle lo ejecuta automáticamente cuando la tarea se llama, ejecutándose entre los bloques `doFirst` y `doLast`.
-        - [15] **Obtener el número**: Utilizamos `number.get()` para obtener el valor del número proporcionado por lx usuarix.
-        - [16-18] **Validación del número**: Verificamos que el número sea mayor o igual a 0. Si no lo es, lanzamos una excepción `StopExecutionException` para detener la ejecución de la tarea. Gradle manejará esta excepción y mostrará un mensaje de error.
+        <Explanation>
+            - **[1-20]**: Definimos una clase que extiende `DefaultTask`. Lo más común es que las tareas en Gradle hereden de `DefaultTask`. Notamos que la clase es **abstracta**, lo que indica que ciertos parámetros de la tarea, como el input, deben ser definidos antes de usarla.
+            - **[2]**: Anotamos la propiedad `number` con `@get:Input` para indicar que es un input de la tarea. Esto permite que Gradle detecte cambios y decida si es necesario ejecutar la tarea nuevamente.
+            - **[3]**: Utilizamos un `Property<Int>` para almacenar el número hasta el cual queremos calcular la secuencia de Fibonacci. `Property` es como una caja que contiene un valor mutable que Gradle puede monitorear.
+            - **[5-19]**: Definimos el método `calculateFibonacci` y lo anotamos con `@TaskAction`. Este método contiene la lógica principal de la tarea. Gradle lo ejecuta automáticamente cuando la tarea se llama, ejecutándose entre los bloques `doFirst` y `doLast`.
+            - **[7]**: Utilizamos `number.get()` para obtener el valor del número proporcionado por lx usuarix.
+            - **[8-10]**: Validamos que el número sea mayor o igual a 0. Si no lo es, lanzamos una excepción `StopExecutionException` para detener la ejecución de la tarea. Gradle manejará esta excepción y mostrará un mensaje de error.
+        </Explanation>
     </TabItem>
-    <TabItem value="Implementación (mejorada)" label={"Implementación (mejorada)"}>
-        ```kotlin title="convention-plugins/src/main/kotlin/tasks/FibonacciTask.kt" showLineNumbers
-        package tasks
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        <Tabs>
+            <TabItem value="Implementación" label={"Implementación"}>
+                ```kotlin title="convention-plugins/src/main/kotlin/tasks/FibonacciTask.kt" showLineNumbers
+                package tasks
 
-        import org.gradle.api.DefaultTask
-        import org.gradle.api.provider.Property
-        import org.gradle.api.tasks.Input
-        import org.gradle.api.tasks.StopExecutionException
-        import org.gradle.api.tasks.TaskAction
+                import org.gradle.api.DefaultTask
+                import org.gradle.api.provider.Property
+                import org.gradle.api.tasks.Input
+                import org.gradle.api.tasks.StopExecutionException
+                import org.gradle.api.tasks.TaskAction
 
-        abstract class FibonacciTask : DefaultTask() {
-            @get:Input
-            abstract val number: Property<Int>
+                abstract class FibonacciTask : DefaultTask() {
+                    @get:Input
+                    abstract val number: Property<Int>
 
-            @TaskAction
-            fun calculateFibonacci() {
-                val n = number.get().takeIf { it >= 0 }
-                    ?: throw StopExecutionException("The number must be greater than or equal to 0")
-                var (first, second) = 0 to 1
-                repeat(n) {
-                    print("$first ")
-                    second += first.also { first = second }
+                    @TaskAction
+                    fun calculateFibonacci() {
+                        val n = number.get()
+                        if (n < 0) {
+                            throw StopExecutionException("The number must be greater than or equal to 0")
+                        }
+                        var first = 0
+                        var second = 1
+                        repeat(n) {
+                            print("$first ")
+                            second += first
+                            first = second - first
+                        }
+                        println("\nThe $n-th Fibonacci number is: $first")
+                    }
                 }
-                println("\nThe $n-th Fibonacci number is: $first")
-            }
-        }
-        ```
-        ### Mejoras en la segunda implementación
+                ```
+            </TabItem>
+            <TabItem value="Implementación (mejorada)" label={"Implementación (mejorada)"}>
+                ```kotlin title="convention-plugins/src/main/kotlin/tasks/FibonacciTask.kt" showLineNumbers
+                package tasks
 
-        - [15-16] **Uso de `takeIf` para validación más concisa**: En la primera implementación, la validación del número se realizaba mediante un `if` seguido de una excepción. En la segunda implementación, esta validación se ha simplificado utilizando el método `takeIf`. Este método permite realizar una verificación en una sola línea y lanzar la excepción si la condición no se cumple, haciendo el código más legible y conciso.
-        - [17] **Uso de la asignación múltiple**: En la primera implementación, los valores de `first` y `second` se actualizaban en dos líneas separadas dentro del bucle `repeat`. En la segunda implementación, se utiliza una estructura más compacta mediante la asignación múltiple (`var (first, second) = 0 to 1`) y el método `also` para actualizar ambos valores en una sola línea. Esto reduce la cantidad de código y mejora la claridad.
-        - [20] **Código más expresivo y eficiente**: La segunda implementación es más idiomática en Kotlin, aprovechando características como el uso de `also` para simplificar la actualización de variables dentro del bucle. Esto no solo mejora la legibilidad, sino que también mantiene la lógica clara y directa.
+                import org.gradle.api.DefaultTask
+                import org.gradle.api.provider.Property
+                import org.gradle.api.tasks.Input
+                import org.gradle.api.tasks.StopExecutionException
+                import org.gradle.api.tasks.TaskAction
 
-        :::info Scope functions
-        Las [funciones de alcance](https://kotlinlang.org/docs/scope-functions.html) (`scope functions`) en Kotlin, como `let`, `run`, `with`, `apply` y `also`, son funciones que permiten realizar operaciones en un objeto dentro de un contexto específico. En este caso, `also` se utiliza para realizar una operación adicional en un objeto y devolver el mismo objeto, lo que permite encadenar operaciones de manera más concisa.
-        :::
+                abstract class FibonacciTask : DefaultTask() {
+                    @get:Input
+                    abstract val number: Property<Int>
+
+                    @TaskAction
+                    fun calculateFibonacci() {
+                        val n = number.get().takeIf { it >= 0 }
+                            ?: throw StopExecutionException("The number must be greater than or equal to 0")
+                        var (first, second) = 0 to 1
+                        repeat(n) {
+                            print("$first ")
+                            second += first.also { first = second }
+                        }
+                        println("\nThe $n-th Fibonacci number is: $first")
+                    }
+                }
+                ```
+                <Explanation>
+                    - **[15-16]**: En lugar de usar un `if` para validar el número, utilizamos `takeIf` para verificar si el número es mayor o igual a 0. Si la condición no se cumple, lanzamos una excepción. Esto simplifica la validación y hace que el código sea más conciso.
+                    - **[17]**: Utilizamos la asignación múltiple (`var (first, second) = 0 to 1`) para inicializar las variables `first` y `second` en una sola línea.
+                    - **[20]**: Utilizamos el método `also` para actualizar las variables `first` y `second` en una sola línea dentro del bucle `repeat`. Esto hace que el código sea más expresivo y eficiente.
+                </Explanation>
+
+                :::tip Scope functions
+                Las [funciones de alcance](https://kotlinlang.org/docs/scope-functions.html) (`scope functions`) en Kotlin, como `let`, `run`, `with`, `apply` y `also`, son funciones que permiten realizar operaciones en un objeto dentro de un contexto específico. En este caso, `also` se utiliza para realizar una operación adicional en un objeto y devolver el mismo objeto, lo que permite encadenar operaciones de manera más concisa.
+                :::
+            </TabItem>
+        </Tabs>
     </TabItem>
 </Tabs>
 
@@ -142,49 +186,38 @@ Dentro de este paquete, crearemos un archivo llamado `FibonacciTask.kt` con el s
 Para usar nuestra tarea, debemos registrarla en algún archivo `*.gradle.kts`. Aquí te mostramos cómo hacerlo en el
 archivo `playground.gradle.kts`:
 
-<Tabs>
-    <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts" showLineNumbers
-        import tasks.FibonacciTask
-        // ...
-        tasks.register<FibonacciTask>("fib_10") {
-            group = "playground"
-            description = "Calculates the 10th Fibonacci number"
-            number = 10
-            doFirst {
-                println("Calculating the 10th Fibonacci number...")
-            }
-            doLast {
-                println("Calculation complete.")
-            }
-        }
+```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts" showLineNumbers
+import tasks.FibonacciTask
+// ...
+tasks.register<FibonacciTask>("fib_10") {
+    group = "playground"
+    description = "Calculates the 10th Fibonacci number"
+    number = 10
+    doFirst {
+        println("Calculating the 10th Fibonacci number...")
+    }
+    doLast {
+        println("Calculation complete.")
+    }
+}
 
-        tasks.register<FibonacciTask>("fib_20") {
-            group = "playground"
-            description = "Calculates the 20th Fibonacci number"
-            number = 20
-            doFirst {
-                println("Calculating the 20th Fibonacci number...")
-            }
-            doLast {
-                println("Calculation complete.")
-            }
-        }
-        ```
+tasks.register<FibonacciTask>("fib_20") {
+    group = "playground"
+    description = "Calculates the 20th Fibonacci number"
+    number = 20
+    doFirst {
+        println("Calculating the 20th Fibonacci number...")
+    }
+    doLast {
+        println("Calculation complete.")
+    }
+}
+```
 
-        En este ejemplo:
-
-        - [3, 15] **Registro de la Tarea `fib_10` y ``fib_20``**: Definimos una instancia de `FibonacciTask` con la propiedad `number` configurada en 10 y 20, respectivamente.
-        - [7-12, 19-24] **`doFirst` y `doLast`**: Estos bloques definen acciones adicionales que se ejecutan antes y después de la lógica
-        principal de la tarea.
-    </TabItem>
-    <TabItem value="Groovy DSL" label="Groovy DSL">
-    ```groovy title="convention-plugins/src/main/groovy/playground.gradle"
-    Eventualmente voy a implementar esto
-    ```
-    </TabItem>
-</Tabs>
-
+<Explanation>
+    - **[3, 5]**: Registramos las tareas `fib_10` y `fib_20` utilizando `tasks.register<FibonacciTask>("fib_10")` y `tasks.register<FibonacciTask>("fib_20")`, respectivamente. Esto crea instancias de `FibonacciTask` con la propiedad `number` configurada en 10 y 20, respectivamente.
+    - **[7-12, 19-24]**: Los bloques `doFirst` y `doLast` definen acciones adicionales que se ejecutan antes y después de la lógica principal de la tarea.
+</Explanation>
 
 ### Ejecución de las tareas
 
@@ -228,80 +261,95 @@ tomado de un archivo de texto (input), transformado en mayúsculas, y ser guarda
     <Tabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell
-            New-Item -Path "convention-plugins\src\main\kotlin\tasks\UppercaseTask.kt" -ItemType "file"
+            New-Item -Path "$TasksDir\UppercaseTask.kt" `
+                -ItemType "File" -Force
             ```
         </TabItem>
         <TabItem value="Windows (corto)" label="Windows (corto)">
             ```powershell
-            ni convention-plugins\src\main\kotlin\tasks\UppercaseTask.kt
+            ni "$TasksDir\UppercaseTask.kt" -i 'f' -f
             ```
         </TabItem>
         <TabItem value="Unix" label="Unix">
             ```bash
-            touch convention-plugins/src/main/kotlin/tasks/UppercaseTask.kt
+            touch "$TASKS_DIR/UppercaseTask.kt"
             ```
         </TabItem>
     </Tabs>
 </details>
 
-```kotlin title="convention-plugins/src/main/kotlin/tasks/UppercaseTask.kt" showLineNumbers
-package tasks
-
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.TaskAction
-import java.io.File
-import java.util.*
-
-abstract class UppercaseTask : DefaultTask() {
-    @get:InputFile
-    abstract var inputFile: File
-
-    @get:OutputFile
-    abstract var outputFile: File
-
-    @TaskAction
-    fun processText() {
-        val processedText = inputFile.readText()
-            .uppercase(Locale.getDefault())
-        outputFile.writeText(processedText)
-    }
-}
-```
-
-- [11-12] **Anotación `@get:InputFile`**: Anotamos la propiedad `inputFile` para indicar que es un archivo de entrada.
-- [14-15] **Anotación `@get:OutputFile`**: Anotamos la propiedad `outputFile` para indicar que es un archivo de salida.
-
-Ahora, registramos la tarea en un archivo `*.gradle.kts`:
-
 <Tabs>
-    <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts" showLineNumbers
-        import tasks.UppercaseTask
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        abstract class UppercaseTask : DefaultTask() {
+            @get:InputFile
+            abstract var inputFile: File
 
-        // ...
+            @get:OutputFile
+            abstract var outputFile: File
 
-        tasks.register<UppercaseTask>("processText") {
-            group = "playground"
-            description = "Process text from input file and write to output file in uppercase"
-            inputFile = file("input.txt")
-            outputFile = file("output.txt")
-            doFirst {
-                println("Processing text...")
-            }
-            doLast {
-                println("Processing complete.")
+            @TaskAction
+            fun processText() {
+                val processedText = inputFile.readText()
+                    .uppercase(Locale.getDefault())
+                outputFile.writeText(processedText)
             }
         }
         ```
     </TabItem>
-    <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy title="convention-plugins/src/main/groovy/playground.gradle"
-        Juro que aquí va a aparecer código más adelante
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin title="convention-plugins/src/main/kotlin/tasks/UppercaseTask.kt" showLineNumbers
+        package tasks
+
+        import org.gradle.api.DefaultTask
+        import org.gradle.api.tasks.InputFile
+        import org.gradle.api.tasks.OutputFile
+        import org.gradle.api.tasks.TaskAction
+        import java.io.File
+        import java.util.*
+
+        abstract class UppercaseTask : DefaultTask() {
+            @get:InputFile
+            abstract var inputFile: File
+
+            @get:OutputFile
+            abstract var outputFile: File
+
+            @TaskAction
+            fun processText() {
+                val processedText = inputFile.readText()
+                    .uppercase(Locale.getDefault())
+                outputFile.writeText(processedText)
+            }
+        }
         ```
     </TabItem>
 </Tabs>
+
+<Explanation>
+    - **[2-3, 5-6]**: Anotamos las propiedades `inputFile` y `outputFile` con `@get:InputFile` y `@get:OutputFile`, respectivamente. Esto indica que `inputFile` es un archivo de entrada y `outputFile` es un archivo de salida.
+</Explanation>
+
+Ahora, registramos la tarea en un archivo `*.gradle.kts`:
+
+```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts" showLineNumbers
+import tasks.UppercaseTask
+
+// ...
+
+tasks.register<UppercaseTask>("processText") {
+    group = "playground"
+    description = "Process text from input file and write to output file in uppercase"
+    inputFile = file("input.txt")
+    outputFile = file("output.txt")
+    doFirst {
+        println("Processing text...")
+    }
+    doLast {
+        println("Processing complete.")
+    }
+}
+```
 
 Finalmente, ejecutamos la tarea desde la línea de comandos de Gradle:
 
@@ -309,26 +357,26 @@ Finalmente, ejecutamos la tarea desde la línea de comandos de Gradle:
     <TabItem value={"Windows"} label={"Windows"}>
         ```powershell
         # Crear un archivo de texto con contenido
-        Set-Content -Path input.txt -Value "Este es el contenido del archivo"
-        ./gradlew processText
-        # Mostrar el contenido del archivo de salida
-        Get-Content output.txt
+        "Este es el contenido del archivo" |
+            Out-File -FilePath input.txt
+        .\gradlew processText   # Ejecutar la tarea
+        Get-Content output.txt  # Mostrar el contenido del archivo de salida
         ```
     </TabItem>
     <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
         ```powershell
+        # Crear un archivo de texto con contenido
         "Este es el contenido del archivo" > input.txt
-        ./gradlew processText
-        gc output.txt
+        .\gradlew processText   # Ejecutar la tarea
+        gc output.txt           # Mostrar el contenido del archivo de salida
         ```
     </TabItem>
     <TabItem value={"Linux/Mac"} label={"Linux/Mac"}>
         ```bash
         # Crear un archivo de texto con contenido
         echo "Este es el contenido del archivo" > input.txt
-        ./gradlew processText
-        # Mostrar el contenido del archivo de salida
-        cat output.txt
+        ./gradlew processText   # Ejecutar la tarea
+        cat output.txt          # Mostrar el contenido del archivo de salida
         ```
     </TabItem>
 </Tabs>
@@ -346,29 +394,7 @@ ESTE ES EL CONTENIDO DEL ARCHIVO
 <Exercise title={"Verificación de números pares e impares"}>
     Vamos a implementar una tarea personalizada que procese un archivo de texto con una lista de números (uno por línea). La tarea verificará si cada número es par o impar y luego escribirá los resultados en un archivo de salida, indicando si el número es "par" o "impar", o si el contenido no es un número válido.
 
-    ## Pasos:
-
-    1. **Crea un archivo `ParityTask.kt` en el paquete `tasks`** dentro del directorio
-    `convention-plugins/src/main/kotlin`. Este archivo contendrá una clase que extienda `DefaultTask` y será
-    responsable de procesar el archivo de entrada y generar el archivo de salida.
-
-    2. **Configura la tarea con dos archivos, uno como entrada y otro como salida:**
-        - Un archivo de entrada `input.txt` que contenga números, uno por línea.
-        - Un archivo de salida `output.txt`, donde se escribirán los resultados.
-
-    3. **Lógica de la tarea:**
-        - Leer el archivo de entrada línea por línea.
-        - Verificar si cada número es par o impar.
-        - Escribir los resultados en el archivo de salida, indicando si el número es "par" o "impar". Si no es un
-            número válido, escribe un mensaje que lo indique.
-
-    4. **Registra la tarea y configúrala en el archivo `playground.gradle.kts`.**
-
-    Puedes utilizar la función `readLines(): List<String>` de la clase `File` para leer el archivo línea por línea.
-    Para convertir las líneas en números, usa `toInt()` de la clase `String`, manejando la excepción
-    `NumberFormatException` para los casos donde el contenido no sea un número válido.
-
-    ## Ejecución de las tareas
+    #### Ejecución de las tareas
 
     Crea un archivo `input.txt` con una lista de números como el siguiente ejemplo:
 
@@ -423,16 +449,17 @@ ESTE ES EL CONTENIDO DEL ARCHIVO
     9: impar
     ```
 
+    <Hint hints={[
+        <> 
+            Puedes utilizar la función <code>readLines: File.() -&gt; List&lt;String&gt;</code> para leer el archivo línea por línea.
+        </>,
+        <>
+            Para convertir las líneas en números, usa <code>toInt: String.() -&gt; Int</code>, manejando la excepción <code>NumberFormatException</code> para los casos donde el contenido no sea un número válido.
+        </>
+    ]}/>
+
     <Solution>
         ```kotlin title="convention-plugins/src/main/kotlin/tasks/ParityTask.kt" showLineNumbers
-        package tasks
-
-        import org.gradle.api.DefaultTask
-        import org.gradle.api.tasks.InputFile
-        import org.gradle.api.tasks.OutputFile
-        import org.gradle.api.tasks.TaskAction
-        import java.io.File
-
         abstract class ParityTask : DefaultTask() {
             @get:InputFile
             abstract var inputFile: File
@@ -460,14 +487,6 @@ ESTE ES EL CONTENIDO DEL ARCHIVO
     </Solution>
     <Solution title={"mejorada"}>
         ```kotlin title="convention-plugins/src/main/kotlin/tasks/ParityTask.kt" showLineNumbers
-        package tasks
-
-        import org.gradle.api.DefaultTask
-        import org.gradle.api.tasks.InputFile
-        import org.gradle.api.tasks.OutputFile
-        import org.gradle.api.tasks.TaskAction
-        import java.io.File
-
         abstract class ParityTask : DefaultTask() {
             @get:InputFile
             abstract var inputFile: File
@@ -489,35 +508,25 @@ ESTE ES EL CONTENIDO DEL ARCHIVO
     </Solution>
 </Exercise>
 
-## ¿Qué hemos visto?
+## ¿Qué aprendimos?
 
-En esta sección hemos aprendido a definir tareas personalizadas en Gradle utilizando clases en Kotlin. Estas tareas
-encapsulan lógica reutilizable y más avanzada, lo que nos permite tener un control más preciso sobre la ejecución de las
-mismas. También vimos cómo usar anotaciones para definir inputs y outputs de nuestras tareas, y cómo registrarlas para
-ser ejecutadas desde la línea de comandos. Finalmente, implementamos ejemplos prácticos, como el cálculo de la secuencia
-de Fibonacci y el procesamiento de archivos de texto.
+En esta lección, aprendimos cómo definir **tareas como clases** en Gradle utilizando Kotlin, lo que nos permite encapsular lógica compleja en clases reutilizables y aplicar principios de programación orientada a objetos.
 
-Además, exploramos cómo hacer nuestras tareas más flexibles permitiendo el manejo de errores y entradas no válidas, como
-fue el caso de la tarea de verificación de números pares e impares.
+### Puntos clave
 
-## Ejemplos en otros frameworks
+1. **Separación de responsabilidades**: Definir tareas como clases permite delegar la lógica específica a clases independientes, manteniendo los archivos de configuración de Gradle más limpios y enfocados en la configuración de las tareas. Esto también sigue el **Principio de Responsabilidad Única (SRP)**, mejorando la mantenibilidad y facilitando futuras modificaciones.
+2. **Reutilización de código**: Al encapsular la lógica en clases de Kotlin, podemos reutilizar estas tareas en diferentes contextos del proyecto, mejorando la eficiencia y reduciendo la duplicación de código.
+3. **Gradle Tasks en Kotlin**: Vimos cómo definir tareas en Kotlin utilizando `DefaultTask`, con propiedades anotadas como `@Input`, `@InputFile`, y `@OutputFile`, lo que facilita la gestión de entradas y salidas en nuestras tareas.
+4. **Tareas parametrizadas**: Aprendimos a crear tareas parametrizadas, como la tarea de Fibonacci, donde el número hasta el cual se calcula la secuencia es un parámetro configurable. Esto muestra cómo hacer que nuestras tareas sean más flexibles y personalizables según las necesidades del proyecto.
+
+---
+
+Al definir tareas como clases, conseguimos un código más modular, limpio y reutilizable, aprovechando las capacidades avanzadas de Gradle y Kotlin.
 
 <div className="language-card-container">
-    <LanguageCard
-        logoSrc="https://upload.wikimedia.org/wikipedia/commons/b/bf/MSBuild_logo.png"
-        language=".NET: MSBuild"
-        link="/build-systems/tasks/classes/msbuild"
-    />
-    <LanguageCard
-        logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Apache-Ant-logo.svg/2560px-Apache-Ant-logo.svg.png"
-        language="Apache Ant"
-        link="/build-systems/tasks/classes/ant"
-    />
-    <LanguageCard
-        logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Ruby_logo.svg/240px-Ruby_logo.svg.png"
-        language="Rake"
-        link="/build-systems/tasks/classes/rake"
-    />
+    <MSBuildCard link="/build-systems/tasks/classes/msbuild"/>
+    <AntCard link="/build-systems/tasks/classes/ant"/>
+    <RakeCard link="/build-systems/tasks/classes/rake"/>
 </div>
 
 <References references={[

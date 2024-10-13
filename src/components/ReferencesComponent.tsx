@@ -20,7 +20,7 @@ interface Reference {
 
 interface ReferencesProps {
     references: Reference[];
-    additionalReferences?: Reference[]; // Opcional
+    additionalReferences?: Reference[];
 }
 
 const renderTypeEmoji = (type: Reference['type']) => {
@@ -91,9 +91,17 @@ const renderReference = (reference: Reference) => {
             <li key={reference.id}>
                 {renderTypeEmoji(reference.type)}{' '}
                 <em>"{reference.title}"</em>.{' '}
+                {`(${reference.year}). `}
                 {`En ${reference.author}, `}
                 {reference.bookTitle && (<>en <em>{reference.bookTitle},</em></>)}{' '}
-                {reference.pages && `(pp. ${reference.pages}). `}
+                {(reference.edition || reference.pages) && (
+                    <>
+                        {'('}
+                        {reference.edition && `${reference.edition}, `}{' '}
+                        {reference.pages && `pp. ${reference.pages}. `}
+                        {'). '}
+                    </>
+                )}
                 {reference.publisher && `${reference.publisher}. `}
             </li>
         );
@@ -115,7 +123,6 @@ const renderReference = (reference: Reference) => {
         );
     }
 
-    // [1] “Expect / Should - Chai”. Accedido: 1 de octubre de 2024. [En línea]. Disponible en: https://www.chaijs.com/api/bdd/#method_language-chains
     if (reference.type === 'web') {
         return (
             <li key={reference.id}>
