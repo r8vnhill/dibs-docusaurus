@@ -112,8 +112,6 @@ const sidebars: SidebarsConfig = {
             },
             items: [
                 'testing/bdd',
-                'testing/exceptions-kt',
-                'testing/ddt/kt',
                 "testing/assertions/assertions-kt",
                 {
                     label: 'Matchers',
@@ -128,6 +126,7 @@ const sidebars: SidebarsConfig = {
                         'testing/matchers/composed/composition',
                     ]
                 },
+                'testing/ddt/kt',
                 {
                     label: 'Property-Based Testing',
                     type: 'category',

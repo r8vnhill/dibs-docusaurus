@@ -1,7 +1,25 @@
+---
+title: Iterator pattern en Java
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
-# Java
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
 
-En **Java**, el patrón **Iterator** está formalmente implementado a través de las interfaces `Iterator` y `Iterable`, que son parte de la **Java Collections Framework**. Al igual que en Kotlin, Java permite iterar sobre colecciones mediante el uso de un iterador, pero para iterar directamente sobre un `Iterator`, necesitas utilizar un bucle `while` con `hasNext()` o un bucle `for` tradicional que controla el iterador.
+En **Java**, el patrón **Iterator** está formalmente implementado a través de las interfaces `Iterator` e `Iterable`, que son parte de la **Java Collections Framework**. Al igual que en Kotlin, Java permite iterar sobre colecciones mediante el uso de un iterador, pero para iterar directamente sobre un `Iterator`, necesitas utilizar un bucle `while` con `hasNext()` o un bucle `for` tradicional que controla el iterador.
 
 ## Implementación del Patrón Iterator en Java
 
@@ -15,67 +33,122 @@ Veamos un ejemplo similar al de Kotlin, en el que implementamos una colección d
 
 Primero, creamos una clase `Book` y una clase `Library` que será iterable:
 
-```java
-import java.util.Iterator;
-import java.util.List;
-import java.util.ArrayList;
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```java showLineNumbers
+        public record Book(String title, String author) {
+            @Override
+            public String toString() {
+                return title + " by " + author;
+            }
+        }
 
-class Book {
-    String title;
-    String author;
+        public class Library implements Iterable<Book> {
+            @Override
+            public Iterator<Book> iterator() {
+                return new BookIterator(books);
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```java showLineNumbers
+        package cl.ravenhill.collections.iterator;
 
-    Book(String title, String author) {
-        this.title = title;
-        this.author = author;
-    }
+        import org.jetbrains.annotations.Contract;
+        import org.jetbrains.annotations.NotNull;
 
-    @Override
-    public String toString() {
-        return title + " by " + author;
-    }
-}
+        public record Book(String title, String author) {
+            @Contract(pure = true)
+            @Override
+            public @NotNull String toString() {
+                return title + " by " + author;
+            }
+        }
+        ```
 
-class Library implements Iterable<Book> {
-    private List<Book> books;
+        ```java showLineNumbers
+        package cl.ravenhill.collections.iterator;
 
-    public Library(Book... books) {
-        this.books = new ArrayList<>(List.of(books));
-    }
+        import org.jetbrains.annotations.NotNull;
 
-    @Override
-    public Iterator<Book> iterator() {
-        return new BookIterator(books);
-    }
-}
-```
+        import java.util.ArrayList;
+        import java.util.Iterator;
+        import java.util.List;
+
+        public class Library implements Iterable<Book> {
+            private List<Book> books;
+
+            public Library(Book... books) {
+                this.books = new ArrayList<>(List.of(books));
+            }
+
+            @Override
+            public @NotNull Iterator<Book> iterator() {
+                return new BookIterator(books);
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
 
 ### 2. Implementación del Iterador
 
 Ahora implementamos la clase `BookIterator` que sigue la interfaz `Iterator` de Java.
 
-```java
-class BookIterator implements Iterator<Book> {
-    private List<Book> books;
-    private int position = 0;
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```java showLineNumbers
+        class BookIterator implements Iterator<Book> {
+            private int position = 0;
 
-    public BookIterator(List<Book> books) {
-        this.books = books;
-    }
+            @Override
+            public boolean hasNext() {
+                return position < books.size();
+            }
 
-    @Override
-    public boolean hasNext() {
-        return position < books.size();
-    }
-
-    @Override
-    public Book next() {
-        if (!hasNext()) {
-            throw new NoSuchElementException();
+            @Override
+            public Book next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                return books.get(position++);
+            }
         }
-        return books.get(position++);
-    }
-}
-```
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```java showLineNumbers
+        package cl.ravenhill.collections.iterator;
+
+        import java.util.Iterator;
+        import java.util.List;
+        import java.util.NoSuchElementException;
+
+        class BookIterator implements Iterator<Book> {
+            private final List<Book> books;
+            private int position = 0;
+
+            public BookIterator(List<Book> books) {
+                this.books = books;
+            }
+
+            @Override
+            public boolean hasNext() {
+                return position < books.size();
+            }
+
+            @Override
+            public Book next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                return books.get(position++);
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
 
 :::note Unchecked exceptions
 En Java, `NoSuchElementException` es una excepción no comprobada que se lanza cuando se intenta acceder a un elemento que no existe. A diferencia de las excepciones comprobadas, no es necesario declarar o manejar explícitamente las excepciones no comprobadas.
@@ -119,27 +192,68 @@ void main(String[] args) {
     ## Ejemplo:
     En lugar de escribir una clase completa con un método `main` tradicional:
 
-    ```java
+    ```java showLineNumbers
     class Main {
-    public static void main(String[] args) {
-    System.out.println("Hello, World!");
-}
-}
+        public static void main(String[] args) {
+            System.out.println("Hello, World!");
+        }
+    }
     ```
 
     Con **Unnamed Classes** en Java 21, puedes escribirlo de forma más concisa:
 
-    ```java
+    ```java showLineNumbers
     void main(String[] args) {
-    System.out.println("Hello, World!");
-}
+        System.out.println("Hello, World!");
+    }
     ```
 
     Este enfoque es especialmente útil para pequeñas aplicaciones, scripts y pruebas, donde la simplicidad es clave.
 </details>
 
-## Similitudes entre Kotlin, Python y Java
+## Comparación final
 
-1. **Iteración Uniforme**: Los tres lenguajes permiten recorrer colecciones de manera uniforme sin exponer la estructura interna, gracias a sus respectivas implementaciones del patrón **Iterator**.
-2. **Abstracción del Recorrido**: En ambos lenguajes, la colección está separada de la lógica de recorrido, lo que permite implementar diferentes tipos de estructuras de datos sin cambiar la forma de iterar.
-3. **Protocolo Nativo**: Los tres lenguajes implementan el patrón iterador de forma nativa: Kotlin y Java usan interfaces (`Iterable` e `Iterator`), mientras que Python utiliza un protocolo basado en `__iter__()` y `__next__()`.
+| **Característica**              | **Java**                                                                                                                                                                       | **Kotlin**                                                                                                                                                                     |
+|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Sintaxis del patrón Iterator** | El patrón **Iterator** es parte integral de la **Java Collections Framework**, implementado a través de las interfaces `Iterator` e `Iterable`, con un enfoque más detallado.    | **Kotlin** simplifica el uso del patrón Iterator con una sintaxis más concisa y moderna. La interfaz `Iterable` está integrada de forma más intuitiva en las colecciones.        |
+| **Uso de `for` loops**           | Se requiere usar explícitamente `hasNext()` y `next()`, o usar un bucle `for` tradicional que gestione el iterador de forma manual.                                              | Los bucles `for` en Kotlin trabajan directamente con `Iterable`, eliminando la necesidad de usar `hasNext()` y `next()`, mejorando la legibilidad.                               |
+| **Compatibilidad**               | Java tiene compatibilidad con versiones anteriores, lo que puede requerir más código ceremonial para mantener la compatibilidad en ciertos contextos.                            | Kotlin mantiene una compatibilidad total con Java, pero introduce características modernas y concisas que facilitan el manejo de colecciones y patrones como el iterador.        |
+
+### Beneficios y limitaciones
+
+<ProCons>
+  <Pros>
+    - **Compatibilidad con la API estándar**: En Java, el patrón Iterator está profundamente integrado en la **Collections Framework**, facilitando su uso en la mayoría de las estructuras de datos comunes.
+    - **Control explícito sobre la iteración**: La interfaz `Iterator` en Java ofrece control explícito sobre cuándo avanzar en la colección, lo que es útil en casos de manipulación o eliminación durante el recorrido.
+    - **Compatibilidad con versiones anteriores**: Java mantiene compatibilidad hacia atrás, por lo que el patrón Iterator sigue funcionando incluso en versiones más antiguas del lenguaje.
+  </Pros>
+  <Cons>
+    - **Código más detallado**: Comparado con Kotlin, el uso de iteradores en Java puede ser más ceremonial, ya que requiere controlar manualmente el ciclo de iteración con `hasNext()` y `next()`.
+    - **Menos expresividad**: Aunque es funcional, la implementación en Java puede ser menos legible y expresiva que en Kotlin, donde las colecciones e iteradores se integran más fluidamente en el lenguaje.
+  </Cons>
+</ProCons>
+
+### ¿Qué aprendimos?
+
+El patrón **Iterator** es una solución flexible y reutilizable para recorrer colecciones sin exponer sus detalles internos, tanto en Java como en Kotlin. A lo largo de este análisis, vimos cómo ambos lenguajes abordan este patrón de manera diferente, destacando sus beneficios y limitaciones según el enfoque de cada uno.
+
+### Puntos clave
+
+- **Java** proporciona una implementación formal del patrón Iterator mediante las interfaces `Iterator` e `Iterable` en su **Collections Framework**, lo que ofrece compatibilidad con versiones anteriores y control detallado de la iteración, aunque puede requerir más código ceremonial.
+- **Kotlin**, en comparación, ofrece una sintaxis más concisa y moderna, integrando el patrón Iterator directamente en las colecciones con mayor simplicidad y legibilidad, lo que lo hace más expresivo y eficiente para la mayoría de los casos de uso.
+
+---
+
+Esta comparación destaca cómo los enfoques pueden variar según el lenguaje, pero en ambos casos, el patrón Iterator sigue siendo una herramienta fundamental para trabajar con colecciones en un entorno orientado a objetos.
+
+<References references={[
+    {
+        title: "Special Types of Java SE",
+        bookTitle: "Java: The comprehensive guide",
+        publisher: "Rheinwerk Publishing/SAP Press",
+        pages: "569–618",
+        year: "2022",
+        author: "C. Ullenboom",
+        type: "book",
+    },
+]}/>
