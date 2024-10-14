@@ -234,9 +234,8 @@ fun assertTrue(
 
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers title="assert/src/test/kotlin/com/github/username/calculator/CalculatorTest.kt"
-        val result = Calculator.add(1, 2)
-        assertTrue(result == 3) { "1 + 2 should be 3" }
+        ```kotlin showLineNumbers
+        assertTrue(Calculator.add(1, 2) == 3, "1 + 2 should be 3")
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
@@ -259,58 +258,86 @@ fun assertTrue(
     </TabItem>
 </Tabs>
 
-En este ejemplo:
+<Explanation>
+    En este ejemplo, utilizamos la función `assertTrue` para verificar si `Calculator.add(1, 2)` es igual a `3`. Si la condición no se cumple, se lanza una excepción con el mensaje "1 + 2 should be 3".    
+</Explanation>
 
-- Calculamos el resultado de `Calculator.add(1, 2)`.
-- Usamos `assertTrue` para verificar que el resultado es igual a `3`.
-- Si la condición no se cumple, se lanza un `AssertionError` con el mensaje especificado.
+## Beneficios y limitaciones
+
+<ProCons>
+    <Pros>
+        - **Claridad y Reusabilidad**: Las aserciones personalizadas mejoran la legibilidad del código de pruebas y permiten reutilizar las mismas aserciones en diferentes casos, reduciendo duplicaciones.
+        - **Mensajes de error personalizados**: Permite proporcionar mensajes de error más claros y específicos, lo que facilita la identificación de fallos en las pruebas.
+        - **Abstracción de complejidad**: Las aserciones personalizadas ocultan detalles complejos de validación, dejando las pruebas más concisas y fáciles de mantener.
+        - **Integración con frameworks**: Al crear aserciones personalizadas, se puede integrar fácilmente con frameworks de testing como Kotest, aprovechando su capacidad de generar informes detallados.
+    </Pros>
+    <Cons>
+        - **Mayor mantenimiento**: Si las aserciones personalizadas no están bien diseñadas o documentadas, pueden ser difíciles de mantener y propensas a errores si los requisitos cambian.
+        - **Posibles problemas de rendimiento**: Aserciones mal implementadas o demasiado complejas pueden afectar el rendimiento de las pruebas, especialmente si se usan en grandes conjuntos de datos o en pruebas muy frecuentes.
+        - **Sobrecarga inicial**: Crear aserciones personalizadas desde cero puede llevar más tiempo y esfuerzo inicialmente, comparado con el uso de aserciones predefinidas de los frameworks.
+    </Cons>
+</ProCons>
 
 <Exercise title={"Verificar si una lista está ordenada"}>
-    Crea una aserción ``assertIsOrdered: (List<Int>, IsStrictlyOrdered) -> Unit`` que verifique si una lista de enteros está ordenada de forma ascendente.
-    - Si el segundo parámetro es ``IsStrictlyOrdered.ENABLED``, la lista debe estar ordenada de forma estrictamente ascendente (sin elementos repetidos).
-    - Si el segundo parámetro es ``IsStrictlyOrdered.DISABLED``, la lista puede contener elementos repetidos.
-
-    <Hint hints={[
-        <>
-            Puedes usar la función <code>zipWithNext</code> para comparar elementos consecutivos de la lista.
-            <br/>
-            <strong>Ejemplo de <code>zipWithNext</code>:</strong>
-
-            <CodeBlock showLineNumbers language={"kotlin"}>
-                {`val list = listOf(1, 2, 3, 5, 5, 7)
-val pairs = list.zipWithNext()
-println(pairs) // [(1, 2), (2, 3), (3, 5), (5, 5), (5, 7)`}
-            </CodeBlock>
-        </>
-    ]} />
+    Crea una aserción ``assertIsOrdered: (List<Int>, Boolean) -> Unit`` que verifique si una lista de enteros está ordenada de forma ascendente.
+    - Si el segundo parámetro es ``true``, la lista debe estar ordenada de forma estrictamente ascendente (sin elementos repetidos).
+    - Si el segundo parámetro es ``false``, la lista puede contener elementos repetidos.
 
     <Solution>
         ```kotlin
-        fun assertIsOrdered(
-            list: List<Int>,
-            isStrictlyOrdered: IsStrictlyOrdered
-        ) {
-            val condition = when (isStrictlyOrdered) {
-                IsStrictlyOrdered.ENABLED -> { a: T, b: T -> a <= b }
-                IsStrictlyOrdered.DISABLED -> { a: T, b: T -> a < b }
-            }
-            val isOrdered = list.zipWithNext().all { (a, b) -> condition(a, b) }
-            if (!isOrdered) {
-                val orderType =
-                    if (isStrictlyOrdered == IsStrictlyOrdered.ENABLED) "strictly"
-                    else "non-strictly"
-                fail("List is not $orderType ordered: $list")
+        fun assertIsOrdered(list: List<Int>, isStrictlyOrdered: Boolean) {
+            if (isStrictlyOrdered) {
+                for (i in 0..<list.size - 1) {
+                    if (list[i] >= list[i + 1]) {
+                        fail("List is not strictly ordered")
+                    }
+                }
+            } else {
+                for (i in 0..<list.size - 1) {
+                    if (list[i] > list[i + 1]) {
+                        fail("List is not ordered")
+                    }
+                }
             }
         }
         ```
+    </Solution>
+
+    <Solution title='(Mejorada)'>
+        ```kotlin showLineNumbers
+        fun assertIsOrdered(list: List<Int>, isStrictlyOrdered: Boolean) {
+            if (isStrictlyOrdered) {
+                list.zipWithNext { a, b -> if (a >= b) fail("List is not strictly ordered") }
+            } else {
+                list.zipWithNext { a, b -> if (a > b) fail("List is not ordered") }
+            }
+        }
+        ```
+
+        :::info Explicación de las mejoras
+
+        - Utilizamos `zipWithNext` para obtener pares consecutivos de elementos en la lista.
+        - Utilizamos una lambda para verificar si cada par cumple con la condición de orden.
+        - Si la condición no se cumple, lanzamos una excepción con el mensaje correspondiente.
+
+        :::
     </Solution>
 </Exercise>
 
 ## ¿Qué aprendimos?
 
-En esta lección aprendimos sobre **aserciones**, una herramienta fundamental en los tests que nos permite verificar que las condiciones de nuestro código sean correctas. Comenzamos viendo ejemplos simples de cómo podemos implementar aserciones manualmente y cómo utilizar las aserciones proporcionadas por los frameworks de pruebas para mejorar la legibilidad y el manejo de errores en nuestros tests.
+En este módulo, exploramos las **aserciones** y cómo implementarlas tanto manualmente como utilizando frameworks de pruebas como Kotest. También aprendimos a crear **aserciones personalizadas** para simplificar las pruebas y proporcionar mensajes de error más claros y específicos.
 
-También vimos cómo crear **aserciones personalizadas**, lo que nos permite adaptar nuestras pruebas a necesidades más específicas. Aprendimos a implementar una aserción genérica `assertTrue` y una más específica, `assertIsOrdered`, que verifica si una lista está ordenada correctamente, ya sea de forma estricta o no estricta.
+### Puntos clave
+
+- Las aserciones son fundamentales para verificar que el comportamiento del código cumple con las expectativas.
+- Usar aserciones manuales es útil, pero los frameworks de testing proporcionan herramientas más potentes y legibles.
+- Crear aserciones personalizadas mejora la claridad y reusabilidad del código de pruebas.
+- La función `fail` facilita el manejo de fallos en pruebas, proporcionando un flujo más claro que lanzar manualmente excepciones.
+
+---
+
+Las aserciones son una herramienta clave para garantizar la calidad del software, ayudando a detectar errores y asegurarse de que el comportamiento del código es el esperado en diferentes escenarios.
 
 <References references={[
     {

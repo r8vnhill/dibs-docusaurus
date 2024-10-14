@@ -96,3 +96,11 @@ export const TypeScriptCard = ({ link }) => {
     link={link}
   />
 }
+
+export const RSpecCard = ({ link }) => {
+  return <LanguageCard
+    logoSrc="https://www.svgrepo.com/show/374053/rspec.svg"
+    language="Ruby: RSpec"
+    link={link}
+  />
+}
