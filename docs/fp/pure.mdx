@@ -1,17 +1,23 @@
 ---
-title: Funciones Puras y Efectos Secundarios
+title: Funciones puras y efectos secundarios
 ---
-import References from "/src/components/ReferencesComponent";
-import Hint from "/src/components/exercise/Hint";
-import Solution from "/src/components/exercise/Solution";
-import Corollary from "/src/components/Corollary";
-import Definition from "/src/components/Definition";
-import Exercise from "/src/components/exercise/Exercise";
-import ReadingTime from '/src/components/ReadingTime';
-import TabItem from "@theme/TabItem";
-import Tabs from "@theme/Tabs";
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
 <ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
 
 En esta lección, abordaremos el concepto de **funciones puras** y su relación con los **efectos secundarios** en la programación. Las funciones puras, al no tener efectos secundarios, ofrecen numerosas ventajas, como una mayor facilidad para probarlas, una mejor previsibilidad de su comportamiento, y su uso en entornos como la programación funcional. Por otro lado, los efectos secundarios, aunque a menudo necesarios en aplicaciones del mundo real, pueden hacer que el código sea más difícil de mantener y depurar.
 
@@ -34,14 +40,6 @@ A lo largo de este tema, aprenderás a identificar funciones puras e impuras, a 
 ## Efectos Secundarios
 
 También conocidos como **side-effects**, los efectos secundarios son cualquier operación que una función realice además de retornar un valor. Un efecto secundario puede ser modificar una variable global, escribir en un archivo, o interactuar con la interfaz de usuario. Cuando una función tiene efectos secundarios, se la considera **impura**.
-
-<Corollary>
-    Una función es impura si tiene efectos secundarios, es decir, si modifica algo fuera de su propio ámbito o entorno.
-</Corollary>
-
-### Ejemplos de Funciones Puras e Impuras
-
-A continuación, analizamos algunos ejemplos para identificar funciones puras e impuras.
 
 <Exercise title={"Identificar Funciones Puras e Impuras"}>
     Identifica si las siguientes funciones son puras o impuras:
@@ -79,11 +77,11 @@ A continuación, analizamos algunos ejemplos para identificar funciones puras e 
     En general, si una función retorna `Unit`, es un indicio de que podría tener efectos secundarios.
 </Corollary>
 
-### Mitigando Efectos Secundarios
+## Mitigando efectos secundarios
 
 Cuando una función es impura debido a que modifica el estado del programa, como en el siguiente ejemplo, se puede refactorizar para evitar esos efectos.
 
-### Ejemplo de función impura:
+### Ejemplo de función impura: Incrementar un arreglo
 
 ```kotlin showLineNumbers
 fun incrementArray(array: Array<Int>): Unit {
@@ -106,14 +104,12 @@ fun incrementArray(array: Array<Int>, index: Int = 0): Array<Int> =
     }
 ```
 
-:::info Explicación del Código
-
-- **[2]** Caso Base: El caso base ocurre cuando el índice ha recorrido todos los elementos del arreglo (`index >= array.size`). En este caso, la función retorna un **arreglo vacío**, lo cual sirve como punto de finalización de la recursión.
-2. **[5]** Caso Recursivo:
-    - En cada paso de la recursión, se crea un **nuevo arreglo** que contiene el valor incrementado del elemento actual, y luego se concatena con el resultado de la llamada recursiva para los elementos restantes.
-    - Esto genera un nuevo arreglo sin modificar el original.
-
-:::
+<Explanation>
+    - **[2]** Caso Base: El caso base ocurre cuando el índice ha recorrido todos los elementos del arreglo (`index >= array.size`). En este caso, la función retorna un **arreglo vacío**, lo cual sirve como punto de finalización de la recursión.
+    - **[5]** Caso Recursivo:
+        - En cada paso de la recursión, se crea un **nuevo arreglo** que contiene el valor incrementado del elemento actual, y luego se concatena con el resultado de la llamada recursiva para los elementos restantes.
+        - Esto genera un nuevo arreglo sin modificar el original.
+</Explanation>
 
 ### Ejemplo de Función Impura: Cálculo de Intereses Compuestos
 
@@ -157,12 +153,6 @@ fun calculateCompoundInterest(
     return calculateRecursive(1, principal, emptyList())
 }
 ```
-
-:::note
-
-Usamos una **función auxiliar** en lugar de parámetros por defecto para evitar sobrecargar la función principal con demasiados parámetros, lo que afectaría su claridad. La función auxiliar maneja el estado interno, manteniendo la **simplicidad** y **legibilidad**, mientras que la función principal se enfoca solo en los parámetros esenciales. Esto sigue el principio de mantener las funciones con la menor cantidad de parámetros posible.
-
-:::
 
 <Exercise title={"Eliminar Efectos Secundarios"}>
     En el siguiente ejemplo, la función `transferirFondos` tiene efectos secundarios, ya que modifica el estado de las cuentas y la base de datos:
@@ -212,19 +202,42 @@ Usamos una **función auxiliar** en lugar de parámetros por defecto para evitar
     </Solution>
 </Exercise>
 
-## ¿Qué Aprendimos?
+## Beneficios y limitaciones de las funciones puras
 
-En esta lección, vimos:
+<ProCons>
+    <Pros>
+        - **Previsibilidad y simplicidad**: Las funciones puras son más fáciles de razonar porque siempre producen los mismos resultados dados los mismos parámetros de entrada, sin depender de factores externos o del estado global.
+        - **Facilidad para probar**: Debido a que no tienen efectos secundarios, las funciones puras son mucho más sencillas de probar de forma unitaria. No requieren mocks ni configuración especial, ya que no interactúan con el estado externo.
+        - **Reutilización y composición**: Las funciones puras se pueden combinar fácilmente para construir soluciones más complejas. Son modulares y reutilizables sin preocuparse por su impacto en el estado externo.
+        - **Facilidad de paralelización**: Al no depender de variables globales o del estado externo, las funciones puras pueden ejecutarse en paralelo sin riesgo de condiciones de carrera, mejorando el rendimiento en sistemas concurrentes o distribuidos.
+        - **Transparencia referencial**: Dado que el resultado de una función pura es predecible y no depende del contexto, se puede optimizar el código mediante técnicas como la memoización o el cacheado.
+    </Pros>
+    <Cons>
+        - **Dificultad para interactuar con el mundo real**: Muchos programas del mundo real requieren efectos secundarios, como leer archivos, hacer consultas a bases de datos o interactuar con una API. En estos casos, las funciones puras por sí solas no son suficientes.
+        - **Overhead por evitar mutaciones**: En algunos casos, evitar efectos secundarios y crear nuevas estructuras de datos en lugar de modificar las existentes puede resultar en un sobrecosto de rendimiento o memoria, especialmente en algoritmos que requieren operaciones intensivas.
+        - **Mayor complejidad para ciertas tareas**: Algunas operaciones que dependen de efectos secundarios, como la escritura de logs o la gestión de estados en aplicaciones interactivas, pueden volverse más complicadas al tratar de forzarlas a ser puras.
+        - **Curva de aprendizaje**: Para aquellos acostumbrados a programar de manera imperativa, trabajar con funciones puras y evitar efectos secundarios puede ser un desafío conceptual, requiriendo un cambio de mentalidad.
+    </Cons>
+</ProCons>
 
-1. **Funciones Puras**: Producen el mismo resultado dado el mismo input y no tienen efectos secundarios, lo que las hace fáciles de probar y predecibles.
-2. **Efectos Secundarios**: Ocurren cuando una función modifica el estado externo o interactúa con el entorno, volviéndola impura y más difícil de mantener.
-3. **Mitigación**: Refactorizar para evitar modificaciones directas en el estado y devolver nuevos valores ayuda a mantener la pureza de las funciones.
+## ¿Qué aprendimos?
 
-Las funciones puras mejoran la **predecibilidad**, **facilidad de prueba**, y **reutilización** en el código.
+En esta lección, hemos explorado el concepto de **funciones puras** y **efectos secundarios**. Aprendimos que las funciones puras son aquellas que no tienen efectos secundarios y siempre devuelven el mismo resultado con las mismas entradas. Además, comprendimos que las funciones con efectos secundarios, si bien son necesarias en muchos casos, pueden dificultar el mantenimiento y la depuración del código.
+
+### Puntos clave
+
+- **Funciones puras**: Son previsibles, fáciles de probar, reutilizables y adecuadas para la paralelización. No modifican el estado del programa ni interactúan con el mundo externo.
+- **Efectos secundarios**: Involucran operaciones como modificar variables globales o escribir en un archivo, lo que hace que las funciones que los contienen sean impuras y dependan del estado externo.
+- **Refactorización para evitar efectos secundarios**: Es posible transformar funciones impuras en funciones puras devolviendo nuevas estructuras de datos en lugar de modificar las existentes, o almacenando resultados en lugar de imprimirlos directamente.
+- **Balance en la programación**: Aunque las funciones puras tienen muchos beneficios, en la programación real es necesario manejar efectos secundarios para interactuar con el mundo externo.
+
+---
+
+El uso de funciones puras y la minimización de los efectos secundarios conducen a un código más limpio, predecible y fácil de mantener. Sin embargo, es esencial encontrar un equilibrio entre pureza y funcionalidad práctica para lograr aplicaciones eficientes y robustas.
 
 <References references={[
     {
-        title: "1. What is functional programming?",
+        title: "What is functional programming?",
         bookTitle: "Functional Programming in Kotlin",
         pages: "3–16",
         location: "Manning Publications Co. LLC",

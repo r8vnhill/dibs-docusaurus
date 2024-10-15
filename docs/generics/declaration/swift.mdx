@@ -1,0 +1,125 @@
+---
+title: Varianza en sitio de declaración en Swift
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+La varianza también está presente en otros lenguajes de programación como **Swift**, aunque el enfoque varía respecto a cómo se maneja en Kotlin. Swift, al igual que Kotlin, permite trabajar con subtipos y supertipos en genéricos, pero su sistema de varianza se maneja de forma más implícita y requiere el uso de protocolos y restricciones de tipos. A continuación, compararemos el manejo de la varianza entre Swift y Kotlin.
+
+## Covarianza en Swift
+
+En **Swift**, no existe una palabra clave específica como `out` para definir la covarianza en el sitio de declaración. Sin embargo, se puede lograr un comportamiento similar mediante el uso de protocolos o tipos de retorno en funciones genéricas. Veamos un ejemplo equivalente en Swift:
+
+```swift showLineNumbers
+class Data {}
+class TextData: Data {}
+class ImageData: Data {}
+
+protocol Producer {
+    associatedtype T
+    func produce() -> T
+}
+
+class TextProducer: Producer {
+    func produce() -> TextData {
+        return TextData()
+    }
+}
+
+let textProducer: Producer = TextProducer()
+```
+
+## Contravarianza en Swift
+
+En **Swift**, tampoco hay una palabra clave equivalente a `in` para definir la contravarianza. Sin embargo, se puede lograr un comportamiento similar utilizando parámetros genéricos en protocolos y funciones. Aquí hay un ejemplo:
+
+```swift showLineNumbers
+protocol Consumer {
+    associatedtype T
+    func consume(item: T)
+}
+
+class GeneralConsumer: Consumer {
+    func consume(item: Data) {
+        print("Consuming data")
+    }
+}
+
+let generalConsumer: Consumer = GeneralConsumer()
+
+func acceptTextConsumer(consumer: Consumer) {
+    let textData = TextData()
+    consumer.consume(item: textData)
+}
+
+acceptTextConsumer(consumer: generalConsumer)
+```
+
+## Comparación final
+
+| **Característica**               | **Swift**                                                                 | **Kotlin**                                                               |
+|----------------------------------|---------------------------------------------------------------------------|--------------------------------------------------------------------------|
+| **Covarianza**                   | No tiene una palabra clave explícita. Se logra usando protocolos y `associatedtype`. La compatibilidad con subtipos se maneja implícitamente. | Se declara explícitamente con la palabra clave `out`, haciendo la covarianza clara y directa. |
+| **Contravarianza**               | No tiene una palabra clave explícita. Se logra con la inferencia de tipos en funciones y subtipos. | Se declara explícitamente con la palabra clave `in`, lo que permite mayor control sobre los tipos. |
+| **Parámetros genéricos**         | Usa `associatedtype` en protocolos para tipos genéricos, lo que puede añadir complejidad en la definición. | Los parámetros genéricos se declaran de manera estándar, sin necesidad de estructuras adicionales. |
+| **Varianza en el sitio de declaración** | No hay palabras clave explícitas para declarar varianza. Se maneja a través del sistema de tipos. | La varianza se define directamente en la declaración de clases o interfaces con `in` y `out`. |
+| **Inferencia de tipos**          | Swift confía en su sistema de inferencia de tipos para resolver compatibilidades de subtipos y supertipos. | Aunque Kotlin también tiene un sistema de inferencia, el uso de `in` y `out` hace que las intenciones sean más explícitas. |
+| **Mensajes de error**            | Los errores de compilación relacionados con varianza pueden ser difíciles de interpretar debido a la falta de palabras clave específicas. | Los mensajes de error en Kotlin son más claros debido a la declaración explícita de varianza. |
+| **Simplicidad vs. control**      | Swift ofrece simplicidad al evitar palabras clave adicionales, pero esto puede reducir el control sobre el comportamiento de los genéricos. | Kotlin ofrece mayor control y precisión con las palabras clave `in` y `out`, a costa de añadir cierta complejidad. |
+
+### Beneficios y limitaciones de la varianza en Swift
+
+<ProCons>
+    <Pros>
+        - **Simplicidad en la sintaxis**: Swift no requiere palabras clave adicionales como `out` o `in` para manejar la varianza, lo que puede hacer que la definición de tipos genéricos sea más simple y directa para desarrolladorxs acostumbrados a una sintaxis más concisa.
+        - **Inferencia automática de tipos**: La capacidad de Swift para inferir compatibilidad de tipos y subtipos en la mayoría de los casos permite escribir código genérico más fácilmente sin necesidad de especificar explícitamente la varianza, lo que puede reducir la complejidad inicial.
+        - **Uso flexible de protocolos**: El uso de `associatedtype` en protocolos permite a Swift manejar tipos genéricos de manera flexible, lo que puede ser ventajoso en escenarios donde se necesita adaptabilidad y no se requiere una rigidez estricta en el tipo de varianza.
+        - **Compatibilidad con subtipos**: Al permitir la compatibilidad implícita con subtipos a través del sistema de tipos, Swift logra un enfoque más natural en escenarios donde se requiere flexibilidad en los parámetros de tipo, sin agregar complejidad adicional.
+    </Pros>
+    <Cons>
+        - **Falta de control explícito sobre la varianza**: A diferencia de Kotlin, Swift no ofrece palabras clave específicas para controlar la varianza (`out` o `in`), lo que puede llevar a una falta de control y claridad en situaciones donde se requiere una definición precisa de cómo se deben manejar los subtipos y supertipos.
+        - **Complejidad en el uso de `associatedtype`**: El uso de `associatedtype` en protocolos puede introducir complejidad adicional en comparación con la simple declaración de parámetros genéricos en Kotlin, especialmente cuando se trabaja con tipos genéricos más complejos.
+        - **Mensajes de error menos claros**: Dado que Swift no tiene varianza explícita, los mensajes de error relacionados con la incompatibilidad de tipos pueden ser más difíciles de interpretar, lo que puede aumentar el tiempo de depuración en escenarios más complejos.
+        - **Menor control en APIs genéricas**: La falta de mecanismos explícitos para manejar la varianza puede limitar la capacidad de diseñar APIs genéricas que sean tanto flexibles como seguras en términos de tipos, lo que podría llevar a errores en tiempo de ejecución que serían detectados en tiempo de compilación en Kotlin.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, hemos explorado cómo se maneja la **varianza en sitio de declaración** en **Swift** en comparación con **Kotlin**. A lo largo de la lección, hemos visto cómo ambos lenguajes abordan la compatibilidad de subtipos y supertipos, y hemos destacado las diferencias clave en su enfoque.
+
+### Puntos clave
+
+1. **Covarianza y contravarianza**: Mientras que en Kotlin usamos palabras clave explícitas como `out` y `in` para definir covarianza y contravarianza, Swift no tiene una sintaxis equivalente. En cambio, confía en el sistema de tipos implícito y en el uso de `associatedtype` en protocolos, lo que simplifica la sintaxis pero puede llevar a una menor precisión y control en algunos casos.
+2. **Inferencia de tipos vs. control explícito**: Swift destaca por su capacidad de inferir tipos de manera automática, lo que facilita escribir código genérico sin necesidad de declarar explícitamente la varianza. Sin embargo, este enfoque puede ofrecer menos control comparado con Kotlin, donde lxs desarrolladorxs tienen mayor capacidad de definir exactamente cómo se comportan los tipos genéricos en distintas situaciones.
+3. **Complejidad en el uso de genéricos**: Aunque el sistema de inferencia de Swift puede hacer que el código sea más simple de escribir, la falta de palabras clave explícitas como `in` y `out` puede complicar la comprensión y el mantenimiento del código, especialmente cuando surgen errores de incompatibilidad de tipos. Kotlin, al ser más explícito en su manejo de varianza, ofrece mensajes de error más claros y un control más fino sobre los tipos.
+4. **Flexibilidad en APIs genéricas**: Swift ofrece flexibilidad con su enfoque menos rígido en cuanto a la varianza, lo que puede ser útil en ciertos casos. Sin embargo, para quienes buscan diseñar APIs genéricas seguras y precisas, Kotlin brinda una estructura más sólida y controlada, lo que ayuda a prevenir errores en tiempo de compilación.
+
+---
+
+Ambos lenguajes presentan enfoques distintos para el manejo de la varianza en genéricos. Swift prioriza la simplicidad y la flexibilidad mediante la inferencia de tipos, mientras que Kotlin ofrece un mayor control y precisión con palabras clave explícitas para manejar subtipos y supertipos. La elección entre uno u otro dependerá del contexto del proyecto y del nivel de control que se necesite sobre los tipos genéricos.
+
+<References references={[
+    {
+        title: "Covariance and Contravariance in Swift",
+        url: "https://medium.com/@aunnnn/covariance-and-contravariance-in-swift-32f3be8610b9",
+        type: "article",
+        author: "aunnnn",
+        publishedDate: "11 de noviembre de 2018",
+    },
+]}/>

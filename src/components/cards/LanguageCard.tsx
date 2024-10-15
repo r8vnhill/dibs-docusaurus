@@ -104,3 +104,27 @@ export const RSpecCard = ({ link }) => {
     link={link}
   />
 }
+
+export const HaskellCard = ({ link }) => {
+  return <LanguageCard
+    logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Haskell-Logo.svg/1200px-Haskell-Logo.svg.png"
+    language="Haskell"
+    link={link}
+  />
+}
+
+export const SwiftCard = ({ link }) => {
+  return <LanguageCard
+    logoSrc="https://cdn-icons-png.flaticon.com/512/3984/3984314.png"
+    language="Swift"
+    link={link}
+  />
+}
+
+export const RustCard = ({ link }) => {
+  return <LanguageCard
+    logoSrc="https://www.svgrepo.com/show/306688/rust.svg"
+    language="Rust"
+    link={link}
+  />
+}

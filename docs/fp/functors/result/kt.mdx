@@ -1,0 +1,299 @@
+---
+title: El functor Result
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+En la programación funcional y en lenguajes modernos como **Kotlin**, el manejo de errores y excepciones puede abordarse de manera más segura y expresiva mediante el uso de estructuras de datos como el **functor `Result`**. Este enfoque permite representar computaciones que pueden fallar, evitando el uso de excepciones y facilitando la composición y transformación de resultados.
+
+En esta lección, exploraremos qué es el functor `Result`, cómo utilizarlo en Kotlin y cuáles son sus ventajas en el manejo de errores y computaciones que pueden fallar.
+
+## ¿Qué es el functor Result?
+
+El **functor `Result`** es una estructura de datos que representa un valor que puede ser exitoso o contener un error. En Kotlin, `Result` es una **clase sellada** que tiene dos posibles estados:
+
+- **Éxito (`Success`)**: Contiene un valor de tipo `T`.
+- **Falla (`Failure`)**: Contiene una excepción (`Throwable`).
+
+Esta estructura permite modelar computaciones que pueden fallar sin recurrir a excepciones tradicionales, facilitando el manejo explícito de errores y promoviendo un código más seguro y fácil de razonar.
+
+## Leyes de un functor
+
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $Group = 'com\github\username'
+            ```
+            
+            ```powershell showLineNumbers
+            $FunctorsTestDir = "functors\src\test\kotlin\$Group\functors"
+            $ResultTestDir = "$FunctorsTestDir\result"
+            New-Item -Path $ResultTestDir -ItemType Directory -Force
+            "package $Group.functors.result" -replace '\\', '.' | 
+                Out-File -FilePath "$ResultTestDir\ResultTest.kt"
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            $Group = 'com\github\username'
+            ```
+
+            ```powershell
+            $FunctorsTestDir = "functors\src\test\kotlin\$Group\functors"
+            $ResultTestDir = "$FunctorsTestDir\result"
+            md $ResultTestDir
+            "package $Group.functors.result" -replace '\\', '.' > `
+                "$ResultTestDir\ResultTest.kt"
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            GROUP=com/github/username
+            ```
+
+            ```bash
+            FUNCTORS_TEST_DIR="functors/src/test/kotlin/$GROUP/functors"
+            RESULT_TEST_DIR="$FUNCTORS_TEST_DIR/result"
+            mkdir -p "$RESULT_TEST_DIR"
+            echo "package ${GROUP//\//.}.functors.result" > \
+                "$RESULT_TEST_DIR/ResultTest.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+Para que una estructura de datos sea considerada un **functor**, debe cumplir dos leyes fundamentales: la **ley de identidad** y la **ley de composición**. Estas leyes aseguran que la estructura respete los principios del cálculo funcional y se comporte de manera predecible cuando aplicamos funciones a sus valores internos.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        #### Ley de Identidad
+
+        La **ley de identidad** establece que si aplicamos la función identidad (`id`) a un functor, el resultado debe ser el mismo functor. En otras palabras, mapear la función identidad no debe alterar el contenido del `Result`:
+
+        ```kotlin showLineNumbers
+        checkAll(
+            Arb.choice(
+                Arb.int().map { Success(it) },
+                Arb.string().map { Failure(Throwable(it)) }
+            )
+        ) { result ->
+            with(ResultFunctor<Int>()) {
+                result.map { it } shouldBe result
+            }
+        }
+        ```
+
+        #### Ley de Composición
+
+        La **ley de composición** dice que si mapeamos dos funciones `f` y `g` sobre un functor, esto debe ser equivalente a mapear la composición de `f` y `g` en una sola operación. Es decir, la siguiente igualdad debe mantenerse:
+
+        ```kotlin showLineNumbers
+        checkAll(
+            Arb.choice(
+                Arb.int().map { Success(it) },
+                arbThrowable().map { Failure(it) }
+            )
+        ) { result ->
+            val f = { x: Int -> x + 1 }
+            val g = { x: Int -> x * 2 }
+
+            with(ResultFunctor<Int>()) {
+                result.map(f).map(g) shouldBe result.map { g(f(it)) }
+            }
+        }
+        ```
+    </TabItem>
+    
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="functors/src/test/kotlin/com/github/username/functors/result/ResultTest.kt"
+        package com.github.username.functors.result
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.choice
+        import io.kotest.property.arbitrary.int
+        import io.kotest.property.arbitrary.map
+        import io.kotest.property.arbitrary.string
+        import io.kotest.property.checkAll
+
+        class ResultTest : FreeSpec({
+            "Given a result" - {
+                "when mapping the identity function" - {
+                    "should return the same result" {
+                        checkAll(
+                            Arb.choice(
+                                Arb.int().map { Success(it) },
+                                Arb.string().map { Failure(Throwable(it)) }
+                            )
+                        ) { result ->
+                            with(ResultFunctor<Int>()) {
+                                result.map { it } shouldBe result
+                            }
+                        }
+                    }
+                }
+
+                "when composing two functions" - {
+                    "should be the same as applying the composed function once" {
+                        checkAll(
+                            Arb.choice(
+                                Arb.int().map { Success(it) },
+                                arbThrowable().map { Failure(it) }
+                            )
+                        ) { result ->
+                            val f = { x: Int -> x + 1 }
+                            val g = { x: Int -> x * 2 }
+
+                            with(ResultFunctor<Int>()) {
+                                result.map(f).map(g) shouldBe result.map { g(f(it)) }
+                            }
+                        }
+                    }
+                }
+            }
+        })
+
+        private fun arbThrowable() = Arb.string().map { Throwable(it) }
+        ```
+    </TabItem>
+</Tabs>
+
+<Explanation>
+    - **Ley de Identidad**: Cuando mapeamos la función identidad (`id`) sobre un `Result`, este no debería cambiar. El contenido del `Success` o el `Failure` sigue siendo el mismo.
+    - **Ley de Composición**: Mapear dos funciones `f` y `g` en secuencia debería ser igual a mapear la composición de ambas en una sola operación, lo que garantiza que el comportamiento del functor respete las reglas de la composición de funciones.
+</Explanation>
+
+## Implementación de Result en Kotlin
+
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $FunctorMainDir = "functors\src\main\kotlin\$Group\functors"
+            $ResultMainDir = "$FunctorMainDir\result"
+            New-Item -Path $ResultMainDir -ItemType Directory -Force
+            "package $Group.functors.result" -replace '\\', '.' | 
+                Out-File -FilePath "$ResultMainDir\Result.kt"
+            "package $Group.functors.result" -replace '\\', '.' | 
+                Out-File -FilePath "$ResultMainDir\Success.kt"
+            "package $Group.functors.result" -replace '\\', '.' |
+                Out-File -FilePath "$ResultMainDir\Failure.kt"
+            "package $Group.functors.result" -replace '\\', '.' |
+                Out-File -FilePath "$ResultMainDir\ResultFunctor.kt"
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            $FunctorMainDir = "functors\src\main\kotlin\$Group\functors"
+            $ResultMainDir = "$FunctorMainDir\result"
+            md $ResultMainDir
+            "package $Group.functors.result" -replace '\\', '.' > `
+                "$ResultMainDir\Result.kt"
+            "package $Group.functors.result" -replace '\\', '.' > `
+                "$ResultMainDir\Success.kt"
+            "package $Group.functors.result" -replace '\\', '.' > `
+                "$ResultMainDir\Failure.kt"
+            "package $Group.functors.result" -replace '\\', '.' > `
+                "$ResultMainDir\ResultFunctor.kt"
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            FUNCTOR_MAIN_DIR="functors/src/main/kotlin/$GROUP/functors"
+            RESULT_MAIN_DIR="$FUNCTOR_MAIN_DIR/result"
+            mkdir -p "$RESULT_MAIN_DIR"
+            echo "package ${GROUP//\//.}.functors.result" > \
+                "$RESULT_MAIN_DIR/Result.kt"
+            echo "package ${GROUP//\//.}.functors.result" > \
+                "$RESULT_MAIN_DIR/Success.kt"
+            echo "package ${GROUP//\//.}.functors.result" > \
+                "$RESULT_MAIN_DIR/Failure.kt"
+            echo "package ${GROUP//\//.}.functors.result" > \
+                "$RESULT_MAIN_DIR/ResultFunctor.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+A continuación, presentamos una implementación básica de la estructura `Result` en **Kotlin**, la cual modela dos estados: éxito (`Success`) y fallo (`Failure`). Esta estructura es común en lenguajes funcionales para representar operaciones que pueden fallar.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>  
+        ```kotlin showLineNumbers
+        sealed interface Result<out T>
+
+        data class Success<out T>(val value: T) : Result<T>
+
+        data class Failure(val exception: Throwable) : Result<Nothing>
+        ```
+    </TabItem>
+    
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="functors/src/main/kotlin/com/github/username/functors/result/Result.kt"
+        package com.github.username.functors.result
+
+        sealed interface Result<out T>
+        ```
+
+        ```kotlin showLineNumbers title="functors/src/main/kotlin/com/github/username/functors/result/Success.kt"
+        package com.github.username.functors.result
+
+        data class Success<out T>(val value: T) : Result<T>
+        ```
+
+        ```kotlin showLineNumbers title="functors/src/main/kotlin/com/github/username/functors/result/Failure.kt"
+        package com.github.username.functors.result
+
+        data class Failure(val exception: Throwable) : Result<Nothing>
+        ```
+    </TabItem>
+</Tabs>
+
+Una vez que hemos definido los estados `Success` y `Failure`, podemos implementar el **functor** para la estructura `Result`. Esto nos permitirá aplicar transformaciones a los valores encapsulados dentro de `Success` sin modificar el estado `Failure`.
+
+La siguiente implementación permite mapear una función sobre un `Result`:
+
+```kotlin showLineNumbers title="functors/src/main/kotlin/com/github/username/functors/result/ResultFunctor.kt"
+package com.github.username.functors.result
+
+fun <T, R> Result<T>.map(transform: (T) -> R): Result<R> =
+    when (this) {
+        is Success -> Success(transform(this.value))
+        is Failure -> this
+    }
+```
+
+<Explanation>
+    - **Identidad en el `Failure`**: Cuando el `Result` es un `Failure`, la función `map` no aplica la transformación, garantizando que los errores no se modifiquen.
+    - **Transformación en `Success`**: En el caso de un `Success`, la función `map` transforma el valor encapsulado, permitiendo operaciones seguras sobre el contenido sin riesgo de alterar los errores.
+    - **Seguridad en tiempo de compilación**: El uso de genéricos en la función `map` asegura que tanto la entrada como la salida del `Result` se manejen de manera segura, previniendo errores de tipo.
+</Explanation>
+
+Ahora podemos ejecutar las pruebas unitarias para verificar que nuestra implementación de `Result` cumple con las leyes de un functor.
+
+## Ejemplo de uso

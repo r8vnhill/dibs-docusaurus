@@ -241,6 +241,7 @@ const sidebars: SidebarsConfig = {
                             items: [
                                 // 'fp/functors/const/kt',
                                 // 'fp/functors/list/kt',
+                                'fp/functors/result/kt',
                                 'fp/functors/function/kt',
                             ],
                         },

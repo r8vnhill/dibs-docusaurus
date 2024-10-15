@@ -1,0 +1,169 @@
+---
+title: Excepciones en JavaScript
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+En esta lección, compararemos el manejo de **excepciones en Kotlin** con **JavaScript**, un lenguaje muy utilizado en el desarrollo web. Ambos lenguajes tienen mecanismos para manejar errores, pero las diferencias en su diseño y enfoque revelan algunas ventajas y limitaciones en cada caso.
+
+## Lanzar Excepciones
+
+En **Kotlin**, al igual que en JavaScript, usamos la palabra clave `throw` para lanzar una excepción. Veamos cómo se hace en **JavaScript**:
+
+```javascript showLineNumbers
+function divide(a, b) {
+    if (b === 0) {
+        throw new Error("Cannot divide by zero");
+    }
+    return a / b;
+}
+
+console.log(divide(10, 2));  // 5
+console.log(divide(10, 0));  // Error: Cannot divide by zero
+```
+
+En Kotlin, las excepciones están estructuradas en una jerarquía que hereda de `Throwable`. En JavaScript, cualquier valor puede ser lanzado como una excepción, lo que significa que puedes lanzar objetos, cadenas de texto, números, etc. Esto puede dar flexibilidad, pero también puede llevar a errores más difíciles de manejar si no se sigue una convención clara, como lanzar siempre instancias de `Error`.
+
+## Capturar Excepciones
+
+Ambos lenguajes utilizan `try-catch` para capturar excepciones. En **JavaScript**, se ve así:
+
+```javascript showLineNumbers
+function safeDivide(a, b) {
+    try {
+        return a / b;
+    } catch (e) {
+        console.log("Error:", e.message);
+        return null;
+    }
+}
+
+console.log(safeDivide(10, 2));  // 5
+console.log(safeDivide(10, 0));  // null, Error: Cannot divide by zero
+```
+
+En Kotlin, `try-catch` puede ser usado como una expresión que retorna un valor, lo que facilita la asignación de un resultado. En JavaScript, `try-catch` no puede retornar directamente un valor, lo que obliga a manejar el flujo de errores con variables adicionales.
+
+## Bloque `finally`
+
+El bloque `finally` se utiliza en ambos lenguajes para ejecutar código que debe ocurrir independientemente de si una excepción fue lanzada o no.
+
+```javascript showLineNumbers
+try {
+    // código que puede lanzar excepciones
+} catch (e) {
+    // manejo de errores
+} finally {
+    // código que siempre se ejecuta
+    console.log("Este código siempre se ejecuta");
+}
+```
+
+Kotlin ofrece una función de extensión `use` para manejar recursos que necesitan ser cerrados (como archivos o conexiones), lo que elimina la necesidad de bloques `finally`. En JavaScript, no existe un equivalente directo, y el manejo de recursos se suele hacer explícitamente dentro del bloque `finally`.
+
+## Propagación de Excepciones
+
+En JavaScript, las excepciones no capturadas también se propagan hacia los niveles superiores. No existe la distinción entre excepciones chequeadas y no chequeadas como en algunos lenguajes como Java.
+
+```javascript showLineNumbers
+function readConfigFile(filePath) {
+    if (!filePath) {
+        throw new Error("File path is required");
+    }
+    // código para leer el archivo...
+}
+
+try {
+    readConfigFile();
+} catch (e) {
+    console.log(e.message);  // File path is required
+}
+```
+
+## Excepciones Personalizadas
+
+En JavaScript, puedes crear excepciones personalizadas extendiendo la clase `Error`, lo que es similar a crear excepciones personalizadas en Kotlin:
+
+```javascript showLineNumbers
+class CustomError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "CustomError";
+    }
+}
+
+function checkCondition(condition) {
+    if (!condition) {
+        throw new CustomError("Condition not met");
+    }
+}
+
+try {
+    checkCondition(false);
+} catch (e) {
+    console.log(e.name + ": " + e.message);  // CustomError: Condition not met
+}
+```
+
+## Comparación final
+
+| **Característica**            | **JavaScript**                                                                 | **Kotlin**                                                                  |
+|-------------------------------|--------------------------------------------------------------------------------|------------------------------------------------------------------------------|
+| **Jerarquía de excepciones**   | Permite lanzar cualquier tipo de valor como excepción, lo que puede dar flexibilidad, pero también puede hacer que el manejo de errores sea inconsistente. | Las excepciones deben heredar de `Throwable`, proporcionando una jerarquía clara y consistente. |
+| **Tipos de excepciones**       | No existen tipos específicos para excepciones, cualquier valor puede lanzarse. Esto puede llevar a problemas si no se siguen buenas prácticas. | Kotlin tiene una jerarquía de excepciones clara, lo que estandariza el manejo de errores. |
+| **Estructura `try-catch`**     | No puede ser usado directamente como expresión, lo que requiere manejo adicional para asignar valores en un bloque `catch`. | `try-catch` es una expresión que puede retornar un valor, lo que simplifica la asignación y el manejo de errores en una sola línea. |
+| **Bloque `finally`**           | Usado para ejecutar código que debe correr independientemente de si se lanza una excepción o no. No tiene mecanismos nativos para el manejo seguro de recursos. | Aunque también soporta `finally`, Kotlin ofrece la función `use` para manejar recursos de forma más segura y automática. |
+| **Propagación de excepciones** | Las excepciones no capturadas se propagan hacia niveles superiores, pero no existe la distinción entre excepciones chequeadas y no chequeadas. | Similar a JavaScript, pero con la ventaja de un tipado estático, lo que permite detectar errores en tiempo de compilación y documentarlos mejor. |
+| **Excepciones personalizadas** | Puedes extender la clase `Error` para crear excepciones personalizadas. No hay un sistema rígido para las excepciones. | Es posible crear excepciones personalizadas heredando de `Exception` o `RuntimeException`, lo que proporciona mayor consistencia y control sobre el manejo de errores. |
+| **Manejo de recursos**         | No tiene un equivalente directo a la función `use`, lo que puede complicar el manejo seguro de recursos. | La función de extensión `use` facilita el manejo seguro de recursos como archivos y conexiones, asegurando que se liberen correctamente. |
+| **Tipado estático**            | Lenguaje dinámico sin verificación en tiempo de compilación, lo que puede llevar a errores difíciles de rastrear. | Lenguaje con tipado estático, lo que ayuda a detectar y manejar excepciones más eficientemente en tiempo de compilación. |
+
+### Beneficios y limitaciones de las excepciones en JavaScript
+
+<ProCons>
+    <Pros>
+        - **Flexibilidad en el tipo de excepción**: JavaScript permite lanzar cualquier valor como excepción (números, objetos, cadenas), lo que brinda flexibilidad a la hora de manejar distintos tipos de errores sin estar limitado a una jerarquía de excepciones.
+        - **Propagación automática de errores**: Las excepciones no capturadas se propagan automáticamente hacia los niveles superiores, lo que facilita delegar el manejo de errores a niveles más apropiados del código.
+        - **Excepciones personalizadas fáciles de crear**: Extender la clase `Error` para crear excepciones personalizadas es sencillo y flexible, lo que permite definir errores específicos sin una estructura rígida.
+        - **Manejo de errores compatible con asincronía**: En combinación con `async`/`await`, el manejo de errores con `try-catch` se adapta fácilmente a la programación asincrónica, simplificando la gestión de promesas fallidas.
+    </Pros>
+
+    <Cons>
+        - **Falta de tipado estático**: JavaScript no tiene un sistema de tipado estático, lo que puede dificultar la detección de errores en tiempo de compilación. Esto puede llevar a que ciertas excepciones pasen desapercibidas hasta que el código se ejecute.
+        - **Inconsistencia en el tipo de excepciones**: Dado que cualquier valor puede lanzarse como una excepción, el manejo de errores puede ser inconsistente, ya que no siempre se siguen las mejores prácticas de lanzar objetos `Error`. Esto puede complicar el seguimiento de errores.
+        - **Manejo manual de recursos**: JavaScript no tiene un equivalente directo a la función `use` de Kotlin, lo que obliga a manejar recursos como archivos o conexiones manualmente, normalmente dentro de un bloque `finally`, aumentando la complejidad.
+        - **Sobrecarga en el flujo de control**: Las excepciones en JavaScript pueden ser usadas indebidamente como mecanismos de control de flujo, lo que puede hacer el código más difícil de leer y mantener, y generar sobrecostos de rendimiento en escenarios de manejo frecuente de excepciones.
+        - **Manejo limitado de errores en promesas**: Aunque `try-catch` funciona bien con `async`/`await`, no se aplica directamente a las promesas sin `await`, lo que requiere usar métodos adicionales como `.catch()`, añadiendo complejidad al manejo de errores asincrónicos.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, hemos comparado el manejo de excepciones en **JavaScript** y **Kotlin**, destacando similitudes y diferencias clave entre ambos lenguajes.
+
+### Puntos clave
+
+- **Flexibilidad en JavaScript**: En JavaScript, es posible lanzar cualquier tipo de valor como excepción, lo que brinda flexibilidad pero también puede resultar en inconsistencias si no se siguen buenas prácticas, como usar la clase `Error`. Kotlin, por otro lado, proporciona una jerarquía de excepciones más estructurada, lo que aporta claridad y consistencia en el manejo de errores.  
+- **Manejo de recursos**: Mientras que ambos lenguajes permiten el uso de bloques `finally` para asegurarse de que se ejecuten ciertas operaciones, como la limpieza de recursos, Kotlin incluye la función `use` para simplificar la gestión segura de recursos, algo que JavaScript no ofrece de manera nativa.
+- **Excepciones personalizadas**: Crear excepciones personalizadas es sencillo en ambos lenguajes, aunque JavaScript lo hace mediante la extensión de `Error` sin un sistema rígido, mientras que Kotlin tiene una estructura más controlada a través de `Exception` y `RuntimeException`.
+- **Tipado estático vs. dinámico**: JavaScript es un lenguaje dinámico, lo que significa que no hay verificación de errores en tiempo de compilación. Kotlin, por su parte, cuenta con un tipado estático que ayuda a identificar errores más temprano en el ciclo de desarrollo.
+- **Asincronía en JavaScript**: JavaScript destaca en el manejo de errores en operaciones asincrónicas gracias a `async`/`await` y `try-catch`, lo que hace que la gestión de errores en funciones asincrónicas sea fluida. Sin embargo, JavaScript requiere un manejo adicional para promesas no resueltas, mientras que Kotlin no tiene esta particularidad ya que es un lenguaje sincrónico por defecto.
+
+---
+
+Cada lenguaje tiene sus propios puntos fuertes y debilidades en el manejo de excepciones. JavaScript, al ser dinámico y flexible, ofrece una mayor libertad pero a costa de perder algo de consistencia en la detección y manejo de errores. Kotlin, con su sistema de tipos estático y herramientas como `use`, asegura mayor control y seguridad en la gestión de excepciones, lo que puede ser más útil en aplicaciones que requieran un alto nivel de fiabilidad y control de errores.

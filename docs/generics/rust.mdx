@@ -1,0 +1,141 @@
+---
+title: Programación genérica en Rust
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+La programación genérica también es un componente clave en **Rust**, un lenguaje que pone un fuerte énfasis en la seguridad y el rendimiento. Al igual que en Kotlin, **Rust** permite escribir funciones, estructuras y rasgos (traits) que operan sobre tipos abstractos mediante el uso de **tipos genéricos**. Sin embargo, la implementación y ciertas características difieren debido a los paradigmas y objetivos específicos de cada lenguaje. A continuación, exploraremos cómo Rust aborda la programación genérica y compararemos algunos de los aspectos clave con Kotlin.
+
+## Tipos genéricos en Rust
+
+En Rust, los tipos genéricos se declaran utilizando **parámetros de tipo**. Esto permite que las funciones, estructuras y rasgos operen sobre una amplia gama de tipos, sin estar restringidos a un tipo específico.
+
+### Funciones genéricas
+
+Aquí hay un ejemplo de una función genérica en Rust:
+
+```rust showLineNumbers
+fn identity<T>(value: T) -> T {
+    value
+}
+
+let int_identity = identity(42);  // El tipo de int_identity es i32
+let string_identity = identity("Hola");  // El tipo de string_identity es &str
+```
+
+En este caso, `T` es un parámetro de tipo que permite que la función `identity` acepte cualquier tipo de dato como argumento y devuelva un valor del mismo tipo. Esto es equivalente a las funciones genéricas que hemos visto en Kotlin.
+
+## Estructuras genéricas
+
+Las estructuras en Rust también pueden ser genéricas. Veamos un ejemplo donde definimos una estructura `Box` que almacena un valor de cualquier tipo `T`:
+
+```rust showLineNumbers
+struct Box<T> {
+    value: T,
+}
+
+let int_box = Box { value: 123 };
+println!("{}", int_box.value);  // Imprime: 123
+
+let string_box = Box { value: "Rust" };
+println!("{}", string_box.value);  // Imprime: Rust
+```
+
+Al igual que en Kotlin, `T` es un parámetro de tipo que define el tipo del valor almacenado en la caja. La principal diferencia es que Rust utiliza **Ownership** y **Borrowing** para controlar cómo se manejan los valores dentro de las estructuras.
+
+## Traits genéricos
+
+En Rust, los **traits** (equivalentes a las interfaces en otros lenguajes) también pueden ser genéricos. Los traits permiten definir comportamientos comunes que pueden ser implementados por diferentes tipos. A continuación, se muestra un ejemplo de un rasgo genérico `Repository` que define operaciones para guardar y buscar datos:
+
+```rust showLineNumbers
+trait Repository<T> {
+    fn save(&mut self, item: T);
+    fn find_by_id(&self, id: u32) -> Option<&T>;
+}
+
+struct UserRepository {
+    users: Vec<User>,
+}
+
+impl Repository<User> for UserRepository {
+    fn save(&mut self, user: User) {
+        self.users.push(user);
+    }
+
+    fn find_by_id(&self, id: u32) -> Option<&User> {
+        self.users.iter().find(|&&user| user.id == id)
+    }
+}
+
+struct User {
+    id: u32,
+    name: String,
+}
+
+let mut user_repo = UserRepository { users: vec![] };
+let user = User { id: 1, name: String::from("John Doe") };
+user_repo.save(user);
+if let Some(found_user) = user_repo.find_by_id(1) {
+    println!("Found user: {} with ID: {}", found_user.name, found_user.id);
+}
+```
+
+## Comparación final
+
+| **Característica**               | **Rust**                                                                 | **Kotlin**                                                               |
+|----------------------------------|---------------------------------------------------------------------------|--------------------------------------------------------------------------|
+| **Control de memoria**           | Utiliza el sistema de **ownership** y **borrowing** para gestionar la memoria de forma segura sin un recolector de basura. Esto requiere una administración explícita de la propiedad de los datos en tipos genéricos. | Utiliza un **garbage collector** para la gestión automática de memoria, lo que simplifica el manejo de recursos pero puede llevar a sobrecargas en tiempo de ejecución. |
+| **Rendimiento**                  | Altamente optimizado, ya que Rust genera código nativo sin penalizaciones por abstracciones genéricas. Ideal para sistemas embebidos o software de alto rendimiento. | Aunque Kotlin ofrece buen rendimiento, su uso de un garbage collector y su JVM subyacente introduce sobrecargas que pueden afectar el rendimiento en aplicaciones críticas. |
+| **Seguridad en tiempo de compilación** | Rust ofrece garantías estrictas de seguridad en tiempo de compilación, especialmente en lo que respecta a la gestión de memoria, evitando errores de acceso a memoria o condiciones de carrera. | Kotlin ofrece seguridad de tipos en tiempo de compilación, pero no proporciona el mismo nivel de control sobre la memoria que Rust. Los errores relacionados con la gestión de recursos pueden aparecer en tiempo de ejecución. |
+| **Simplicidad de sintaxis**      | La sintaxis de Rust puede ser más compleja debido al manejo explícito de ownership y lifetimes, lo que introduce una curva de aprendizaje más pronunciada. | La sintaxis de Kotlin es más sencilla y cercana a otros lenguajes orientados a objetos como Java, facilitando la adopción para desarrolladorxs que provienen de estos lenguajes. |
+| **Abstracción de tipos**         | Los **traits** permiten definir comportamientos genéricos, pero pueden complicar la implementación debido a las restricciones de ownership y borrowing. | Kotlin permite una abstracción de tipos más flexible y menos restrictiva a través de sus **interfaces** y clases genéricas, proporcionando una experiencia más fluida en el manejo de tipos. |
+| **Traits vs Interfaces**         | Los **traits** en Rust permiten implementar comportamientos compartidos entre tipos, y se pueden usar como restricciones en los parámetros genéricos. Proveen más flexibilidad que las interfaces tradicionales. | **Interfaces** en Kotlin son más cercanas al estándar de lenguajes orientados a objetos. Aunque ofrecen flexibilidad, no cuentan con las capacidades avanzadas de los traits de Rust. |
+| **Curva de aprendizaje**         | La necesidad de entender ownership, lifetimes y borrowing introduce una curva de aprendizaje más alta, especialmente para desarrolladorxs nuevos en Rust. | Kotlin es más accesible para desarrolladorxs familiarizadxs con lenguajes orientados a objetos, ofreciendo una curva de aprendizaje más suave. |
+
+### Beneficios y limitaciones
+
+<ProCons>
+    <Pros>
+        - **Control detallado sobre la memoria**: Gracias a su sistema de **ownership** y **borrowing**, Rust permite un control preciso sobre cómo se gestiona la memoria, lo que elimina la necesidad de un recolector de basura y mejora el rendimiento en aplicaciones de alto rendimiento.
+        - **Seguridad en tiempo de compilación**: Rust verifica exhaustivamente en tiempo de compilación el uso correcto de los tipos genéricos y la memoria, lo que previene errores comunes como accesos a memoria no válidos y condiciones de carrera, proporcionando un entorno de desarrollo más seguro.
+        - **Alto rendimiento**: Las abstracciones genéricas en Rust no penalizan el rendimiento en tiempo de ejecución, lo que lo hace ideal para aplicaciones que requieren un control eficiente de los recursos, como sistemas embebidos o software de bajo nivel.
+    </Pros>
+
+    <Cons>
+        - **Curva de aprendizaje pronunciada**: El sistema de **ownership** y **lifetimes** en Rust añade una capa de complejidad que puede resultar difícil de entender para desarrolladorxs que no están acostumbradxs a este nivel de control sobre la memoria.
+        - **Sintaxis más compleja**: Comparado con lenguajes como Kotlin, la sintaxis de Rust es más detallada y requiere una mayor cantidad de código explícito para manejar aspectos como la propiedad de datos, lo que puede dificultar la legibilidad.
+        - **Errores relacionados con ownership**: Aunque Rust previene errores de memoria, el sistema de ownership puede generar mensajes de error difíciles de interpretar, especialmente cuando se trata de tipos genéricos que involucran múltiples referencias o lifetimes.
+        - **Menor flexibilidad en abstracciones**: Aunque los **traits** en Rust son potentes, su uso conlleva restricciones adicionales debido al sistema de borrow checker, lo que puede dificultar la implementación de algunas abstracciones en comparación con lenguajes que utilizan interfaces más simples, como Kotlin.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, hemos explorado la **programación genérica** en **Rust**, comparándola con **Kotlin**. Ambos lenguajes ofrecen soporte para tipos genéricos, permitiendo escribir funciones, estructuras y contratos que operan sobre tipos abstractos, lo que aumenta la flexibilidad y reutilización del código. Sin embargo, la manera en que cada lenguaje implementa estos conceptos refleja sus prioridades y paradigmas fundamentales.
+
+### Puntos clave:
+
+- **Control de memoria en Rust**: Gracias a su sistema de **ownership** y **borrowing**, Rust proporciona un control detallado y seguro sobre la gestión de memoria sin depender de un recolector de basura. Este enfoque lo convierte en una excelente opción para aplicaciones donde el rendimiento y la seguridad son críticos. En cambio, Kotlin, al basarse en la **JVM**, utiliza un **garbage collector**, lo que simplifica la gestión de memoria a costa de posibles sobrecargas en tiempo de ejecución.
+- **Rendimiento**: Rust se destaca por su capacidad de generar código nativo altamente optimizado, sin penalizaciones por el uso de abstracciones genéricas, haciéndolo ideal para sistemas embebidos o aplicaciones de alto rendimiento. Kotlin, aunque eficiente, está limitado por la JVM y el recolector de basura, lo que puede afectar el rendimiento en aplicaciones muy sensibles al uso de recursos.
+- **Seguridad de tipos**: Ambos lenguajes ofrecen seguridad de tipos en tiempo de compilación, pero Rust va un paso más allá al evitar errores de gestión de memoria y condiciones de carrera, aspectos que no son tan estrictamente controlados en Kotlin.
+- **Curva de aprendizaje y sintaxis**: La **curva de aprendizaje** de Rust es considerablemente más pronunciada debido a su sistema de ownership y el manejo de **lifetimes**, lo que puede resultar intimidante para desarrolladorxs que no están familiarizadxs con estos conceptos. Kotlin, por otro lado, tiene una sintaxis más accesible y está más alineada con lenguajes orientados a objetos tradicionales como Java, lo que facilita su adopción.
+- **Abstracción de tipos**: Rust utiliza **traits** para definir comportamientos genéricos, lo que proporciona flexibilidad, pero a veces con restricciones adicionales impuestas por el sistema de **ownership**. En contraste, Kotlin permite una abstracción de tipos más flexible y menos restrictiva a través de **interfaces**, lo que ofrece una experiencia más fluida para el desarrollo de aplicaciones genéricas.
+
+---
+
+Ambos lenguajes presentan fortalezas y limitaciones, y la elección entre ellos dependerá del contexto del proyecto, las necesidades de rendimiento, y el nivel de control que se requiere sobre la memoria y los recursos.

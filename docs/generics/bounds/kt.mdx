@@ -76,10 +76,16 @@ En esta lección, exploraremos:
             $SrcTestDir = "bounds\src\test\kotlin\$Group"
             $RepoMainDir = "$SrcMainDir\repo"
             $RepoTestDir = "$SrcTestDir\repo"
-            New-Item -Path "$RepoMainDir\Repository.kt" -ItemType 'file' -Force
-            New-Item -Path "$RepoMainDir\Entity.kt" -ItemType 'file' -Force
-            New-Item -Path "$RepoMainDir\Serializable.kt" -ItemType 'file' -Force
-            New-Item -Path "$RepoTestDir\RepositoryTest.kt" -ItemType 'file' -Force
+            New-Item -Path $RepoMainDir -ItemType Directory -Force
+            New-Item -Path $RepoTestDir -ItemType Directory -Force
+            "package $Group.repo" -replace '\\', '.' | 
+                Out-File -FilePath "$RepoMainDir\Repository.kt"
+            "package $Group.repo" -replace '\\', '.' |
+                Out-File -FilePath "$RepoMainDir\Entity.kt"
+            "package $Group.repo" -replace '\\', '.' |
+                Out-File -FilePath "$RepoMainDir\Serializable.kt"
+            "package $Group.repo" -replace '\\', '.' |
+                Out-File -FilePath "$RepoTestDir\RepositoryTest.kt"
             ```
         </TabItem>
         <TabItem value="Windows (corto)" label="Windows (corto)">
@@ -92,10 +98,16 @@ En esta lección, exploraremos:
             $SrcTestDir = "bounds\src\test\kotlin\$Group"
             $RepoMainDir = "$SrcMainDir\repo"
             $RepoTestDir = "$SrcTestDir\repo"
-            ni "$RepoMainDir\Repository.kt" -i 'f' -f
-            ni "$RepoMainDir\Entity.kt" -i 'f' -f
-            ni "$RepoMainDir\Serializable.kt" -i 'f' -f
-            ni "$RepoTestDir\RepositoryTest.kt" -i 'f' -f
+            md $RepoMainDir
+            md $RepoTestDir
+            "package $Group.repo" -replace '\\', '.' > `
+                "$RepoMainDir\Repository.kt"
+            "package $Group.repo" -replace '\\', '.' > `
+                "$RepoMainDir\Entity.kt"
+            "package $Group.repo" -replace '\\', '.' > `
+                "$RepoMainDir\Serializable.kt"
+            "package $Group.repo" -replace '\\', '.' > `
+                "$RepoTestDir\RepositoryTest.kt"
             ```
         </TabItem>
         <TabItem value="Linux/Mac" label="Linux/Mac">
@@ -110,10 +122,10 @@ En esta lección, exploraremos:
             REPO_TEST_DIR="$SRC_TEST_DIR/repo"
             mkdir -p "$REPO_MAIN_DIR"
             mkdir -p "$REPO_TEST_DIR"
-            touch "$REPO_MAIN_DIR/Repository.kt"
-            touch "$REPO_MAIN_DIR/Entity.kt"
-            touch "$REPO_MAIN_DIR/Serializable.kt"
-            touch "$REPO_TEST_DIR/RepositoryTest.kt"
+            echo "package ${GROUP//\//.}.repo" > "$REPO_MAIN_DIR/Repository.kt"
+            echo "package ${GROUP//\//.}.repo" > "$REPO_MAIN_DIR/Entity.kt"
+            echo "package ${GROUP//\//.}.repo" > "$REPO_MAIN_DIR/Serializable.kt"
+            echo "package ${GROUP//\//.}.repo" > "$REPO_TEST_DIR/RepositoryTest.kt"
             ```
         </TabItem>
     </Tabs>
@@ -129,9 +141,9 @@ Queremos que el comportamiento de nuestra clase `Repository` sea el siguiente:
     <TabItem label="Código esencial" value="Código esencial">
         ```kotlin showLineNumbers
         with(repository) {
-            entities.isEmpty() shouldBe true
+            entities.shouldBeEmpty()
             save(entity)
-            entities.size shouldBe 1
+            entities shouldHaveSize 1
             entities.last() shouldBe entity
             serializeAll() shouldBe "[MockEntity(id=1)]"
         }
@@ -140,8 +152,10 @@ Queremos que el comportamiento de nuestra clase `Repository` sea el siguiente:
     <TabItem label="Código completo" value="Código completo">
         ```kotlin showLineNumbers title="bounds/src/test/kotlin/com/github/username/repo/RepositoryTest.kt"
         package com.github.username.repo
-
+        
         import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.collections.shouldBeEmpty
+        import io.kotest.matchers.collections.shouldHaveSize
         import io.kotest.matchers.shouldBe
 
         private class MockEntity(override val id: Int) : Entity, Serializable {
@@ -155,15 +169,17 @@ Queremos que el comportamiento de nuestra clase `Repository` sea el siguiente:
 
         class RepositoryTest : FreeSpec({
             "A repository" - {
-                "can save an entity" {
-                    val repository = Repository<MockEntity>()
-                    val entity = MockEntity(1)
-                    with(repository) {
-                        entities.isEmpty() shouldBe true
-                        save(entity)
-                        entities.size shouldBe 1
-                        entities.last() shouldBe entity
-                        serializeAll() shouldBe "[MockEntity(id=1)]"
+                "when saving an entity" - {
+                    "should contain the entity" {
+                        val repository = Repository<MockEntity>()
+                        val entity = MockEntity(1)
+                        with(repository) {
+                            entities.shouldBeEmpty()
+                            save(entity)
+                            entities shouldHaveSize 1
+                            entities.last() shouldBe entity
+                            serializeAll() shouldBe "[MockEntity(id=1)]"
+                        }
                     }
                 }
             }
@@ -182,7 +198,7 @@ La forma más común de declarar una cota superior es directamente en la declara
 
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers title="bounds/src/main/kotlin/com/github/username/repo/Repository.kt"
+        ```kotlin showLineNumbers
         class Repository<T : Entity>
         ```
     </TabItem>
@@ -215,7 +231,7 @@ La forma más común de declarar una cota superior es directamente en la declara
     - **`T : Entity`** significa que `T` debe ser `Entity` o una clase que herede de `Entity`.
 </Explanation>
 
-### Segunda Forma: Usar la Cláusula `where` para Múltiples Cotas
+### Segunda forma: Usar la cláusula `where` para múltiples cotas
 
 Cuando es necesario aplicar **múltiples restricciones** a un tipo genérico en Kotlin, la cláusula `where` proporciona una forma clara y organizada de hacerlo. Esta técnica es útil cuando un tipo debe cumplir con más de una condición, garantizando que todas las restricciones se definan de manera explícita y comprensible.
 
@@ -276,7 +292,7 @@ En última instancia, la elección se basa en las preferencias de lx desarrollad
 
 :::
  
-### Ventajas y desventajas de las cotas superiores
+### Beneficios y limitaciones de las cotas superiores
 
 <ProCons>
    <Pros>
@@ -284,7 +300,6 @@ En última instancia, la elección se basa en las preferencias de lx desarrollad
       - **Flexibilidad y reutilización**: Al definir cotas superiores, se puede crear código genérico flexible que funcione con cualquier subtipo que cumpla las restricciones, permitiendo reutilizar clases y funciones sin necesidad de reescribirlas para cada caso específico.
       - **Clara intención de uso**: Especificar cotas superiores hace explícitas las expectativas y restricciones de una clase o función, lo que mejora la legibilidad y el mantenimiento del código, ya que otrxs desarrolladorxs pueden entender rápidamente qué tipos se esperan.
       - **Integridad de la API**: En el contexto de bibliotecas de software, las cotas superiores ayudan a asegurar que solo los tipos adecuados interactúen con la API, previniendo usos incorrectos que podrían llevar a errores en tiempo de ejecución.
-
    </Pros>
    <Cons>
       - **Complejidad adicional**: Usar cotas superiores y múltiples restricciones puede hacer que las definiciones de funciones y clases genéricas sean más complicadas, lo que puede ser intimidante para desarrolladorxs menos experimentados.
@@ -309,18 +324,28 @@ En Kotlin, las **cotas inferiores** no son compatibles de forma nativa, lo que s
             ```powershell
             $NotificationsMainDir = "$SrcMainDir\notifications"
             $NotificationsTestDir = "$SrcTestDir\notifications"
-            New-Item -Path "$NotificationsMainDir\EmailNotificationSystem.kt" `
-                -ItemType 'file' -Force
-            New-Item -Path "$NotificationsMainDir\NotificationHandler.kt" `
-                -ItemType 'file' -Force
-            New-Item -Path "$NotificationsTestDir\EmailNotificationSystemTest.kt" `
-                -ItemType 'file' -Force
+            New-Item -Path $NotificationsMainDir -ItemType 'directory' -Force
+            New-Item -Path $NotificationsTestDir -ItemType 'directory' -Force
+            "package $Group.notifications" -replace '\\', '.' | 
+                Out-File -FilePath "$NotificationsMainDir\EmailNotificationSystem.kt"
+            "package $Group.notifications" -replace '\\', '.' |
+                Out-File -FilePath "$NotificationsMainDir\NotificationHandler.kt"
+            "package $Group.notifications" -replace '\\', '.' |
+                Out-File -FilePath "$NotificationsTestDir\EmailNotificationSystemTest.kt"
             ```
         </TabItem>
         <TabItem value="Windows (corto)" label="Windows (corto)">
             ```powershell
             $NotificationsMainDir = "$SrcMainDir\notifications"
             $NotificationsTestDir = "$SrcTestDir\notifications"
+            md $NotificationsMainDir
+            md $NotificationsTestDir
+            "package $Group.notifications" -replace '\\', '.' > `
+                "$NotificationsMainDir\EmailNotificationSystem.kt"
+            "package $Group.notifications" -replace '\\', '.' > `
+                "$NotificationsMainDir\NotificationHandler.kt"
+            "package $Group.notifications" -replace '\\', '.' > `
+                "$NotificationsTestDir\EmailNotificationSystemTest.kt"
             ```
         </TabItem>
         <TabItem value="Linux/Mac" label="Linux/Mac">
@@ -329,6 +354,9 @@ En Kotlin, las **cotas inferiores** no son compatibles de forma nativa, lo que s
             NOTIFICATIONS_TEST_DIR="$SRC_TEST_DIR/notifications"
             mkdir -p "$NOTIFICATIONS_MAIN_DIR"
             mkdir -p "$NOTIFICATIONS_TEST_DIR"
+            echo "package ${GROUP//\//.}.notifications" > "$NOTIFICATIONS_MAIN_DIR/EmailNotificationSystem.kt"
+            echo "package ${GROUP//\//.}.notifications" > "$NOTIFICATIONS_MAIN_DIR/NotificationHandler.kt"
+            echo "package ${GROUP//\//.}.notifications" > "$NOTIFICATIONS_TEST_DIR/EmailNotificationSystemTest.kt"
             ```
         </TabItem>
     </Tabs>
@@ -357,26 +385,36 @@ Esto quiere decir que necesitamos un método `registerHandler` en `EmailNotifica
         ```kotlin showLineNumbers
         val system = EmailNotificationSystem()
         val generalHandler = NotificationHandler<Notification>()
-        system.registerHandler(generalHandler)
-        system.handlers.size shouldBe 1
-        system.handlers.last() shouldBe generalHandler
+        with(system) {
+            handlers.shouldBeEmpty()
+            registerHandler(generalHandler)
+            handlers shouldHaveSize 1
+            handlers.last() shouldBe generalHandler
+        }
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers
-        package com.github.username.notifications
+        ```kotlin showLineNumbers title="bounds/src/test/kotlin/com/github/username/notifications/EmailNotificationSystemTest.kt"
+        package cl.ravenhill.notifications
 
         import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.collections.shouldBeEmpty
+        import io.kotest.matchers.collections.shouldHaveSize
         import io.kotest.matchers.shouldBe
 
         class NotificationSystemTest : FreeSpec({
             "A notification system" - {
-                "can register a handler" {
-                    val system = EmailNotificationSystem()
-                    val generalHandler = NotificationHandler<Notification>()
-                    system.registerHandler(generalHandler)
-                    system.handlers.size shouldBe 1
-                    system.handlers.last() shouldBe generalHandler
+                "when registering a handler" - {
+                    "should contain the handler" {
+                        val system = EmailNotificationSystem()
+                        val generalHandler = NotificationHandler<Notification>()
+                        with(system) {
+                            handlers.shouldBeEmpty()
+                            registerHandler(generalHandler)
+                            handlers shouldHaveSize 1
+                            handlers.last() shouldBe generalHandler
+                        }
+                    }
                 }
             }
         })
@@ -386,7 +424,7 @@ Esto quiere decir que necesitamos un método `registerHandler` en `EmailNotifica
 
 Del concepto de **contravarianza**, sabemos que si `A` es un subtipo de `B`, entonces `Consumer<B>` es un subtipo de `Consumer<A>`. Aplicando esto, si `EmailNotification` es un subtipo de `Notification`, entonces un `NotificationHandler<Notification>` puede ser utilizado en cualquier lugar donde se espere un `NotificationHandler<EmailNotification>`. Esto nos permite aceptar un `NotificationHandler<Notification>` en contextos que requieren un `NotificationHandler<EmailNotification>`, emulando efectivamente una **cota inferior** en Kotlin.
 
-```kotlin showLineNumbers
+```kotlin showLineNumbers title="bounds/src/main/kotlin/com/github/username/notifications/EmailNotificationSystem.kt"
 package com.github.username.notifications
 
 typealias EmailNotificationHandler = 
@@ -402,7 +440,12 @@ class EmailNotificationSystem {
 }
 ```
 
-### Ventajas y desventajas de emular cotas inferiores
+<Explanation>
+    - **`EmailNotificationHandler`** es un alias para `NotificationHandler<in EmailNotification>`, que representa un handler que acepta notificaciones de correo electrónico o cualquier supertipo de `EmailNotification`.
+    - **`registerHandler`** acepta un `EmailNotificationHandler`, que puede ser un `NotificationHandler<EmailNotification>` o un supertipo de `EmailNotification`.
+</Explanation>
+
+### Beneficios y limitaciones de emular cotas inferiores
 
 <ProCons>
    <Pros>
@@ -435,3 +478,15 @@ Por otro lado, aprendimos que, aunque Kotlin no soporta cotas inferiores de form
 ---
 
 Estas técnicas y conocimientos son fundamentales para diseñar bibliotecas genéricas robustas y reutilizables, asegurando que las APIs se mantengan flexibles pero seguras para lxs desarrolladorxs que las utilicen.
+
+<References references={[
+    {
+        title: "Generics",
+        bookTitle: "Kotlin in action",
+        publisher: "Manning Publications Co.",
+        pages: "223–253",
+        year: "2017",
+        author: "Dmitry Jemerov & Svetlana Isakova",
+        type: "book",
+    },
+]}/>
