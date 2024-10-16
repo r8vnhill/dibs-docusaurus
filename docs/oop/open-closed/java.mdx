@@ -1,0 +1,98 @@
+---
+title: Clases abiertas y finales en Java
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+En **Java**, las clases son abiertas por defecto, lo que significa que pueden ser heredadas a menos que las marques explícitamente con la palabra clave `final`. Usar `final` en clases o métodos es una buena práctica cuando no quieres que esas clases o métodos sean extendidos o sobrescritos, protegiendo así su comportamiento original.
+
+## Ejemplo en Java de clase y métodos finales
+
+Imagina que tienes una clase `DatabaseConnection` y quieres asegurarte de que ninguna subclase pueda modificar su comportamiento. Para lograr esto, usas `final` en la clase o en métodos específicos.
+
+### Clase `DatabaseConnection` (final)
+
+```java
+public class DatabaseConnection {
+    protected String url;
+
+    public DatabaseConnection(String url) {
+        this.url = url;
+    }
+
+    public final void startConnection() {
+        System.out.println("Connecting to " + url);
+    }
+
+    public void closeConnection() {
+        System.out.println("Closing connection to " + url);
+    }
+}
+```
+
+<Explanation>
+    El método `startConnection` está marcado como `final`, lo que significa que no puede ser sobrescrito por subclases. Sin embargo, el método `closeConnection` no está marcado como `final`, por lo que puede ser sobrescrito si es necesario.
+</Explanation>
+
+### Heredar `DatabaseConnection`
+
+```java
+public final class EncryptedDatabaseConnection extends DatabaseConnection {
+
+    public EncryptedDatabaseConnection(String url) {
+        super(url);
+    }
+
+    @Override
+    public void closeConnection() {
+        System.out.println("Closing encrypted connection to " + url);
+    }
+}
+```
+
+<Explanation>
+    - La clase `EncryptedDatabaseConnection` extiende `DatabaseConnection`, pero no puede sobrescribir el método `startConnection` porque está marcado como `final`. Sin embargo, puede sobrescribir el método `closeConnection` para proporcionar un comportamiento específico.
+    - La clase `EncryptedDatabaseConnection` también está marcada como `final`, lo que significa que no puede ser heredada por otras clases.
+</Explanation>
+
+## Comparación final
+
+| **Característica**                       | **Java**                                                                                               | **Kotlin**                                                                                                  |
+|------------------------------------------|--------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
+| **Clases abiertas por defecto**          | En Java, las clases son **abiertas** por defecto y **pueden ser heredadas** a menos que se usen `final`. | En Kotlin, las clases son **cerradas** por defecto y **no pueden ser heredadas** a menos que se usen `open`. |
+| **Control de herencia**                  | Para evitar la herencia, se debe usar explícitamente la palabra clave `final` en clases o métodos.       | Las clases y métodos son cerrados por defecto, solo puedes permitir herencia explícita marcándolos como `open`. |
+| **Sobrescritura**                        | Los métodos pueden ser sobrescritos a menos que sean `final`.                                            | Los métodos deben ser `open` para permitir su sobrescritura.                                                 |
+| **Finalidad por defecto**                | Debes marcar clases y métodos como `final` si deseas evitar que sean heredados o sobrescritos.           | La finalidad está integrada por defecto, lo que asegura un diseño más seguro y controlado desde el principio. |
+| **Desarrollo seguro**                    | Es fácil heredar accidentalmente de una clase, lo que puede provocar problemas de base frágil.           | Menor riesgo de herencia accidental, lo que ayuda a evitar problemas como el **problema de la base frágil**.  |
+| **Flexibilidad en herencia**             | Más flexible para herencia, pero requiere un control manual con `final` para evitar problemas.            | Más restringido, lo que garantiza mayor control sobre cómo se extienden las clases.                           |
+
+### Beneficios y limitaciones
+
+<ProCons>
+  <Pros>
+    - **Flexibilidad inicial**: En Java, las clases y métodos son abiertos por defecto, lo que facilita la extensión de funcionalidad sin la necesidad de hacer cambios adicionales. Esto proporciona flexibilidad a lxs desarrolladorxs que desean reutilizar el código base sin demasiadas restricciones.
+    - **Control explícito**: El uso de `final` permite un control explícito sobre qué clases y métodos pueden ser heredados o sobrescritos. Esto ayuda a mantener la seguridad de partes críticas del código cuando es necesario.
+    - **Amplia compatibilidad**: Java es ampliamente utilizado y conocido, lo que significa que esta flexibilidad de herencia abierta puede ser útil en muchos contextos, especialmente en sistemas que necesitan un diseño orientado a extensibilidad.
+  </Pros>
+  <Cons>
+    - **Riesgo de herencia accidental**: Al ser las clases abiertas por defecto, se corre el riesgo de herencia accidental. Lxs desarrolladorxs pueden heredar y sobrescribir clases sin tener en cuenta el comportamiento esperado, lo que puede conducir a errores o a romper la funcionalidad de la clase base (problema de la base frágil).
+    - **Mayor responsabilidad del desarrollador**: El desarrollador debe estar constantemente vigilante de cuándo y dónde usar `final`. La falta de control automático en el lenguaje puede llevar a problemas en grandes equipos o proyectos donde no todos siguen estas buenas prácticas.
+    - **Posible complicación del mantenimiento**: Debido a la apertura por defecto, es más probable que el código sufra de un diseño más complejo a medida que diferentes desarrolladores heredan y sobrescriben funcionalidades sin un control estricto. Esto puede complicar el mantenimiento a largo plazo.
+    - **Necesidad de documentación adicional**: En Java, debido a la apertura por defecto, puede ser necesario documentar de manera explícita cuándo una clase debe ser heredada y cuándo no, lo que añade una capa extra de trabajo en la creación de bibliotecas de software robustas.
+  </Cons>
+</ProCons>
