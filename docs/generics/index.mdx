@@ -20,6 +20,35 @@ import RepoClone from "@site/src/components/admonitions/RepoClone"
 <GithubRepoLink user="r8vnhill" repo="generic-programming-kt" />
 
 <RepoClone groupId="generic-programming" repoName="generic-programming-kt" />
+<details>
+    <summary>
+        Comencemos por crear un módulo para la lección...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Item -Path 'basics' -ItemType Directory
+            '// Intentionally left blank' |
+                Out-File -FilePath 'basics\build.gradle.kts'
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            md basics
+            '// Intentionally left blank' > basics\build.gradle.kts
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            mkdir basics
+            echo '// Intentionally left blank' > basics/build.gradle.kts
+            ```
+        </TabItem>
+    </Tabs>
+
+    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
+</details>
 
 La **programación genérica** es un paradigma clave en el diseño de software moderno que permite escribir código más flexible, reutilizable y robusto. Este enfoque permite trabajar con tipos abstractos, sin la necesidad de especificar los tipos concretos de antemano, facilitando el manejo de diferentes tipos de datos con un solo conjunto de funciones o estructuras.
 
@@ -99,6 +128,126 @@ Kotlin soporta el polimorfismo paramétrico a través de **tipos genéricos**. P
 ### Funciones Genéricas
 
 La función `identity` puede ser implementada fácilmente en Kotlin usando un parámetro de tipo genérico:
+
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $Group = 'com\github\username'
+            ```
+
+            ```powershell
+            $GenericTestDir = "basics\src\test\kotlin\$Group\generics"
+            $GenericMainDir = "basics\src\main\kotlin\$Group\generics"
+            $GenericTestDir | New-Item -ItemType Directory -Force
+            $GenericMainDir | New-Item -ItemType Directory -Force
+            "package $Group.generics" -replace '\\', '.' | 
+                Out-File -FilePath "$GenericTestDir\IdentityTest.kt"
+            "package $Group.generics" -replace '\\', '.' | 
+                Out-File -FilePath "$GenericMainDir\Identity.kt"
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            $Group = 'com\github\username'
+            ```
+
+            ```powershell
+            $GenericTestDir = "basics\src\test\kotlin\$Group\generics"
+            $GenericMainDir = "basics\src\main\kotlin\$Group\generics"
+            $GenericTestDir, $GenericMainDir | % { md $_ }
+            "package $Group.generics" -replace '\\', '.' > `
+                "$GenericTestDir\IdentityTest.kt"
+            "package $Group.generics" -replace '\\', '.' > `
+                "$GenericMainDir\Identity.kt"
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            GROUP=com/github/username
+            ```
+
+            ```bash
+            GENERIC_TEST_DIR="basics/src/test/kotlin/$GROUP/generics"
+            GENERIC_MAIN_DIR="basics/src/main/kotlin/$GROUP/generics"
+            mkdir -p $GENERIC_TEST_DIR $GENERIC_MAIN_DIR
+            echo "package ${GROUP//\//.}.generics" > \
+                $GENERIC_TEST_DIR/IdentityTest.kt
+            echo "package ${GROUP//\//.}.generics" > \
+                $GENERIC_MAIN_DIR/Identity.kt
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+<Tabs>
+    <TabItem label={"Especificación"} value={"Especificación"}>
+        ```kotlin
+        "Given an identity function" - {
+            "when calling it with a string" - {
+                "should return the same string" {}
+            }
+            
+            "when calling it with an integer" - {
+                "should return the same integer" {}
+            }
+            
+            "when calling it with a boolean" - {
+                "should return the same boolean" {}
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin
+        "when calling it with a string" - {
+            "should return the same string" {
+                identity("Hello") shouldBe "Hello"
+            }
+        }
+
+        "when calling it with an integer" - {
+            "should return the same integer" {
+                identity(42) shouldBe 42
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin
+        package com.github.username.generics
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        class IdentityTest : FreeSpec({
+            "Given an identity function" - {
+                "when calling it with a string" - {
+                    "should return the same string" {
+                        identity("Hello") shouldBe "Hello"
+                    }
+                }
+                
+                "when calling it with an integer" - {
+                    "should return the same integer" {
+                        identity(42) shouldBe 42
+                    }
+                }
+                
+                "when calling it with a boolean" - {
+                    "should return the same boolean" {
+                        identity(true) shouldBe true
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
 
 ```kotlin showLineNumbers
 fun <T> identity(value: T): T = value
