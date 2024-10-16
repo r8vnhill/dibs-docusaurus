@@ -1,0 +1,181 @@
+---
+title: Mi primera aplicación en Bazel
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+En esta lección, compararemos cómo crear una aplicación básica en Kotlin utilizando **Bazel**. Tanto Gradle como Bazel permiten gestionar dependencias, compilar código y empaquetar aplicaciones, pero difieren en su enfoque y características. Bazel es un sistema de construcción multiplataforma, originalmente desarrollado por Google, que se enfoca en velocidad y escalabilidad, ideal para grandes proyectos.
+
+Nos centraremos en las diferencias clave, y al final, tendrás una visión clara de cómo crear y ejecutar una aplicación en cada sistema.
+
+## Echo App con Bazel
+
+Vamos a replicar la **Echo App** que construimos con Gradle, pero esta vez usando **Bazel**. La funcionalidad seguirá siendo la misma: recibir un mensaje como argumento y mostrarlo en la consola junto con la hora actual.
+
+### Estructura del proyecto
+
+Con Bazel, la estructura del proyecto es diferente. En lugar de archivos como `build.gradle.kts`, utilizamos archivos de configuración llamados **BUILD** y un archivo principal llamado **WORKSPACE**.
+
+#### Archivo WORKSPACE
+
+El archivo `WORKSPACE` es el punto de entrada de Bazel. Aquí es donde podemos declarar dependencias externas o configurar repositorios. Para nuestro proyecto, utilizaremos `rules_jvm_external` para gestionar las dependencias de Kotlin.
+
+Crea el archivo `WORKSPACE` con el siguiente contenido:
+
+```python showLineNumbers title="WORKSPACE"
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "rules_jvm_external",
+    urls = ["https://github.com/bazelbuild/rules_jvm_external/archive/refs/tags/4.2.zip"],
+    strip_prefix = "rules_jvm_external-4.2",
+)
+
+load("@rules_jvm_external//:defs.bzl", "maven_install")
+
+maven_install(
+    artifacts = [
+        "org.jetbrains.kotlin:kotlin-stdlib:2.0.21",
+        "org.jetbrains.kotlinx:kotlinx-datetime:0.6.1",
+    ],
+    repositories = [
+        "https://maven-central.storage.googleapis.com/",
+    ],
+)
+```
+
+<Explanation>
+    - `http_archive`: Descarga un archivo comprimido desde una URL y lo descomprime en el directorio de salida.
+    - `maven_install`: Instala dependencias de Maven en el proyecto.
+    - `artifacts`: Lista de dependencias a instalar.
+    - `repositories`: Repositorios de Maven donde buscar las dependencias.
+</Explanation>
+
+### Configuración en el archivo BUILD
+
+Cada directorio con código fuente necesita un archivo **BUILD** que defina cómo compilar el código. Para nuestra Echo App, vamos a definir una **regla** que compile y ejecute el código Kotlin.
+
+Crea el archivo `BUILD` dentro del directorio `src/main/kotlin/echo/` con el siguiente contenido:
+
+```python showLineNumbers title="src/main/kotlin/echo/BUILD"
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_binary")
+
+kt_jvm_binary(
+    name = "EchoApp",
+    srcs = ["EchoApp.kt"],
+    main_class = "echo.EchoAppKt",
+    deps = [
+        "@maven//:org_jetbrains_kotlinx_kotlinx_datetime",
+    ],
+)
+```
+
+<Explanation>
+    - `kt_jvm_binary`: Una regla para compilar y ejecutar aplicaciones Kotlin.
+    - `srcs`: Los archivos fuente de Kotlin.
+    - `main_class`: La clase que contiene el método `main()`.
+    - `deps`: Las dependencias que estamos utilizando, como `kotlinx-datetime`.
+</Explanation>
+
+### Código de la aplicación
+
+Ahora vamos a escribir el código de la aplicación en `EchoApp.kt`, similar a lo que ya vimos en Kotlin con Gradle:
+
+```kotlin showLineNumbers title="src/main/kotlin/echo/EchoApp.kt"
+package echo
+
+import kotlinx.datetime.Clock
+
+fun echo(message: String) = "${Clock.System.now()} - $message"
+
+fun main(args: Array<String>) {
+    for (arg in args) {
+        println(echo(arg))
+    }
+}
+```
+
+El código es prácticamente el mismo que con Gradle, utilizando la biblioteca `kotlinx.datetime` para agregar la marca de tiempo al mensaje.
+
+### Ejecutando la aplicación
+
+Con todo configurado, podemos compilar y ejecutar la aplicación utilizando Bazel. Primero, ejecuta el siguiente comando para compilar el proyecto:
+
+```bash
+bazel build //src/main/kotlin/echo:EchoApp
+```
+
+Después, ejecuta la aplicación:
+
+```bash
+bazel run //src/main/kotlin/echo:EchoApp -- "Hello, world!"
+```
+
+El resultado será similar a lo que vimos en Gradle, con la salida en la consola mostrando el mensaje con la hora actual.
+
+## Comparación final
+
+| **Característica**                  | **Bazel**                                                                 | **Gradle**                                                                |
+|-------------------------------------|----------------------------------------------------------------------------|---------------------------------------------------------------------------|
+| **Configuración**                   | Requiere un archivo `WORKSPACE` para configurar dependencias externas y archivos `BUILD` en cada directorio. | Utiliza `build.gradle.kts` o `build.gradle` para definir dependencias y tareas en un solo archivo por proyecto o módulo. |
+| **Gestión de dependencias**         | Usa `rules_jvm_external` para integrar dependencias de Maven y otros repositorios. | Utiliza el sistema integrado de dependencias con un acceso directo a Maven Central. |
+| **Compilación incremental**         | Alta eficiencia en compilaciones incrementales, ideal para proyectos grandes y complejos. | Ofrece compilación incremental, pero puede ser más lento que Bazel en proyectos grandes. |
+| **Compilación multiplataforma**     | Excelente para proyectos con múltiples lenguajes de programación (Java, C++, Python, etc.). | Enfocado principalmente en la JVM (Kotlin, Java, Groovy) y Gradle Script. |
+| **Velocidad de compilación**        | Más rápido en grandes proyectos con múltiples dependencias debido a su estrategia de compilación paralela. | Adecuado para proyectos pequeños y medianos, pero puede ser más lento en proyectos masivos. |
+| **Complejidad de configuración**    | Más complejo de configurar, especialmente para quienes no están familiarizadxs con su sistema de reglas. | Más simple y directo de configurar para la mayoría de los proyectos pequeños y medianos. |
+| **Comunidad y ecosistema**          | Usado por grandes proyectos internos de Google, pero con menor adopción general fuera de estos casos. | Amplia adopción en la comunidad de Kotlin, Android y desarrollo de aplicaciones basadas en la JVM. |
+| **Soporte de plugins y extensiones**| Depende de reglas específicas (por ejemplo, `rules_kotlin`) para añadir soporte de lenguajes y herramientas. | Gran cantidad de plugins y extensiones disponibles para diferentes tecnologías. |
+| **Distribución de aplicaciones**    | Fácil creación de binarios multiplataforma, sin necesidad de dependencias externas como Gradle. | Requiere `gradle run` o empaquetado adicional (por ejemplo, `installDist`) para crear binarios ejecutables. |
+| **Curva de aprendizaje**            | Mayor curva de aprendizaje, especialmente para desarrolladorxs que no estén familiarizadxs con sus reglas y configuraciones. | Más fácil de aprender y usar para proyectos JVM y lenguajes soportados nativamente. |
+
+## Beneficios y limitaciones
+
+<ProCons>
+  <Pros>
+    - **Velocidad en proyectos grandes**: Bazel sobresale en la compilación de proyectos grandes, gracias a su compilación paralela y a su eficiente manejo de dependencias.
+    - **Multilenguaje**: Bazel permite gestionar proyectos que mezclan múltiples lenguajes de programación (Java, Kotlin, C++, Python) en un solo repositorio, lo que lo hace ideal para proyectos complejos.
+    - **Independencia de la plataforma**: Bazel facilita la creación de binarios multiplataforma sin depender de herramientas adicionales, permitiendo una distribución más flexible.
+    - **Determinismo y caché**: Ofrece un sistema de compilación determinista, lo que significa que la misma entrada siempre genera la misma salida. Además, utiliza un sistema avanzado de caché para evitar recompilaciones innecesarias.
+    - **Escalabilidad**: Ideal para proyectos masivos que necesitan manejar miles de dependencias y múltiples lenguajes sin sacrificar el rendimiento.
+  </Pros>
+
+  <Cons>
+    - **Curva de aprendizaje**: Configurar y dominar Bazel puede ser más complicado, especialmente para desarrolladorxs que no están familiarizadxs con su sistema de reglas.
+    - **Menor adopción fuera de grandes empresas**: Aunque Bazel es muy usado por compañías como Google, no tiene la misma adopción masiva que Gradle en el ecosistema JVM, lo que puede dificultar encontrar recursos y comunidades de soporte.
+    - **Menos integración con el ecosistema de JVM**: Aunque Bazel soporta Kotlin y Java, su integración con el ecosistema JVM es menos natural comparado con Gradle, que está profundamente integrado con herramientas como Android Studio.
+    - **Configuración inicial más larga**: Para proyectos pequeños o medianos, la configuración inicial de Bazel puede sentirse como una sobrecarga en comparación con la simplicidad de un único archivo `build.gradle.kts` en Gradle.
+  </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos cómo crear una aplicación básica en Kotlin utilizando **Bazel** y cómo se compara con **Gradle**. Replicamos la funcionalidad de nuestra **Echo App**, pero utilizando la infraestructura de Bazel. Vimos cómo configurar el archivo `WORKSPACE` y los archivos `BUILD`, gestionar dependencias y ejecutar la aplicación.
+
+También comparamos las principales diferencias entre Bazel y Gradle, tanto en términos de facilidad de configuración como en rendimiento y escalabilidad, destacando cuándo es más conveniente usar uno u otro.
+
+## Puntos clave
+
+- **Configuración y gestión de dependencias**: Mientras que Gradle ofrece una configuración más sencilla y centralizada en un solo archivo, Bazel distribuye la configuración en varios archivos y requiere un archivo `WORKSPACE` para dependencias externas.
+- **Velocidad y escalabilidad**: Bazel es excelente para grandes proyectos con múltiples lenguajes de programación y ofrece compilación paralela más rápida en comparación con Gradle, especialmente en proyectos grandes y complejos.
+- **Curva de aprendizaje**: Bazel tiene una curva de aprendizaje más pronunciada debido a su complejidad y sistema de reglas, mientras que Gradle es más amigable y fácil de aprender, especialmente para desarrolladorxs de proyectos JVM.
+- **Distribución de binarios**: Bazel facilita la creación de binarios multiplataforma sin dependencias externas, mientras que en Gradle es necesario realizar pasos adicionales para empaquetar aplicaciones de forma ejecutable.
+- **Menor adopción de Bazel en proyectos JVM**: Aunque Bazel ofrece ventajas en grandes proyectos, Gradle sigue siendo la herramienta preferida en proyectos Kotlin y JVM debido a su integración con herramientas como Android Studio y su amplia comunidad.
+
+---
+
+Con estas ideas, puedes elegir entre **Bazel** o **Gradle** dependiendo de las necesidades de tu proyecto. Si trabajas con proyectos pequeños o medianos en la JVM, **Gradle** puede ser la opción más sencilla y rápida. Sin embargo, si necesitas velocidad y escalabilidad en proyectos grandes y multiplataforma, **Bazel** será una opción poderosa.

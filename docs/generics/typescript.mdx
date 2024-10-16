@@ -1,88 +1,197 @@
 ---
 title: Programación genérica en TypeScript
 ---
-import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
 
 Al igual que en Kotlin, **TypeScript** también soporta el polimorfismo paramétrico utilizando **tipos genéricos**. Esto permite definir funciones, clases e interfaces que pueden trabajar con cualquier tipo de dato sin especificarlo de antemano.
 
-### Función Genérica en TypeScript
+## Función Genérica en TypeScript
 
 En TypeScript, la **función de identidad** se implementa con tipos genéricos de la siguiente manera:
 
-```typescript
-function identity<T>(value: T): T {
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```typescript showLineNumbers
+        test('when called with a string, then returns the string', () => {
+            const value = 'hello';
+            expect(identity(value)).toBe(value);
+        });
+
+        test('when called with a number, then returns the number', () => {
+            const value = 42;
+            expect(identity(value)).toBe(value);
+        });
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```typescript showLineNumbers title="test/generics/identity.test.ts"
+        import { describe, expect, test } from '@jest/globals';
+        import { identity } from '../../src/generics/identity';
+
+        describe('given an identity function', () => {
+            test('when called with a string, then returns the string', () => {
+                const value = 'hello';
+                expect(identity(value)).toBe(value);
+            });
+
+            test('when called with a number, then returns the number', () => {
+                const value = 42;
+                expect(identity(value)).toBe(value);
+            });
+
+            test('when called with an object, then returns the object', () => {
+                const value = { foo: 'bar' };
+                expect(identity(value)).toBe(value);
+            });
+        });
+        ```
+    </TabItem>
+</Tabs>
+
+```typescript showLineNumbers title="src/generics/identity.ts"
+export function identity<T>(value: T): T {
     return value;
 }
 ```
 
-#### Uso
-
-```typescript
-const intIdentity = identity(420);       // The type of intIdentity is number
-const stringIdentity = identity("Hello"); // The type of stringIdentity is string
-```
-
-### Clases Genéricas en TypeScript
+## Clases Genéricas en TypeScript
 
 TypeScript también soporta **clases genéricas**. Un ejemplo típico es la clase `Box` que puede almacenar un valor de cualquier tipo `T`:
 
-```typescript
-class Box<T> {
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```typescript showLineNumbers
+        test('when containing a string, then returns the string', () => {
+            const box: Box<string> = { value: 'hello' };
+            expect(box.value).toBe('hello');
+        });
+
+        test('when containing a number, then returns the number', () => {
+            const box: Box<number> = { value: 42 };
+            expect(box.value).toBe(42);
+        });
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```typescript showLineNumbers title="test/generics/box.test.ts"
+        import { describe, expect, test } from '@jest/globals';
+        import { Box } from '../../src/generics/box';
+
+        describe('given a box', () => {
+            test('when containing a string, then returns the string', () => {
+                const box: Box<string> = { value: 'hello' };
+                expect(box.value).toBe('hello');
+            });
+
+            test('when containing a number, then returns the number', () => {
+                const box: Box<number> = { value: 42 };
+                expect(box.value).toBe(42);
+            });
+
+            test('when containing an object, then returns the object', () => {
+                const box: Box<{ foo: string }> = { value: { foo: 'bar' } };
+                expect(box.value).toEqual({ foo: 'bar' });
+            });
+        })
+        ```
+    </TabItem>
+</Tabs>
+
+```typescript showLineNumbers title="src/generics/box.ts"
+export class Box<T> {
     constructor(public value: T) {}
 }
 ```
 
-#### Uso
-
-```typescript
-const intBox = new Box(123);
-const stringBox = new Box("TypeScript");
-
-console.log(intBox.value); // Prints: 123
-console.log(stringBox.value); // Prints: TypeScript
-```
-
-### Interfaces Genéricas en TypeScript
+## Interfaces Genéricas en TypeScript
 
 Similar a Kotlin, **TypeScript** también permite definir **interfaces genéricas**. Aquí está un ejemplo de una interfaz `Repository` genérica para cualquier tipo `T`:
 
-```typescript
-interface Repository<T> {
-    save(item: T): void;
-    findById(id: number): T | undefined;
-}
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```typescript showLineNumbers
+        test('when saving a user, then can find the user by id', () => {
+            const repository = new UserRepository();
+            const user: User = { id: 1, name: 'Jeon Geuk-jin' };
+            expect(repository.findById(user.id)).toBeUndefined();
+            repository.save(user);
+            expect(repository.findById(user.id)).toEqual(user);
+        });
+        ```
 
-class UserRepository implements Repository<User> {
-    private users: User[] = [];
+        ```typescript showLineNumbers
+        export interface Repository<T> {
+            save(value: T): void;
+            findById(id: number): T | undefined;
+        }
 
-    save(item: User): void {
-        this.users.push(item);
-    }
+        export class UserRepository implements Repository<User> {}
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```typescript showLineNumbers title="test/generics/repo/user-repository.test.ts"
+        import { describe, expect, test } from '@jest/globals';
+        import { User } from '../../../src/generics/repo/user';
+        import { UserRepository } from '../../../src/generics/repo/repository';
 
-    findById(id: number): User | undefined {
-        return this.users.find(user => user.id === id);
-    }
-}
+        describe('given a user repository', () => {
+            test('when saving a user, then can find the user by id', () => {
+                const repository = new UserRepository();
+                const user: User = { id: 1, name: 'Jeon Geuk-jin' };
+                expect(repository.findById(user.id)).toBeUndefined();
+                repository.save(user);
+                expect(repository.findById(user.id)).toEqual(user);
+            })
+        })
+        ```
 
-class User {
-    constructor(public id: number, public name: string) {}
-}
-```
+        ```typescript showLineNumbers title="src/generics/repo/user.ts"
+        export interface User {
+            id: number;
+            name: string;
+        }
+        ```
 
-#### Uso
+        ```typescript showLineNumbers title="src/generics/repo/repository.ts"
+        import { User } from './user.ts';
 
-```typescript
-const userRepository = new UserRepository();
-const user = new User(1, "John Doe");
+        export interface Repository<T> {
+            save(value: T): void;
+            findById(id: number): T | undefined;
+        }
 
-userRepository.save(user);
-console.log(userRepository.findById(1)); // Imprime: User { id: 1, name: 'John Doe' }
-```
+        export class UserRepository implements Repository<User> {
+            private users: User[] = [];
 
-### Comparación Final
+            save(user: User): void {
+                this.users.push(user);
+            }
+
+            findById(id: number): User | undefined {
+                return this.users.find(user => user.id === id);
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+## Comparación Final
 
 | Característica                 | Kotlin                                     | TypeScript                                      |
 |--------------------------------|--------------------------------------------|-------------------------------------------------|
@@ -92,27 +201,26 @@ console.log(userRepository.findById(1)); // Imprime: User { id: 1, name: 'John D
 | **Tipo de Parámetro Inferido** | Inferencia fuerte                          | Inferencia flexible                             |
 | **Sistema de Tipos**           | Estático y seguro en tiempo de compilación | Estático, pero más flexible                     |
 
-:::tip Ventajas de TypeScript
+### Beneficios y limitaciones
 
-1. **Flexibilidad**: TypeScript permite mayor flexibilidad en la inferencia de tipos, lo que puede hacer que sea más fácil de usar en proyectos donde el tipado rígido no es siempre necesario.
-2. **Integración con JavaScript**: Al ser un superconjunto de JavaScript, TypeScript facilita la adopción gradual de tipos en proyectos JavaScript existentes, lo que lo convierte en una excelente opción para proyectos que evolucionan.
-3. **Desarrollo web**: TypeScript es ampliamente utilizado en el desarrollo de aplicaciones web modernas, particularmente en frameworks como Angular, lo que lo hace relevante para desarrolladores web.
-
-:::
-
-:::danger Desventajas de TypeScript
-
-1. **Tipado menos estricto**: Aunque TypeScript tiene un sistema de tipos estáticos, es más flexible que el de Kotlin, lo que puede llevar a errores difíciles de detectar en aplicaciones grandes si no se aplica correctamente.
-2. **Menor seguridad de tipos**: Debido a que TypeScript permite el tipado opcional y es más permisivo, no siempre se garantiza la misma seguridad en tiempo de compilación que en Kotlin.
-3. **Complejidad añadida**: En proyectos grandes, la configuración y gestión de tipos en TypeScript puede volverse compleja, especialmente cuando se integran librerías de JavaScript que no tienen tipos definidos.
-
-:::
+<ProCons>
+    <Pros>
+        - **Flexibilidad**: TypeScript permite mayor flexibilidad en la inferencia de tipos, lo que puede hacer que sea más fácil de usar en proyectos donde el tipado rígido no es siempre necesario.
+        - **Integración con JavaScript**: Al ser un superconjunto de JavaScript, TypeScript facilita la adopción gradual de tipos en proyectos JavaScript existentes, lo que lo convierte en una excelente opción para proyectos que evolucionan.
+        - **Desarrollo web**: TypeScript es ampliamente utilizado en el desarrollo de aplicaciones web modernas, particularmente en frameworks como Angular, lo que lo hace relevante para desarrolladores web.        
+    </Pros>
+    <Cons>
+        - **Tipado menos estricto**: Aunque TypeScript tiene un sistema de tipos estáticos, es más flexible que el de Kotlin, lo que puede llevar a errores difíciles de detectar en aplicaciones grandes si no se aplica correctamente.
+        - **Menor seguridad de tipos**: Debido a que TypeScript permite el tipado opcional y es más permisivo, no siempre se garantiza la misma seguridad en tiempo de compilación que en Kotlin.
+        - **Complejidad añadida**: En proyectos grandes, la configuración y gestión de tipos en TypeScript puede volverse compleja, especialmente cuando se integran librerías de JavaScript que no tienen tipos definidos.
+    </Cons>
+</ProCons>
 
 ## ¿Qué Aprendimos?
 
 En esta lección, hemos explorado cómo **TypeScript** soporta el polimorfismo paramétrico de manera similar a **Kotlin** a través del uso de **tipos genéricos**. Ambos lenguajes permiten escribir código más flexible y reutilizable al permitir que funciones, clases e interfaces trabajen con cualquier tipo de dato. Sin embargo, también hemos visto algunas diferencias clave en sus enfoques, como la flexibilidad del sistema de tipos de TypeScript frente a la mayor rigidez y seguridad del sistema de tipos de Kotlin.
 
-### Puntos clave
+## Puntos clave
 
 - **TypeScript** ofrece un sistema de tipos más flexible, adecuado para proyectos que requieren integrarse con código JavaScript existente o aplicaciones web modernas.
 - **Kotlin**, por otro lado, proporciona un sistema de tipos más estricto y seguro, lo que garantiza una mayor seguridad en tiempo de compilación, evitando errores de tipo comunes.
@@ -127,7 +235,7 @@ Con esto, puedes aplicar el polimorfismo paramétrico en ambos lenguajes para es
         publisher: "O'Reilly",
         pages: "109–142",
         type: "book",
-        title: "4. Generics",
+        title: "Generics",
         author: "Baumgartner, S.",
         year: "2023",
         bookTitle: "Typescript Cookbook: Real world type-level programming",

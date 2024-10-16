@@ -1,0 +1,165 @@
+---
+title: El functor Result en Rust
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+Ahora que ya conocemos cómo manejar computaciones que pueden fallar utilizando el **functor `Result`** en Kotlin, vamos a comparar este enfoque con otro lenguaje de programación: **Rust**. Rust también utiliza una estructura similar llamada `Result`, la cual sigue los mismos principios de programación funcional, pero con algunas diferencias significativas debido a las características únicas del lenguaje.
+
+En esta lección comparativa, exploraremos cómo se implementa y utiliza `Result` en **Rust**, destacando cualquier limitación o ventaja en comparación con Kotlin.
+
+## ¿Qué es el functor `Result` en Rust?
+
+Al igual que en Kotlin, **Rust** tiene una estructura de datos `Result` para representar operaciones que pueden fallar. Esta estructura tiene dos variantes:
+
+- **Ok(T)**: Indica que la operación fue exitosa y contiene un valor de tipo `T`.
+- **Err(E)**: Indica que la operación falló y contiene un valor de tipo `E`, que generalmente es una estructura de error.
+
+La firma genérica del `Result` en Rust es la siguiente:
+
+```rust
+enum Result<T, E> {
+    Ok(T),
+    Err(E),
+}
+```
+
+Esta estructura permite el manejo explícito de errores, evitando el uso de excepciones y facilitando la composición de operaciones seguras, de manera similar a Kotlin.
+
+## Ejemplo: Cálculo de área de un círculo
+
+Implementaremos una función que calcule el área de un círculo. Si el radio es negativo, devolveremos un `Err` con un mensaje de error, mientras que si el radio es positivo, devolveremos un `Ok` con el área calculada.
+
+```rust showLineNumbers
+fn calculate_area(radius: f64) -> Result<f64, String> {
+    if radius >= 0.0 {
+        Ok(std::f64::consts::PI * radius * radius)
+    } else {
+        Err(String::from("El radio no puede ser negativo"))
+    }
+}
+
+fn main() {
+    let radius = -5.0;
+    match calculate_area(radius) {
+        Ok(area) => println!("El área del círculo es {}", area),
+        Err(e) => println!("Error: {}", e),
+    }
+}
+```
+
+### Diferencias con Kotlin
+
+1. **Manejo de errores sin excepciones**: Al igual que Kotlin, Rust evita las excepciones tradicionales y obliga a manejar los errores explícitamente. Sin embargo, Rust lo lleva un paso más allá, ya que no tiene un sistema de excepciones en absoluto. Todos los errores en Rust se manejan mediante el tipo `Result` o el tipo `Option`.
+2. **Tipos de error flexibles**: En Rust, podemos especificar cualquier tipo para representar un error en la variante `Err`. En Kotlin, los errores están restringidos a `Throwable`, mientras que en Rust, los errores pueden ser `String`, números o cualquier otra estructura personalizada, ofreciendo más flexibilidad.
+3. **Manejo con `match`**: Rust usa el patrón `match` para desempacar valores de `Result`. Esto proporciona una forma más expresiva de manejar tanto el éxito (`Ok`) como el fallo (`Err`), en comparación con las funciones `onSuccess` y `onFailure` de Kotlin.
+
+## Composición funcional en Rust
+
+En Rust, el método equivalente a `map` en `Result` nos permite transformar el valor encapsulado dentro de `Ok`, sin modificar el valor de `Err`. A continuación, se muestra cómo podemos usar `map` para transformar el área del círculo, similar a cómo lo haríamos en Kotlin:
+
+```rust showLineNumbers
+fn main() {
+    let radius = 5.0;
+    let result = calculate_area(radius)
+        .map(|area| format!("El área del círculo con radio {} es {}", radius, area));
+
+    match result {
+        Ok(message) => println!("{}", message),
+        Err(e) => println!("Error: {}", e),
+    }
+}
+```
+
+### Diferencias en composición
+
+1. **Patrón `match` vs. `map`**: Rust obliga a utilizar `match` o métodos como `map` y `and_then` para componer funciones sobre `Result`. Aunque Kotlin ofrece una composición funcional similar con `map`, en Rust, esto es más natural, ya que el lenguaje está diseñado en torno al manejo explícito de resultados y errores.
+2. **Error handling con `?`**: Rust ofrece una característica única llamada **operador `?`**, que permite propagar errores automáticamente sin tener que usar `match` o `map`. Esto hace que la propagación de errores sea mucho más limpia y legible en comparación con Kotlin:
+
+    ```rust showLineNumbers
+    fn calculate_area(radius: f64) -> Result<f64, String> {
+        if radius >= 0.0 {
+            Ok(std::f64::consts::PI * radius * radius)
+        } else {
+            Err(String::from("El radio no puede ser negativo"))
+        }
+    }
+
+    fn print_area(radius: f64) -> Result<(), String> {
+        let area = calculate_area(radius)?;
+        println!("El área del círculo es {}", area);
+        Ok(())
+    }
+
+    fn main() {
+        if let Err(e) = print_area(-5.0) {
+            println!("Error: {}", e);
+        }
+    }
+    ```
+
+    Este operador no tiene un equivalente directo en Kotlin, lo que hace que la propagación de errores sea más fluida en Rust, especialmente cuando hay múltiples operaciones que pueden fallar.
+
+## Comparación final actualizada
+
+| **Característica**            | **Rust**                                                                 | **Kotlin**                                                                  |
+|-------------------------------|--------------------------------------------------------------------------|----------------------------------------------------------------------------|
+| **Manejo de errores**          | No hay excepciones, los errores se manejan exclusivamente con `Result` o `Option`. | Manejo de errores con excepciones y `Result`, lo que permite elegir entre ambos enfoques. |
+| **Composición funcional**      | Métodos como `map`, `and_then`, y el operador `?` facilitan la composición de funciones con resultados. | Aunque `Result` tiene `map`, no tiene `flatMap`, por lo que encadenar funciones que devuelven `Result` puede requerir alternativas como `fold`. |
+| **Flexibilidad en errores**    | Los tipos de error en `Err` pueden ser cualquier tipo de datos, lo que ofrece flexibilidad. | Los errores están restringidos a subclases de `Throwable`, lo que puede ser menos flexible. |
+| **Curva de aprendizaje**       | Mayor curva de aprendizaje debido a características como ownership y borrowing. | Más fácil de aprender para desarrolladorxs familiarizadxs con otros lenguajes de la JVM. |
+| **Sistema de tipos**           | El sistema de tipos de Rust garantiza que todos los errores sean manejados en tiempo de compilación. | Kotlin fuerza el manejo de errores cuando se usa `Result`, pero las excepciones aún pueden pasar desapercibidas. |
+| **Propagación de errores**     | El operador `?` permite una propagación limpia y automática de errores. | Kotlin no tiene un operador equivalente, lo que puede hacer que la propagación de errores sea más verbosa. |
+| **Patrón `match`**             | `match` es un potente mecanismo de Rust para desempacar valores de `Result` y `Option`. | Kotlin utiliza expresiones como `when` y funciones como `onSuccess`, pero no tiene un equivalente directo a `match`. |
+| **Soporte multiplataforma**    | Rust es multiplataforma y puede compilarse para diferentes arquitecturas sin depender de la JVM. | Kotlin es multiplataforma, pero depende de la JVM para algunas plataformas como Android y servidores. |
+
+### Beneficios y limitaciones
+
+<ProCons>
+    <Pros>
+        - **Manejo explícito de errores sin excepciones**: Rust no tiene excepciones, lo que obliga a manejar todos los posibles errores mediante `Result` o `Option`, promoviendo un manejo más seguro y controlado de errores en tiempo de compilación.
+        - **Flexibilidad en tipos de error**: La variante `Err` en Rust puede contener cualquier tipo de dato, lo que ofrece mayor flexibilidad para personalizar y representar errores de diversas formas, desde simples cadenas hasta estructuras más complejas.
+        - **Composición funcional eficiente**: Rust proporciona métodos como `map` y `and_then`, junto con el operador `?`, que hacen que la composición de operaciones con `Result` sea fácil y limpia, permitiendo encadenar y propagar errores sin necesidad de estructuras complejas o verbosas.
+        - **Propagación de errores con `?`**: El operador `?` en Rust simplifica la propagación de errores de manera automática y clara, reduciendo el código necesario para manejar múltiples errores en funciones complejas.
+        - **Garantías en tiempo de compilación**: Rust asegura que todos los errores deben ser manejados explícitamente antes de compilar, eliminando la posibilidad de errores no controlados en tiempo de ejecución.
+        - **Determinismo y eficiencia**: Rust prioriza el rendimiento y la seguridad, con características como el manejo de errores sin costo adicional de rendimiento y el uso eficiente de memoria mediante su sistema de ownership.
+
+    </Pros>
+    <Cons>
+        - **Curva de aprendizaje pronunciada**: El sistema de ownership y borrowing de Rust, aunque poderoso, puede ser difícil de dominar, especialmente para desarrolladorxs que vienen de lenguajes más permisivos como Kotlin o Java.
+        - **Mayor verbosidad inicial**: En algunos casos, el manejo explícito de errores en Rust puede parecer más detallado o verboso en comparación con lenguajes que permiten excepciones no controladas, lo que podría ralentizar el desarrollo inicial.
+        - **Menos flexible para algunas tareas rápidas**: Aunque Rust es excelente para el control fino de errores y memoria, puede sentirse innecesariamente detallado para aplicaciones más pequeñas o prototipos rápidos en los que la seguridad estricta no es una prioridad principal.
+        - **Menor ecosistema para ciertos casos de uso**: Si bien Rust está creciendo rápidamente, para algunos casos de uso específicos o bibliotecas avanzadas, aún puede tener menos soporte en comparación con lenguajes como Kotlin o Java, especialmente en el ecosistema empresarial.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, comparamos cómo se implementa y utiliza el functor `Result` en **Rust** y **Kotlin**, resaltando las similitudes y diferencias entre ambos lenguajes en cuanto al manejo de errores. Exploramos cómo ambos lenguajes utilizan estructuras similares para representar operaciones que pueden fallar, pero con enfoques diferentes debido a las características únicas de cada lenguaje.
+
+### Puntos clave:
+
+- **Manejo explícito de errores**: Tanto Rust como Kotlin usan `Result` para modelar operaciones que pueden fallar, pero Rust no tiene excepciones, lo que obliga a un manejo más controlado y explícito de los errores.
+- **Composición funcional**: Rust ofrece un manejo más flexible de errores con funciones como `map`, `and_then`, y el operador `?`, mientras que Kotlin carece de `flatMap` y no tiene un equivalente directo del operador `?`, lo que puede requerir el uso de alternativas como `fold`.
+- **Flexibilidad en tipos de error**: Rust permite mayor flexibilidad en el manejo de tipos de error dentro de `Err`, mientras que Kotlin restringe los errores a subclases de `Throwable`.
+- **Sistema de tipos robusto**: Rust garantiza que todos los errores se manejen en tiempo de compilación, eliminando la posibilidad de errores no manejados en tiempo de ejecución, mientras que en Kotlin, las excepciones aún pueden pasar desapercibidas.
+- **Propagación de errores más simple en Rust**: El operador `?` en Rust simplifica la propagación de errores sin necesidad de manejar explícitamente cada caso de fallo, algo que no tiene un equivalente en Kotlin.
+
+---
+
+Tanto Rust como Kotlin tienen enfoques sólidos para manejar computaciones que pueden fallar, y la elección entre uno u otro depende del contexto y de las características específicas del proyecto en el que estés trabajando.

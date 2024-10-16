@@ -1,63 +1,202 @@
 ---
 title: Enumeraciones
 ---
-import Solution from "/src/components/exercise/Solution";
-import Exercise from "/src/components/exercise/Exercise";
-import {Cons, ProCons, Pros} from "/src/components/cajitas/ProCons";
-import { LanguageCard } from "/src/components/cards/LanguageCard";
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
-import ReadingTime from '/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
 
 Las **enumeraciones** en lenguajes de programación son una forma común y directa de representar **tipos suma** concretos.
 
 En muchos lenguajes, las enumeraciones permiten representar diferentes estados o condiciones de manera segura y manejable. Cada valor de una enumeración es un caso específico de una posible situación que puede ocurrir. En lugar de manejar estos casos con cadenas, números o booleanos, las **enumeraciones** aseguran que solo se utilicen valores válidos y conocidos, evitando errores comunes como malentendidos de sintaxis o valores inesperados.
 
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $Group = 'com\github\username'
+            ```
+            
+            ```powershell showLineNumbers
+            $SumMainDir = "adt\src\main\kotlin\$Group\sum"
+            $EnumMainDir = "$SumMainDir\enums"
+            New-Item -Path $EnumMainDir -ItemType Directory -Force
+            "package $Group.sum.enums" -replace '\\', '.' | 
+                Out-File -FilePath "$EnumMainDir\DeliveryState.kt"
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            $Group = 'com\github\username'
+            ```
+
+            ```powershell
+            $SumMainDir = "adt\src\main\kotlin\$Group\sum"
+            $EnumMainDir = "$SumMainDir\enums"
+            md $EnumMainDir
+            "package $Group.sum.enums" -replace '\\', '.' > ` 
+                "$EnumMainDir\DeliveryState.kt"
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            GROUP=com/github/username
+            ```
+
+            ```bash
+            SUM_MAIN_DIR=adt/src/main/kotlin/$GROUP/sum
+            ENUM_MAIN_DIR=$SUM_MAIN_DIR/enums
+            mkdir -p $ENUM_MAIN_DIR
+            echo "package ${GROUP//\//.}.sum.enums" > \
+                "$ENUM_MAIN_DIR/DeliveryState.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
 Por ejemplo, consideremos una enumeración que define los posibles estados de un pedido:
 
-```kotlin showLineNumbers
+```kotlin showLineNumbers title="adt/src/main/kotlin/com/github/username/sum/enums/DeliveryState.kt"
+package com.github.username.sum.enums
+
 enum class DeliveryState {
     PENDING, PAID, SHIPPED, DELIVERED, CANCELLED
 }
 ```
 
-Aquí, `DeliveryState` es una **concretización** de un tipo suma, donde solo puede tener uno de los estados predefinidos (`PENDING`, `PAID`, etc.). Esto garantiza que siempre trabajes con estados válidos y evita errores que podrían surgir al manejar strings o enteros de manera manual.
+<Explanation>
+Aquí, `DeliveryState` es una enumeración que representa los estados posibles de un pedido: `PENDING`, `PAID`, `SHIPPED`, `DELIVERED` y `CANCELLED`. Cada uno de estos valores es un caso específico de un estado de entrega y puede ser utilizado para modelar el ciclo de vida de un pedido. Al utilizar esta enumeración, se garantiza que solo se utilicen estados válidos y conocidos.
+</Explanation>
 
 ## Uso en un `when` exhaustivo
+
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $SumTestDir = "adt\src\test\kotlin\$Group\sum"
+            $EnumTestDir = "$SumTestDir\enums"
+            New-Item -Path $EnumTestDir -ItemType Directory -Force
+            "package $Group.sum.enums" -replace '\\', '.' | 
+                Out-File -FilePath "$EnumTestDir\DeliveryStateTest.kt"
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            $SumTestDir = "adt\src\test\kotlin\$Group\sum"
+            $EnumTestDir = "$SumTestDir\enums"
+            md $EnumTestDir
+            "package $Group.sum.enums" -replace '\\', '.' > `
+                "$EnumTestDir\DeliveryStateTest.kt"
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            SUM_TEST_DIR=adt/src/test/kotlin/$GROUP/sum
+            ENUM_TEST_DIR=$SUM_TEST_DIR/enums
+            mkdir -p $ENUM_TEST_DIR
+            echo "package ${GROUP//\//.}.sum.enums" > \
+                "$ENUM_TEST_DIR/DeliveryStateTest.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
 
 En Kotlin, un `when` es exhaustivo cuando cubre todos los posibles valores de una enumeración. Esto significa que no necesitas un bloque `else` si has manejado todos los estados posibles:
 
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers showLineNumbers
-        fun handleOrderState(state: DeliveryState) = when (state) {
-            DeliveryState.PENDING -> println("Order is pending")
-            DeliveryState.PAID -> println("Order is paid")
-            DeliveryState.SHIPPED -> println("Order is shipped")
-            DeliveryState.DELIVERED -> println("Order is delivered")
-            DeliveryState.CANCELLED -> println("Order is cancelled")
+        ```kotlin showLineNumbers
+        withData(
+            DeliveryState.PENDING to "Order is pending",
+            DeliveryState.PAID to "Order is paid",
+            DeliveryState.SHIPPED to "Order is shipped",
+            DeliveryState.DELIVERED to "Order is delivered",
+            DeliveryState.CANCELLED to "Order is cancelled"
+        ) { (state, expected) ->
+            handleState(state) shouldBe expected
+        }
+        ```
+
+        ```kotlin showLineNumbers
+        fun handleState(state: DeliveryState) = when (state) {
+            DeliveryState.PENDING -> "Order is pending"
+            DeliveryState.PAID -> "Order is paid"
+            DeliveryState.SHIPPED -> "Order is shipped"
+            DeliveryState.DELIVERED -> "Order is delivered"
+            DeliveryState.CANCELLED -> "Order is cancelled"
         }
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers showLineNumbers
-        fun handleOrderState(state: DeliveryState) = when (state) {
-            DeliveryState.PENDING -> println("Order is pending")
-            DeliveryState.PAID -> println("Order is paid")
-            DeliveryState.SHIPPED -> println("Order is shipped")
-            DeliveryState.DELIVERED -> println("Order is delivered")
-            DeliveryState.CANCELLED -> println("Order is cancelled")
+        ```kotlin showLineNumbers title="adt/src/test/kotlin/com/github/username/sum/enums/DeliveryStateTest.kt"
+        package com.github.username.sum.enums
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.datatest.withData
+        import io.kotest.matchers.shouldBe
+
+        class DeliveryStateTest : FreeSpec({
+            "A delivery state" - {
+                "when handled" - {
+                    "should return a string representation" - {
+                        withData(
+                            DeliveryState.PENDING to "Order is pending",
+                            DeliveryState.PAID to "Order is paid",
+                            DeliveryState.SHIPPED to "Order is shipped",
+                            DeliveryState.DELIVERED to "Order is delivered",
+                            DeliveryState.CANCELLED to "Order is cancelled"
+                        ) { (state, expected) ->
+                            handleState(state) shouldBe expected
+                        }
+                    }
+                }
+            }
+        })
+        ```
+
+        ```kotlin showLineNumbers title="adt/src/main/kotlin/com/github/username/sum/enums/DeliveryState.kt"
+        package com.github.username.sum.enums
+
+        enum class DeliveryState {
+            PENDING, PAID, SHIPPED, DELIVERED, CANCELLED
         }
 
-        fun main() {
-            handleOrderState(DeliveryState.PENDING)
-            handleOrderState(DeliveryState.PAID)
+        fun handleState(state: DeliveryState) = when (state) {
+            DeliveryState.PENDING -> "Order is pending"
+            DeliveryState.PAID -> "Order is paid"
+            DeliveryState.SHIPPED -> "Order is shipped"
+            DeliveryState.DELIVERED -> "Order is delivered"
+            DeliveryState.CANCELLED -> "Order is cancelled"
         }
         ```
     </TabItem>
 </Tabs>
+
+<Explanation>
+    Aquí, `handleState` es una función que toma un estado de entrega (`DeliveryState`) y devuelve una representación en cadena del estado. Al utilizar un `when` exhaustivo, se garantiza que todos los posibles estados de entrega sean manejados, evitando la necesidad de un bloque `else` adicional. Si se agrega un nuevo estado a la enumeración, el compilador de Kotlin emitirá un error si no se maneja en el `when`, lo que ayuda a mantener el código completo y actualizado.
+</Explanation>
 
 ## Métodos en Enumeraciones
 
@@ -66,68 +205,95 @@ Las enumeraciones en Kotlin pueden contener tanto métodos abstractos como concr
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```kotlin showLineNumbers
+        withData(
+            DeliveryState.PENDING to "Non-final state: Order is pending",
+            DeliveryState.PAID to "Non-final state: Order is paid",
+            DeliveryState.SHIPPED to "Non-final state: Order is shipped",
+            DeliveryState.DELIVERED to "Final state: Order is delivered",
+            DeliveryState.CANCELLED to "Final state: Order is cancelled"
+        ) { (state, expected) ->
+            handleState(state) shouldBe expected
+        }
+        ```
+
+        ```kotlin showLineNumbers
         enum class DeliveryState {
             PENDING {
                 override fun signal() = "Order is pending"
-            },
-            CANCELLED {
+            }, CANCELLED {
                 override fun signal() = "Order is cancelled"
             };
 
             abstract fun signal(): String
 
-            fun isFinalState() = this == DELIVERED || this == CANCELLED
+            val isFinal get() = this == DELIVERED || this == CANCELLED
         }
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
         ```kotlin showLineNumbers
+        package com.github.username.sum.enums
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.datatest.withData
+        import io.kotest.matchers.shouldBe
+
+        class DeliveryStateTest : FreeSpec({
+            "A delivery state" - {
+                "when handled" - {
+                    "should return a string representation" - {
+                        withData(
+                            // highlight-start
+                            DeliveryState.PENDING to "Non-final state: Order is pending",
+                            DeliveryState.PAID to "Non-final state: Order is paid",
+                            DeliveryState.SHIPPED to "Non-final state: Order is shipped",
+                            DeliveryState.DELIVERED to "Final state: Order is delivered",
+                            DeliveryState.CANCELLED to "Final state: Order is cancelled"
+                            // highlight-end
+                        ) { (state, expected) ->
+                            handleState(state) shouldBe expected
+                        }
+                    }
+                }
+            }
+        })
+        ```
+
+        ```kotlin showLineNumbers
+        package com.github.username.sum.enums
+
+        // highlight-start
         enum class DeliveryState {
             PENDING {
                 override fun signal() = "Order is pending"
-            },
-            PAID {
+            }, PAID {
                 override fun signal() = "Order is paid"
-            },
-            SHIPPED {
+            }, SHIPPED {
                 override fun signal() = "Order is shipped"
-            },
-            DELIVERED {
+            }, DELIVERED {
                 override fun signal() = "Order is delivered"
-            },
-            CANCELLED {
+            }, CANCELLED {
                 override fun signal() = "Order is cancelled"
             };
 
             abstract fun signal(): String
 
-            fun isFinalState() = this == DELIVERED || this == CANCELLED
+            val isFinal get() = this == DELIVERED || this == CANCELLED
         }
 
-        fun handleOrderState(state: DeliveryState) = if (state.isFinalState()) {
-            println("Final state: ${state.signal()}")
+        fun handleState(state: DeliveryState) = if (state.isFinal) {
+            "Final state: ${state.signal()}"
         } else {
-            println("Non-final state: ${state.signal()}")
+            "Non-final state: ${state.signal()}"
         }
-
-        fun main() {
-            handleOrderState(DeliveryState.PENDING)
-            handleOrderState(DeliveryState.DELIVERED)
-            /* Output:
-            Non-final state: Order is pending
-            Final state: Order is delivered
-            */
-        }
+        // highlight-end
         ```
     </TabItem>
 </Tabs>
 
-:::info Explicación del Código
-
-- Cada valor de la enumeración proporciona su propia implementación del método abstracto `signal`, devolviendo un mensaje específico.
-- El método concreto `isFinalState` está disponible para todos los valores de la enumeración y se utiliza para verificar si el estado es final (es decir, `DELIVERED` o `CANCELLED`).
-
-:::
+<Explanation>
+    Aquí, `DeliveryState` es una enumeración que representa los estados de entrega de un pedido. Cada valor de la enumeración tiene su propio método `signal` que devuelve un mensaje específico para ese estado. Además, la enumeración tiene un método concreto `isFinal` que verifica si el estado es final (`DELIVERED` o `CANCELLED`). Al utilizar estos métodos, se puede personalizar el comportamiento de cada estado de entrega, al mismo tiempo que se comparten comportamientos comunes.
+</Explanation>
 
 Este enfoque permite tener tanto comportamientos específicos como comunes en una enumeración.
 
@@ -145,11 +311,16 @@ Para crear una enumeración con un constructor en Kotlin, defines los parámetro
         enum class DeliveryState(private val description: String, val code: Int) {
             PENDING("Order is pending", 0),
             CANCELLED("Order is cancelled", 4);
+
+            fun signal(): String = description
         }
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
         ```kotlin showLineNumbers
+        package com.github.username.sum.enums
+
+        // highlight-start
         enum class DeliveryState(private val description: String, val code: Int) {
             PENDING("Order is pending", 0),
             PAID("Order is paid", 1),
@@ -158,34 +329,25 @@ Para crear una enumeración con un constructor en Kotlin, defines los parámetro
             CANCELLED("Order is cancelled", 4);
 
             fun signal(): String = description
+            // highlight-end
 
-            fun isFinalState() = this == DELIVERED || this == CANCELLED
-        }
+            val isFinal: Boolean
+                get() = this == DELIVERED || this == CANCELLED
+        }   
 
-        fun handleOrderState(state: DeliveryState) = if (state.isFinalState()) {
-            println("Final state: ${state.signal()}")
+        fun handleState(state: DeliveryState) = if (state.isFinal) {
+            "Final state: ${state.signal()}"
         } else {
-            println("Non-final state: ${state.signal()}")
-        }
-
-        fun main() {
-            handleOrderState(DeliveryState.PENDING)
-            handleOrderState(DeliveryState.DELIVERED)
-            /* Output:
-            Non-final state: Order is pending
-            Final state: Order is delivered
-            */
+            "Non-final state: ${state.signal()}"
         }
         ```
     </TabItem>
 </Tabs>
 
-:::info Explicación del Código
-
-- **Descripción**: Cada valor de la enumeración tiene un `description` que detalla el estado del pedido.
-- **Código**: Se asocia un código numérico (`code`) a cada estado.
-
-:::
+<Explanation>
+    - **Descripción**: Aquí, `DeliveryState` es una enumeración que representa los estados de entrega de un pedido. Cada valor de la enumeración tiene un constructor que toma una descripción y un código numérico. Estos valores se utilizan para inicializar cada estado de entrega con información adicional.
+    - **Código**: Se asocia un código numérico (`code`) a cada estado de entrega.
+</Explanation>
 
 ### Uso de los Valores del Constructor
 
@@ -194,31 +356,67 @@ Puedes acceder a los valores del constructor de la enumeración como lo harías 
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```kotlin showLineNumbers
-        fun printOrderDetails(state: DeliveryState) {
-            println("State: ${state.description}, Code: ${state.code}")
+        withData(
+            DeliveryState.PENDING to 0,
+            DeliveryState.PAID to 1,
+            DeliveryState.SHIPPED to 2,
+            DeliveryState.DELIVERED to 3,
+            DeliveryState.CANCELLED to 4
+        ) { (state, expected) ->
+            state.code shouldBe expected
         }
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
         ```kotlin showLineNumbers
-        fun printOrderDetails(state: DeliveryState) {
-            println("State: ${state.description}, Code: ${state.code}")
-        }
+        package com.github.username.sum.enums
 
-        fun main() {
-            val state = DeliveryState.SHIPPED
-            printOrderDetails(state)
-            /* Output: State: Order is shipped, Code: 2 */
-        }
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.datatest.withData
+        import io.kotest.matchers.shouldBe
+
+        class DeliveryStateTest : FreeSpec({
+            "A delivery state" - {
+                "when handled" - {
+                    "should return a string representation" - {
+                        withData(
+                            DeliveryState.PENDING to "Non-final state: Order is pending",
+                            DeliveryState.PAID to "Non-final state: Order is paid",
+                            DeliveryState.SHIPPED to "Non-final state: Order is shipped",
+                            DeliveryState.DELIVERED to "Final state: Order is delivered",
+                            DeliveryState.CANCELLED to "Final state: Order is cancelled"
+                        ) { (state, expected) ->
+                            handleState(state) shouldBe expected
+                        }
+                    }
+                }
+
+                // highlight-start
+                "when accessing its code" - {
+                    "should return the index of the state" - {
+                        withData(
+                            DeliveryState.PENDING to 0,
+                            DeliveryState.PAID to 1,
+                            DeliveryState.SHIPPED to 2,
+                            DeliveryState.DELIVERED to 3,
+                            DeliveryState.CANCELLED to 4
+                        ) { (state, expected) ->
+                            state.code shouldBe expected
+                        }
+                    }
+                }
+                // highlight-end
+            }
+        })
         ```
     </TabItem>
 </Tabs>
 
-Aquí, cada valor de la enumeración tiene su propio mensaje personalizado y código que se accede a través de las propiedades `description` y `code`.
-
 ## Implementación de Interfaces
 
 Las enumeraciones en Kotlin pueden implementar interfaces, lo que les permite heredar comportamientos y métodos predeterminados definidos en estas interfaces. Esto es útil cuando se desea que los valores de una enumeración compartan comportamientos comunes sin necesidad de duplicar código en cada valor de la enumeración. A continuación, se presenta un ejemplo de cómo hacer que una enumeración implemente múltiples interfaces, con métodos que no necesitan ser sobrescritos.
+
+{/* BDD */}
 
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>

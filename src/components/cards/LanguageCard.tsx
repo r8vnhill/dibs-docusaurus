@@ -128,3 +128,11 @@ export const RustCard = ({ link }) => {
     link={link}
   />
 }
+
+export const BazelCard = ({ link }) => {
+  return <LanguageCard
+    logoSrc="https://upload.wikimedia.org/wikipedia/en/7/7d/Bazel_logo.svg"
+    language="Multilenguaje: Bazel"
+    link={link}
+  />
+}

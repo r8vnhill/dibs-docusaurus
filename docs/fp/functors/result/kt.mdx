@@ -12,7 +12,7 @@ import Hint from '@site/src/components/exercise/Hint'
 import Definition from '@site/src/components/Definition'
 import Corollary from '@site/src/components/Corollary'
 import GithubRepoLink from '@site/src/components/GithubRepoLink'
-import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import { LanguageCard, RustCard } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
 
@@ -296,4 +296,143 @@ fun <T, R> Result<T>.map(transform: (T) -> R): Result<R> =
 
 Ahora podemos ejecutar las pruebas unitarias para verificar que nuestra implementación de `Result` cumple con las leyes de un functor.
 
-## Ejemplo de uso
+### Ejemplo de uso: Cálculo de área de un círculo
+
+Vamos a implementar una función que calcule el área de un círculo. La función recibirá el radio como un `Double` y devolverá el área como un `Result`. Si el radio es negativo, devolveremos un `Failure` con un mensaje de error.
+
+```kotlin showLineNumbers
+fun calculateArea(radius: Double): Result<Double> = 
+    if (radius >= 0) {
+        Success(Math.PI * radius * radius)
+    } else {
+        Failure(IllegalArgumentException("El radio no puede ser negativo"))
+    }
+```
+
+Ahora utilizamos el functor `Result` para calcular el área y aplicar transformaciones adicionales solo en caso de éxito, sin necesidad de capturar excepciones.
+
+```kotlin showLineNumbers
+fun main() {
+    val radius = 5.0
+    val areaResult = calculateArea(radius)
+
+    val result = areaResult.map { area -> 
+        "El área del círculo con radio $radius es $area"
+    }
+
+    println(result)
+}
+```
+
+Si ejecutamos el código con un radio positivo, obtenemos un `Success` con el área calculada y transformada en un mensaje descriptivo. Si usamos un radio negativo, obtenemos un `Failure` con el mensaje de error.
+
+<Exercise>
+    Implementa las siguientes funciones para el functor `Result`:
+
+    1. `fold: Result<T>.(onSuccess: (T) -> R, onFailure: (Throwable) -> R): R`: Esta función permite manejar los casos de éxito y fallo de manera más flexible y expresiva. Debe aplicar la función `onSuccess` al valor encapsulado en un `Success` y la función `onFailure` a la excepción en un `Failure`.
+    2. `runCatching: (() -> T): Result<T>`: Esta función ejecuta una operación que puede lanzar una excepción y devuelve un `Result` con el resultado o el error capturado.
+    
+    <Solution>
+        ```kotlin showLineNumbers
+        fun <R> Result<T>.fold(
+            onFailure: (Throwable) -> R,
+            onSuccess: (T) -> R
+        ): R = when(this) {
+            is Failure -> onFailure(exception)
+            is Success -> onSuccess(value)
+        }
+
+        fun runCatching(block: () -> T): Result<T> = try {
+            Success(block())
+        } catch (e: Throwable) {
+            Failure(e)
+        }
+        ```
+    </Solution>
+</Exercise>
+
+<details>
+    <summary>
+        Functor `Result` en la librería estándar de Kotlin
+    </summary>
+    
+    En la librería estándar de Kotlin, existe una clase `Result` que es muy similar a la que hemos implementado. El propósito es encapsular el éxito o fracaso de una operación y manejar los errores de manera funcional sin depender de excepciones tradicionales. La clase `Result` estándar tiene varias características útiles:
+
+    - **`getOrNull()`**: Permite acceder al valor en caso de éxito o devuelve `null` en caso de falla.
+    - **`exceptionOrNull()`**: Permite acceder a la excepción en caso de falla o devuelve `null` en caso de éxito.
+    - **`onSuccess` y `onFailure`**: Son funciones que permiten aplicar una operación solo en caso de éxito o fallo, respectivamente.
+    
+    ### Ejemplo de uso de `Result` estándar de Kotlin:
+
+    ```kotlin showLineNumbers
+    fun divide(a: Int, b: Int): Result<Int> =
+        if (b != 0) Result.success(a / b)
+        else Result.failure(IllegalArgumentException("División por cero"))
+
+    fun main() {
+        val result = divide(10, 0)
+        
+        result
+            .onSuccess { value -> println("Resultado: $value") }
+            .onFailure { error -> println("Error: ${error.message}") }
+    }
+    ```
+
+    En este ejemplo, la operación de división devuelve un `Result` y dependiendo del éxito o fallo, se ejecuta el código correspondiente sin la necesidad de capturar excepciones de manera explícita.
+
+    El `Result` estándar de Kotlin también ofrece otras utilidades como `map`, `fold` y `recover`, que permiten transformar el resultado de una operación o manejar el error de manera declarativa.
+
+    ### Diferencias entre el `Result` personalizado y el estándar
+
+    - **Disponibilidad**: El `Result` estándar de Kotlin es parte de la librería estándar y es preferible usarlo en la mayoría de los casos para aprovechar su integración con las funciones y la API de Kotlin.
+    - **Flexibilidad**: El `Result` personalizado que hemos creado permite agregar cualquier comportamiento adicional o modificar cómo se manejan los errores, lo cual puede ser útil en proyectos con necesidades específicas.
+</details>
+
+## Beneficios y limitaciones del functor `Result`
+
+<ProCons>
+    <Pros>
+        - **Manejo explícito de errores**: El uso de `Result` promueve un manejo de errores más explícito y controlado, evitando las excepciones tradicionales que pueden ser difíciles de rastrear.
+        - **Composición fluida**: El functor `Result` facilita la composición de operaciones seguras. Funciones como `map` y `flatMap` permiten encadenar operaciones sin romper el flujo del programa.
+        - **Seguridad en tiempo de compilación**: Al tratar los errores como un estado explícito dentro del tipo `Result`, Kotlin fuerza a que los errores se manejen en tiempo de compilación, previniendo fallos en tiempo de ejecución.
+        - **Transformaciones seguras**: La función `map` aplicada sobre `Success` permite transformar el valor encapsulado sin afectar el estado de `Failure`, garantizando la inmutabilidad y seguridad de los errores.
+        - **Legibilidad y claridad**: Utilizar `Result` hace que el código sea más legible, ya que las funciones que pueden fallar lo indican de manera explícita en su tipo de retorno, haciendo que los flujos de éxito y fallo sean claros.
+    </Pros>
+
+    <Cons>
+        - **Sobrecarga en operaciones simples**: En algunos casos, utilizar `Result` para operaciones sencillas puede generar una sobrecarga adicional en el código, ya que requiere manejar ambos casos (`Success` y `Failure`), incluso cuando los errores son poco frecuentes.
+        - **Curva de aprendizaje**: Aunque el uso de `Result` es beneficioso, desarrolladorxs que provienen de lenguajes que utilizan excepciones tradicionales pueden encontrar una pequeña curva de aprendizaje al acostumbrarse a la manipulación explícita de errores.
+        - **Composición limitada**: Aunque el `Result` permite la composición de funciones, su capacidad para componer múltiples operaciones puede ser limitada en casos donde el manejo de errores es muy complejo, requiriendo estructuras más avanzadas.
+        - **Uso inconsistente**: Si no se sigue de manera coherente en todo el proyecto, la mezcla de excepciones tradicionales y `Result` puede generar inconsistencias y dificultar el mantenimiento del código.
+        - **Verboso en casos simples**: En comparación con el manejo de excepciones mediante `try-catch`, el `Result` puede parecer más verboso en situaciones donde solo se requiere una simple captura de error.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, aprendimos a utilizar el **functor `Result`** en Kotlin para manejar computaciones que pueden fallar de forma más controlada y clara. Exploramos cómo `Result` nos permite modelar tanto el éxito como el fallo en una operación sin utilizar excepciones tradicionales, y cómo aplicar transformaciones seguras mediante funciones como `map`. También vimos cómo las **leyes del functor**, como la identidad y la composición, garantizan el comportamiento predecible y seguro de estas operaciones.
+
+### Puntos clave
+
+- **Manejo explícito de errores**: `Result` proporciona una manera clara de gestionar errores y resultados exitosos, evitando la dependencia en excepciones.
+- **Composición funcional**: Funciones como `map` permiten transformar valores de manera segura, sin afectar el estado del error.
+- **Seguridad en tiempo de compilación**: Kotlin fuerza a manejar los casos de error, lo que reduce fallos en tiempo de ejecución.
+- **Ley de identidad**: Mapear la función identidad sobre un `Result` debe devolver el mismo `Result` sin modificaciones.
+- **Ley de composición**: Mapear dos funciones consecutivamente debe ser equivalente a mapear la composición de ambas en una sola operación.
+
+---
+
+El uso de `Result` en Kotlin es una herramienta poderosa para desarrollar programas más robustos y seguros, especialmente en el manejo de computaciones que pueden fallar. Al utilizar `Result`, promovemos un estilo de programación funcional, con un enfoque más claro y seguro en la gestión de errores, mejorando la legibilidad y el mantenimiento del código.
+
+<div className="language-card-container">
+    <RustCard link="/docs/fp/functors/result/rust"/>
+</div>
+
+<References references={[
+    {
+        title: "Result—Kotlin Programming Language",
+        url: "https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-result/index.html",
+        accessedDate: "29 de septiembre de 2024",
+        type: "web",
+    },
+]}/>
