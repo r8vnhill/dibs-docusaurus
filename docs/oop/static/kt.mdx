@@ -1,0 +1,289 @@
+---
+title: Variables y funciones estáticas
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+En esta lección, exploraremos cómo trabajar con **variables y funciones estáticas en Kotlin**. A diferencia de Java, Kotlin no utiliza la palabra clave `static`. En su lugar, ofrece mecanismos como **objetos singleton**, **objetos de compañía (companion objects)** y **funciones y variables de nivel superior** para lograr funcionalidades similares.
+
+## Variables y funciones de nivel superior
+
+En Kotlin, podemos declarar variables y funciones fuera de cualquier clase o interfaz. Estas se conocen como **variables y funciones de nivel superior** y son efectivamente estáticas, ya que pertenecen al archivo en el que están definidas y no a una instancia de una clase.
+
+```kotlin showLineNumbers
+// Archivo: Utils.kt
+
+// Función de nivel superior
+fun saludo(nombre: String): String {
+    return "Hola, $nombre!"
+}
+
+// Variable de nivel superior
+val PI = 3.1416
+```
+
+Podemos acceder a estas funciones y variables directamente desde cualquier parte del código sin necesidad de crear una instancia o referencia a una clase.
+
+```kotlin showLineNumbers
+fun main() {
+    val mensaje = saludo("Mundo")
+    println(mensaje)  // Salida: Hola, Mundo!
+
+    println("El valor de PI es $PI")  // Salida: El valor de PI es 3.1416
+}
+```
+
+## Objetos singleton (`object`)
+
+El modificador `object` en Kotlin se utiliza para declarar **objetos singleton**. Un objeto singleton es una clase que solo tiene una única instancia en toda la aplicación. Es útil cuando necesitas variables o funciones que pertenezcan a una clase pero no a una instancia específica.
+
+```kotlin showLineNumbers
+object Contador {
+    var valor = 0
+
+    fun incrementar() {
+        valor++
+    }
+}
+```
+
+Podemos acceder a las propiedades y funciones del objeto singleton directamente a través de su nombre.
+
+```kotlin showLineNumbers
+fun main() {
+    Contador.incrementar()
+    Contador.incrementar()
+    println("El contador es ${Contador.valor}")  // Salida: El contador es 2
+}
+```
+
+<Explanation>
+- **Objetos singleton**: Proporcionan una manera sencilla de crear variables y funciones que son accesibles globalmente y que mantienen un estado único en toda la aplicación.
+</Explanation>
+
+## Objetos de compañía (`companion object`)
+
+Cuando necesitas variables o funciones estáticas asociadas a una clase específica, pero no quieres utilizar un objeto singleton separado, puedes usar un **companion object**. Un `companion object` es un bloque dentro de una clase que permite definir miembros estáticos.
+
+```kotlin showLineNumbers
+class Calculadora {
+    companion object {
+        fun sumar(a: Int, b: Int): Int {
+            return a + b
+        }
+    }
+}
+```
+
+Puedes acceder a los miembros del `companion object` utilizando el nombre de la clase.
+
+```kotlin showLineNumbers
+fun main() {
+    val resultado = Calculadora.sumar(5, 3)
+    println("El resultado es $resultado")  // Salida: El resultado es 8
+}
+```
+
+<Explanation>
+- **Companion object**: Permite definir miembros estáticos dentro de una clase, similares a los miembros `static` en Java.
+- **Nombre opcional**: Puedes asignar un nombre al `companion object` si lo deseas, aunque por defecto se llama `Companion`.
+</Explanation>
+
+### Uso de variables estáticas en un companion object
+
+Puedes declarar variables dentro de un `companion object` que actúan como variables estáticas.
+
+```kotlin showLineNumbers
+class Configuracion {
+    companion object {
+        const val VERSION = "1.0.0"
+        var modoDebug = true
+    }
+}
+```
+
+- `const val` se utiliza para constantes en tiempo de compilación.
+- `var` o `val` se utilizan para variables en tiempo de ejecución.
+
+Accediendo a las variables:
+
+```kotlin showLineNumbers
+fun main() {
+    println("Versión: ${Configuracion.VERSION}")  // Salida: Versión: 1.0.0
+    println("Modo debug: ${Configuracion.modoDebug}")  // Salida: Modo debug: true
+
+    Configuracion.modoDebug = false
+    println("Modo debug: ${Configuracion.modoDebug}")  // Salida: Modo debug: false
+}
+```
+
+## Anotación `@JvmStatic`
+
+Si estás interoperando con código Java y necesitas que las funciones o variables dentro de un `companion object` sean tratadas como estáticas en Java, puedes usar la anotación `@JvmStatic`.
+
+```kotlin showLineNumbers
+class Utilidades {
+    companion object {
+        @JvmStatic
+        fun saludar(nombre: String) {
+            println("Hola, $nombre!")
+        }
+    }
+}
+```
+
+En Java, puedes llamar a esta función como si fuera estática:
+
+```java showLineNumbers
+public class Main {
+    public static void main(String[] args) {
+        Utilidades.saludar("Mundo");  // Salida: Hola, Mundo!
+    }
+}
+```
+
+<Explanation>
+- **Interoperabilidad con Java**: La anotación `@JvmStatic` hace que los miembros del `companion object` sean visibles como miembros estáticos en Java.
+</Explanation>
+
+## Objetos anidados (`nested object`)
+
+También puedes declarar objetos dentro de clases o incluso dentro de otros objetos. Estos se conocen como **objetos anidados**.
+
+```kotlin showLineNumbers
+class Externa {
+    object Anidada {
+        fun mensaje() = "Objeto anidado en Externa"
+    }
+}
+```
+
+Accediendo al objeto anidado:
+
+```kotlin showLineNumbers
+fun main() {
+    println(Externa.Anidada.mensaje())  // Salida: Objeto anidado en Externa
+}
+```
+
+## Ejemplo práctico: Logger
+
+Implementemos un ejemplo práctico utilizando un `object` para crear un **Logger** simple.
+
+```kotlin showLineNumbers
+object Logger {
+    fun info(mensaje: String) {
+        println("INFO: $mensaje")
+    }
+
+    fun error(mensaje: String) {
+        println("ERROR: $mensaje")
+    }
+}
+```
+
+Uso del Logger:
+
+```kotlin showLineNumbers
+fun main() {
+    Logger.info("Aplicación iniciada")
+    Logger.error("Ocurrió un error inesperado")
+}
+```
+
+## Comparación con Java
+
+En Java, utilizamos la palabra clave `static` para declarar variables y métodos estáticos dentro de una clase. En Kotlin, este concepto se reemplaza con `object`, `companion object` y funciones de nivel superior.
+
+### Java
+
+```java showLineNumbers
+public class Utilidad {
+    public static void saludar(String nombre) {
+        System.out.println("Hola, " + nombre + "!");
+    }
+}
+```
+
+### Kotlin equivalente
+
+```kotlin showLineNumbers
+class Utilidad {
+    companion object {
+        @JvmStatic
+        fun saludar(nombre: String) {
+            println("Hola, $nombre!")
+        }
+    }
+}
+```
+
+## Resumen
+
+- **Funciones y variables de nivel superior**: Son efectivamente estáticas y pueden ser usadas en cualquier parte sin necesidad de una clase.
+- **Objeto singleton (`object`)**: Crea una única instancia que puede tener propiedades y funciones accesibles globalmente.
+- **Companion object**: Permite definir miembros estáticos dentro de una clase, accesibles a través del nombre de la clase.
+- **Anotación `@JvmStatic`**: Utilizada para interoperabilidad con Java, haciendo que los miembros del `companion object` sean estáticos en Java.
+- **Objetos anidados**: Objetos definidos dentro de clases u otros objetos, útiles para organizar el código.
+
+## Ejercicios
+
+<Exercise>
+1. Crea una clase `Conversor` con un `companion object` que contenga una función `celsiusAFahrenheit(celsius: Double): Double` que convierta grados Celsius a Fahrenheit.
+
+2. Utiliza un `object` llamado `ContadorVisitas` que lleve la cuenta de cuántas veces se ha llamado a una función `registrarVisita()`. Muestra el número total de visitas cada vez que se registra una nueva.
+
+<Solution>
+
+1. **Clase Conversor con companion object**
+
+```kotlin showLineNumbers
+class Conversor {
+    companion object {
+        fun celsiusAFahrenheit(celsius: Double): Double {
+            return celsius * 9/5 + 32
+        }
+    }
+}
+
+fun main() {
+    val fahrenheit = Conversor.celsiusAFahrenheit(25.0)
+    println("25 grados Celsius son $fahrenheit grados Fahrenheit")  // Salida: 25 grados Celsius son 77.0 grados Fahrenheit
+}
+```
+
+2. **Objeto ContadorVisitas**
+
+```kotlin showLineNumbers
+object ContadorVisitas {
+    var totalVisitas = 0
+
+    fun registrarVisita() {
+        totalVisitas++
+        println("Visita registrada. Total de visitas: $totalVisitas")
+    }
+}
+
+fun main() {
+    ContadorVisitas.registrarVisita()  // Salida: Visita registrada. Total de visitas: 1
+    ContadorVisitas.registrarVisita()  // Salida: Visita registrada. Total de visitas: 2
+}
+```
+
+</Solution>
+</Exercise>

@@ -163,11 +163,11 @@ const sidebars: SidebarsConfig = {
             },
             items: [
                 'oop/open-closed/open-closed-kt',
+                'oop/anonymous/kt',
                 'oop/extension/kt',
                 'oop/operator-overload/kt',
-                'oop/anonymous/kt',
                 'oop/infix',
-                'oop/companion',
+                'oop/static/kt',
                 'oop/inheritance-2',
             ],
         },
