@@ -136,3 +136,11 @@ export const BazelCard = ({ link }) => {
     link={link}
   />
 }
+
+export const AssertJCard = ({ link }) => {
+  return <LanguageCard
+    logoSrc="https://www.svgrepo.com/show/184143/java.svg"
+    language="JVM: AssertJ"
+    link={link}
+  />
+}

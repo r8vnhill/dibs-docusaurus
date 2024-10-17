@@ -1,0 +1,301 @@
+---
+title: Generadores a partir de un PRNG
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+Una de las formas más simples de crear un generador en Kotest es utilizando la función de alto orden `arbitrary`, que aprovecha un **Pseudo-Random Number Generator** manejado internamente por Kotest. Esta función permite generar datos de prueba controlados y reproducibles, útiles para la creación de tests basados en propiedades.
+
+## Ejemplo: Generador de listas de enteros
+
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $Group = 'com\github\username'
+            ```
+                
+            ```powershell
+            $GeneratorsTestDir = "generators\src\test\kotlin\$Group\generators"
+            $GeneratorsMainDir = "generators\src\main\kotlin\$Group\generators"
+            $AverageTestDir = "$GeneratorsTestDir\average"
+            $AverageMainDir = "$GeneratorsMainDir\average"
+            New-Item -Path $AverageTestDir -ItemType Directory -Force
+            New-Item -Path $AverageMainDir -ItemType Directory -Force
+            $AverageTestDir | Out-File -FilePath "$AverageTestDir\AverageTest.kt"
+            $AverageMainDir | Out-File -FilePath "$AverageMainDir\Average.kt"
+            "package $Group.generators.average" -replace '\\', '.' | 
+                Out-File -FilePath "$AverageTestDir\AverageTest.kt"
+            "package $Group.generators.average" -replace '\\', '.' |
+                Out-File -FilePath "$AverageMainDir\Average.kt"
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            $Group = 'com\github\username'
+            ```
+            
+            ```powershell
+            $GeneratorsTestDir = "generators\src\test\kotlin\$Group\generators"
+            $GeneratorsMainDir = "generators\src\main\kotlin\$Group\generators"
+            $AverageTestDir = "$GeneratorsTestDir\average"
+            $AverageMainDir = "$GeneratorsMainDir\average"
+            $AverageTestDir, $AverageMainDir | % { md $_ }
+            "package $Group.generators.average" -replace '\\', '.' | 
+                Out-File -FilePath "$AverageTestDir\AverageTest.kt"
+            "package $Group.generators.average" -replace '\\', '.' |
+                Out-File -FilePath "$AverageMainDir\Average.kt"
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            GROUP="com/github/username"
+            ```
+
+            ```bash
+            GENERATORS_TEST_DIR="generators/src/test/kotlin/$GROUP/generators"
+            GENERATORS_MAIN_DIR="generators/src/main/kotlin/$GROUP/generators"
+            AVERAGE_TEST_DIR="$GENERATORS_TEST_DIR/average"
+            AVERAGE_MAIN_DIR="$GENERATORS_MAIN_DIR/average"
+            mkdir -p "$AVERAGE_TEST_DIR" "$AVERAGE_MAIN_DIR"
+            echo "package ${GROUP//\//.}.generators.average" > \
+                "$AVERAGE_TEST_DIR/AverageTest.kt"
+            echo "package ${GROUP//\//.}.generators.average" > \
+                "$AVERAGE_MAIN_DIR/Average.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+### Definiendo la especificación
+
+Supongamos que queremos generar listas de enteros de tamaño arbitrario para probar una función que calcula el promedio de una lista. Para lograrlo, podemos definir un generador que cree un par de datos: el primer elemento será una lista de enteros y el segundo será el promedio esperado de esa lista. De esta manera, podremos validar fácilmente si la función de promedio calcula correctamente el resultado.
+
+Comencemos por definir una especificación BDD (Behavior-Driven Development) para nuestro test:
+
+```kotlin showLineNumbers
+"Given a list of integers" - {
+    "when calculating the average of a non-empty list" - {
+        "should return the sum of the elements divided by the number of elements" {}
+    }
+}
+```
+
+Este enfoque sigue el flujo natural del lenguaje BDD, lo que permite expresar el comportamiento de la función de manera clara y comprensible.
+
+Ahora implementamos los detalles de nuestro test, donde usaremos un generador para crear pares de listas de enteros y sus promedios correspondientes:
+
+```kotlin showLineNumbers
+checkAll(...) { (list, expectedAverage) ->
+    average(list) shouldBe expectedAverage
+}
+```
+
+<Explanation>
+    Este ejemplo ilustra cómo esperamos que nuestro generador funcione. Generará pares de listas de enteros junto con sus promedios esperados. Luego, el test verificará que el promedio calculado por nuestra función sea igual al promedio esperado generado previamente. Esto garantiza que nuestra implementación de la función de promedio sea correcta bajo una variedad de casos de prueba.
+</Explanation>
+
+### Implementando el generador
+
+Para crear un generador personalizado en **Kotest**, utilizaremos la función `arbitrary`, que nos permite definir cómo se generan los datos de prueba según nuestro caso de uso específico. A continuación, seguiremos dos convenciones para mantener nuestro código limpio y organizado:
+
+- El nombre de todos los generadores debe comenzar con `arb`, indicando que estamos definiendo un generador arbitrario.
+- Especificamos claramente el tipo de datos que generará, lo que mejora la legibilidad y facilita la comprensión del propósito del generador.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        private typealias ListAndAverage = Pair<MutableList<Double>, Double>
+
+        private fun arbIntListAndAverage(): Arb<ListAndAverage> = 
+            arbitrary { (random, seed) ->
+                val list = mutableListOf<Int>()
+                val size = random.nextInt(1, 100)
+                var sum = 0
+                repeat(size) {
+                    val number = random.nextInt(1, 100)
+                    list += number
+                    sum += number
+                }
+                list to sum / size
+            }
+        ```
+
+        ```kotlin showLineNumbers
+        checkAll(arbIntListAndAverage()) { (list, expectedAverage) ->
+            average(list)
+                .shouldBeGreaterThanOrEqual(expectedAverage - 0.0001)
+                .shouldBeLessThan(expectedAverage + 0.0001)
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="generators/src/test/kotlin/com/github/username/generators/average/AverageTest.kt"
+        package com.github.username.generators.average
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.collections.shouldBeIn
+        import io.kotest.matchers.doubles.shouldBeGreaterThanOrEqual
+        import io.kotest.matchers.doubles.shouldBeLessThan
+        import io.kotest.matchers.shouldBe
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.arbitrary
+        import io.kotest.property.checkAll
+
+        typealias ListAndAverage = Pair<MutableList<Double>, Double>
+
+        class AverageTest : FreeSpec({
+            "Given a list of integers" - {
+                "when calculating the average of a non-empty list" - {
+                    "should return the sum of the elements divided by the number of elements" {
+                        checkAll(arbIntListAndAverage()) { (list, average) ->
+                            average(list)
+                                .shouldBeGreaterThanOrEqual(average - 0.0001)
+                                .shouldBeLessThan(average + 0.0001)
+                        }
+                    }
+                }
+            }
+        })
+
+        private fun arbIntListAndAverage(): Arb<ListAndAverage> = arbitrary { (random, seed) ->
+            val list = mutableListOf<Double>()
+            val size = random.nextInt(1, 100)
+            var average = 0.0
+            repeat(size) {
+                val number = random.nextDouble(1.0, 100.0)
+                list += number
+                average += number / size
+            }
+            list to average
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+<Explanation>
+    - Definimos un alias `ListAndAverage` para representar un par que contiene una lista de enteros y su promedio calculado. Esto nos ayuda a que el tipo de retorno del generador sea más explícito y descriptivo.
+    - Implementamos un generador llamado `arbIntListAndAverage` que genera listas de enteros y calcula su promedio correspondiente:
+        - Utilizamos la función `arbitrary`, que nos da acceso a un generador de números aleatorios (`random`), con el cual generamos los elementos de la lista.
+        - El generador crea una lista de enteros de tamaño aleatorio entre 1 y 100. Se asegura de que la lista nunca esté vacía, ya que el promedio de una lista vacía no tendría sentido.
+        - Para cada elemento de la lista, generamos un número aleatorio entre 1 y 100, lo añadimos a la lista, y simultáneamente calculamos el promedio sumando el número dividido por el tamaño de la lista.
+        - El generador devuelve un par que contiene la lista generada y el promedio calculado.
+    - Utilizamos `shouldBeGreaterThanOrEqual` y `shouldBeLessThan` para verificar que el promedio calculado por nuestra función `average` esté dentro de un rango de tolerancia de 0.0001 del promedio esperado. Esto se debe a que los cálculos de punto flotante pueden tener errores de redondeo, por lo que debemos permitir una pequeña variación en el resultado.
+</Explanation>
+
+### Implementando la función de promedio
+
+Finalmente, implementamos la función `average` que calcula el promedio de una lista de enteros. Es importante recordar que la implementación de la función debe ser distinta a la lógica del generador, ya que replicar esa lógica no sería útil para realizar pruebas efectivas.
+
+<Tabs>
+  <TabItem label={"Implementación iterativa"} value={"Implementación iterativa"}>
+    ```kotlin showLineNumbers title="generators/src/main/kotlin/com/github/username/generators/average/Average.kt"
+    package com.github.username.generators.average
+
+    fun average(list: List<Double>): Double {
+        var sum = 0.0
+        for (number in list) {
+            sum += number
+        }
+        return sum / list.size
+    }
+    ```
+
+    <Explanation>
+        - En esta implementación iterativa, usamos un bucle `for` para recorrer la lista de números.
+        - Cada número se suma al acumulador `sum`, que luego se divide por el tamaño de la lista para obtener el promedio.
+        - Este enfoque es sencillo y fácil de entender, pero puede ser menos idiomático en Kotlin que otras alternativas más funcionales.
+    </Explanation>
+  </TabItem>
+
+  <TabItem label={"Implementación funcional"} value={"Implementación funcional"}>
+    ```kotlin showLineNumbers title="generators/src/main/kotlin/com/github/username/generators/average/Average.kt"
+    package com.github.username.generators.average
+
+    fun average(list: List<Double>) =
+        list.fold(0.0) { acc, number -> 
+            acc + number
+        } / list.size 
+    ```
+
+    <Explanation>
+        - Esta implementación utiliza un enfoque funcional con la función `fold`, que recorre la lista    acumulando el resultado en el parámetro `acc` (acumulador).
+        - Al final del recorrido, dividimos la suma acumulada por el tamaño de la lista para obtener el promedio.
+        - Este enfoque es más conciso y expresivo, aprovechando las características funcionales de Kotlin.
+    </Explanation>
+  </TabItem>
+</Tabs>
+
+<Exercise>
+    Implementa un generador arbitrario que produzca diccionarios donde:
+
+    - **La llave** sea un número entero.
+    - **El valor** sea un `String` generado por la concatenación de caracteres aleatorios.
+
+    #### Detalles del ejercicio:
+
+    1. El tamaño del diccionario debe generarse de manera aleatoria.
+    2. Para generar los caracteres aleatorios que componen los valores del diccionario, puedes utilizar la función `nextInt` para obtener números aleatorios dentro del rango de valores Unicode (entre `0x0000` y `0xFFFF`).
+    3. Una vez generado el número, conviértelo en un carácter usando la función de extensión `toChar()`.
+
+    #### Ejemplo de generación de un carácter aleatorio:
+
+    ```kotlin
+    random.nextInt(0x0000, 0xFFFF).toChar()
+    ```
+
+    Este código generará un número aleatorio en el rango Unicode y lo convertirá a su correspondiente carácter. Usa este enfoque para construir las cadenas que serán los valores del diccionario.
+    
+    <Solution>
+        ```kotlin showLineNumbers
+        typealias IntStringMap = Map<Int, String>
+
+        private fun arbIntStringMap(): Arb<IntStringMap> = arbitrary { (random, seed) ->
+            val map = mutableMapOf<Int, String>()
+            val size = random.nextInt(1, 100)
+            while (map.size < size) {
+                val key = random.nextInt()
+                val stringSize = random.nextInt(1, 100)
+                val value = List(stringSize) {
+                    random.nextInt(0x0000, 0xFFFF).toChar()
+                }.joinToString("")
+                map[key] = value
+            }
+            map
+        }
+        ```    
+    </Solution>
+</Exercise>
+
+## ¿Qué aprendimos?
+
+En esta lección, aprendimos a implementar generadores personalizados en **Kotest** utilizando un **Pseudo-Random Number Generator (PRNG)** para generar datos de prueba controlados y reproducibles. Específicamente, exploramos cómo generar listas de enteros y sus promedios correspondientes para validar el comportamiento de una función que calcula el promedio de una lista. También revisamos distintas maneras de implementar la función de promedio, ya sea con un enfoque iterativo o funcional.
+
+### Puntos clave
+
+- **Generadores personalizados con `arbitrary`**: Utilizamos la función `arbitrary` para definir generadores personalizados, aprovechando un PRNG que facilita la creación de datos de prueba variados y controlados.
+- **Especificaciones BDD**: Definimos nuestras pruebas utilizando un enfoque BDD para describir el comportamiento esperado de nuestra función de promedio, lo que mejora la claridad y la mantenibilidad de los tests.
+- **Verificación de precisión en tests**: Aprendimos a verificar resultados que involucran cálculos de punto flotante permitiendo una pequeña variación para evitar problemas con la precisión de los cálculos.
+
+---
+
+Esta lección ofrece una base sólida para usar generadores en tests basados en propiedades, que son cruciales para verificar que nuestras funciones se comporten correctamente bajo una amplia variedad de entradas.

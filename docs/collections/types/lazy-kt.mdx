@@ -1,18 +1,23 @@
 ---
-title: Colecciones perezosas
+title: Colecciones Perezosas
 ---
-import Definition from "@site/src/components/Definition";
-import Exercise from "@site/src/components/exercise/Exercise";
-import GitHubRepoLink from "@site/src/components/GithubRepoLink";
-import { LanguageCard } from "@site/src/components/cards/LanguageCard";
-import ReadingTime from '@site/src/components/ReadingTime';
-import References from "@site/src/components/ReferencesComponent";
-import Solution from "@site/src/components/exercise/Solution";
-import TabItem from "@theme/TabItem";
-import Tabs from "@theme/Tabs";
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard, JavaScriptCard, JavaCard, PythonCard, RustCard, ScalaCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
 <ReadingTime />
-<GitHubRepoLink repo={"collections-kt"} user={"r8vnhill"} />
+<GithubRepoLink user="r8vnhill" repo="collections-kt" />
 
 Una **colección perezosa** es una estructura de datos donde los elementos no se calculan o procesan inmediatamente, sino que se generan bajo demanda. Este enfoque permite que las operaciones de transformación se ejecuten solo cuando sea necesario, y pueden ser especialmente útiles en flujos infinitos o en procesos que involucran muchas operaciones encadenadas, evitando la creación de colecciones temporales.
 
@@ -33,20 +38,21 @@ Una **colección perezosa** es una estructura de datos donde los elementos no se
     <Tabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell
-            New-Item -Path 'lazy\src\main\kotlin' -ItemType 'Directory'
-            Set-Content -Path 'lazy\build.gradle.kts' -Value '// Intentionally left blank'
+            New-Item -Path 'lazy' -ItemType 'Directory'
+            '// Intentionally left blank' |
+                Out-File -FilePath 'lazy\build.gradle.kts'
             ```
         </TabItem>
         <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
             ```powershell
-            mkdir 'lazy\src\main\kotlin'
+            md lazy
             '// Intentionally left blank' > 'lazy\build.gradle.kts'
             ```
         </TabItem>
-        <TabItem value="Unix" label="Unix">
+        <TabItem value="Linux/Mac" label="Linux/Mac">
             ```bash
-            mkdir -p "lazy/src/main/kotlin"
-            echo "// Intentionally left blank" > "lazy/build.gradle.kts"
+            mkdir lazy
+            echo '// Intentionally left blank' > 'lazy/build.gradle.kts'
             ```
         </TabItem>
     </Tabs>
@@ -56,7 +62,116 @@ Una **colección perezosa** es una estructura de datos donde los elementos no se
 
 Para implementar una **colección perezosa** en Kotlin, podemos utilizar el **patrón Iterator**, definiendo nuestras propias clases que implementan las interfaces `Iterable` e `Iterator`. A continuación, se presenta una implementación que genera una secuencia infinita de números pares de manera perezosa.
 
-### Paso 1: Definir la Clase `EvenNumbers`
+### Especificación BDD
+
+```kotlin showLineNumbers
+"Given a lazy collection of even numbers" - {
+    "when an arbitrary number of elements is requested" - {
+        "then the collection should generate the first n even numbers" {}
+    }
+}
+```
+
+### Implementación de las pruebas
+
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $Group = 'com\github\username'
+            ```
+
+            ```powershell
+            $LazyTestDir = "lazy\src\test\kotlin\$Group\"
+            $EvenNumbersTestDir = "$LazyTestDir\even"
+            New-Item -Path $EvenNumbersTestDir -ItemType Directory -Force
+            "package $Group.even" -replace '\\', '.' | 
+                Out-File -FilePath "$EvenNumbersTestDir\EvenNumbersTest.kt"
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            $Group = 'com\github\username'
+            ```
+
+            ```powershell
+            $LazyTestDir = "lazy\src\test\kotlin\$Group\"
+            $EvenNumbersTestDir = "$LazyTestDir\even"
+            md $EvenNumbersTestDir
+            "package $Group.even" -replace '\\', '.' > `
+                "$EvenNumbersTestDir\EvenNumbersTest.kt"
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            GROUP="com/github/username"
+            ```
+
+            ```bash
+            LAZY_TEST_DIR="lazy/src/test/kotlin/$GROUP/"
+            EVEN_NUMBERS_TEST_DIR="$LAZY_TEST_DIR/even"
+            mkdir -p $EVEN_NUMBERS_TEST_DIR
+            echo "package ${GROUP//\//.}.even" > \
+                "$EVEN_NUMBERS_TEST_DIR/EvenNumbersTest.kt"
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        checkAll(Arb.int(1..100)) { n ->
+            val evenNumbers = EvenNumbers()
+            val firstNEvens = mutableListOf<Int>()
+            val iterator = evenNumbers.iterator()
+            while (iterator.hasNext() && firstNEvens.size < n) {
+                firstNEvens.add(iterator.next())
+            }
+            val expected = (0 until n * 2 step 2).toList()
+            firstNEvens shouldBe expected
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="lazy/src/test/kotlin/com/github/username/even/EvenNumbersTest.kt"
+        package com.github.username.even
+
+        import cl.ravenhill.even.EvenNumbers
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.int
+        import io.kotest.property.checkAll
+
+        class EvenNumbersTest : FreeSpec({
+            "Given a lazy collection of even numbers" - {
+                "when an arbitrary number of elements is requested" - {
+                    "then the collection should generate the first n even numbers" {
+                        checkAll(Arb.int(1..100)) { n ->
+                            val evenNumbers = EvenNumbers()
+                            val firstNEvens = mutableListOf<Int>()
+                            val iterator = evenNumbers.iterator()
+                            while (iterator.hasNext() && firstNEvens.size < n) {
+                                firstNEvens.add(iterator.next())
+                            }
+                            val expected = (0 until n * 2 step 2).toList()
+                            firstNEvens shouldBe expected
+                        }
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
+
+
+### Definiendo la clase `EvenNumbers`
 
 <details>
     <summary>
@@ -66,22 +181,29 @@ Para implementar una **colección perezosa** en Kotlin, podemos utilizar el **pa
     <Tabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell
-            $BaseDir = 'com\github\username'
-            New-Item -Path "lazy\src\main\kotlin\$BaseDir\parity\EvenNumbers.kt" -Force `
-                -ItemType 'File'
+            $LazyMainDir = "lazy\src\main\kotlin\$Group\"
+            $EvenNumbersMainDir = "$LazyMainDir\even"
+            New-Item -Path $EvenNumbersMainDir -ItemType Directory -Force
+            "package $Group.even" -replace '\\', '.' | 
+                Out-File -FilePath "$EvenNumbersMainDir\EvenNumbers.kt"
             ```
         </TabItem>
         <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
             ```powershell
-            $BaseDir = 'com\github\username'
-            ni "lazy\src\main\kotlin\$BaseDir\parity\EvenNumbers.kt" -f -i 'File'
+            $LazyMainDir = "lazy\src\main\kotlin\$Group\"
+            $EvenNumbersMainDir = "$LazyMainDir\even"
+            md $EvenNumbersMainDir
+            "package $Group.even" -replace '\\', '.' > `
+                "$EvenNumbersMainDir\EvenNumbers.kt"
             ```
         </TabItem>
-        <TabItem value="Unix" label="Unix">
+        <TabItem value="Linux/Mac" label="Linux/Mac">
             ```bash
-            BASE_DIR="com/github/username"
-            mkdir -p "lazy/src/main/kotlin/$BASE_DIR/parity"
-            touch "lazy/src/main/kotlin/$BASE_DIR/parity/EvenNumbers.kt"
+            LAZY_MAIN_DIR="lazy/src/main/kotlin/$GROUP/"
+            EVEN_NUMBERS_MAIN_DIR="$LAZY_MAIN_DIR/even"
+            mkdir -p $EVEN_NUMBERS_MAIN_DIR
+            echo "package ${GROUP//\//.}.even" > \
+                "$EVEN_NUMBERS_MAIN_DIR/EvenNumbers.kt"
             ```
         </TabItem>
     </Tabs>
@@ -89,15 +211,15 @@ Para implementar una **colección perezosa** en Kotlin, podemos utilizar el **pa
 
 Esta clase implementa la interfaz `Iterable<Int>`, lo que permite que se pueda iterar sobre sus elementos. Internamente, utiliza un iterador personalizado para generar los números pares de forma perezosa.
 
-```kotlin title="lazy/src/main/kotlin/com/github/username/parity/EvenNumbers.kt" showLineNumbers
-package com.github.username.parity
+```kotlin title="lazy/src/main/kotlin/com/github/username/even/EvenNumbers.kt" showLineNumbers
+package com.github.username.even
 
 class EvenNumbers : Iterable<Int> {
     override fun iterator(): Iterator<Int> = EvenNumberIterator()
 }
 ```
 
-### Paso 2: Definir la Clase `EvenNumberIterator`
+### Definiendo la clase `EvenNumberIterator`
 
 <details>
     <summary>
@@ -107,19 +229,20 @@ class EvenNumbers : Iterable<Int> {
     <Tabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell
-            New-Item -Path "lazy\src\main\kotlin\$BaseDir\parity\EvenNumberIterator.kt" -Force `
-                -ItemType 'File'
+            "package $Group.even" -replace '\\', '.' | 
+                Out-File -FilePath "$EvenNumbersMainDir\EvenNumberIterator.kt"
             ```
         </TabItem>
         <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
             ```powershell
-            ni "lazy\src\main\kotlin\$BaseDir\parity\EvenNumberIterator.kt" -f -i 'File'
+            "package $Group.even" -replace '\\', '.' > `
+                "$EvenNumbersMainDir\EvenNumberIterator.kt"
             ```
         </TabItem>
-        <TabItem value="Unix" label="Unix">
+        <TabItem value="Linux/Mac" label="Linux/Mac">
             ```bash
-            mkdir -p "lazy/src/main/kotlin/$BASE_DIR/parity"
-            touch "lazy/src/main/kotlin/$BASE_DIR/parity/EvenNumberIterator.kt"
+            echo "package ${GROUP//\//.}.even" > \
+                "$EVEN_NUMBERS_MAIN_DIR/EvenNumberIterator.kt"
             ```
         </TabItem>
     </Tabs>
@@ -127,8 +250,8 @@ class EvenNumbers : Iterable<Int> {
 
 Esta clase implementa la interfaz `Iterator<Int>` y es responsable de generar los números pares uno a uno cuando se solicitan.
 
-```kotlin title="lazy/src/main/kotlin/com/github/username/parity/EvenNumberIterator.kt" showLineNumbers
-package com.github.username.parity
+```kotlin title="lazy/src/main/kotlin/com/github/username/even/EvenNumberIterator.kt" showLineNumbers
+package com.github.username.even
 
 class EvenNumberIterator : Iterator<Int> {
     private var current = 0
@@ -145,88 +268,11 @@ class EvenNumberIterator : Iterator<Int> {
 }
 ```
 
-:::info Explicación del Código
-
-- **[4]** ``current``: Mantiene el estado interno del iterador, representando el número par actual.
-- **[6]** ``hasNext()``: Siempre retorna ``true`` ya que la secuencia es infinita.
-- **[8-14]** ``next()``: Retorna el siguiente número par y actualiza el estado interno incrementando ``current`` en 2. Si el siguiente número par supera el valor máximo de un entero, se lanza una excepción ``NoSuchElementException``, deteniendo la iteración.
-
-:::
-
-### Paso 3: Uso de la Colección Perezosa `EvenNumbers`
-
-<details>
-    <summary>
-        Si quieres crear el archivo desde la terminal...
-    </summary>
-
-    <Tabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path "lazy\src\main\kotlin\$BaseDir\parity\Main.kt" -Force `
-                -ItemType 'File'
-            ```
-        </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-            ```powershell
-            ni "lazy\src\main\kotlin\$BaseDir\parity\Main.kt" -f -i 'File'
-            ```
-        </TabItem>
-        <TabItem value="Unix" label="Unix">
-            ```bash
-            touch "lazy/src/main/kotlin/$BASE_DIR/parity/Main.kt"
-            ```
-        </TabItem>
-    </Tabs>
-</details>
-
-A continuación, se muestra cómo utilizar la colección perezosa para obtener los primeros `n` números pares.
-
-<Tabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers title="lazy/src/main/kotlin/com/github/username/parity/Main.kt"
-        fun computeEvenNumbersWithIterator() {
-            val evenNumbers = EvenNumbers()
-            val iterator = evenNumbers.iterator()
-
-            val firstTenEvens = mutableListOf<Int>()
-            while (iterator.hasNext() && firstTenEvens.size < SIZE) {
-                firstTenEvens.add(iterator.next())
-            }
-
-            println(firstTenEvens)
-        }
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="lazy/src/main/kotlin/com/github/username/parity/Main.kt"
-        const val SIZE = 10
-
-        fun computeEvenNumbersWithIterator() {
-            val evenNumbers = EvenNumbers()
-            val iterator = evenNumbers.iterator()
-
-            val firstTenEvens = mutableListOf<Int>()
-            while (iterator.hasNext() && firstTenEvens.size < SIZE) {
-                firstTenEvens.add(iterator.next())
-            }
-
-            println(firstTenEvens)
-        }
-
-        fun main() {
-            println("Computing the first $SIZE even numbers using an iterator:")
-            computeEvenNumbersWithIterator()
-        }
-        ```
-    </TabItem>
-</Tabs>
-
-:::info Explication del Código
-
-- **[6-8]** ``while (iterator.hasNext() && firstTenEvens.size < SIZE)``: Itera sobre los números pares generados por el iterador hasta que se alcance el tamaño deseado.
-
-:::
+<Explanation>
+    - **`current`** mantiene el estado interno del iterador, representando el número par actual.
+    - **`hasNext()`** siempre retorna `true` ya que la secuencia es infinita.
+    - **`next()`** retorna el siguiente número par y actualiza el estado interno incrementando `current` en 2. Si el siguiente número par supera el valor máximo de un entero, se lanza una excepción `NoSuchElementException`, deteniendo la iteración.
+</Explanation>
 
 :::warning Consideraciones al Usar Colecciones Perezosas
 
@@ -236,9 +282,9 @@ A continuación, se muestra cómo utilizar la colección perezosa para obtener l
 
 :::
 
-### Comparación entre Colecciones Tempranas, Tempranas Mutables y Perezosas en Kotlin
+## Comparación entre Colecciones Tempranas, Tempranas Mutables y Perezosas en Kotlin
 
-| **Característica**                  | **Colecciones Temprana (Inmutables)** (`List`, `Set`, `Map`)     | **Colecciones Temprana Mutables** (`MutableList`, `MutableSet`, `MutableMap`) | **Colecciones Perezosas**                                      |
+| **Característica**                  | **Colecciones Tempranas (Inmutables)** (`List`, `Set`, `Map`)     | **Colecciones Tempranas Mutables** (`MutableList`, `MutableSet`, `MutableMap`) | **Colecciones Perezosas**                                      |
 |-------------------------------------|------------------------------------------------------------------|-------------------------------------------------------------------------------|----------------------------------------------------------------|
 | **Evaluación**                      | Inmediata                                                        | Inmediata                                                                     | Diferida                                                       |
 | **Mutabilidad**                     | Inmutables: No permiten modificaciones después de su creación    | Mutables: Permiten agregar, eliminar y modificar elementos                    | Inmutables por defecto                                         |
@@ -260,69 +306,45 @@ A continuación, se muestra un ejemplo de cómo utilizar secuencias en Kotlin pa
 
 <Tabs>
     <TabItem label={"Implementación"} value={"Implementación"}>
-        ```kotlin showLineNumbers title="lazy/src/main/kotlin/com/github/tu_usuario/parity/Main.kt"
-        // ...
-        fun computeEvenNumbersWithSequence() {
-            val evenNumbers = sequence {
-                var number = 0
-                while (true) {
-                    yield(number)
-                    number += 2
-                }
+        ```kotlin showLineNumbers
+        val evenNumbers = sequence {
+            var number = 0
+            while (true) {
+                yield(number)
+                number += 2
             }
-            val firstTenEvens = evenNumbers
-                .take(SIZE)
-                .toList()
-
-            println(firstTenEvens)
         }
-
-        fun main() {
-            // ...
-            println("\nComputing the first $SIZE even numbers using a sequence:")
-            computeEvenNumbersWithSequence()
-        }
+        val firstTenEvens = evenNumbers
+            .take(SIZE)
+            .toList()
         ```
 
-        :::info Explicación del Código
-
+        <Explanation>
         - **Creación de la Secuencia con `sequence {}`**:
-            - **[3]** Utilizamos la función `sequence {}` para crear una **secuencia perezosa**.
-            - **[3-9]** Dentro del bloque `sequence {}`, inicializamos una variable `number`, que comienza en 0. Esta variable representa el número par actual.
-        - **Generación de la Secuencia:**
-            - **[5-9]** Utilizamos un bucle `while (true)` para generar una **secuencia infinita** de números pares. El bucle continúa indefinidamente, generando números pares sin detenerse.
-            - **[6]** `yield(number)`: Esta función emite el valor actual de `number` como el siguiente elemento de la secuencia. Cada vez que Kotlin "solicita" un nuevo valor de la secuencia, `yield` lo proporciona.
-            - **[7]** `number += 2`: Después de emitir el valor actual, incrementamos `number` en 2 para que el siguiente valor emitido por la secuencia sea el próximo número par.
-        - **Consumo de la Secuencia:**
-            - **[12]** `take(SIZE)`: Este método selecciona los primeros 10 elementos generados por la secuencia. Aunque la secuencia es infinita, este método limita el número de elementos que realmente se consumen.
-            - **[13]** `toList()`: Convierte los 10 elementos seleccionados en una lista. Esto facilita su manipulación posterior, ya que las listas en Kotlin proporcionan más operaciones y facilitan el acceso a sus elementos.
-
-        :::
+            - **`sequence {}`**: Crea una secuencia perezosa.
+            - **`var number = 0`**: Inicializa la variable `number` en 0.
+            - **`while (true)`**: Bucle infinito para generar números pares.
+            - **`yield(number)`**: Emite el número actual como parte de la secuencia.
+            - **`number += 2`**: Incrementa `number` en 2 para el siguiente número par.
+        - **Consumo de la Secuencia**:
+            - **`take(SIZE)`**: Selecciona los primeros 10 elementos.
+            - **`toList()`**: Convierte los elementos seleccionados en una lista.
+        </Explanation>
     </TabItem>
     <TabItem label={"Implementación (mejorada)"} value={"Implementación (mejorada)"}>
-        ```kotlin showLineNumbers title="lazy/src/main/kotlin/com/github/tu_usuario/parity/Main.kt"
-        // ...
-        fun computeEvenNumbersWithSequence() {
-            val evenNumbers = generateSequence(0) { it + 2 }  // Crear una secuencia perezosa de números pares
-            val firstTenEvens = evenNumbers.take(SIZE).toList()  // Tomar los primeros 10 elementos y convertirlos a una lista
-
-            println(firstTenEvens)  // Resultado: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
-        }
-
-        fun main() {
-            // ...
-            println("\nComputing the first $SIZE even numbers using a sequence:")
-            computeEvenNumbersWithSequence()
-        }
+        ```kotlin showLineNumbers
+        val evenNumbers = generateSequence(0) { it + 2 }
+        val firstTenEvens = evenNumbers
+            .take(SIZE)
+            .toList()
         ```
 
-        :::info Explicación del Código
-
+        <Explanation>
         - **Creación de la Secuencia con `generateSequence()`**:
-            - **[3]** Utilizamos la función `generateSequence(0) { it + 2 }` para crear una secuencia perezosa de números pares.
-            - **[3]** El primer argumento de `generateSequence()` es el valor inicial (`0`), y el segundo argumento es una función lambda que define cómo se generan los siguientes elementos de la secuencia (`it + 2`).
-
-        :::
+            - **`generateSequence(0) { it + 2 }`**: Crea una secuencia perezosa de números pares.
+            - **`0`**: Valor inicial de la secuencia.
+            - **`{ it + 2 }`**: Función lambda que define cómo se generan los siguientes elementos.
+        </Explanation>
     </TabItem>
 </Tabs>
 
@@ -350,26 +372,11 @@ Este enfoque aprovecha las secuencias perezosas de Kotlin para manejar coleccion
 En esta sección, hemos explorado las **colecciones perezosas** en Kotlin, con un enfoque particular en las **secuencias**. Las secuencias permiten la creación de colecciones infinitas de forma eficiente, generando y procesando solo los elementos necesarios cuando se solicitan. También hemos aprendido a implementar secuencias personalizadas utilizando `sequence {}` y `generateSequence()`, lo que nos permite manejar grandes flujos de datos o secuencias infinitas con facilidad.
 
 <div className="language-card-container">
-    <LanguageCard
-        logoSrc="https://www.svgrepo.com/show/184143/java.svg"
-        language="Java"
-        link="/docs/collections/types/lazy/java"
-    />
-    <LanguageCard
-        logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/800px-Python-logo-notext.svg.png"
-        language="Python"
-        link="/docs/collections/types/lazy/python"
-    />
-    <LanguageCard
-        logoSrc="https://www.svgrepo.com/show/306688/rust.svg"
-        language="Rust"
-        link="/docs/collections/types/lazy/rust"
-    />
-    <LanguageCard
-        logoSrc="https://www.svgrepo.com/show/354313/scala.svg"
-        language="Scala"
-        link="/docs/collections/types/lazy/scala"
-    />
+    <JavaCard link="/docs/collections/types/lazy/java" />
+    <JavaScriptCard link="/docs/collections/types/lazy/js" />
+    <PythonCard link="/docs/collections/types/lazy/python" />
+    <RustCard link="/docs/collections/types/lazy/rust" />
+    <ScalaCard link="/docs/collections/types/lazy/scala" />
 </div>
 
 <References references={[

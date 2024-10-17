@@ -1,0 +1,270 @@
+---
+title: Matchers personalizados en AssertJ
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard, AssertJCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+En **AssertJ**, los matchers personalizados se definen creando una clase que extiende de `AbstractAssert`. Esta clase contiene métodos para realizar las validaciones necesarias y devolver un mensaje de error si la aserción falla.
+
+## Ejemplo de matcher personalizado: Número par
+
+Existen dos formas de crear matchers personalizados en **AssertJ**. La primera es crear un objeto de tipo `Condition` y la segunda es extender la clase `AbstractAssert`.
+
+### Creación de un matcher con `Condition`
+
+Para crear un matcher que verifique si un número es par, utilizamos la clase `Condition` de AssertJ:
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        public static Condition<Integer> even =
+                new Condition<>(value -> value % 2 == 0, "even");
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="cl/ravenhill/assertj/Matchers.java"
+        package cl.ravenhill.assertj;
+
+        import org.assertj.core.api.Condition;
+
+        public class Matchers {
+            public static Condition<Integer> even =
+                    new Condition<>(value -> value % 2 == 0, "even");
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+<Explanation>
+    Creamos un objeto `Condition` que verifica si un número es par. El constructor de `Condition` recibe una expresión lambda que evalúa la condición y un mensaje de error en caso de fallo.
+</Explanation>
+
+#### Uso del matcher en pruebas
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```java showLineNumbers
+        assertThat(2).is(even);
+        assertThat(3).isNot(even);
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```java showLineNumbers title="cl/ravenhill/assertj/EvenNumberTest.java"
+        package cl.ravenhill.assertj;
+
+        import org.junit.jupiter.api.DisplayName;
+        import org.junit.jupiter.api.Test;
+
+        import static cl.ravenhill.assertj.Matchers.even;
+        import static org.assertj.core.api.Assertions.assertThat;
+        import static org.junit.jupiter.api.Assertions.assertThrows;
+
+        class EvenNumberTest {
+            @DisplayName("Given an even number, when checking if it is even, then it should pass")
+            @Test
+            void testEvenNumberIsEven() {
+                assertThat(2).is(even);
+            }
+
+            @DisplayName("Given an even number, when checking if it is not even, then it should fail")
+            @Test
+            void testEvenNumberIsNotEven() {
+                assertThrows(AssertionError.class, () -> assertThat(2).isNot(even));
+            }
+
+            @DisplayName("Given an odd number, when checking if it is not even, then it should pass")
+            @Test
+            void testOddNumberIsNotEven() {
+                assertThat(3).isNot(even);
+            }
+
+            @DisplayName("Given an odd number, when checking if it is even, then it should fail")
+            @Test
+            void testOddNumberIsEven() {
+                assertThrows(AssertionError.class, () -> assertThat(3).is(even));
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+<Explanation>
+    - En el código de prueba, utilizamos el matcher `even` para verificar si un número es par.
+    - La aserción `assertThat(2).is(even)` verifica si el número 2 es par, mientras que `assertThat(3).isNot(even)` verifica si el número 3 no es par.
+</Explanation>
+
+### Creación de un matcher con `AbstractAssert`
+
+Para crear un matcher que verifique si un número es par en **AssertJ**, lo hacemos de la siguiente manera:
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```java showLineNumbers
+        public class EvenNumberAssert extends AbstractAssert<EvenNumberAssert, Integer> {
+
+            public EvenNumberAssert(Integer actual) {
+                super(actual, EvenNumberAssert.class);
+            }
+
+            public static EvenNumberAssert assertThat(Integer actual) {
+                return new EvenNumberAssert(actual);
+            }
+
+            public EvenNumberAssert isEven() {
+                isNotNull();
+                if (actual % 2 != 0) {
+                    failWithMessage("Expected <%s> to be even, but it was not.", actual);
+                }
+                return this;
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```java showLineNumbers title="cl/ravenhill/assertj/EvenNumberAssert.java"
+        package cl.ravenhill.assertj;
+
+        import org.assertj.core.api.AbstractAssert;
+        import org.jetbrains.annotations.Contract;
+        import org.jetbrains.annotations.NotNull;
+
+        public class EvenNumberAssert extends AbstractAssert<EvenNumberAssert, Integer> {
+
+            public EvenNumberAssert(Integer actual) {
+                super(actual, EvenNumberAssert.class);
+            }
+
+            @Contract("_ -> new")
+            public static @NotNull EvenNumberAssert assertThat(Integer actual) {
+                return new EvenNumberAssert(actual);
+            }
+
+            public EvenNumberAssert isEven() {
+                isNotNull();
+                if (actual % 2 != 0) {
+                    failWithMessage("Expected <%s> to be even, but it was not.", actual);
+                }
+                return this;
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+<Explanation>
+    - La clase `EvenNumberAssert` extiende de `AbstractAssert` y proporciona el método `isEven()` que realiza la comprobación.
+    - El método `assertThat()` crea una instancia de `EvenNumberAssert`, facilitando el uso de este matcher en pruebas.
+    - El método `isEven()` verifica si el número actual es par y lanza un error si no lo es.
+</Explanation>
+
+#### Uso del matcher en pruebas
+
+Para utilizar este matcher personalizado en una prueba, el código sería algo como:
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        assertThat(2).isEven();
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers 
+        package cl.ravenhill.assertj;
+
+        import org.junit.jupiter.api.DisplayName;
+        import org.junit.jupiter.api.Test;
+
+        import static cl.ravenhill.assertj.EvenNumberAssert.assertThat;
+        import static org.junit.jupiter.api.Assertions.assertThrows;
+
+        public class EvenNumberAssertTest {
+            @DisplayName("Given an even number, when checking if it is even, then it should pass")
+            @Test
+            void testEvenNumber() {
+                assertThat(2).isEven();
+            }
+
+            @DisplayName("Given an odd number, when checking if it is even, then it should fail")
+            @Test
+            void testOddNumber() {
+                assertThrows(AssertionError.class, () -> assertThat(3).isEven());
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+Este código verifica si los números proporcionados son pares. Si el número no es par, se lanza un error con un mensaje personalizado.
+
+## Comparación final
+
+| **Característica**                    | **AssertJ**                                                                                                                                                  | **Kotest**                                                                                                                                                    |
+|---------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Definición de matchers personalizados** | En **AssertJ**, se pueden crear matchers personalizados extendiendo `AbstractAssert` o utilizando `Condition`. Esto permite realizar validaciones complejas y personalizadas mediante clases que heredan funcionalidad base. | En **Kotest**, los matchers personalizados se definen implementando la interfaz `Matcher<T>`, lo que simplifica la creación de validaciones específicas sin necesidad de crear clases enteras. |
+| **Sintaxis fluida**                   | AssertJ ofrece una sintaxis fluida y encadenable, permitiendo múltiples validaciones en una sola línea (`isEven().isGreaterThan()`).                           | Kotest también ofrece una sintaxis fluida con operadores como `should` y `shouldNot`, lo que facilita la creación de pruebas expresivas y legibles.            |
+| **Compatibilidad**                    | Está diseñado principalmente para **Java**, lo que lo hace ideal para proyectos que utilizan el ecosistema Java.                                              | Kotest está optimizado para **Kotlin**, aprovechando las características de este lenguaje, como `coroutines` y expresiones lambda.                            |
+| **Flexibilidad para crear matchers**  | En AssertJ, los matchers personalizados requieren más configuración, especialmente si se utiliza `AbstractAssert`. Sin embargo, este enfoque ofrece más control en casos complejos. | Crear un matcher en Kotest es más sencillo y directo. Basta con implementar `Matcher<T>` y definir las condiciones.                                            |
+| **Soporte para asincronía**           | AssertJ no tiene soporte nativo para asincronía, lo que puede ser una limitación en proyectos que dependen de operaciones concurrentes o asíncronas.            | Kotest soporta asincronía nativamente, integrando **coroutines** y facilitando las pruebas de código que utiliza operaciones asíncronas.                       |
+| **Uso en JVM y Kotlin**               | Aunque AssertJ se puede utilizar en proyectos Kotlin, no está diseñado específicamente para este lenguaje, lo que puede limitar la integración perfecta con características avanzadas de Kotlin. | Kotest está diseñado específicamente para **Kotlin** y la JVM, lo que garantiza una integración más fluida y un mejor uso de las características del lenguaje. |
+
+### Beneficios y limitaciones
+
+<ProCons>
+   <Pros>
+       - **Sintaxis fluida y encadenable**: AssertJ ofrece una sintaxis fluida que permite encadenar múltiples validaciones en una sola línea, lo que facilita la lectura y mejora la expresividad de las pruebas.
+       - **Flexibilidad en la creación de matchers**: Con AssertJ, los matchers personalizados se pueden definir usando `Condition` para situaciones simples o extendiendo `AbstractAssert` para validaciones más complejas. Esto ofrece flexibilidad dependiendo del nivel de personalización necesario.
+       - **Amplia compatibilidad con Java**: AssertJ está bien integrado en el ecosistema de Java, haciéndolo una opción ideal para proyectos Java que requieren una biblioteca rica en funcionalidad para pruebas.
+       - **Personalización avanzada**: Al extender `AbstractAssert`, se puede obtener un control total sobre cómo se manejan las validaciones y los mensajes de error, lo que permite personalizar cada detalle del matcher.
+   </Pros>
+   <Cons>
+       - **Complejidad en la creación de matchers**: Comparado con Kotest, crear matchers personalizados en AssertJ puede ser más complejo y requiere más configuración, especialmente si se utiliza `AbstractAssert`.
+       - **Falta de soporte para asincronía**: AssertJ no tiene soporte nativo para operaciones asíncronas, lo que puede ser un inconveniente en proyectos que dependen de procesos concurrentes o asíncronos.
+       - **Menor integración con Kotlin**: Aunque AssertJ puede ser utilizado en proyectos Kotlin, no está optimizado para este lenguaje, lo que significa que puede no aprovechar completamente las características avanzadas de Kotlin, como `coroutines` o lambdas.
+       - **Mayor carga de configuración**: Mientras que Kotest permite crear matchers personalizados de manera sencilla implementando una interfaz, AssertJ requiere la creación de clases completas y métodos adicionales, lo que puede aumentar la carga de configuración para casos complejos.
+   </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, hemos comparado la creación de **matchers personalizados** entre AssertJ y Kotest, observando las diferencias clave en cómo se definen y utilizan estos matchers en cada marco de pruebas.
+
+### Puntos clave
+
+1. **Matchers Personalizados en AssertJ**: 
+   - AssertJ permite crear matchers personalizados de dos formas: mediante `Condition` o extendiendo la clase `AbstractAssert`. Esto ofrece flexibilidad para validar condiciones complejas.
+   - La creación de matchers mediante `AbstractAssert` proporciona un alto grado de control sobre las validaciones y los mensajes de error, pero también implica mayor complejidad y configuración.
+2. **Matchers Personalizados en Kotest**:
+   - Kotest facilita la creación de matchers personalizados mediante la implementación de la interfaz `Matcher<T>`. Este enfoque es más sencillo y directo, ideal para validaciones que no requieren una estructura compleja.
+   - Kotest está diseñado para Kotlin, lo que permite aprovechar sus características avanzadas, como las `coroutines`, para soportar asincronía nativa en las pruebas.
+3. **Diferencias Notables**:
+   - **Sintaxis**: Ambos frameworks ofrecen una sintaxis fluida y encadenable, aunque AssertJ destaca por su enfoque más Java y Kotest por su integración nativa con Kotlin.
+   - **Asincronía**: Kotest tiene una ventaja en proyectos que requieren pruebas de código asíncrono, ya que soporta nativamente `coroutines`. AssertJ, por otro lado, no tiene soporte nativo para asincronía.
+   - **Carga de configuración**: AssertJ puede requerir más configuración al crear matchers complejos, mientras que Kotest simplifica el proceso mediante la interfaz `Matcher<T>`.
+
+---
+
+Ambos frameworks son útiles para la creación de matchers personalizados, pero la elección depende del lenguaje y las necesidades del proyecto. AssertJ es ideal para proyectos en Java que requieren un alto control y flexibilidad, mientras que Kotest es más adecuado para proyectos Kotlin que buscan simplicidad, soporte para asincronía y una integración más fluida con el lenguaje.
+
+<References references={[
+    {
+        title: "AssertJ - fluent assertions java library",
+        url: "https://assertj.github.io/doc/",
+        accessedDate: "4 de octubre de 2024",
+        type: "web",
+    },
+]}/>

@@ -94,7 +94,7 @@ Para que una estructura de datos sea considerada un **functor**, debe cumplir do
         checkAll(
             Arb.choice(
                 Arb.int().map { Success(it) },
-                Arb.string().map { Failure(Throwable(it)) }
+                arbThrowable().map { Failure(it) }
             )
         ) { result ->
             with(ResultFunctor<Int>()) {
@@ -144,7 +144,7 @@ Para que una estructura de datos sea considerada un **functor**, debe cumplir do
                         checkAll(
                             Arb.choice(
                                 Arb.int().map { Success(it) },
-                                Arb.string().map { Failure(Throwable(it)) }
+                                arbThrowable().map { Failure(it) }
                             )
                         ) { result ->
                             with(ResultFunctor<Int>()) {
@@ -276,22 +276,29 @@ A continuación, presentamos una implementación básica de la estructura `Resul
 
 Una vez que hemos definido los estados `Success` y `Failure`, podemos implementar el **functor** para la estructura `Result`. Esto nos permitirá aplicar transformaciones a los valores encapsulados dentro de `Success` sin modificar el estado `Failure`.
 
-La siguiente implementación permite mapear una función sobre un `Result`:
+La siguiente implementación permite mapear una función sobre un `Result`, incluyendo una función `contraMap` que transforma la excepción en caso de fallo sin modificar el valor encapsulado en un `Success` (esto no es común en todos los functors, pero es útil en este caso para mantener la consistencia de los errores).
 
 ```kotlin showLineNumbers title="functors/src/main/kotlin/com/github/username/functors/result/ResultFunctor.kt"
 package com.github.username.functors.result
 
-fun <T, R> Result<T>.map(transform: (T) -> R): Result<R> =
-    when (this) {
-        is Success -> Success(transform(this.value))
+class ResultFunctor<T> {
+    fun <R> Result<T>.map(f: (T) -> R): Result<R> = when(this) {
         is Failure -> this
+        is Success -> Success(f(value))
     }
+
+    fun <R: Throwable> Result<T>.contraMap(f: (Throwable) -> R): Result<T> = when(this) {
+        is Failure -> Failure(f(exception))
+        is Success -> this
+    }
+}
 ```
 
 <Explanation>
     - **Identidad en el `Failure`**: Cuando el `Result` es un `Failure`, la función `map` no aplica la transformación, garantizando que los errores no se modifiquen.
     - **Transformación en `Success`**: En el caso de un `Success`, la función `map` transforma el valor encapsulado, permitiendo operaciones seguras sobre el contenido sin riesgo de alterar los errores.
     - **Seguridad en tiempo de compilación**: El uso de genéricos en la función `map` asegura que tanto la entrada como la salida del `Result` se manejen de manera segura, previniendo errores de tipo.
+    - **Manejo de errores**: La función `contraMap` permite transformar la excepción en un `Failure` sin modificar el valor encapsulado en un `Success`.
 </Explanation>
 
 Ahora podemos ejecutar las pruebas unitarias para verificar que nuestra implementación de `Result` cumple con las leyes de un functor.
@@ -300,31 +307,131 @@ Ahora podemos ejecutar las pruebas unitarias para verificar que nuestra implemen
 
 Vamos a implementar una función que calcule el área de un círculo. La función recibirá el radio como un `Double` y devolverá el área como un `Result`. Si el radio es negativo, devolveremos un `Failure` con un mensaje de error.
 
-```kotlin showLineNumbers
-fun calculateArea(radius: Double): Result<Double> = 
-    if (radius >= 0) {
-        Success(Math.PI * radius * radius)
-    } else {
-        Failure(IllegalArgumentException("El radio no puede ser negativo"))
-    }
-```
+#### Especificación de la función `calculateArea`
 
-Ahora utilizamos el functor `Result` para calcular el área y aplicar transformaciones adicionales solo en caso de éxito, sin necesidad de capturar excepciones.
+Comencemos  definiendo una especificación para la función `calculateArea` que calcula el área de un círculo:
 
 ```kotlin showLineNumbers
-fun main() {
-    val radius = 5.0
-    val areaResult = calculateArea(radius)
-
-    val result = areaResult.map { area -> 
-        "El área del círculo con radio $radius es $area"
+"Given a radius" - {
+    "when calculating the area of a circle" - {
+        "should return a success if the radius is non-negative" - {}
+        "should return a failure if the radius is negative" {}
     }
-
-    println(result)
 }
 ```
 
-Si ejecutamos el código con un radio positivo, obtenemos un `Success` con el área calculada y transformada en un mensaje descriptivo. Si usamos un radio negativo, obtenemos un `Failure` con el mensaje de error.
+#### Implementación de las pruebas unitarias
+
+Ahora, completaremos los detalles de los casos de prueba para verificar el comportamiento de la función `calculateArea`, utilizaremos Data-Driven testing para definir casos de prueba con radios positivos y property-based testing para radios negativos.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        "should return a success if the radius is non-negative" - {
+            withData(
+                0 to 0.0,
+                1 to 3.141592653589793,
+                2 to 12.566370614359172,
+                3 to 28.274333882308138
+            ) { (radius, expected) ->
+                with(ResultFunctor<Double>()) {
+                    circleArea(radius)
+                        .map { it shouldBe expected }
+                        .shouldBeInstanceOf<Success<Double>>()
+                        .contraMap { it }
+                        .shouldBeInstanceOf<Success<Double>>()
+                }
+            }
+        }
+
+        "should return a failure if the radius is negative" {
+            checkAll(Arb.negativeInt()) { radius ->
+                with(ResultFunctor<Double>()) {
+                    circleArea(radius)
+                        .map { it }
+                        .shouldBeInstanceOf<Failure>()
+                        .contraMap {
+                            it shouldHaveMessage "Radius must be non-negative"
+                            it
+                        }.shouldBeInstanceOf<Failure>()
+                }
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        package cl.ravenhill.functors.result
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.datatest.withData
+        import io.kotest.matchers.shouldBe
+        import io.kotest.matchers.throwable.shouldHaveMessage
+        import io.kotest.matchers.types.shouldBeInstanceOf
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.negativeInt
+        import io.kotest.property.checkAll
+
+        class CircleAreaTest : FreeSpec({
+            "Given a radius" - {
+                "when calculating the area of a circle" - {
+                    "should return a success if the radius is non-negative" - {
+                        withData(
+                            0 to 0.0,
+                            1 to 3.141592653589793,
+                            2 to 12.566370614359172,
+                            3 to 28.274333882308138
+                        ) { (radius, expected) ->
+                            with(ResultFunctor<Double>()) {
+                                circleArea(radius)
+                                    .map { it shouldBe expected }
+                                    .shouldBeInstanceOf<Success<Double>>()
+                                    .contraMap { it }
+                                    .shouldBeInstanceOf<Success<Double>>()
+                            }
+                        }
+                    }
+
+                    "should return a failure if the radius is negative" {
+                        checkAll(Arb.negativeInt()) { radius ->
+                            with(ResultFunctor<Double>()) {
+                                circleArea(radius)
+                                    .map { it }
+                                    .shouldBeInstanceOf<Failure>()
+                                    .contraMap {
+                                        it shouldHaveMessage "Radius must be non-negative"
+                                        it
+                                    }.shouldBeInstanceOf<Failure>()
+                            }
+                        }
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
+
+<Explanation>
+    - **Cálculo del área**: Utilizamos Data-Driven testing para probar el cálculo del área con radios positivos y comparamos el resultado esperado con el valor obtenido.
+    - **Manejo de errores**: Verificamos que la función `circleArea` devuelva un `Failure` con el mensaje correcto cuando el radio es negativo.
+    - **Verificación de tipos**: Utilizamos `shouldBeInstanceOf` para asegurarnos de que el resultado sea del tipo esperado (`Success` o `Failure`).
+    - **Mapeo de errores**: Aplicamos la función `contraMap` para verificar que el mensaje de error sea el correcto en caso de fallo.
+</Explanation>
+
+#### Implementación de la función `circleArea`
+
+```kotlin showLineNumbers
+package com.github.username.functors.result
+
+import kotlin.math.PI
+
+fun circleArea(radius: Int): Result<Double> = if (radius < 0) {
+    Failure(IllegalArgumentException("Radius must be non-negative"))
+} else {
+    Success(PI * radius * radius)
+}
+```
 
 <Exercise>
     Implementa las siguientes funciones para el functor `Result`:
@@ -362,7 +469,7 @@ Si ejecutamos el código con un radio positivo, obtenemos un `Success` con el á
     - **`exceptionOrNull()`**: Permite acceder a la excepción en caso de falla o devuelve `null` en caso de éxito.
     - **`onSuccess` y `onFailure`**: Son funciones que permiten aplicar una operación solo en caso de éxito o fallo, respectivamente.
     
-    ### Ejemplo de uso de `Result` estándar de Kotlin:
+    #### Ejemplo de uso de `Result` estándar de Kotlin:
 
     ```kotlin showLineNumbers
     fun divide(a: Int, b: Int): Result<Int> =
@@ -382,7 +489,7 @@ Si ejecutamos el código con un radio positivo, obtenemos un `Success` con el á
 
     El `Result` estándar de Kotlin también ofrece otras utilidades como `map`, `fold` y `recover`, que permiten transformar el resultado de una operación o manejar el error de manera declarativa.
 
-    ### Diferencias entre el `Result` personalizado y el estándar
+    #### Diferencias entre el `Result` personalizado y el estándar
 
     - **Disponibilidad**: El `Result` estándar de Kotlin es parte de la librería estándar y es preferible usarlo en la mayoría de los casos para aprovechar su integración con las funciones y la API de Kotlin.
     - **Flexibilidad**: El `Result` personalizado que hemos creado permite agregar cualquier comportamiento adicional o modificar cómo se manejan los errores, lo cual puede ser útil en proyectos con necesidades específicas.
@@ -401,7 +508,7 @@ Si ejecutamos el código con un radio positivo, obtenemos un `Success` con el á
 
     <Cons>
         - **Sobrecarga en operaciones simples**: En algunos casos, utilizar `Result` para operaciones sencillas puede generar una sobrecarga adicional en el código, ya que requiere manejar ambos casos (`Success` y `Failure`), incluso cuando los errores son poco frecuentes.
-        - **Curva de aprendizaje**: Aunque el uso de `Result` es beneficioso, desarrolladorxs que provienen de lenguajes que utilizan excepciones tradicionales pueden encontrar una pequeña curva de aprendizaje al acostumbrarse a la manipulación explícita de errores.
+        - **Curva de aprendizaje**: Aunque el uso de `Result` es beneficioso, quienes provienen de lenguajes que utilizan excepciones tradicionales pueden encontrar una pequeña curva de aprendizaje al acostumbrarse a la manipulación explícita de errores.
         - **Composición limitada**: Aunque el `Result` permite la composición de funciones, su capacidad para componer múltiples operaciones puede ser limitada en casos donde el manejo de errores es muy complejo, requiriendo estructuras más avanzadas.
         - **Uso inconsistente**: Si no se sigue de manera coherente en todo el proyecto, la mezcla de excepciones tradicionales y `Result` puede generar inconsistencias y dificultar el mantenimiento del código.
         - **Verboso en casos simples**: En comparación con el manejo de excepciones mediante `try-catch`, el `Result` puede parecer más verboso en situaciones donde solo se requiere una simple captura de error.

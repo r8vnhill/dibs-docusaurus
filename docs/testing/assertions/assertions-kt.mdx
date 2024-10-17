@@ -69,8 +69,8 @@ Las **aserciones** son instrucciones que verifican si una condición específica
             ```powershell
             $CalculatorTestDir = "assert\src\test\kotlin\$Group\calculator"
             $CalculatorMainDir = "assert\src\main\kotlin\$Group\calculator"
-            New-Item -Path $CalculatorTestDir -ItemType Directory -Force
-            New-Item -Path $CalculatorMainDir -ItemType Directory -Force
+            $CalculatorTestDir | New-Item -ItemType Directory -Force
+            $CalculatorMainDir | New-Item -ItemType Directory -Force
             "package $Group.calculator" -replace '\\', '.' | 
                 Out-File -FilePath "$CalculatorTestDir\CalculatorTest.kt"
             "package $Group.calculator" -replace '\\', '.' |
@@ -85,8 +85,7 @@ Las **aserciones** son instrucciones que verifican si una condición específica
             ```powershell
             $CalculatorTestDir = "assert\src\test\kotlin\$Group\calculator"
             $CalculatorMainDir = "assert\src\main\kotlin\$Group\calculator"
-            md $CalculatorTestDir
-            md $CalculatorMainDir
+            $CalculatorTestDir, $CalculatorMainDir | % { md $_ }
             "package $Group.calculator" -replace '\\', '.' > `
                 "$CalculatorTestDir\CalculatorTest.kt"
             "package $Group.calculator" -replace '\\', '.' > `
@@ -101,10 +100,11 @@ Las **aserciones** son instrucciones que verifican si una condición específica
             ```bash
             CALCULATOR_TEST_DIR="assert/src/test/kotlin/$GROUP/calculator"
             CALCULATOR_MAIN_DIR="assert/src/main/kotlin/$GROUP/calculator"
-            mkdir -p "$CALCULATOR_TEST_DIR"
-            mkdir -p "$CALCULATOR_MAIN_DIR"
-            echo "package ${GROUP//\//.}.calculator" > "$CALCULATOR_TEST_DIR/CalculatorTest.kt"
-            echo "package ${GROUP//\//.}.calculator" > "$CALCULATOR_MAIN_DIR/Calculator.kt"
+            mkdir -p "$CALCULATOR_TEST_DIR" "$CALCULATOR_MAIN_DIR"
+            echo "package ${GROUP//\//.}.calculator" > \
+                "$CALCULATOR_TEST_DIR/CalculatorTest.kt"
+            echo "package ${GROUP//\//.}.calculator" > \
+                "$CALCULATOR_MAIN_DIR/Calculator.kt"
             ```
         </TabItem>
     </Tabs>
@@ -114,9 +114,15 @@ Por ejemplo, consideremos una prueba escrita manualmente:
 
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers title="assert/src/test/kotlin/com/github/username/calculator/CalculatorTest.kt"
-        val result = Calculator.add(1, 2).takeIf { it == 3 } 
-            ?: throw AssertionError("1 + 2 should be 3")
+        ```kotlin showLineNumbers
+        "Given a calculator" - {
+            "when adding 1 and 2" - {
+                "should return 3" {
+                    Calculator.add(1, 2).takeIf { it == 3 } 
+                        ?: throw AssertionError("1 + 2 should be 3")
+                }
+            }
+        }
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
@@ -139,7 +145,9 @@ Por ejemplo, consideremos una prueba escrita manualmente:
     </TabItem>
 </Tabs>
 
-En este código, verificamos si `Calculator.add(1, 2)` es igual a `3`. Si no lo es, lanzamos una excepción `AssertionError` con un mensaje descriptivo; de lo contrario, imprimimos "Test passed".
+<Explanation>
+    En este código, verificamos si `Calculator.add(1, 2)` es igual a `3`. Si no lo es, lanzamos una excepción `AssertionError` con un mensaje descriptivo; de lo contrario, imprimimos `"Test passed"`.
+</Explanation>
 
 Supongamos ahora que tenemos la siguiente implementación errónea de ``Calculator``:
 
@@ -172,7 +180,7 @@ Sin embargo, podemos simplificar y mejorar este test utilizando las aserciones q
 
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers title="assert/src/test/kotlin/com/github/username/calculator/CalculatorTest.kt"
+        ```kotlin
         Calculator.add(1, 2).takeIf { it == 3 }
             ?: fail("1 + 2 should be 3")
         ```
@@ -198,7 +206,9 @@ Sin embargo, podemos simplificar y mejorar este test utilizando las aserciones q
     </TabItem>
 </Tabs>
 
-Aquí, en lugar de lanzar una excepción manualmente, utilizamos la función `fail` proporcionada por el framework, que marca la prueba como fallida y proporciona el mensaje de error correspondiente. Esto también ayudará al framework a generar un informe detallado de la prueba.
+<Explanation>
+    Aquí, en lugar de lanzar una excepción manualmente, utilizamos la función `fail` proporcionada por el framework, que marca la prueba como fallida y proporciona el mensaje de error correspondiente. Esto también ayudará al framework a generar un informe detallado de la prueba.
+</Explanation>
 
 ## Implementación de Aserciones Personalizadas
 
@@ -228,7 +238,8 @@ Aquí, en lugar de lanzar una excepción manualmente, utilizamos la función `fa
             ```bash
             ASSERTIONS_DIR="assert/src/test/kotlin/$GROUP/assertions"
             mkdir -p "$ASSERTIONS_DIR"
-            echo "package ${GROUP//\//.}.assertions" > "$ASSERTIONS_DIR/AssertTrue.kt"
+            echo "package ${GROUP//\//.}.assertions" > \
+                "$ASSERTIONS_DIR/AssertTrue.kt"
             ```
         </TabItem>
     </Tabs>
@@ -289,7 +300,7 @@ fun assertTrue(
 </Tabs>
 
 <Explanation>
-    En este ejemplo, utilizamos la función `assertTrue` para verificar si `Calculator.add(1, 2)` es igual a `3`. Si la condición no se cumple, se lanza una excepción con el mensaje "1 + 2 should be 3".    
+    En este ejemplo, utilizamos la función `assertTrue` para verificar si `Calculator.add(1, 2)` es igual a `3`. Si la condición no se cumple, se lanza una excepción con el mensaje `"1 + 2 should be 3"`.
 </Explanation>
 
 ## Beneficios y limitaciones
@@ -313,7 +324,7 @@ fun assertTrue(
     - Si el segundo parámetro es ``false``, la lista puede contener elementos repetidos.
 
     <Solution>
-        ```kotlin
+        ```kotlin showLineNumbers
         fun assertIsOrdered(list: List<Int>, isStrictlyOrdered: Boolean) {
             if (isStrictlyOrdered) {
                 for (i in 0..<list.size - 1) {
@@ -332,18 +343,26 @@ fun assertTrue(
         ```
     </Solution>
 
-    <Solution title='(Mejorada)'>
+    <Solution title='(Alternativa)'>
         ```kotlin showLineNumbers
         fun assertIsOrdered(list: List<Int>, isStrictlyOrdered: Boolean) {
             if (isStrictlyOrdered) {
-                list.zipWithNext { a, b -> if (a >= b) fail("List is not strictly ordered") }
+                list.zipWithNext { a, b -> 
+                    if (a >= b) {
+                        fail("List is not strictly ordered") 
+                    }
+                }
             } else {
-                list.zipWithNext { a, b -> if (a > b) fail("List is not ordered") }
+                list.zipWithNext { a, b -> 
+                    if (a > b) {
+                        fail("List is not ordered") 
+                    }
+                }
             }
         }
         ```
 
-        :::info Explicación de las mejoras
+        :::info Explicación de la solución alternativa
 
         - Utilizamos `zipWithNext` para obtener pares consecutivos de elementos en la lista.
         - Utilizamos una lambda para verificar si cada par cumple con la condición de orden.
@@ -368,7 +387,18 @@ En este módulo, exploramos las **aserciones** y cómo implementarlas tanto manu
 
 Las aserciones son una herramienta clave para garantizar la calidad del software, ayudando a detectar errores y asegurarse de que el comportamiento del código es el esperado en diferentes escenarios.
 
+xUnit Patterns. (2003). En K. Beck, Test-driven development: By example. Addison-Wesley.
+
 <References references={[
+    {
+        title: "xUnit Patterns",
+        bookTitle: "Test-driven development: By example",
+        publisher: "Addison-Wesley",
+        year: "2003",
+        author: "K. Beck",
+        type: "book",
+    },
+]} additionalReferences={[
     {
         accessedDate: '31 de julio de 2024',
         siteOrAuthor: 'Wikipedia',

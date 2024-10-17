@@ -137,6 +137,17 @@ const sidebars: SidebarsConfig = {
                     items: [
                         'testing/pbt/concatenation/str-cat',
                         'testing/pbt/biggest/kt',
+                        {
+                            label: 'Generadores arbitrarios',
+                            type: 'category',
+                            link: {
+                                type: 'doc',
+                                id: 'testing/pbt/generators/kt',
+                            },
+                            items: [
+                                'testing/pbt/generators/examples/prng/kt',
+                            ],
+                        },
                     ],
                 },
             ],
@@ -206,19 +217,19 @@ const sidebars: SidebarsConfig = {
                 "fp/hof",
                 'fp/lambdas/lambdas-kt',
                 "fp/pure",
-                {
-                    type: 'category',
-                    label: 'Optimización de Funciones Recursivas',
-                    link: {
-                        type: 'generated-index',
-                        title: 'Optimización de Funciones Recursivas',
-                        description: 'Uno de los problemas con la recursión es el caso en que la pila de ejecución se desborda. Existen distintas soluciones',
-                    },
-                    items: [
-                        'fp/recursion-optimization/tail/tail',
-                        'fp/recursion-optimization/trampoline',
-                    ],
-                },
+                // {
+                //     type: 'category',
+                //     label: 'Optimización de Funciones Recursivas',
+                //     link: {
+                //         type: 'generated-index',
+                //         title: 'Optimización de Funciones Recursivas',
+                //         description: 'Uno de los problemas con la recursión es el caso en que la pila de ejecución se desborda. Existen distintas soluciones',
+                //     },
+                //     items: [
+                //         'fp/recursion-optimization/tail/tail',
+                //         'fp/recursion-optimization/trampoline',
+                //     ],
+                // },
                 // 'fp/ad-hoc/kt',
                 // 'fp/kinds/higher-kinded-types-kt',
                 // 'fp/typeclass/kt',

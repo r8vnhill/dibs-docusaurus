@@ -69,10 +69,12 @@ Por ejemplo, obtener el máximo de una lista puede lograrse en $O(n)$ mediante u
             ```powershell
             $BiggestTestDir = "biggest\src\test\kotlin\$Group\biggest"
             $BiggestMainDir = "biggest\src\main\kotlin\$Group\biggest"
-            New-Item -Path "$BiggestTestDir\BiggestTest.kt" `
-                -ItemType "file" -Force
-            New-Item -Path "$BiggestMainDir\Biggest.kt" `
-                -ItemType "file" -Force
+            $BiggestTestDir | New-Item -ItemType Directory -Force
+            $BiggestMainDir | New-Item -ItemType Directory -Force
+            "package $Group.biggest" -replace '\\', '.' | 
+                Out-File -FilePath "$BiggestTestDir\BiggestTest.kt"
+            "package $Group.biggest" -replace '\\', '.' |
+                Out-File -FilePath "$BiggestMainDir\Biggest.kt"
             ```
         </TabItem>
         <TabItem value="Windows (corto)" label="Windows (corto)">
@@ -83,8 +85,11 @@ Por ejemplo, obtener el máximo de una lista puede lograrse en $O(n)$ mediante u
             ```powershell
             $BiggestTestDir = "biggest\src\test\kotlin\$Group\biggest"
             $BiggestMainDir = "biggest\src\main\kotlin\$Group\biggest"
-            ni "$BiggestTestDir\BiggestTest.kt" -i 'f' -f
-            ni "$BiggestMainDir\Biggest.kt" -i 'f' -f
+            $BiggestTestDir, $BiggestMainDir | % { md $_ }
+            "package $Group.biggest" -replace '\\', '.' > `
+                "$BiggestTestDir\BiggestTest.kt"
+            "package $Group.biggest" -replace '\\', '.' > `
+                "$BiggestMainDir\Biggest.kt"
             ```
         </TabItem>
         <TabItem value="Linux/Mac" label="Linux/Mac">
@@ -95,10 +100,11 @@ Por ejemplo, obtener el máximo de una lista puede lograrse en $O(n)$ mediante u
             ```bash
             BIGGEST_TEST_DIR=biggest/src/test/kotlin/$GROUP/biggest
             BIGGEST_MAIN_DIR=biggest/src/main/kotlin/$GROUP/biggest
-            mkdir -p $BIGGEST_TEST_DIR
-            mkdir -p $BIGGEST_MAIN_DIR
-            touch $BIGGEST_TEST_DIR/BiggestTest.kt
-            touch $BIGGEST_MAIN_DIR/Biggest.kt
+            mkdir -p $BIGGEST_TEST_DIR $BIGGEST_MAIN_DIR
+            echo "package ${GROUP//\//.}.biggest" > \
+                $BIGGEST_TEST_DIR/BiggestTest.kt
+            echo "package ${GROUP//\//.}.biggest" > \
+                $BIGGEST_MAIN_DIR/Biggest.kt
             ```
         </TabItem>
     </Tabs>
@@ -260,26 +266,42 @@ Para solucionar el problema en nuestro test, es necesario segmentar el espacio d
 
 Para manejar el caso de una lista vacía, podemos devolver `Int.MIN_VALUE` como valor predeterminado. De esta manera, si la lista está vacía, el resultado será el menor valor posible para un entero.
 
-```kotlin showLineNumbers title="biggest/src/main/kotlin/com/github/username/biggest/Biggest.kt"
-package com.github.username.biggest
+<Tabs>
+    <TabItem label={"Implementación iterativa"} value={"Implementación iterativa"}>     
+        ```kotlin showLineNumbers title="biggest/src/main/kotlin/com/github/username/biggest/Biggest.kt"
+        package com.github.username.biggest
 
-fun biggest(list: List<Int>) = if (list.isEmpty()) {
-    Int.MIN_VALUE
-} else {
-    var biggest = list[0]
-    for (number in list) {
-        if (number > biggest) {
-            biggest = number
+        fun biggest(list: List<Int>) = if (list.isEmpty()) {
+            Int.MIN_VALUE
+        } else {
+            var biggest = list[0]
+            for (number in list) {
+                if (number > biggest) {
+                    biggest = number
+                }
+            }
+            biggest
         }
-    }
-    biggest
-}
-```
+        ```
+    </TabItem>
+    <TabItem label={"Implementación funcional"} value={"Implementación funcional"}>
+        ```kotlin showLineNumbers title="biggest/src/main/kotlin/com/github/username/biggest/Biggest.kt"
+        package com.github.username.biggest
+
+        fun biggest(list: List<Int>) = 
+            list.fold(Int.MIN_VALUE) { acc, number ->
+                if (number > acc) number else acc
+            }
+        ```
+    </TabItem>
+</Tabs>
 
 Si ejecutamos nuevamente los tests con `./gradlew test`, deberíamos ver que todos los tests pasan correctamente.
 
 <Exercise>
-    Escribe un test basado en propiedades para una función `reverse: (List<Int>) -> List<Int>` que toma una lista y retorna la misma lista en orden inverso
+    Escribe un test basado en propiedades para una función `reverse: (List<Int>) -> List<Int>` que toma una lista y retorna la misma lista en orden inverso.
+    
+    **No es necesario implementar la función, sólo el test.**
 
     <Hint hints={[
         "Utiliza dos listas y verifica el resultado de invertir la concatenación",
@@ -318,6 +340,8 @@ Si ejecutamos nuevamente los tests con `./gradlew test`, deberíamos ver que tod
     - Sólo la primera letra de cada palabra debe estar en mayúsculas (no consideres palabras vacías)
 
     Utiliza `Arb.string(0..100, Codepoint.az())` para generar los strings a probar.
+
+    **No es necesario implementar la función, sólo los tests.**
 
     <Hint hints={[
         <>

@@ -1,0 +1,88 @@
+---
+title: Varianza en sitio de uso en Scala
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+Imagina que estamos utilizando una clase `Box` en Scala, la cual es invariante por defecto:
+
+```scala
+class Box[T](val value: T)
+```
+
+Queremos escribir una función que acepte una `Box` que contenga cualquier subtipo de `Animal`. Aquí es donde entra en juego la varianza en sitio de uso. En lugar de modificar la declaración original de `Box`, simplemente indicamos en el uso que debe ser covariante.
+
+## Covarianza en sitio de uso
+
+Para aceptar una `Box` que contenga cualquier subtipo de `Animal`, podemos utilizar la siguiente sintaxis en Scala:
+
+```scala
+def acceptAnimalBox(box: Box[? <: Animal]) = {
+    // Lógica para trabajar con la caja de animales
+}
+```
+
+El operador `? <: Animal` permite que la función acepte cualquier `Box` que contenga un subtipo de `Animal`. Esto es equivalente al uso de `out` en Kotlin, y permite mayor flexibilidad en la interoperabilidad con tipos genéricos.
+
+## Contravarianza en sitio de uso
+
+Ahora, si queremos escribir una función que acepte una `Box` para cualquier supertipo de `ClickEvent`, utilizamos el operador `? >:` para la contravarianza:
+
+```scala
+def registerClickHandler(handler: EventHandler[? >: ClickEvent]) = {
+    // Lógica para registrar el manejador de eventos
+}
+```
+
+En este caso, Scala nos permite aceptar cualquier `EventHandler` que pueda manejar `ClickEvent` o cualquiera de sus supertipos. Esto es similar a usar `in` en Kotlin.
+
+## Comparación final
+
+| **Característica**             | **Scala**                                                                                                                                                             | **Kotlin**                                                                                                                                                      |
+|--------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Varianza en sitio de uso**   | Scala utiliza `? <: T` para covarianza y `? >: T` para contravarianza, ofreciendo flexibilidad para ajustar tipos genéricos en el uso sin cambiar la declaración original. | Kotlin emplea `out T` para covarianza y `in T` para contravarianza en sitio de uso, logrando un propósito similar, pero con una sintaxis más explícita.           |
+
+### Beneficios y limitaciones
+
+<ProCons>
+    <Pros>
+        - **Mayor flexibilidad en el uso de tipos genéricos**: Scala permite ajustar la varianza de los tipos genéricos en el lugar donde se utilizan, lo que facilita la interoperabilidad con bibliotecas que no han declarado varianza explícita.
+        - **Compatibilidad con subtipos y supertipos**: La capacidad de Scala para aceptar subtipos y supertipos en el punto de uso con `? <: T` y `? >: T` facilita el diseño de APIs más versátiles.
+        - **Mantenimiento de la seguridad de tipos**: A pesar de permitir un alto grado de flexibilidad, la varianza en sitio de uso en Scala mantiene la seguridad de tipos en tiempo de compilación, garantizando que las proyecciones sean verificadas por el compilador.
+    </Pros>
+    <Cons>
+        - **Mayor complejidad de lectura**: El uso frecuente de operadores como `? <: T` y `? >: T` puede hacer que el código sea más difícil de leer y entender, especialmente para desarrolladorxs menos familiarizadxs con la varianza en sitio de uso. Esto puede complicar el mantenimiento a largo plazo en equipos grandes.
+        - **Acceso restringido a propiedades**: Cuando se utiliza contravarianza (`? >: T`), se restringe el acceso a ciertos métodos o propiedades de los tipos genéricos.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos la **varianza en sitio de uso** en Scala, un concepto que permite ajustar la varianza de tipos genéricos en el lugar donde se utilizan, sin necesidad de modificar la declaración original. Este enfoque es particularmente útil para mejorar la flexibilidad y la interoperabilidad con bibliotecas que no declaran varianza explícita, permitiendo a lxs desarrolladorxs trabajar con tipos genéricos de una manera más adaptable y reutilizable.
+
+### Puntos clave
+
+1. **Covarianza y contravarianza en sitio de uso**: Scala ofrece los operadores `? <: T` para covarianza y `? >: T` para contravarianza en sitio de uso, lo que permite aceptar subtipos y supertipos de manera segura y flexible.
+2. **Compatibilidad con bibliotecas externas**: La varianza en sitio de uso facilita la integración con bibliotecas que no han declarado varianza, ya que permite adaptar la varianza según sea necesario sin modificar el código original.
+3. **Seguridad de tipos en tiempo de compilación**: Aunque se utiliza una mayor flexibilidad, Scala garantiza la seguridad de tipos en tiempo de compilación, lo que reduce la posibilidad de errores en tiempo de ejecución.
+4. **Comparación con Kotlin**: Mientras que Kotlin utiliza `out` para covarianza y `in` para contravarianza, Scala emplea una sintaxis diferente con `? <: T` y `? >: T`, pero logra un propósito similar.
+5. **Beneficios y limitaciones**: La varianza en sitio de uso proporciona flexibilidad, pero también puede añadir complejidad al código, lo que hace que sea más difícil de leer y mantener, especialmente en proyectos grandes o equipos con menos experiencia en este concepto.
+
+---
+
+En resumen, la **varianza en sitio de uso** es una herramienta poderosa que proporciona flexibilidad adicional en el uso de tipos genéricos en Scala. Permite a lxs desarrolladorxs ajustar los tipos según las necesidades del contexto, manteniendo la seguridad en tiempo de compilación y facilitando la interoperabilidad con bibliotecas externas.

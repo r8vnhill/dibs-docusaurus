@@ -1,0 +1,123 @@
+---
+title: Colecciones perezosas en JavaScript
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+En JavaScript, la **evaluación perezosa** puede lograrse mediante **generators**. Un generador es una función que puede pausar su ejecución y reanudarla cuando sea necesario, lo que lo hace ideal para trabajar con colecciones o secuencias perezosas.
+
+## Definición de un generador en JavaScript
+
+Un generador se define utilizando la palabra clave `function*`, que indica que la función es capaz de "generar" valores bajo demanda.
+
+```javascript showLineNumbers
+function* evenNumbers() {
+    let num = 0;
+    while (true) {
+        yield num;
+        num += 2;
+    }
+}
+```
+
+<Explanation>
+    En este caso, `evenNumbers` es un generador que devuelve un número par cada vez que es invocado. Utilizando la palabra clave `yield`, el generador "pausa" su ejecución y espera hasta que se solicite el siguiente valor. El ciclo `while (true)` garantiza que la secuencia sea infinita.
+</Explanation>
+
+## Uso del generador en JavaScript
+
+Para utilizar el generador y obtener los primeros `n` números pares:
+
+```javascript
+const evenGen = evenNumbers();
+const firstTenEvens = [];
+
+for (let i = 0; i < 10; i++) {
+    firstTenEvens.push(evenGen.next().value);
+}
+
+console.log(firstTenEvens);  // Output: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
+```
+
+En este ejemplo, llamamos repetidamente a `evenGen.next()` para obtener los valores uno a uno de la secuencia perezosa. El método `next()` devuelve un objeto con la estructura `{ value: <valor>, done: <booleano> }`, donde `value` es el valor actual y `done` indica si el generador ha terminado.
+
+## Generadores asíncronos en JavaScript
+
+En JavaScript, los **generadores asíncronos** (`async function*`) permiten trabajar con flujos de datos que se obtienen de forma asíncrona, como peticiones a APIs o entradas de archivos, algo que no tiene un equivalente directo en Kotlin.
+
+```javascript showLineNumbers
+async function* asyncNumbers() {
+    let num = 0;
+    while (num < 10) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        yield num++;
+    }
+}
+
+(async () => {
+    for await (const num of asyncNumbers()) {
+        console.log(num);
+    }
+})();
+```
+
+<Explanation>
+    En este ejemplo, `asyncNumbers` es un generador asíncrono que emite un número cada segundo. Al utilizar `for await...of`, podemos iterar sobre los valores emitidos de manera asíncrona.
+</Explanation>
+
+## Comparación final
+
+| **Característica**               | **JavaScript**                                                                                                                                                    | **Kotlin**                                                                                                                                                     |
+|----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Definición de secuencias**     | Utiliza `function*` para definir generadores, permitiendo generar secuencias perezosas.                                                                            | Utiliza `sequence {}` o `generateSequence()` para crear secuencias perezosas fuertemente tipadas.                                                               |
+| **Encadenamiento de operaciones**| Los generadores no permiten encadenar transformaciones directamente (como `map` o `filter`) sin convertir la secuencia en un array primero.                        | Soporta operaciones intermedias como `map`, `filter`, y `take`, ejecutándolas perezosamente sin crear colecciones intermedias.                                   |
+| **Asincronía**                   | Soporta **generadores asíncronos** (`async function*`), permitiendo manejar flujos de datos asíncronos, como operaciones de red o de entrada/salida.               | Kotlin no soporta directamente secuencias asíncronas, aunque puede manejar asincronía con coroutines y flujos (`Flow`) para algunos casos de uso asíncronos.     |
+| **Seguridad de tipos**           | JavaScript es dinámicamente tipado, por lo que los generadores no tienen una verificación de tipos en tiempo de compilación.                                        | Kotlin ofrece seguridad de tipos en tiempo de compilación, permitiendo secuencias perezosas con tipos genéricos y evitando errores en tiempo de ejecución.       |
+| **Composición de flujos infinitos** | Soportado mediante generadores, permitiendo crear secuencias infinitas fácilmente.                                                                                  | Las secuencias en Kotlin permiten trabajar con flujos infinitos y realizar operaciones perezosas, como en JavaScript, pero con mayor control en la tipificación. |
+
+### Beneficios y limitaciones
+
+<ProCons>
+    <Pros>
+        - **Facilidad de uso con generadores**: JavaScript proporciona una sintaxis sencilla para definir generadores perezosos utilizando `function*`, lo que permite la creación de secuencias de manera fácil y flexible.
+        - **Manejo de asincronía**: Con los generadores asíncronos (`async function*`), JavaScript permite manejar flujos de datos asíncronos de manera eficiente, algo útil para tareas como el procesamiento de datos de red o archivos.
+        - **Compatibilidad con flujos infinitos**: Los generadores de JavaScript son una excelente herramienta para trabajar con secuencias infinitas, generando los elementos solo cuando se solicitan.
+        - **Flexibilidad del lenguaje**: Al ser un lenguaje dinámico, JavaScript ofrece mayor flexibilidad en el manejo de colecciones y generadores, lo que puede simplificar su uso en proyectos pequeños o prototipos.
+    </Pros>
+    <Cons>
+        - **Falta de encadenamiento directo**: A diferencia de Kotlin, los generadores en JavaScript no soportan el encadenamiento de transformaciones como `map` o `filter` de manera nativa, lo que requiere convertir la secuencia en un array antes de aplicar estas operaciones.
+        - **Menor seguridad de tipos**: JavaScript es un lenguaje dinámicamente tipado, lo que significa que no ofrece la seguridad de tipos que se encuentra en Kotlin. Esto puede llevar a errores en tiempo de ejecución que podrían evitarse en un lenguaje fuertemente tipado como Kotlin.
+        - **Mayor potencial de errores en flujos asíncronos**: Aunque los generadores asíncronos son poderosos, su uso puede ser más propenso a errores o comportamientos inesperados, especialmente cuando se combina con otras operaciones asíncronas, debido a la falta de tipificación y control más estricto.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos cómo **JavaScript** y **Kotlin** manejan colecciones perezosas y cómo las implementan a través de diferentes mecanismos. A lo largo de la lección, vimos las similitudes y diferencias clave entre ambos lenguajes.
+
+### Puntos clave
+
+1. **Generadores en JavaScript**: Utilizando la sintaxis `function*`, JavaScript permite la creación de secuencias perezosas que solo generan elementos cuando se solicitan. Estos generadores pueden ser síncronos o asíncronos (`async function*`), permitiendo flujos de datos asíncronos.
+2. **Secuencias en Kotlin**: Kotlin, mediante las secuencias (`Sequence`), ofrece una manera eficiente de procesar grandes cantidades de datos de manera perezosa, soportando encadenamiento de operaciones como `map` o `filter` sin crear colecciones intermedias.
+3. **Asincronía en JavaScript**: JavaScript sobresale al manejar flujos asíncronos con generadores asíncronos (`async function*`), lo cual no tiene un equivalente directo en Kotlin, aunque este último puede manejar asincronía con coroutines y flujos (`Flow`).
+4. **Seguridad de tipos**: Kotlin ofrece una ventaja importante en cuanto a la **seguridad de tipos en tiempo de compilación**, lo que reduce el riesgo de errores en comparación con JavaScript, que es dinámicamente tipado.
+5. **Transformaciones y encadenamiento**: Mientras que Kotlin permite un encadenamiento fluido de operaciones perezosas sobre secuencias, en JavaScript es necesario convertir los generadores en arrays para realizar transformaciones como `map` o `filter`.
+
+---
+
+En resumen, tanto JavaScript como Kotlin ofrecen herramientas poderosas para manejar **colecciones perezosas**, pero Kotlin proporciona una mayor seguridad de tipos y un encadenamiento más directo de operaciones intermedias, mientras que JavaScript destaca por su flexibilidad y su capacidad para manejar flujos de datos asíncronos de manera natural.

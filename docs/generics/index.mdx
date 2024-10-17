@@ -12,7 +12,7 @@ import Hint from '@site/src/components/exercise/Hint'
 import Definition from '@site/src/components/Definition'
 import Corollary from '@site/src/components/Corollary'
 import GithubRepoLink from '@site/src/components/GithubRepoLink'
-import { LanguageCard, JavaCard, RustCard } from '@site/src/components/cards/LanguageCard'
+import { LanguageCard, JavaCard, RustCard, ScalaCard, TypeScriptCard } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from "@site/src/components/admonitions/RepoClone"
 
@@ -127,8 +127,6 @@ Kotlin soporta el polimorfismo paramétrico a través de **tipos genéricos**. P
 
 ### Funciones Genéricas
 
-La función `identity` puede ser implementada fácilmente en Kotlin usando un parámetro de tipo genérico:
-
 <details>
     <summary>
         Si quieres crear los archivos desde la terminal...
@@ -184,63 +182,81 @@ La función `identity` puede ser implementada fácilmente en Kotlin usando un pa
     </Tabs>
 </details>
 
+La función `identity` es una implementación clásica y sencilla que devuelve exactamente el valor que recibe como argumento, sin realizar ninguna modificación. En Kotlin, podemos implementarla fácilmente utilizando un parámetro de tipo genérico, lo que permite que funcione con cualquier tipo de dato.
+
+#### Especificación de la función `identity`
+
+Primero, definimos una especificación BDD para verificar el comportamiento esperado de la función `identity` con diferentes tipos de datos:
+
+```kotlin
+"Given an identity function" - {
+    "when calling it with a string" - {
+        "should return the same string" {}
+    }
+    
+    "when calling it with an integer" - {
+        "should return the same integer" {}
+    }
+    
+    "when calling it with a boolean" - {
+        "should return the same boolean" {}
+    }
+}
+```
+
+#### Implementación de los casos de prueba
+
+Ahora, implementamos los detalles de los casos de prueba, utilizando Kotest para generar valores de prueba aleatorios:
+
 <Tabs>
-    <TabItem label={"Especificación"} value={"Especificación"}>
-        ```kotlin
-        "Given an identity function" - {
-            "when calling it with a string" - {
-                "should return the same string" {}
-            }
-            
-            "when calling it with an integer" - {
-                "should return the same integer" {}
-            }
-            
-            "when calling it with a boolean" - {
-                "should return the same boolean" {}
-            }
-        }
-        ```
-    </TabItem>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin
-        "when calling it with a string" - {
-            "should return the same string" {
-                identity("Hello") shouldBe "Hello"
+        ```kotlin showLineNumbers
+        "when calling it with a string" {
+            checkAll(Arb.string()) { s ->
+                identity(s) shouldBe s
             }
         }
 
-        "when calling it with an integer" - {
-            "should return the same integer" {
-                identity(42) shouldBe 42
+        "when calling it with an integer" {
+            checkAll(Arb.int()) { i ->
+                identity(i) shouldBe i
             }
         }
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin
+        ```kotlin showLineNumbers title="basics/src/test/kotlin/com/github/username/generics/IdentityTest.kt"
         package com.github.username.generics
 
         import io.kotest.core.spec.style.FreeSpec
         import io.kotest.matchers.shouldBe
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.int
+        import io.kotest.property.arbitrary.string
+        import io.kotest.property.checkAll
 
         class IdentityTest : FreeSpec({
             "Given an identity function" - {
                 "when calling it with a string" - {
                     "should return the same string" {
-                        identity("Hello") shouldBe "Hello"
+                        checkAll(Arb.string()) { s ->
+                            identity(s) shouldBe s
+                        }
                     }
                 }
-                
+
                 "when calling it with an integer" - {
                     "should return the same integer" {
-                        identity(42) shouldBe 42
+                        checkAll(Arb.int()) { i ->
+                            identity(i) shouldBe i
+                        }
                     }
                 }
-                
+
                 "when calling it with a boolean" - {
                     "should return the same boolean" {
                         identity(true) shouldBe true
+                        identity(false) shouldBe false
                     }
                 }
             }
@@ -249,64 +265,356 @@ La función `identity` puede ser implementada fácilmente en Kotlin usando un pa
     </TabItem>
 </Tabs>
 
-```kotlin showLineNumbers
-fun <T> identity(value: T): T = value
+#### Implementación de la función `identity`
 
-val intIdentity = identity(42) // El tipo de intIdentity es Int
-val stringIdentity = identity("Hola") // El tipo de stringIdentity es String
+Finalmente, la función `identity` en Kotlin es simple y genérica. La definimos utilizando un parámetro de tipo `T`:
+
+```kotlin showLineNumbers title="basics/src/main/kotlin/com/github/username/generics/Identity.kt"
+package com.github.username.generics
+
+fun <T> identity(value: T): T = value
 ```
 
-En este caso, `T` es un parámetro de tipo que permite que `identity` acepte cualquier tipo de dato como argumento y devuelva un valor del mismo tipo. El parámetro de tipo `T` será determinado en tiempo de compilación basado en el tipo de argumento que se pase a la función.
+<Explanation>
+    - **`<T>`** es un parámetro de tipo genérico que indica que la función `identity` puede aceptar y devolver cualquier tipo de dato.
+    - La función `identity` simplemente devuelve el valor que recibe como argumento, sin realizar modificaciones.
+    - El compilador determinará el tipo `T` en tiempo de compilación en función del tipo de dato que se pase como argumento a la función.
+</Explanation>
+
 
 ### Clases Genéricas
 
-El polimorfismo paramétrico también puede ser aplicado en la definición de clases genéricas. Por ejemplo, podemos definir una clase `Box` que almacene un valor de cualquier tipo `T`:
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
 
-```kotlin showLineNumbers
-class Box<T>(val value: T)
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            "package $Group.generics" -replace '\\', '.' | 
+                Out-File -FilePath "$GenericTestDir\BoxTest.kt"
+            "package $Group.generics" -replace '\\', '.' |
+                Out-File -FilePath "$GenericMainDir\Box.kt"  
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            "package $Group.generics" -replace '\\', '.' > `
+                "$GenericTestDir\BoxTest.kt"
+            "package $Group.generics" -replace '\\', '.' > `
+                "$GenericMainDir\Box.kt"
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            echo "package ${GROUP//\//.}.generics" > \
+                $GENERIC_TEST_DIR/BoxTest.kt
+            echo "package ${GROUP//\//.}.generics" > \
+                $GENERIC_MAIN_DIR/Box.kt
+            ```
+        </TabItem>
+    </Tabs>
+</details>
 
-val intBox = Box(123)
-println(intBox.value) // Imprime: 123
+El polimorfismo paramétrico también puede ser aplicado en la definición de clases genéricas. Por ejemplo, podemos definir una clase `Box` que almacene un valor de cualquier tipo `T`.
 
-val stringBox = Box("Kotlin")
-println(stringBox.value) // Imprime: Kotlin
+#### Especificación de la clase `Box`
+
+Primero, definimos una especificación BDD para verificar el comportamiento esperado de la clase `Box` con diferentes tipos de datos:
+
+```kotlin
+"Given a Box" - {
+    "when creating it with an integer" - {
+        "should store the integer value" {}
+    }
+    
+    "when creating it with a string" - {
+        "should store the string value" {}
+    }
+
+    "when creating it with a boolean" - {
+        "should store the boolean value" {}
+    }
+}
 ```
 
-En esta clase, `T` es un parámetro de tipo que representa el tipo del valor almacenado en la caja (`Box`). La clase `Box` puede ser instanciada con cualquier tipo concreto.
+#### Implementación de los casos de prueba
+
+Luego, implementamos los detalles de los casos de prueba, utilizando Kotest para generar valores de prueba aleatorios:
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        "when creating it with an integer" {
+            checkAll(Arb.int()) { i ->
+                Box(i).value shouldBe i
+            }
+        }
+
+        "when creating it with a string" {
+            checkAll(Arb.string()) { s ->
+                Box(s).value shouldBe s
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="basics/src/test/kotlin/com/github/username/generics/BoxTest.kt"
+        package com.github.username.generics
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.int
+        import io.kotest.property.arbitrary.string
+        import io.kotest.property.checkAll
+
+        class BoxTest : FreeSpec({
+            "Given a Box" - {
+                "when creating it with an integer" - {
+                    "should store the integer value" {
+                        checkAll(Arb.int()) { i ->
+                            Box(i).value shouldBe i
+                        }
+                    }
+                }
+
+                "when creating it with a string" - {
+                    "should store the string value" {
+                        checkAll(Arb.string()) { s ->
+                            Box(s).value shouldBe s
+                        }
+                    }
+                }
+
+                "when creating it with a boolean" - {
+                    "should store the boolean value" {
+                        Box(true).value shouldBe true
+                        Box(false).value shouldBe false
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
+
+#### Implementación de la clase `Box`
+
+Finalmente, la clase `Box` en Kotlin es genérica y flexible. La definimos utilizando un parámetro de tipo `T`:
+
+```kotlin showLineNumbers title="basics/src/main/kotlin/com/github/username/generics/Box.kt"
+package com.github.username.generics
+
+class Box<T>(val value: T)
+```
+
+<Explanation>
+    - **`<T>`** es un parámetro de tipo genérico que i
+    ndica que la clase `Box` puede almacenar cualquier tipo de dato.
+    - La clase `Box` tiene un atributo `value` que almacena el valor de tipo `T` proporcionado al crear una instancia de `Box`.
+    - El compilador determinará el tipo `T` en tiempo de compilación en función del tipo de dato que se pase al constructor de `Box`.
+</Explanation>
 
 ### Interfaces Genéricas
 
-Kotlin también permite el uso de interfaces genéricas, lo que permite crear contratos más flexibles para diferentes implementaciones. Por ejemplo, podemos crear una interfaz genérica `Repository` que defina operaciones básicas para cualquier tipo de entidad:
+<details>
+    <summary>
+        Si quieres crear los archivos desde la terminal...
+    </summary>
 
-```kotlin showLineNumbers
-interface Repository<T> {
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            $RepoTestDir = "$GenericTestDir\repo"
+            $RepoMainDir = "$GenericMainDir\repo"
+            New-Item -Path $RepoTestDir, $RepoMainDir `
+                -ItemType Directory -Force
+            "$RepoTestDir\UserRepositoryTest.kt", "$RepoMainDir\Repository.kt", `
+                "$RepoMainDir\User.kt", "$RepoMainDir\UserRepository.kt" |
+                ForEach-Object { 
+                    "package $Group.generics.repo" -replace '\\', '.' |
+                        Out-File -FilePath $_ 
+                }
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            $RepoTestDir = "$GenericTestDir\repo"
+            $RepoMainDir = "$GenericMainDir\repo"
+            md $RepoTestDir, $RepoMainDir
+            "$RepoTestDir\UserRepositoryTest.kt", "$RepoMainDir\Repository.kt", `
+                "$RepoMainDir\User.kt", "$RepoMainDir\UserRepository.kt" | % { 
+                    "package $Group.generics.repo" -replace '\\', '.' > $_ 
+                }
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            REPO_TEST_DIR="$GENERIC_TEST_DIR/repo"
+            REPO_MAIN_DIR="$GENERIC_MAIN_DIR/repo"
+            mkdir -p $REPO_TEST_DIR $REPO_MAIN_DIR
+            for file in "$REPO_TEST_DIR/UserRepositoryTest.kt" "$REPO_MAIN_DIR/Repository.kt" \
+                        "$REPO_MAIN_DIR/User.kt" "$REPO_MAIN_DIR/UserRepository.kt"; do
+                echo "package ${GROUP//\//.}.generics.repo" > $file
+            done
+            ```
+        </TabItem>
+    </Tabs>
+</details>
+
+Kotlin permite el uso de **interfaces genéricas**, lo que proporciona flexibilidad para definir contratos que pueden adaptarse a múltiples tipos de datos. Por ejemplo, podemos crear una interfaz genérica `Repository` que describa operaciones comunes para cualquier entidad:
+
+```kotlin showLineNumbers title="basics/src/main/kotlin/com/github/username/generics/repo/Repository.kt"
+package com.github.username.generics.repo
+
+interface Repository<T, K> {
     fun save(item: T)
-    fun findById(id: Int): T?
+    fun findByKey(key: K): T?
 }
 ```
 
-Luego, podemos implementar esta interfaz para diferentes tipos de datos:
+<Explanation>
+    - **`<T>` y `<K>`** son **parámetros de tipo genérico**, lo que significa que la interfaz `Repository` puede trabajar con cualquier tipo de entidad (`T`) y cualquier tipo de clave (`K`).
+    - El método `save` almacena una entidad del tipo `T`, mientras que `findByKey` busca una entidad en base a una clave del tipo `K`.
+    - Al utilizar tipos genéricos, esta interfaz puede ser reutilizada para implementar repositorios de cualquier tipo de entidad, lo que promueve la reutilización del código.
+</Explanation>
 
-```kotlin showLineNumbers
-class UserRepository : Repository<User> {
-    private val users = mutableListOf<User>()
+#### Especificación BDD
 
+Con esta interfaz en mente, podemos escribir una especificación de comportamiento para un repositorio de usuarios utilizando un enfoque de **BDD**:
+
+```kotlin
+"A user repository" - {
+    "when attempting to find a user by username" - {
+        "should return the user if it was saved" {}
+
+        "should return null if the user was not saved" {}
+    }
+}
+```
+
+Este enfoque nos permite verificar de manera clara y precisa el comportamiento esperado de un repositorio de usuarios, garantizando que devuelve un usuario existente o `null` si no fue encontrado.
+
+#### Implementación de los casos de prueba
+
+A continuación, se presentan los detalles de los casos de prueba para verificar el comportamiento del repositorio de usuarios.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        "should return the user if it was saved" {
+            checkAll(arbUser()) { user ->
+                val repository = UserRepository()
+                repository.findById(user.id).shouldBeNull()
+                repository.save(user)
+                repository.findById(user.id)
+                    .shouldNotBeNull()
+                    .shouldBe(user)
+            }
+        }
+
+        "should return null if the user was not saved" {
+            checkAll(arbUser()) { user ->
+                val repository = UserRepository()
+                repository.findById(user.id).shouldBeNull()
+            }
+        }
+        ```
+
+        ```kotlin showLineNumbers
+        private fun arbUser(): Arb<User> = Arb.name()
+            .flatMap { name ->
+                Arb.usernames().map { username ->
+                    User("$username", "$name")
+                }
+            }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="basics/src/test/kotlin/com/github/username/generics/repo/UserRepositoryTest.kt"
+        package com.github.username.generics.repo
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.nulls.shouldBeNull
+        import io.kotest.matchers.nulls.shouldNotBeNull
+        import io.kotest.matchers.shouldBe
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.flatMap
+        import io.kotest.property.arbitrary.map
+        import io.kotest.property.arbs.name
+        import io.kotest.property.arbs.usernames
+        import io.kotest.property.checkAll
+
+        class UserRepositoryTest : FreeSpec({
+            "A user repository" - {
+                "when attempting to find a user by username" - {
+                    "should return the user if it was saved" {
+                        checkAll(arbUser()) { user ->
+                            val repository = UserRepository()
+                            repository.findByUsername(user.username).shouldBeNull()
+                            repository.save(user)
+                            repository.findByUsername(user.username)
+                                .shouldNotBeNull()
+                                .shouldBe(user)
+                        }
+                    }
+
+                    "should return null if the user was not saved" {
+                        checkAll(arbUser()) { user ->
+                            val repository = UserRepository()
+                            repository.findByUsername(user.username).shouldBeNull()
+                        }
+                    }
+                }
+            }
+        })
+
+        private fun arbUser(): Arb<User> = Arb.name()
+            .flatMap { name ->
+                Arb.usernames().map { username ->
+                    User("$username", "$name")
+                }
+            }
+        ```
+    </TabItem>
+</Tabs>
+
+<Explanation>
+    - **Pruebas de propiedad con Kotest**: 
+        - En el caso de la prueba `"should return the user if it was saved"`, se genera un usuario utilizando el generador `arbUser()`. Se guarda el usuario en el repositorio y luego se verifica que pueda ser encontrado usando su `id`. La primera llamada a `findById` asegura que el usuario no esté guardado inicialmente (`shouldBeNull`), mientras que la segunda llamada después de guardarlo asegura que el usuario sea encontrado (`shouldNotBeNull` y `shouldBe(user)`).
+        - La prueba `"should return null if the user was not saved"`, por otro lado, verifica que un usuario no guardado no pueda ser encontrado en el repositorio. Se genera un usuario y se verifica que no esté guardado inicialmente (`shouldBeNull`).
+    - **Generador personalizado `arbUser()`**: El generador `arbUser()` utiliza el generador de nombres (`Arb.name()`) y nombres de usuario (`Arb.usernames()`) para crear instancias de `User`. La función `flatMap` combina ambos generadores, generando un nombre y un nombre de usuario para construir un objeto `User`. Esto permite probar el repositorio con una variedad de datos generados de manera automática.
+</Explanation>
+   
+Este enfoque garantiza que el repositorio funcione correctamente para distintos tipos de usuarios y escenarios de almacenamiento.
+
+#### Implementación de la interfaz `Repository`
+
+Luego, podemos implementar esta interfaz para el caso específico de un repositorio de usuarios:
+
+```kotlin showLineNumbers title="basics/src/main/kotlin/com/github/username/generics/repo/User.kt"
+package com.github.username.generics.repo
+
+class User(val username: String, val name: String)
+```
+
+```kotlin showLineNumbers title="basics/src/main/kotlin/com/github/username/generics/repo/UserRepository.kt"
+package com.github.username.generics.repo
+
+class UserRepository : Repository<User, String> {
+    private val users = mutableMapOf<String, User>()
+    
     override fun save(item: User) {
-        users.add(item)
+        users[item.username] = item    
     }
 
-    override fun findById(id: Int): User? = users.find { it.id == id }
+    override fun findByKey(key: String) = users[key]
 }
-
-class User(val id: Int, val name: String)
-
-val userRepository = UserRepository()
-val user = User(1, "John Doe")
-userRepository.save(user)
-println(userRepository.findById(1)?.let { "${it.id}: ${it.name}" }) // Imprime: 1: John Doe
 ```
 
-### Ventajas y Desventajas de la Programación Genérica
+## Beneficios y limitaciones
 
 <ProCons>
     <Pros>
@@ -319,33 +627,30 @@ println(userRepository.findById(1)?.let { "${it.id}: ${it.name}" }) // Imprime: 
     <Cons>
         - **Complejidad adicional**: El uso de tipos genéricos puede incrementar la complejidad del código, lo que puede dificultar su comprensión, especialmente para quienes no están familiarizadxs con el concepto.
         - **Errores de inferencia**: En algunos casos, la inferencia de tipos puede no ser suficiente o comportarse de manera inesperada, lo que lleva a la necesidad de especificar explícitamente los tipos.
-        - **Limitaciones del sistema de tipos**: No todos los lenguajes soportan características avanzadas de tipos genéricos como los límites superiores e inferiores o la variancia, lo que puede reducir su poder expresivo en algunos casos.
+        - **Limitaciones del sistema de tipos**: No todos los lenguajes soportan características avanzadas de tipos genéricos como los límites superiores e inferiores o la varianza, lo que puede reducir su poder expresivo en algunos casos.
         - **Sobrecarga de compilación**: En lenguajes con un sistema de tipos estricto, el uso intensivo de genéricos puede aumentar el tiempo de compilación, especialmente en proyectos grandes.
         - **Curva de aprendizaje**: Para desarrolladorxs nuevos en programación genérica, puede ser más difícil de entender y aplicar correctamente, lo que podría llevar a errores conceptuales o mal uso de los genéricos.
     </Cons>
 </ProCons>
 
-## ¿Qué Aprendimos?
+## ¿Qué aprendimos?
 
-En esta lección, hemos explorado la **programación genérica**, un enfoque poderoso que permite escribir código más flexible y reutilizable al operar sobre tipos abstractos. A través del **polimorfismo paramétrico**, aprendimos cómo definir funciones, clases e interfaces que funcionan con cualquier tipo, lo que mejora la versatilidad y seguridad del código.
+En esta lección, exploramos la **programación genérica** y el **polimorfismo paramétrico**, conceptos clave para escribir código más flexible y reutilizable. Vimos cómo aplicar genéricos en funciones, clases e interfaces en Kotlin, y cómo estos permiten trabajar con diferentes tipos de datos sin duplicar código ni comprometer la seguridad de tipos.
 
-- **Reutilización y flexibilidad**: Vimos cómo las funciones genéricas como `identity` y clases como `Box` pueden manejar múltiples tipos de datos sin duplicación de código, aumentando la flexibilidad de nuestras soluciones.
-- **Seguridad de tipos**: El uso de parámetros de tipo garantiza que nuestras funciones y clases trabajen de manera segura, evitando errores en tiempo de compilación.
-- **Aplicaciones prácticas**: La implementación de interfaces genéricas como `Repository` permite abstraer las operaciones sobre entidades, facilitando la creación de estructuras de datos reutilizables y adaptables.
+### Puntos clave
 
-Sin embargo, también exploramos algunas **desventajas** de la programación genérica, como la **complejidad adicional** y la **curva de aprendizaje** involucrada. A pesar de estos desafíos, la programación genérica es una herramienta clave para el desarrollo de software robusto y eficiente.
+1. **Polimorfismo paramétrico**: Es la capacidad de definir funciones y estructuras de datos de manera abstracta para que operen con cualquier tipo sin especificar un tipo concreto. Esto incrementa la flexibilidad del código.   
+2. **Genéricos en Kotlin**: Vimos cómo Kotlin admite genéricos en funciones y clases, lo que nos permite crear soluciones altamente reutilizables, como una función de identidad o un repositorio genérico.
+3. **Clases e interfaces genéricas**: Aprendimos a crear clases e interfaces que pueden operar con cualquier tipo de dato, facilitando la abstracción y reutilización del código, como el caso de un `Repository` genérico.
+4. **Beneficios y limitaciones**: Si bien los genéricos proporcionan grandes ventajas como la reutilización de código y la seguridad de tipos, también pueden agregar complejidad y sobrecarga de compilación, por lo que es importante usarlos con cuidado.
+
+---
+
+En resumen, la programación genérica es una herramienta poderosa que nos permite escribir código más abstracto y reutilizable, mejorando la mantenibilidad y adaptabilidad de las soluciones. Sin embargo, también es importante entender las posibles complicaciones que conlleva para aprovechar todo su potencial.
 
 <div className="language-card-container">
     <JavaCard link='/docs/generics/java' />
     <RustCard link='/docs/generics/rust' />
-    <LanguageCard
-        logoSrc="https://www.svgrepo.com/show/354313/scala.svg"
-        language="Scala"
-        link="/docs/generics/scala"
-    />
-    <LanguageCard
-        logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Typescript_logo_2020.svg/800px-Typescript_logo_2020.svg.png"
-        language="TypeScript"
-        link="/docs/generics/typescript"
-    />
+    <ScalaCard link='/docs/generics/scala' />
+    <TypeScriptCard link='/docs/generics/typescript' />
 </div>
