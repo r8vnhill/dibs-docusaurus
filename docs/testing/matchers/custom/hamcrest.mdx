@@ -1,12 +1,23 @@
 ---
-title: Matchers personalizados en Hamcrest
+title: Matchers personalizados con Hamcrest
 ---
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
-import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
 
 **Hamcrest** es una librería de matchers para Java que se utiliza comúnmente con **JUnit** para escribir aserciones más legibles y expresivas.
 
@@ -23,7 +34,7 @@ Vamos a crear un matcher personalizado que verifique si un número entero es par
 
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```java showLineNumbers title="src/test/java/cl/ravenhill/parity/IsEvenMatcher.java"
+        ```java showLineNumbers
         public class IsEvenMatcher extends TypeSafeMatcher<Integer> {
 
             @Override
@@ -48,8 +59,8 @@ Vamos a crear un matcher personalizado que verifique si un número entero es par
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```java showLineNumbers title="src/test/java/cl/ravenhill/parity/IsEvenMatcher.java"
-        package cl.ravenhill.parity;
+        ```java showLineNumbers title="./src/test/java/cl/ravenhill/hamcrest/even/IsEvenMatcher.java"
+        package cl.ravenhill.hamcrest.even;
 
         import org.hamcrest.Description;
         import org.hamcrest.TypeSafeMatcher;
@@ -90,45 +101,45 @@ Ahora, podemos utilizar el matcher `isEven()` en nuestras pruebas con **JUnit**:
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```java showLineNumbers
-        @Test
-        @DisplayName("Even numbers should be recognized as even")
-        public void testEvenNumbers() {
-            int[] evenNumbers = {2, 4, 6, 8, 10};
-            for (int number : evenNumbers) {
-                assertThat(number, isEven());
-            }
-        }
+        assertThat(2, isEven());
+        assertThat(3, not(isEven()));
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
         ```java showLineNumbers
-        package cl.ravenhill.parity;
-
-        import static cl.ravenhill.parity.IsEvenMatcher.isEven;
-        import static org.hamcrest.MatcherAssert.assertThat;
-        import static org.hamcrest.Matchers.not;
+        package cl.ravenhill.hamcrest.even;
 
         import org.junit.jupiter.api.DisplayName;
         import org.junit.jupiter.api.Test;
 
-        public class IsEvenTest {
+        import static cl.ravenhill.hamcrest.even.IsEvenMatcher.isEven;
+        import static org.hamcrest.MatcherAssert.assertThat;
+        import static org.hamcrest.Matchers.not;
+        import static org.junit.jupiter.api.Assertions.assertThrows;
 
+        public class IsEvenTest {
+            @DisplayName("Given an even number, when checking if it is even, then it should pass")
             @Test
-            @DisplayName("Even numbers should be recognized as even")
-            public void testEvenNumbers() {
-                int[] evenNumbers = {2, 4, 6, 8, 10};
-                for (int number : evenNumbers) {
-                    assertThat(number, isEven());
-                }
+            void testEvenNumberIsEven() {
+                assertThat(2, isEven());
             }
 
+            @DisplayName("Given an even number, when checking if it is not even, then it should fail")
             @Test
-            @DisplayName("Odd numbers should not be recognized as even")
-            public void testOddNumbers() {
-                int[] oddNumbers = {1, 3, 5, 7, 9};
-                for (int number : oddNumbers) {
-                    assertThat(number, not(isEven()));
-                }
+            void testEvenNumberIsNotEven() {
+                assertThrows(AssertionError.class, () -> assertThat(2, not(isEven())));
+            }
+
+            @DisplayName("Given an odd number, when checking if it is not even, then it should pass")
+            @Test
+            void testOddNumberIsNotEven() {
+                assertThat(3, not(isEven()));
+            }
+
+            @DisplayName("Given an odd number, when checking if it is even, then it should fail")
+            @Test
+            void testOddNumberIsEven() {
+                assertThrows(AssertionError.class, () -> assertThat(3, isEven()));
             }
         }
         ```
@@ -143,34 +154,33 @@ Ahora, podemos utilizar el matcher `isEven()` en nuestras pruebas con **JUnit**:
 | **Reutilización**                  | Fácil reutilización con la función `Matcher` que acepta lambdas. | Se crean clases reutilizables pero requieren más código para definirlas. |
 | **Composición de Matchers**        | Fácil de componer múltiples matchers usando `should` y `shouldNot`. | Utiliza `assertThat` y combinaciones con `Matchers` como `not` o `allOf`. |
 | **Mensajes de Error**              | Define mensajes de error y mensajes negados de forma sencilla con lambdas. | Debes implementar los métodos `describeTo` y `describeMismatchSafely`. |
-| **Flexibilidad**                   | Kotest ofrece un enfoque más moderno y flexible con soporte para Data-Driven Testing y propiedades. | Hamcrest es más clásico y estático, pero tiene una amplia adopción en el ecosistema Java. |
-| **Curva de Aprendizaje**           | La sintaxis con lambdas es intuitiva, lo que facilita la creación rápida de matchers. | Requiere más familiarización con la creación de clases y métodos para definir matchers. |
 | **Compatibilidad con Frameworks**  | Nativo para proyectos de Kotlin, integración fluida con Kotest. | Ampliamente utilizado en Java, compatible con frameworks como JUnit. |
 
-:::tip **Ventajas de Hamcrest**
+### Beneficios y limitaciones
 
-1. **Madurez y Adopción**: Es una biblioteca madura con una gran base de usuarios y soporte en muchos proyectos Java, incluido JUnit.
-2. **Versatilidad**: Hamcrest ofrece una amplia variedad de matchers prediseñados, y su enfoque basado en clases permite definir comportamientos muy personalizados y detallados.
-3. **Composición Poderosa**: Hamcrest permite componer matchers de manera muy expresiva, como combinar condiciones con `allOf`, `anyOf`, y otros.
+<ProCons>
+    <Pros>
+        - **Madurez y Adopción**: Es una biblioteca madura con una gran base de usuarios y soporte en muchos proyectos Java, incluido JUnit.
+        - **Versatilidad**: Hamcrest ofrece una amplia variedad de matchers prediseñados, y su enfoque basado en clases permite definir comportamientos muy personalizados y detallados.
+        - **Composición poderosa**: Hamcrest permite componer matchers de manera muy expresiva, como combinar condiciones con `allOf`, `anyOf`, y otros.        
+    </Pros>
+    <Cons>
+        - **Verboso**: La creación de un matcher personalizado requiere definir una clase completa y múltiples métodos, lo que puede ser innecesariamente detallado para casos simples.
+        - **Sintaxis antigua**: Comparado con Kotest, que utiliza funciones in-line y lambdas, la sintaxis de Hamcrest puede parecer más arcaica y menos intuitiva para nuevxs desarrolladorxs.
+    </Cons>
+</ProCons>
 
-:::
+## ¿Qué aprendimos?
 
-:::danger **Desventajas de Hamcrest**
+En esta lección, hemos explorado cómo crear **matchers personalizados** en **Hamcrest** y compararlos con la experiencia en **Kotest**.
 
-1. **Verboso**: La creación de un matcher personalizado requiere definir una clase completa y múltiples métodos, lo que puede ser innecesariamente detallado para casos simples.
-2. **Sintaxis Antigua**: Comparado con Kotest, que utiliza funciones in-line y lambdas, la sintaxis de Hamcrest puede parecer más arcaica y menos intuitiva para nuevos desarrolladores.
-
-:::
-
-## ¿Qué Aprendimos?
-
-En esta lección, hemos explorado cómo crear **matchers personalizados** en **Hamcrest** y compararlos con la experiencia en **Kotest**. Aquí están algunos puntos clave:
+### Puntos clave
 
 1. **Estructura de los Matchers**: En **Hamcrest**, crear un matcher personalizado implica extender la clase `TypeSafeMatcher` y sobrescribir métodos como `matchesSafely`, `describeTo`, y `describeMismatchSafely`. Esta estructura es más detallada y verbosa en comparación con **Kotest**.
 2. **Reutilización y Flexibilidad**: Mientras que en **Kotest** puedes definir matchers personalizados de forma concisa usando lambdas, en **Hamcrest** necesitas crear una clase completa, lo que añade un poco de complejidad, pero también ofrece más control y personalización en la lógica del matcher.
 3. **Compatibilidad y Adopción**: **Hamcrest** es muy utilizado en proyectos Java, especialmente en combinación con **JUnit**, lo que lo hace ideal para entornos Java maduros. **Kotest**, en cambio, está más orientado a proyectos en **Kotlin**, ofreciendo una sintaxis más moderna y flexible.
 
-### Conclusión
+---
 
 **Hamcrest** sigue siendo una excelente opción en el ecosistema **Java**, especialmente para proyectos que requieren un control detallado y personalizado en las aserciones. Sin embargo, para aquellos que prefieren una sintaxis más concisa y moderna, especialmente en **Kotlin**, **Kotest** puede ser una alternativa más atractiva.
 

@@ -12,16 +12,14 @@ import Hint from '@site/src/components/exercise/Hint'
 import Definition from '@site/src/components/Definition'
 import Corollary from '@site/src/components/Corollary'
 import GithubRepoLink from '@site/src/components/GithubRepoLink'
-import { LanguageCard, BazelCard } from '@site/src/components/cards/LanguageCard'
+import { LanguageCard, BazelCard, CMakeCard, MavenCard, BuckCard } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
 
 <ReadingTime />
-<GithubRepoLink user="r8vnhill" repo="" />
+<GithubRepoLink user="r8vnhill" repo="echo-app-kt" />
 
-En esta sección, aprenderemos a crear una aplicación ejecutable utilizando Kotlin y Gradle. Al igual que en las
-secciones anteriores, inicialmente nos conformaremos con una configuración simple para comprender los conceptos básicos
-e iremos mejorando la aplicación en las secciones siguientes.
+En esta lección, aprenderemos a crear una aplicación ejecutable utilizando Kotlin y Gradle. Al igual que en las lecciones anteriores, inicialmente nos conformaremos con una configuración simple para comprender los conceptos básicos e iremos mejorando la aplicación en las secciones siguientes.
 
 ## Echo App
 
@@ -55,29 +53,15 @@ el proyecto ejecutando el siguiente comando en tu terminal:
 Lo siguiente es decirle a Gradle dónde debe buscar la nueva dependencia. Para ello, actualiza el archivo
 `settings.gradle.kts` en la raíz del proyecto para incluir el repositorio de MavenCentral:
 
-<Tabs groupId={"gradle"}>
-    <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin title="settings.gradle.kts"
-        // ...
-        dependencyResolutionManagement {    // Gestión de resolución de dependencias
-            @Suppress("UnstableApiUsage")   // Necesario para usar la API de resolución de dependencias
-            repositories {
-                mavenCentral()  // Repositorio Maven Central
-            }
-        }
-    ```
-    </TabItem>
-    <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy title="settings.gradle"
-        // ...
-        dependencyResolutionManagement {    // Gestión de resolución de dependencias
-            repositories {
-                mavenCentral()  // Repositorio Maven Central
-            }
-        }
-        ```
-    </TabItem>
-</Tabs>
+```kotlin title="settings.gradle.kts"
+// ...
+dependencyResolutionManagement {    // Gestión de resolución de dependencias
+    @Suppress("UnstableApiUsage")   // Necesario para usar la API de resolución de dependencias
+    repositories {
+        mavenCentral()  // Repositorio Maven Central
+    }
+}
+```
 
 Aquí, hemos añadido `mavenCentral()` al bloque `repositories` para que Gradle pueda buscar la dependencia en Maven Central. Esto añadirá el repositorio a todos los módulos del proyecto.
 
@@ -96,8 +80,6 @@ descripción algunos de los diferentes tipos de dependencias que se pueden decla
 
 La sintaxis básica para añadir una dependencia es la siguiente:
 
-<Tabs groupId={"gradle"}>
-    <TabItem value="Kotlin DSL" label="Kotlin DSL">
 ```kotlin
 dependencies {
     implementation("group:artifact:version")
@@ -105,36 +87,14 @@ dependencies {
     implementation(libs.artifact)
 }
 ```
-</TabItem>
-<TabItem value="Groovy DSL" label="Groovy DSL">
-```groovy
-dependencies {
-    implementation 'group:artifact:version'
-    implementation group: 'group', name: 'artifact', version: 'version'
-    implementation libs.artifact
-}
-```
-</TabItem>
-</Tabs>
 
 En nuestro caso, añadimos la dependencia de `kotlinx-datetime` a nuestro proyecto de la siguiente manera:
 
-<Tabs groupId={"gradle"}>
-    <TabItem value="Kotlin DSL" label="Kotlin DSL">
 ```kotlin title="app/build.gradle.kts"
 dependencies {
     implementation(libs.kotlinx.datetime)
 }
 ```
-</TabItem>
-<TabItem value="Groovy DSL" label="Groovy DSL">
-```groovy title="app/build.gradle"
-dependencies {
-    implementation libs.kotlinx.datetime
-}
-```
-</TabItem>
-</Tabs>
 
 ### Creando la aplicación
 
@@ -159,12 +119,11 @@ fun main(args: Array<String>) {
 }
 ```
 
-En este ejemplo:
-- Usamos `kotlinx.datetime.Clock` para obtener la hora actual y así agregar una marca de tiempo a los mensajes que se
-    envían como argumento.
-- La función `echo()` toma un mensaje como parámetro y devuelve una cadena con el mensaje acompañado de la hora actual.
-- En la función `main()`, se iteran los argumentos de la aplicación (`args`), y para cada uno de ellos, se llama a la
-    función `echo()`.
+<Explanation>
+    - Usamos `kotlinx.datetime.Clock` para obtener la hora actual y así agregar una marca de tiempo a los mensajes que se envían como argumento.
+    - La función `echo()` toma un mensaje como parámetro y devuelve una cadena con el mensaje acompañado de la hora actual.
+    - En la función `main()`, se iteran los argumentos de la aplicación (`args`), y para cada uno de ellos, se llama a la función `echo()`.
+</Explanation>
 
 #### Configuración del plugin `application`
 
@@ -174,8 +133,6 @@ Para que nuestra aplicación sea ejecutable con Gradle, necesitamos agregar el p
 
 Añade el siguiente bloque al archivo `build.gradle.kts`:
 
-<Tabs>
-    <TabItem value="Kotlin DSL" label="Kotlin DSL">
 ```kotlin title="./app/build.gradle.kts"
 plugins {
     // ...
@@ -188,28 +145,11 @@ application {
     mainClass.set("cl.ravenhill.echo.EchoAppKt")
 }
 ```
-</TabItem>
-<TabItem value="Groovy DSL" label="Groovy DSL">
-```groovy title="./app/build.gradle"
-plugins {
-    // ...
-    id 'application'
-}
 
-// ...
-
-application {
-    mainClass.set('cl.ravenhill.echo.EchoAppKt')
-}
-```
-</TabItem>
-</Tabs>
-
-En este bloque:
-- Se aplica el plugin `application`.
-- Definimos la clase principal que contiene la función `main()` de nuestra aplicación. En este caso, la clase generada
-    por el compilador de Kotlin es `cl.ravenhill.echo.EchoAppKt`. El compilador agrega `Kt` al nombre de la clase, ya
-    que es el nombre del archivo en el que está definida la función `main()`.
+<Explanation>
+    - Se aplica el plugin `application`.
+    - Se define la clase principal que contiene la función `main()` de nuestra aplicación. En este caso, la clase generada por el compilador de Kotlin es `cl.ravenhill.echo.EchoAppKt`. El compilador agrega `Kt` al nombre de la clase, ya que es el nombre del archivo en el que está definida la función `main()`.
+</Explanation>
 
 #### Ejecutando la aplicación
 
@@ -257,30 +197,27 @@ Esto producirá el mismo resultado que ejecutar `gradle run`, pero con la ventaj
 
 Has creado tu primera aplicación ejecutable en Kotlin, lista para distribuirse sin la necesidad de Gradle. Este es un paso importante para asegurar que tu aplicación sea más accesible para quienes la usen, ya que podrán ejecutarla de manera independiente.
 
-## Lo que aprendimos
+## ¿Qué aprendimos?
 
-- Cómo agregar dependencias a un proyecto Gradle.
-- Cómo configurar un proyecto Gradle para ejecutar una aplicación Kotlin.
-- Cómo ejecutar una aplicación Kotlin utilizando `gradle run`.
-- Cómo empaquetar una aplicación Kotlin en un archivo ejecutable para su distribución, usando `gradle installDist`.
+En esta lección, hemos aprendido cómo crear una aplicación básica en Kotlin usando **Gradle**, configurar dependencias, y hacer que nuestra aplicación sea ejecutable y distribuible. Estos son los puntos clave que cubrimos:
+
+### Puntos clave
+
+- **Configuración de dependencias**: Añadimos bibliotecas externas como `kotlinx-datetime` para manejar fechas y horas de manera eficiente.
+- **Estructura de la aplicación**: Aprendimos cómo estructurar el código en paquetes, definir funciones como `echo()`, y manejar los argumentos de la aplicación desde la línea de comandos.
+- **Gradle y ejecución de la aplicación**: Utilizamos `gradle run` para ejecutar la aplicación durante el desarrollo y aprendimos sobre sus limitaciones. También exploramos cómo empaquetar la aplicación para su distribución sin depender de Gradle.
+- **Distribución de la aplicación**: Usamos `gradlew installDist` para crear un archivo ejecutable que puede ser compartido y ejecutado por cualquier persona sin necesidad de instalar Gradle.
+
+---
+
+Crear una aplicación ejecutable con Gradle es un proceso fundamental que te permite distribuir tu software de manera independiente. Este paso es clave para cualquier proyecto que busque ser utilizado por otros desarrolladores o usuarixs finales. ¡Felicidades por completar este primer paso!
+
 
 <div className="language-card-container">
-    <LanguageCard
-        logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Cmake.svg/1200px-Cmake.svg.png"
-        language="C/C++: CMake"
-        link="cmake"
-    />
-    <LanguageCard
-        logoSrc="https://static-00.iconduck.com/assets.00/file-type-maven-icon-192x256-wb8b12w6.png"
-        language="JVM: Maven"
-        link="maven"
-    />
+    <CMakeCard link="/docs/build-systems/app/cmake" />
+    <MavenCard link="/docs/build-systems/app/maven" />
     <BazelCard link="/docs/build-systems/app/bazel" />
-    <LanguageCard
-        logoSrc="https://www.svgrepo.com/show/373479/buckbuild.svg"
-        language="Multilenguaje: Buck"
-        link="buck"
-    />
+    <BuckCard link="/docs/build-systems/app/buck" />
 </div>
 
 <References references={[

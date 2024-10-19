@@ -1,0 +1,113 @@
+---
+title: Functores en Scala
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+En Scala, los functores se definen utilizando **higher-kinded types**, lo que permite trabajar con constructores de tipos de manera más flexible. Vamos a crear un functor genérico y luego aplicar esta abstracción a una clase simple como `Box`. 
+
+## Definición del Functor en Scala 3
+
+Para empezar, definimos un trait **Functor** que actúa sobre un tipo `F[_]` (un constructor de tipos). La función esencial es `map`, que toma una función de `A` a `B` y la aplica a un `F[A]`, devolviendo un `F[B]`.
+
+```scala showLineNumbers
+trait Functor[F[_]]:
+  def map[A, B](fa: F[A])(f: A => B): F[B]
+```
+
+## Implementando un Functor para `Box`
+
+Ahora, definimos una clase `Box` que almacena un valor de tipo `A`, y luego proporcionamos una instancia de functor para `Box` usando la palabra clave `given` en Scala 3. Esto nos permite definir el comportamiento de `map` sobre `Box` de una forma limpia y concisa.
+
+```scala showLineNumbers
+case class Box[A](value: A)
+
+given BoxFunctor: Functor[Box] with
+  def map[A, B](fa: Box[A])(f: A => B): Box[B] = 
+    Box(f(fa.value))
+```
+
+## Uso del Functor con `given`
+
+Con el functor implementado, podemos usar la instancia de `given` para aplicar la función `map` sobre una instancia de `Box`.
+
+```scala showLineNumbers
+val box = Box(10)
+val mappedBox = summon[Functor[Box]].map(box)(_ + 1) // Box(11)
+```
+
+### Comparación con Kotlin
+
+1. **Soporte para Higher-Kinded Types (HKT)**:  
+   Scala 3 tiene soporte nativo para **higher-kinded types**, lo que significa que podemos definir un functor de manera genérica sobre cualquier tipo que implemente la operación `map`. En Kotlin, esto no es posible de forma directa, y las soluciones comunes incluyen simulaciones de HKT mediante interfaces y tipos contenedores, lo cual introduce complejidad adicional. En Scala, la abstracción es más limpia y flexible.
+
+2. **Instancias Implícitas con `given`**:  
+   Scala 3 ofrece el concepto de **given instances**, que proporciona una forma elegante y menos repetitiva de definir instancias de tipo como el functor. En Kotlin, tendríamos que pasar explícitamente una instancia del functor como parámetro o hacer uso de objectos de forma manual, lo que puede ser más verboso. El enfoque con `given` en Scala permite inyectar estas instancias de manera implícita cuando se necesitan, lo que hace el código más expresivo.
+
+3. **Composición de Functores**:  
+   En ambos lenguajes, podemos componer funciones usando el método `map`. Sin embargo, en Scala, la composición de functores para diferentes estructuras de datos es más flexible gracias al uso de HKT y el sistema de tipos avanzado. En Kotlin, la composición de funciones dentro de estructuras de datos puede ser más limitada debido a la ausencia de HKT, y requiere soluciones específicas para cada estructura.
+
+## Ejemplo Comparativo
+
+Veamos un ejemplo práctico de cómo aplicar un functor a una clase `Box` tanto en Scala 3 como en Kotlin:
+
+### Scala 3
+
+```scala showLineNumbers
+// Definición del Functor para Box
+given BoxFunctor: Functor[Box] with
+  def map[A, B](fa: Box[A])(f: A => B): Box[B] = 
+    Box(f(fa.value))
+
+val box = Box(5)
+val result = summon[Functor[Box]].map(box)(_ + 1) // Box(6)
+```
+
+### Característica Única en Scala
+
+- **Tipo Inferido para `Functor[Box]` con `given`**:  
+   En Scala, el uso de `given` permite que el compilador infiera la instancia del functor automáticamente sin necesidad de invocar explícitamente un objeto. Este nivel de inferencia de tipos y la facilidad para trabajar con abstractions como los functores no es tan directo en Kotlin. Scala simplifica el manejo de instancias implícitas con una sintaxis fluida y sin tanta verbosidad.
+
+### Ejemplo Extendido: Composición de Functores en Scala 3
+
+En Scala, podemos aplicar el mismo concepto a estructuras más complejas utilizando la misma interfaz functorial:
+
+```scala showLineNumbers
+val nestedBox = Box(Box(5))
+
+given BoxFunctor: Functor[Box] with
+  def map[A, B](fa: Box[A])(f: A => B): Box[B] = 
+    Box(f(fa.value))
+
+val result = summon[Functor[Box]].map(nestedBox)(_.map(_ + 1)) 
+// Result: Box(Box(6))
+```
+
+### Composición de Functores en Kotlin
+
+En Kotlin, la composición de functores para tipos anidados requeriría una implementación específica por cada caso o estructura, debido a la falta de HKT, lo que haría el código más específico y posiblemente menos reutilizable.
+
+## Resumen Comparativo
+
+| **Característica**                    | **Scala 3**                                                | **Kotlin**                                               |
+|---------------------------------------|------------------------------------------------------------|----------------------------------------------------------|
+| **Soporte para Higher-Kinded Types**  | Soportado de forma nativa, permite crear abstracciones más generales y flexibles sobre estructuras de datos. | No soportado nativamente. Soluciones requieren simulación, lo que introduce complejidad adicional. |
+| **Instancias Implícitas (`given`)**   | Ofrece instancias implícitas (`given`), que simplifican el manejo de tipos como functors, reduciendo la verbosidad y facilitando la inyección de instancias. | No hay equivalente directo. Se requiere pasar instancias explícitamente o mediante objetos, lo que genera más código. |
+| **Composición de Functores**          | Muy flexible gracias al soporte de HKT. Permite la composición sobre tipos anidados de manera general sin necesidad de código adicional. | Requiere implementación específica por cada caso debido a la falta de HKT, lo que puede hacer el código menos reutilizable. |
+| **Inferencia de Tipos**               | La inferencia de tipos es más poderosa con `given`, lo que permite trabajar de manera implícita sin necesidad de invocar explícitamente los tipos. | Kotlin tiene una inferencia de tipos robusta, pero la falta de instancias implícitas limita la fluidez al trabajar con abstracciones como los functores. |
+| **Expresividad y Simplicidad**        | Scala 3 ofrece una mayor expresividad gracias a `given` y el soporte para HKT, lo que hace el código más flexible y conciso. | Kotlin puede requerir más código explícito para manejar abstracciones similares, especialmente en casos complejos como los functores anidados. |

@@ -58,7 +58,7 @@ const sidebars: SidebarsConfig = {
                     items: [
                         'build-systems/tasks/default/default-gradle',
                         'build-systems/tasks/custom/custom-kt',
-                        'build-systems/tasks/classes-kt'
+                        'build-systems/tasks/classes/kt'
                     ],
                 },
                 {
@@ -88,17 +88,7 @@ const sidebars: SidebarsConfig = {
                         'build-systems/library/fat-jar',
                         'build-systems/library/copy-refined',
                         'build-systems/library/documentation',
-                        {
-                            type: "category",
-                            label: "Publicación de bibliotecas",
-                            link: {
-                                type: 'doc',
-                                id: 'build-systems/library/publish/publish-gradle',
-                            },
-                            items: [
-                                'build-systems/library/publish/publish-langs',
-                            ],
-                        },
+                        'build-systems/library/publish/publish-gradle',
                     ],
                 },
             ],

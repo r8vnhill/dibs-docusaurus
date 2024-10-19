@@ -1,95 +1,148 @@
 ---
-title: buck
+title: Mi primera aplicación con Buck
 ---
-import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
 
-## Herramienta Multilenguaje: **Buck**
+**Buck2** es una herramienta de construcción desarrollada por Meta (anteriormente Facebook) que se enfoca en la escalabilidad y el rendimiento. Es especialmente útil para grandes proyectos con múltiples lenguajes y muchas dependencias. En esta lección, veremos cómo crear una aplicación simple de **Echo App** que recibe un mensaje como argumento y lo muestra en la consola junto con la hora actual.
 
-**Buck** es una herramienta de construcción de código abierta desarrollada por Facebook, diseñada para proyectos grandes y escalables, soportando múltiples lenguajes, incluyendo **C++**, **Java**, **Python**, **Go**, **Rust**, y más. Al igual que **Gradle**, **Buck** permite compilar, empaquetar y ejecutar aplicaciones, pero con un enfoque en la velocidad y la eficiencia de construcciones incrementales.
+## Estructura del proyecto
 
-### Ejemplo de Aplicación Kotlin con Buck
+Con **Buck2**, la estructura del proyecto es diferente a lo que estamos acostumbrados con Gradle. En lugar de archivos como `build.gradle.kts`, utilizamos archivos **BUCK** y un archivo principal llamado **BUCK2** para definir las dependencias y las reglas de construcción.
 
-En **Buck**, los pasos son ligeramente diferentes. Al ser una herramienta más orientada a la optimización de grandes proyectos, **Buck** no tiene una equivalencia directa a los comandos `run` y `installDist` de **Gradle**, pero sigue permitiendo construir y ejecutar aplicaciones de forma eficiente.
+### Archivo BUCK
 
-1. **Configuración de Buck para Kotlin**
-**Buck** utiliza archivos `BUCK` para definir cómo se construyen los proyectos. Aquí tienes un ejemplo básico de cómo configurar un proyecto **Kotlin** en **Buck**.
+El archivo `BUCK` define cómo compilar y vincular el código fuente. Aquí es donde describimos las reglas para la construcción de la aplicación, incluyendo el lenguaje, los archivos de código fuente y las dependencias. Para nuestra **Echo App**, el archivo `BUCK` tendría el siguiente aspecto:
 
-     ```python title="BUCK" showLineNumbers
-     kotlin_library(
-         name = "echo_lib",
-         srcs = glob(["*.kt"]),
-         deps = [
-             "//third_party:kotlinx-datetime",
-         ],
-     )
+```python showLineNumbers title="BUCK"
+cxx_binary(
+    name = "EchoApp",
+    srcs = ["app/src/main/cpp/EchoApp.cpp"],
+)
+```
 
-     kotlin_binary(
-         name = "echo_app",
-         srcs = ["EchoApp.kt"],
-         deps = [":echo_lib"],
-         main_class = "cl.ravenhill.echo.EchoAppKt",
-     )
-    ```
+<Explanation>
+    - **cxx_binary**: Esta regla le indica a Buck que queremos compilar un binario en C++.
+    - **srcs**: Especifica el archivo fuente `EchoApp.cpp`.
+    - **deps**: Aquí definimos las dependencias, en este caso un módulo para manejar la fecha y hora.
+</Explanation>
 
- - **kotlin_library**: Define una biblioteca Kotlin.
- - **kotlin_binary**: Define un binario ejecutable, similar a `installDist` en Gradle.
+## Código de la aplicación en C++
 
-2. **Construir la aplicación**:
-A diferencia de Gradle, **Buck** no tiene un comando directo para ejecutar la aplicación sin antes construirla. Para construir la aplicación, utilizamos el siguiente comando:
+En **C++**, usaremos la librería estándar para obtener la hora actual y el argumento que recibe la aplicación. El código en `EchoApp.cpp` se vería de la siguiente manera:
 
- ```bash
- buck build //:echo_app
-   ```
+```cpp title="EchoApp.cpp"
+#include <iostream>
+#include <chrono>
+#include <ctime>
 
-Esto generará un archivo binario en el directorio `buck-out/gen/`.
+void echo(const std::string& message) {
+    auto now = std::chrono::system_clock::now();
+    std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+    std::cout << std::ctime(&currentTime) << message << std::endl;
+}
 
-3. **Ejecutar la aplicación**:
+int main(int argc, char* argv[]) {
+    for (int i = 1; i < argc; ++i) {
+        echo(argv[i]);
+    }
+    return 0;
+}
+```
 
-Una vez construida, podemos ejecutar la aplicación con el comando `buck run`, similar al `gradle run` de Gradle:
+<Explanation>
+    - **std::chrono**: Se utiliza para obtener la hora actual del sistema.
+    - **std::ctime**: Convierte el tiempo en un formato legible.
+    - **echo()**: Función que imprime el mensaje junto con la hora actual.
+    - **main()**: Itera sobre los argumentos pasados al programa y llama a `echo()` con cada uno de ellos.
+</Explanation>
 
- ```bash
- buck run //:echo_app -- "Hello, world!"
-   ```
+## Ejecutando la aplicación
 
-Al igual que en Gradle, se pueden pasar argumentos directamente al ejecutable utilizando `--` seguido de los argumentos.
+Para ejecutar la aplicación en **Buck2**, usamos el siguiente comando:
 
-### Comparación Entre Gradle y Buck
+```bash
+buck2 run :EchoApp -- "Hello," "world!"
+```
 
-| Característica                               | Gradle                                     | Buck                                                                         |
-|----------------------------------------------|--------------------------------------------|------------------------------------------------------------------------------|
-| **Ejecutar aplicación directamente**         | `gradle run`                               | `buck run`                                                                   |
-| **Generar archivo ejecutable independiente** | `gradle installDist`                       | `buck build` (genera el binario, pero sin empaquetado detallado como Gradle) |
-| **Lenguajes soportados**                     | Principalmente JVM (Kotlin, Java)          | Multilenguaje (C++, Python, Go, Rust, Kotlin, etc.)                          |
-| **Soporte para dependencias**                | Repositorios como MavenCentral, JCenter    | Archivos externos o integraciones personalizadas                             |
-| **Caché**                                    | Local y remoto, con configuración opcional | Caché avanzado distribuido por defecto                                       |
-| **Curva de aprendizaje**                     | Más amigable para proyectos JVM            | Mayor curva de aprendizaje, pero escalable para proyectos grandes            |
+El resultado será similar al siguiente:
+
+```text
+Thu Oct 17 21:12:50 2024
+Hello,
+Thu Oct 17 21:12:50 2024
+world!
+```
+
+## Comparación final entre Buck2
+
+| **Característica**              | **Buck2**                                                             | **Gradle**                                                               |
+|---------------------------------|------------------------------------------------------------------------|--------------------------------------------------------------------------|
+| **Manejo de dependencias**       | Manual y explícito, con control total sobre cómo se definen y vinculan | Automático, manejado a través de repositorios como Maven Central          |
+| **Multilenguaje**                | Soporta múltiples lenguajes como C++, Python, Java                     | Principalmente orientado a lenguajes de la JVM, como Kotlin y Java        |
+| **Escalabilidad**                | Diseñado para proyectos grandes y complejos con muchas dependencias     | Adecuado para proyectos pequeños y medianos, pero puede escalar a grandes |
+| **Compilación incremental**      | Muy eficiente en compilaciones incrementales y paralelas                | También ofrece compilación incremental, pero menos eficiente a gran escala|
+| **Ecosistema**                   | Fuerte en aplicaciones de servidor y compilación de binarios            | Excelente integración con el ecosistema Android y aplicaciones móviles    |
+| **Gestión de scripts de construcción** | Archivos `BUCK` para definir reglas de construcción                    | Archivos `build.gradle.kts`, fáciles de mantener y con soporte de Kotlin  |
+| **Compilación modular**          | Control más detallado sobre módulos y compilación                       | Ofrece buena modularización, pero más automatizada                        |
+
+### Beneficios y limitaciones
+
+<ProCons>
+    <Pros>
+        - **Escalabilidad**: **Buck2** está diseñado para grandes proyectos con muchas dependencias y múltiples lenguajes. Su enfoque en la eficiencia lo hace ideal para proyectos que necesitan compilarse de manera incremental y paralela, reduciendo el tiempo de compilación en proyectos grandes y complejos.
+        - **Soporte para múltiples lenguajes**: Buck2 puede manejar proyectos que combinan varios lenguajes de programación, como C++, Python, y Java, ofreciendo un control detallado sobre cómo se compilan y vinculan estos lenguajes en un solo proyecto.
+        - **Compilación modular**: **Buck2** permite un control granular sobre cómo se compilan y gestionan los módulos, lo que ofrece flexibilidad para proyectos que requieren diferentes reglas de compilación para distintos componentes.
+        - **Control sobre reglas de construcción**: Quienes desarrollan tienen un control detallado sobre cómo se definen las reglas de compilación y qué dependencias se incluyen, lo que puede ser una ventaja para proyectos con requisitos específicos y personalizados.
+    </Pros>
+
+    <Cons>
+        - **Curva de aprendizaje pronunciada**: **Buck2** requiere una comprensión profunda de cómo definir y gestionar reglas de compilación y dependencias de manera manual. Esto puede hacer que sea más difícil de aprender y utilizar, especialmente para equipos que no están familiarizados con sus conceptos.
+        - **Mayor complejidad en la configuración**: A diferencia de Gradle, que maneja las dependencias de manera automática, **Buck2** requiere una configuración más manual y detallada, lo que puede agregar complejidad al desarrollo, especialmente en proyectos más pequeños o con menos recursos.
+        - **Menor ecosistema de herramientas**: Mientras que Gradle tiene un ecosistema más maduro y bien integrado con herramientas populares, **Buck2** se centra más en proyectos de servidores y aplicaciones de gran escala, lo que lo limita en entornos más especializados.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos cómo crear una aplicación simple utilizando **Buck2** y **C++**, y comparamos este enfoque con **Gradle** en el contexto de Kotlin. Buck2, con su capacidad para manejar grandes proyectos multilenguaje y su control detallado sobre las dependencias y las reglas de construcción, es ideal para aplicaciones de servidor o proyectos con necesidades avanzadas de compilación y escalabilidad.
+
+### Puntos clave
+
+- **Manejo de dependencias**: Buck2 permite un control más explícito y manual de las dependencias, a diferencia de Gradle, que automatiza este proceso a través de repositorios como Maven Central.
+- **Multilenguaje y escalabilidad**: Buck2 es especialmente útil en proyectos que combinan varios lenguajes, como C++, Python, y Java, y está optimizado para grandes proyectos con compilación incremental.
+- **Compilación modular**: Proyectos complejos se benefician del control granular que ofrece Buck2 sobre la compilación y el manejo de dependencias.
+- **Curva de aprendizaje**: Aunque potente, Buck2 requiere un mayor esfuerzo de configuración y una comprensión profunda de su funcionamiento, lo que puede ser una barrera para proyectos más pequeños o equipos menos experimentados.
+
+### Consideraciones para elegir entre Buck2 y Gradle
+
+- **Usa Buck2** si trabajas en proyectos grandes y multilenguaje que requieren compilaciones rápidas y eficientes, o si necesitas control detallado sobre las reglas de compilación.
+- **Usa Gradle** si tu proyecto está basado en el ecosistema JVM (Kotlin, Java) y buscas una herramienta más accesible, con un manejo automatizado de dependencias y una integración sólida con Android y aplicaciones móviles.
+
+--- 
+
+Ahora que hemos explorado cómo usar Buck2, ¡puedes aplicar estos conocimientos para gestionar proyectos más complejos y a gran escala!
 
 <References references={[
     {
-        title: "",
-        url: "",
-        type: "article",
-        author: "",
-        publishedDate: "",
-    },
-    {
-        accessedDate: '',
-        siteOrAuthor: '',
-        title: '',
-        type: 'web',
-        url: '',
-    },
-    {
-        title: "",
-        bookTitle: "",
-        pages: "",
-        location: "",
-        publisher: "",
-        year: "",
-        type: "book",
-        author: ''
+        title: "Getting Started | Buck2",
+        url: "https://buck2.build/docs/about/getting_started/",
+        accessedDate: "17 de octubre de 2024",
+        type: "web",
     },
 ]}/>

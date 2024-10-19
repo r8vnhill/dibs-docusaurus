@@ -1,16 +1,53 @@
 ---
-title: Functores en Kotlin
+title: Functores
 ---
-import Corollary from "../../../src/components/Corollary";
-import Definition from "/src/components/Definition";
-import Solution from "/src/components/exercise/Solution";
-import ReadingTime from '/src/components/ReadingTime';
-import Exercise from "/src/components/exercise/Exercise";
-import References from "/src/components/ReferencesComponent";
-import TabItem from "@theme/TabItem";
-import Tabs from "@theme/Tabs";
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard, ScalaCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="functional-programming-kt" />
+
+<details>
+    <summary>
+        Comencemos por crear un módulo para la lección...
+    </summary>
+
+    <Tabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            New-Items -Path 'functors' -ItemType 'directory'
+            '// Intentionally left blank' |
+                Out-File -FilePath 'functors\build.gradle.kts'
+            ```
+        </TabItem>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
+            ```powershell
+            md 'functors'
+            '// Intentionally left blank' > 'functors\build.gradle.kts'
+            ```
+        </TabItem>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
+            ```bash
+            mkdir functors
+            echo '// Intentionally left blank' > 'functors/build.gradle.kts'
+            ```
+        </TabItem>
+    </Tabs>
+
+    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
+</details>
 
 <Definition title={"Functor"}>
     Un **Functor** es una abstracción matemática que aparece en la teoría de categorías, y se aplica en programación funcional como una estructura sobre la que se puede aplicar una función. Formalmente, un functor es un tipo que implementa el comportamiento de la función $\textrm{map}$, la cual aplica una función a los elementos que contiene, preservando la estructura del contenedor.
@@ -20,7 +57,7 @@ import Tabs from "@theme/Tabs";
     Si tienes una estructura de datos como una lista, un árbol o una caja, y puedes aplicar una función a cada elemento dentro de esa estructura sin modificar la forma de la estructura, entonces esa estructura es un functor.
 </Corollary>
 
-### Leyes de los Functores
+## Leyes de los functores
 
 Para que una estructura sea considerada un **functor**, debe cumplir con las siguientes dos leyes fundamentales:
 
@@ -46,67 +83,164 @@ Para que una estructura sea considerada un **functor**, debe cumplir con las sig
 
 Estas leyes garantizan que un functor preserve la estructura de las transformaciones aplicadas a sus valores, asegurando consistencia y previsibilidad en su comportamiento.
 
-## Implementando Functores en Kotlin
+## Implementando functores en Kotlin
+
 
 <details>
     <summary>
-        Comencemos por crear un módulo para la lección...
-    </summary>
-
-    <Tabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path 'functors\src\main\kotlin' -ItemType Directory -Force
-            New-Item -Path 'functors\build.gradle.kts' -ItemType File -Force
-            ```
-        </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-            ```powershell
-            mkdir -p 'functors\src\main\kotlin'
-            ni 'functors\build.gradle.kts' -i 'f' -f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            mkdir -p functors/src/main/kotlin
-            touch functors/build.gradle.kts
-            ```
-        </TabItem>
-    </Tabs>
-</details>
-
-### Creando la Clase ``Box``
-
-<details>
-    <summary>
-        Si prefieres crear el archivo desde la terminal...
+        Si quieres crear los archivos desde la terminal...
     </summary>
 
     <Tabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell
             $Group = 'com\github\username'
-            $FunctorsDir = "functors\src\main\kotlin\$Group\functors"
-            New-Item -Path "$FunctorsDir\Box.kt" -ItemType File -Force
+            ```
+
+            ```powershell
+            $FunctorsTestDir = "functors\src\test\kotlin\$Group\functors"
+            $FunctorsMainDir = "functors\src\main\kotlin\$Group\functors"
+            New-Item -Path $FunctorsDir, $FunctorsTestDir `
+                -ItemType Directory -Force
+            "$FunctorsTestDir\BoxFunctorTest.kt", "$FunctorsMainDir\Box.kt", `
+                "$FunctorsMainDir\BoxFunctor.kt" | ForEach-Object {
+                    "package $Group.functors" -replace '\\', '.' | 
+                        Out-File -FilePath $_
+                }
             ```
         </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
+        <TabItem value="Windows (corto)" label="Windows (corto)">
             ```powershell
             $Group = 'com\github\username'
-            $FunctorsDir = "functors\src\main\kotlin\$Group\functors"
-            ni "$FunctorsDir\Box.kt" -i 'f' -f
+            ```
+
+            ```powershell
+            $FunctorsTestDir = "functors\src\test\kotlin\$Group\functors"
+            $FunctorsMainDir = "functors\src\main\kotlin\$Group\functors"
+            md $FunctorsDir $FunctorsTestDir
+            "$FunctorsTestDir\BoxFunctorTest.kt", "$FunctorsMainDir\Box.kt", `
+                "$FunctorsMainDir\BoxFunctor.kt" | % {
+                    "package $Group.functors" -replace '\\', '.' > $_
+                }
             ```
         </TabItem>
         <TabItem value="Linux/Mac" label="Linux/Mac">
             ```bash
             GROUP="com/github/username"
+            ```
+
+            ```bash
             FUNCTORS_DIR="functors/src/main/kotlin/$GROUP/functors"
-            mkdir -p "$FUNCTORS_DIR"
-            touch "$FUNCTORS_DIR/Box.kt"
+            FUNCTORS_TEST_DIR="functors/src/test/kotlin/$GROUP/functors"
+            mkdir -p "$FUNCTORS_DIR" "$FUNCTORS_TEST_DIR"
+            echo "package ${GROUP//\//.}.functors" > `
+                "$FUNCTORS_TEST_DIR/BoxFunctorTest.kt" `
+                "$FUNCTORS_DIR/Box.kt" "$FUNCTORS_DIR/BoxFunctor.kt"
             ```
         </TabItem>
     </Tabs>
 </details>
+
+Para ilustrar el concepto de **functor**, crearemos una clase `Box` que encapsula un valor de tipo genérico. A continuación, implementaremos la funcionalidad de un functor para esta clase. Para propósitos didácticos, definiremos un functor como una estructura que contiene un método `map`. Este método aplicará una función al valor almacenado en la `Box`, transformándolo y devolviendo una nueva `Box` con el resultado. Así, el functor nos permite realizar transformaciones sin extraer directamente el valor contenido.
+
+Aunque aquí implementamos el functor de manera explícita para resaltar el concepto, en la práctica cualquier tipo que proporcione una función `map` puede considerarse un functor, ya que `map` es la operación esencial que define el comportamiento de un functor: aplicar una función a un valor encapsulado y devolver el resultado de forma encapsulada.
+
+### Especificación BDD
+
+Para verificar que nuestro functor cumple con las leyes de los functores, primero definiremos las pruebas BDD correspondientes. Luego, implementaremos el functor y ejecutaremos las pruebas para confirmar que se cumplen las leyes de identidad y composición.
+
+```kotlin showLineNumbers
+"Given a generic box" - {
+    "when mapping the identity function" - {
+        "should return the same box" {}
+    }
+    
+    "when composing two functions" - {
+        "should be the same as applying the composed function once" {}
+    }
+}
+```
+
+### Implementando las pruebas
+
+Con la especificación BDD en su lugar, ahora implementaremos las pruebas para verificar que nuestro functor cumple con las leyes de los functores.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        
+        #### Ley de Identidad
+        
+        ```kotlin showLineNumbers
+        checkAll(Arb.int()) { value ->
+            val box = Box(value)
+            with(BoxFunctor) {
+                box.map { it } shouldBe box
+            }
+        }
+        ```
+
+        #### Ley de Composición
+
+        ```kotlin showLineNumbers
+        checkAll(Arb.int()) { value ->
+            val box = Box(value)
+            val f = { x: Int -> x + 1 }
+            val g = { x: Int -> x * 2 }
+
+            with(BoxFunctor) {
+                box.map(f).map(g) shouldBe box.map { g(f(it)) }
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="functors/src/test/kotlin/com/github/username/functors/BoxFunctorTest.kt"
+        package com.github.username.functors
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.int
+        import io.kotest.property.checkAll
+
+        class BoxFunctorTest : FreeSpec({
+            "Given a generic box" - {
+                "when mapping the identity function" - {
+                    "should return the same box" {
+                        checkAll(Arb.int()) { value ->
+                            val box = Box(value)
+                            with(BoxFunctor) {
+                                box.map { it } shouldBe box
+                            }
+                        }
+                    }
+                }
+
+                "when composing two functions" - {
+                    "should be the same as applying the composed function once" {
+                        checkAll(Arb.int()) { value ->
+                            val box = Box(value)
+                            val f = { x: Int -> x + 1 }
+                            val g = { x: Int -> x * 2 }
+
+                            with(BoxFunctor) {
+                                box.map(f).map(g) shouldBe box.map { g(f(it)) }
+                            }
+                        }
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
+
+<Explanation>
+    - **Ley de Identidad**: Verificamos que mapear la función identidad sobre una caja genérica devuelva la misma caja.
+    - **Ley de Composición**: Comprobamos que mapear dos funciones `f` y `g` sobre una caja genérica, en dos pasos separados, sea equivalente a mapear la composición de `f` y `g` en un solo paso.
+</Explanation>
+
+### Creando la Clase ``Box``
 
 Consideremos la siguiente implementación de una caja (`Box`) en Kotlin.
 
@@ -118,30 +252,6 @@ data class Box<out A>(val value: A)
 
 ### Implementando el Functor para `Box`
 
-<details>
-    <summary>
-        Si prefieres crear el archivo desde la terminal...
-    </summary>
-
-    <Tabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path "$FunctorsDir\BoxFunctor.kt" -ItemType File -Force
-            ```
-        </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-            ```powershell
-            ni "$FunctorsDir\BoxFunctor.kt" -i 'f' -f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            touch "$FUNCTORS_DIR/BoxFunctor.kt"
-            ```
-        </TabItem>
-    </Tabs>
-</details>
-
 Ahora, crearemos una clase para representar un functor para la caja (`Box`).
 
 ```kotlin showLineNumbers title="functors/src/main/kotlin/com/github/username/functors/BoxFunctor.kt"
@@ -151,35 +261,10 @@ class BoxFunctor {
     fun <A, B> Box<A>.map(f: (A) -> B) = Box(f(this.value))
 }
 ```
-:::info Explicación del Código
 
-- **[4]** `map`: Es un método de extensión que toma una función `f` y la aplica al valor contenido en la caja, devolviendo una nueva caja con el resultado de la función aplicada al valor original.
-
-:::
-
-### Verificando las Leyes de los Functores
-
-Veamos que nuestro functor cumple con las leyes de los functores. Primero, verificaremos la **Ley de Identidad**.
-
-```kotlin showLineNumbers
-val box: Box<Int> = Box(420)
-val identity = with(BoxFunctor) {
-    box.map { it }
-}
-println("Functor adheres to the identity law: ${identity == box}")
-```
-
-Ahora, verificaremos la **Ley de Composición**.
-
-```kotlin showLineNumbers
-val composition = with(BoxFunctor) {
-    box.map { it + 1 }.map { it * 2 }
-}
-val composed = with(BoxFunctor) {
-    box.map { (it + 1) * 2 }
-}
-println("Functor adheres to the composition law: ${composition == composed}")
-```
+<Explanation>
+    - **`map`**: Es un método de extensión que toma una función `f` y la aplica al valor contenido en la caja, devolviendo una nueva caja con el resultado de la función aplicada al valor original.
+</Explanation>
 
 <details>
     <summary>
@@ -199,7 +284,7 @@ println("Functor adheres to the composition law: ${composition == composed}")
 
     Sin embargo, **Kotlin no soporta higher-kinded types de forma nativa**. Esto significa que no podemos directamente definir una interfaz `Functor` que sea genérica sobre un constructor de tipos `F`.
 
-    Para intentar superar esta limitación, algunos desarrolladores utilizan patrones para simular HKT, como crear una interfaz `Kind<F, A>` que actúa como un contenedor genérico:
+    Para intentar superar esta limitación, algunxs desarrolladorxs utilizan patrones para simular HKT, como crear una interfaz `Kind<F, A>` que actúa como un contenedor genérico:
 
     ```kotlin
     interface Kind<F, A>
@@ -239,7 +324,7 @@ println("Functor adheres to the composition law: ${composition == composed}")
 
     - **Simplicidad**: El código es más simple y fácil de leer, ya que no necesitamos introducir abstracciones adicionales como `Kind`.
     - **Seguridad de Tipos Mejorada**: Aprovechamos al máximo el sistema de tipos de Kotlin, evitando casting y comprobaciones manuales.
-    - **Facilidad de Uso**: Los desarrolladores pueden utilizar la función `map` directamente sobre las instancias de `Box`, sin necesidad de envolver o desempaquetar los valores.
+    - **Facilidad de Uso**: Lxs desarrolladorxs pueden utilizar la función `map` directamente sobre las instancias de `Box`, sin necesidad de envolver o desempaquetar los valores.
 
     Al implementar los functores sin HKT, mantenemos la capacidad de mapear funciones sobre nuestras estructuras de datos, cumpliendo con las leyes de los functores y aprovechando las características del lenguaje de manera más eficiente.
 </details>
@@ -256,6 +341,10 @@ println("Functor adheres to the composition law: ${composition == composed}")
         ```
     </Solution>
 </Exercise>
+
+<div className="language-card-container">
+    <ScalaCard link={"/docs/fp/functors/scala"}/>
+</div>
 
 <References references={[
     {

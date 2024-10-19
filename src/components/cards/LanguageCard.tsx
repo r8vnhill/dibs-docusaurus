@@ -113,6 +113,14 @@ export const HaskellCard = ({ link }) => {
   />
 }
 
+export const QuickCheckCard = ({ link }) => {
+  return <LanguageCard
+    logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Haskell-Logo.svg/1200px-Haskell-Logo.svg.png"
+    language="Haskell: QuickCheck"
+    link={link}
+  />
+}
+
 export const SwiftCard = ({ link }) => {
   return <LanguageCard
     logoSrc="https://cdn-icons-png.flaticon.com/512/3984/3984314.png"
@@ -141,6 +149,46 @@ export const AssertJCard = ({ link }) => {
   return <LanguageCard
     logoSrc="https://www.svgrepo.com/show/184143/java.svg"
     language="JVM: AssertJ"
+    link={link}
+  />
+}
+
+export const CMakeCard = ({ link }) => {
+  return <LanguageCard
+    logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Cmake.svg/1200px-Cmake.svg.png"
+    language="C/C++: CMake"
+    link={link}
+  />
+}
+
+export const MavenCard = ({ link }) => {
+  return <LanguageCard
+    logoSrc="https://static-00.iconduck.com/assets.00/file-type-maven-icon-192x256-wb8b12w6.png"
+    language="JVM: Maven"
+    link={link}
+  />
+}
+
+export const BuckCard = ({ link }) => {
+  return <LanguageCard
+    logoSrc="https://www.svgrepo.com/show/373479/buckbuild.svg"
+    language="Multilenguaje: Buck"
+    link={link}
+  />
+}
+
+export const CSharpCard = ({ link }) => {
+  return <LanguageCard
+    logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Logo_C_sharp.svg/1200px-Logo_C_sharp.svg.png"
+    language="C#"
+    link={link}
+  />
+}
+
+export const EiffelCard = ({ link }) => {
+  return <LanguageCard
+    logoSrc="/img/Eiffel_logo.svg.png"
+    language="Eiffel"
     link={link}
   />
 }

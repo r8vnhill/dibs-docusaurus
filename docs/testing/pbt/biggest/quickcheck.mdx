@@ -1,0 +1,95 @@
+---
+title: "Ejemplo: Encontrar el mayor de una lista con QuickCheck"
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+Vamos a construir una propiedad para encontrar el mayor valor en una lista de enteros. Al igual que en Kotest, primero definimos la propiedad que se desea probar.
+
+En **Haskell**, el siguiente código utiliza QuickCheck para probar la propiedad de que el máximo de una lista es igual al último elemento de la lista cuando esta está ordenada:
+
+```haskell showLineNumbers
+import Test.QuickCheck
+
+-- Definición de la función maxElement
+maxElement :: [Int] -> Int
+maxElement = foldl1 max
+
+-- Propiedad a probar: el máximo de una lista coincide con el último
+-- elemento de la lista ordenada
+prop_maxElement :: [Int] -> Property
+prop_maxElement xs = not (null xs) ==> maxElement xs == last (sort xs)
+
+main :: IO ()
+main = quickCheck prop_maxElement
+```
+
+### Diferencias y Similitudes con Kotest
+
+1. **Generación de datos**: QuickCheck en Haskell, al igual que Kotest, utiliza generadores para probar múltiples casos. La función `Arb.list(Arb.int())` en Kotest se traduce en QuickCheck simplemente como `Arbitrary [Int]`, que genera listas de enteros. Sin embargo, en Haskell, los generadores son implícitos para tipos estándar como listas, lo que facilita la configuración inicial.
+   
+2. **Propiedades**: Ambas herramientas permiten definir propiedades que se deben cumplir. En QuickCheck, se utiliza el operador `==>` para indicar condiciones previas que deben cumplirse antes de ejecutar la prueba, como asegurarse de que la lista no esté vacía, algo que en Kotest se manejaría como un caso de borde.
+
+3. **Pruebas deterministas**: Mientras que Kotest utiliza una semilla específica para repetir pruebas fallidas, QuickCheck también puede recibir una semilla para replicar las pruebas, pero el control sobre los generadores de casos puede ser más avanzado en Haskell, gracias a la posibilidad de componer generadores personalizados de manera más fluida.
+
+### Implementación alternativa
+
+Al igual que en Kotest, podemos definir una implementación alternativa que también valide el comportamiento de la función. Por ejemplo, una implementación usando `sort`:
+
+```haskell showLineNumbers
+-- Otra implementación usando sort para verificar maxElement
+altMaxElement :: [Int] -> Int
+altMaxElement = last . sort
+
+-- Propiedad que compara maxElement con altMaxElement
+prop_maxElementEquiv :: [Int] -> Property
+prop_maxElementEquiv xs = not (null xs) ==> maxElement xs == altMaxElement xs
+```
+
+### Manejo de listas vacías
+
+En ambos frameworks, uno de los principales casos a considerar es cómo manejar las listas vacías. En Haskell, podemos manejar esto declarando una propiedad explícita para las listas vacías, lo cual no sería muy diferente al manejo en Kotest:
+
+```haskell showLineNumbers
+prop_emptyList :: Property
+prop_emptyList = maxElement [] === minBound
+```
+
+### Beneficios y limitaciones
+
+<ProCons>
+  <Pros>
+    - **Puramente funcional**: Haskell, como lenguaje funcional puro, facilita las pruebas basadas en propiedades gracias a la naturaleza inmutable de los datos, lo que simplifica la validación de comportamientos sin preocuparse por efectos secundarios.
+    - **Generadores avanzados**: QuickCheck permite una composición más avanzada y poderosa de generadores, haciendo que las pruebas sean muy expresivas y flexibles. Generadores personalizados se pueden componer de manera sencilla.
+    - **Tipos y pureza**: Gracias a la inferencia de tipos y la pureza de Haskell, se pueden definir propiedades complejas de manera concisa sin preocuparse por efectos secundarios. Esto lo hace ideal para validar comportamientos matemáticos o algoritmos complejos.
+  </Pros>
+
+  <Cons>
+    - **Curva de aprendizaje**: Aunque QuickCheck es poderoso, tiene una curva de aprendizaje más pronunciada debido a la complejidad del lenguaje y el manejo explícito de efectos secundarios.
+    - **Manejo manual de efectos secundarios**: En Haskell, los efectos secundarios como I/O no son automáticos y requieren uso de monads como `IO`, lo que puede complicar la escritura de pruebas en algunos casos.
+    - **Rendimiento**: Las pruebas en Haskell pueden ser más lentas si los generadores no están bien optimizados, especialmente al probar propiedades complejas con listas grandes o estructuras de datos avanzadas.
+</Cons>
+</ProCons>
+
+### ¿Qué aprendimos?
+
+En esta lección, hemos comparado el uso de **Property-Based Testing** entre **Kotest** y **QuickCheck**, observando cómo se implementan propiedades similares en ambos frameworks y las diferencias en cuanto a generación de datos, manejo de efectos secundarios y composicionalidad de generadores. Haskell, con su naturaleza puramente funcional, ofrece algunas ventajas en términos de claridad y predictibilidad, pero requiere una mayor comprensión del manejo de efectos secundarios y un enfoque más explícito en la gestión de pruebas complejas.
+
+--- 
+
+Explorar estos enfoques en diferentes lenguajes nos permite comprender mejor las ventajas y limitaciones de cada uno, y cómo elegir la herramienta adecuada dependiendo del entorno de desarrollo y el tipo de proyecto.

@@ -39,17 +39,43 @@ Existen dos operaciones lógicas clave para componer matchers:
     <Tabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell
-            
+            $Group = 'com\github\username'
+            ```
+
+            ```powershell
+            $MatchersDir = "matchers\src\test\kotlin\$Group\matchers\composed"
+            New-Item -Path $MatchersDir -ItemType Directory -Force
+            "$MatchersDir\BeStrongPassword.kt", "$MatchersDir\BeStrongPasswordTest.kt" |
+                ForEach-Object { 
+                    "package $Group.matchers.composed" -replace '\\', '.' | 
+                        Out-File -FilePath "$_.kt" 
+                }
             ```
         </TabItem>
         <TabItem value="Windows (corto)" label="Windows (corto)">
             ```powershell
-            Powershell (short)
+            $Group = 'com\github\username'
+            ```
+
+            ```powershell
+            $MatchersDir = "matchers\src\test\kotlin\$Group\matchers\composed"
+            md $MatchersDir
+            "$MatchersDir\BeStrongPassword.kt", "$MatchersDir\BeStrongPasswordTest.kt" |
+                % { "package $Group.matchers.composed" -replace '\\', '.' > $_ }
             ```
         </TabItem>
         <TabItem value="Linux/Mac" label="Linux/Mac">
             ```bash
-            Bash
+            GROUP='com/github/username'
+            ```
+
+            ```bash
+            MATCHERS_DIR="matchers/src/test/kotlin/$GROUP/matchers/composed"
+            mkdir -p "$MATCHERS_DIR"
+            for FILE in "$MATCHERS_DIR/BeStrongPassword.kt" "$MATCHERS_DIR/BeStrongPasswordTest.kt"; do
+                echo "package ${GROUP//\//.}.matchers.composed" > \
+                    "$FILE"
+            done
             ```
         </TabItem>
     </Tabs>
@@ -203,7 +229,19 @@ La composición de matchers es una herramienta poderosa que permite crear valida
     </Solution>
 </Exercise>
 
-## Conclusión
+## ¿Qué aprendimos?
+
+En esta sección exploramos cómo utilizar **matchers compuestos** para validar condiciones complejas de forma modular y reutilizable.
+
+### Puntos clave
+
+- Los matchers se pueden combinar usando operaciones lógicas como **suma lógica** (`or` / `Matcher.any`) y **producto lógico** (`and` / `Matcher.all`) para crear validaciones más sofisticadas.
+- Al combinar matchers simples, logramos verificar condiciones complejas, como la fortaleza de una contraseña o la validez de un correo electrónico.
+- La composición de matchers es útil para mantener nuestras pruebas limpias y legibles, a la vez que facilita la reutilización del código.
+
+---
+
+Al final, hemos visto cómo estos conceptos se aplican a escenarios prácticos y cómo los matchers permiten crear reglas concisas para validar datos en nuestras pruebas.
 
 <div className="language-card-container">
     <LanguageCard

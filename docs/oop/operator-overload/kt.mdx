@@ -1,16 +1,73 @@
 ---
-title: Sobrecarga de Operadores
+title: Sobrecarga de operadores
 ---
-import TabItem from "@theme/TabItem";
-import Tabs from "@theme/Tabs";
-import References from "/src/components/ReferencesComponent";
-import ReadingTime from "/src/components/ReadingTime";
-import { LanguageCard } from "/src/components/cards/LanguageCard";
-import {ProCons, Pros, Cons} from '/src/components/cajitas/ProCons';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
 <ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="object-oriented-programming-kt" />
 
-A estas alturas, ya deberías estar familiarizadx con el concepto de **sobrecarga de funciones** (overloading). Como repaso rápido, la sobrecarga permite definir varias funciones con el mismo nombre, pero diferentes firmas (es decir, con distintos números o tipos de parámetros). Esto le permite a los desarrolladores reutilizar un mismo nombre para funciones que realizan tareas similares con diferentes tipos de datos.
+<details>
+    <summary>
+        Comencemos por crear un módulo para la lección...
+    </summary>
+
+    ```kotlin showLineNumbers title="convention-plugins/src/main/kotlin/operator-overload.gradle.kts"
+    tasks.register("setupOperatorOverloadModule") {
+        val baseDir = "operator-overload"
+        doLast {
+            // Crear el directorio base del módulo y build.gradle.kts si no existe
+            val operatorOverloadDir = rootProject.file(baseDir).apply { mkdirs() }
+            operatorOverloadDir.resolve("build.gradle.kts").apply {
+                if (!exists()) {
+                    writeText("// Intentionally left blank")
+                    println("File created: $this")
+                } else {
+                    println("File already exists: $this")
+                }
+            }
+
+            // Crear directorios y archivos para Complex.kt y ComplexTest.kt si no existen
+            val groupPath = rootProject.group.toString().replace(".", "/")
+            listOf("main" to "Complex.kt", "test" to "ComplexTest.kt")
+                .forEach { (type, fileName) ->
+                    val dir = rootProject.file("$baseDir/src/$type/kotlin/$groupPath/complex")
+                        .apply { mkdirs() }
+                    dir.resolve(fileName).apply {
+                        if (!exists()) {
+                            writeText("package ${rootProject.group}.complex\n\n")
+                            println("File created: $this")
+                        } else {
+                            println("File already exists: $this")
+                        }
+                    }
+                }
+        }
+    }
+    ```
+
+    Preocupate de que el plugin `operator-overload` esté aplicado en el archivo `build.gradle.kts` del módulo principal.
+
+    ```bash
+    ./gradlew setupOperatorOverloadModule
+    ```
+
+    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
+</details>
+
+A estas alturas, ya deberías estar familiarizadx con el concepto de **sobrecarga de funciones** (overloading). Como repaso rápido, la sobrecarga permite definir varias funciones con el mismo nombre, pero diferentes firmas (es decir, con distintos números o tipos de parámetros). Esto le permite a quien desarrolla reutilizar un mismo nombre para funciones que realizan tareas similares con diferentes tipos de datos.
 
 De manera similar, la **sobrecarga de operadores** es una característica presente en lenguajes como Kotlin que permite definir comportamientos personalizados para operadores estándar como `+`, `-`, `*`, `/`, entre otros. Esto resulta especialmente útil cuando trabajamos con tipos de datos definidos por lx usuarix, ya que nos permite hacer que interactúen de forma más natural e intuitiva con los operadores existentes del lenguaje, facilitando su uso y mejorando la legibilidad del código.
 
@@ -20,62 +77,121 @@ En Kotlin, para sobrecargar un operador, se declara una función utilizando la p
 
 Por ejemplo, la función `plus` se utiliza para sobrecargar el operador `+`. Esto permite que, cuando utilices el operador `+` con objetos de esa clase, Kotlin sepa qué operación ejecutar.
 
+Aquí te dejo una versión mejorada del ejemplo, con mayor claridad y consistencia:
+
 ## Ejemplo Práctico: Sobrecarga del Operador `+` para Números Complejos
 
-Veamos un ejemplo práctico utilizando una clase `Complex` que representa un número complejo (con partes real e imaginaria). En este ejemplo, sobrecargamos el operador `+` para permitir la suma de dos números complejos de forma natural.
+En este ejemplo, implementamos la sobrecarga del operador `+` en una clase `Complex` para sumar dos números complejos, así como sumar un número complejo con un valor `Double`.
+
+### Especificación BDD
+
+El siguiente esquema BDD (Behavior-Driven Development) describe el comportamiento esperado al sumar números complejos:
 
 ```kotlin showLineNumbers
-class Complex(val real: Double, val imaginary: Double) {
+"Given a complex number" - {
+    "when adding it to another complex number" - {
+        "then the real part should be the sum of the real parts" {}
+        "then the imaginary part should be the sum of the imaginary parts" {}
+    }
 
-    operator fun plus(other: Complex): Complex =
-        Complex(real + other.real, imaginary + other.imaginary)
+    "when adding it to a real number" - {
+        "then the real part should be the sum of the real part and the real number" {}
+        "then the imaginary part should remain unchanged" {}
+    }
 }
-
-operator fun Complex.plus(value: Double): Complex =
-    Complex(real + value, imaginary)
 ```
 
-:::info Explicación del código
+### Implementación de las pruebas
 
-- **Clase `Complex`**: Almacena dos propiedades `real` (parte real) e `imaginary` (parte imaginaria).
-- **Sobrecarga de `plus` para `Complex`**: Definimos una función miembro `plus` que toma otro número complejo y devuelve un nuevo número complejo que es la suma de ambos.
-- **Sobrecarga de `plus` para `Double`**: Utilizamos una función de extensión para permitir la suma de un número complejo con un `Double`.
-
-:::
-
-## Uso de la Sobrecarga de Operadores
-
-Gracias a esta sobrecarga, podemos sumar números complejos de manera intuitiva usando el operador `+`, como si fueran tipos primitivos:
+Aquí tenemos las pruebas que verifican que la suma de números complejos y la suma con un número `Double` funcionan correctamente:
 
 <Tabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
+    <TabItem label="Código esencial" value="Código esencial">
         ```kotlin showLineNumbers
-        val number1 = Complex(1.0, 2.0)
-        val number2 = Complex(3.0, 4.0)
-        val sum = number1 + number2
-        val number3 = number1 + 5.0
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers
-        fun main() {
-            val number1 = Complex(1.0, 2.0)
-            val number2 = Complex(3.0, 4.0)
-            val sum = number1 + number2
-            println("Suma: (${sum.real}, ${sum.imaginary})")
-            /* Output:
-             Suma: (4.0, 6.0)
-             */
+        checkAll(arbComplex(), arbComplex()) { a, b ->
+            val result = a + b
+            result.real shouldBe (a.real + b.real)
+        }
 
-            val number3 = number1 + 5.0
-            println("Suma con Double: (${number3.real}, ${number3.imaginary})")
-            /* Output:
-             Suma con Double: (6.0, 2.0)
-             */
+        checkAll(arbComplex(), Arb.double()) { a, b ->
+            val result = a + b
+            result.real shouldBe (a.real + b)
         }
         ```
     </TabItem>
+
+    <TabItem label="Código completo" value="Código completo">
+        ```kotlin showLineNumbers title="operator-overload/src/test/kotlin/com/github/username/complex/ComplexTest.kt"
+        package com.github.username.complex
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.double
+        import io.kotest.property.arbitrary.map
+        import io.kotest.property.checkAll
+
+        class ComplexTest : FreeSpec({
+            "Given a complex number" - {
+                "when adding it to another complex number" - {
+                    "then the real part should be the sum of the real parts" {
+                        checkAll(arbComplex(), arbComplex()) { a, b ->
+                            val result = a + b
+                            result.real shouldBe (a.real + b.real)
+                        }
+                    }
+                    "then the imaginary part should be the sum of the imaginary parts" {
+                        checkAll(arbComplex(), arbComplex()) { a, b ->
+                            val result = a + b
+                            result.imaginary shouldBe (a.imaginary + b.imaginary)
+                        }
+                    }
+                }
+                "when adding it to a real number" - {
+                    "then the real part should be the sum of the real part and the real number" {
+                        checkAll(arbComplex(), Arb.double()) { a, b ->
+                            val result = a + b
+                            result.real shouldBe (a.real + b)
+                        }
+                    }
+                    "then the imaginary part should remain unchanged" {
+                        checkAll(arbComplex(), Arb.double()) { a, b ->
+                            val result = a + b
+                            result.imaginary shouldBe a.imaginary
+                        }
+                    }
+                }
+            }
+        })
+
+        // Generador de números complejos aleatorios para las pruebas
+        private fun arbComplex() = Arb.pair(Arb.double(), Arb.double())
+            .map { (real, imaginary) ->
+                Complex(real, imaginary)
+            }
+        ```
+    </TabItem>
 </Tabs>
+
+### Implementación de la Clase `Complex`
+
+```kotlin showLineNumbers title="operator-overload/src/main/kotlin/com/github/username/complex/Complex.kt"
+package com.github.username.complex
+
+class Complex(val real: Double, val imaginary: Double) {
+
+    operator fun plus(other: Complex) =
+        Complex(real + other.real, imaginary + other.imaginary)
+}
+
+operator fun Complex.plus(value: Double) = Complex(real + value, imaginary)
+
+```
+
+<Explanation>
+    - **Clase `Complex`**: Almacena dos propiedades `real` (parte real) e `imaginary` (parte imaginaria).
+    - **Sobrecarga de `plus` para `Complex`**: Definimos una función miembro `plus` que toma otro número complejo y devuelve un nuevo número complejo que es la suma de ambos.
+    - **Sobrecarga de `plus` para `Double`**: Utilizamos una función de extensión para permitir la suma de un número complejo con un `Double`.
+</Explanation>
 
 :::warning Uso Responsable de la Sobrecarga de Operadores
 
@@ -117,12 +233,10 @@ class Greeter(val greeting: String) {
 }
 ```
 
-:::info Explicación del código
-
-- **Clase `Greeter`**: Contiene un saludo predefinido.
-- **Sobrecarga de `invoke`**: Permite llamar a una instancia de `Greeter` pasando un nombre, como si fuera una función.
-
-:::
+<Explanation>
+    - **Clase `Greeter`**: Contiene un saludo predefinido.
+    - **Sobrecarga de `invoke`**: Permite llamar a una instancia de `Greeter` pasando un nombre, como si fuera una función.
+</Explanation>
 
 **Uso:**
 
@@ -135,30 +249,34 @@ fun main() {
 
 Este enfoque hace que el código sea más conciso y natural, especialmente cuando el objeto representa una acción o comportamiento.
 
+## Beneficios y limitaciones de la sobrecarga de operadores
+
 <ProCons>
     <Pros>
-        - **Legibilidad y Expresividad Mejoradas**: La sobrecarga de operadores permite que las operaciones en objetos personalizados se vean y se comporten de manera similar a los tipos primitivos, mejorando la legibilidad y expresividad del código.
-        - **Consistencia con Operadores Existentes**: Facilita la integración de tipos definidos por el usuario en el lenguaje, permitiendo que interactúen de forma natural con operadores ya conocidos, lo que hace que las APIs sean más intuitivas y fáciles de usar.
-        - **Flexibilidad y Personalización**: Permite adaptar el comportamiento de los operadores para que se ajusten a las necesidades específicas de una clase o estructura de datos, ofreciendo una mayor flexibilidad en el diseño del código.
-        - **Implementación de Patrones Funcionales**: El operador `invoke` permite tratar objetos como funciones, lo que es especialmente útil en programación funcional o cuando se busca crear DSLs (Domain-Specific Languages) en Kotlin.
+        - **Legibilidad y expresividad mejoradas**: La sobrecarga de operadores permite que las operaciones en objetos personalizados se vean y se comporten de manera similar a los tipos primitivos, mejorando la legibilidad y expresividad del código.
+        - **Consistencia con operadores existentes**: Facilita la integración de tipos definidos por el usuario en el lenguaje, permitiendo que interactúen de forma natural con operadores ya conocidos, lo que hace que las APIs sean más intuitivas y fáciles de usar.
+        - **Flexibilidad y personalización**: Permite adaptar el comportamiento de los operadores para que se ajusten a las necesidades específicas de una clase o estructura de datos, ofreciendo una mayor flexibilidad en el diseño del código.
+        - **Implementación de patrones funcionales**: El operador `invoke` permite tratar objetos como funciones, lo que es especialmente útil en programación funcional o cuando se busca crear DSLs (Domain-Specific Languages) en Kotlin.
     </Pros>
     <Cons>
-        - **Ambigüedad y Confusión**: El uso indebido o excesivo de la sobrecarga de operadores puede hacer que el código sea confuso o difícil de entender para otrxs desarrolladorxs, especialmente si los operadores se utilizan para acciones no intuitivas.
-        - **Dificultad para Mantener el Código**: Al personalizar operadores, es posible que los desarrolladores futuros no comprendan rápidamente qué está haciendo el código, lo que puede dificultar el mantenimiento y la extensión de las funcionalidades.
-        - **Inconsistencias con el Comportamiento Esperado**: Cuando un operador se sobrecarga de una manera que se desvía de su uso habitual (como `+` para fusionar objetos en lugar de sumarlos), puede generar confusión y errores, ya que las expectativas sobre su funcionamiento no se cumplen.
-        - **Complejidad Adicional**: La implementación de sobrecargas de operadores introduce una capa adicional de abstracción, lo que puede aumentar la complejidad del código y hacer que el flujo de ejecución sea más difícil de rastrear, especialmente en proyectos grandes o colaborativos.
+        - **Ambigüedad y confusión**: El uso indebido o excesivo de la sobrecarga de operadores puede hacer que el código sea confuso o difícil de entender para otrxs desarrolladorxs, especialmente si los operadores se utilizan para acciones no intuitivas.
+        - **Dificultad para mantener el código**: Al personalizar operadores, es posible que lxs desarrolladorxs futuros no comprendan rápidamente qué está haciendo el código, lo que puede dificultar el mantenimiento y la extensión de las funcionalidades.
+        - **Inconsistencias con el comportamiento esperado**: Cuando un operador se sobrecarga de una manera que se desvía de su uso habitual (como `+` para fusionar objetos en lugar de sumarlos), puede generar confusión y errores, ya que las expectativas sobre su funcionamiento no se cumplen.
+        - **Complejidad adicional**: La implementación de sobrecargas de operadores introduce una capa adicional de abstracción, lo que puede aumentar la complejidad del código y hacer que el flujo de ejecución sea más difícil de rastrear, especialmente en proyectos grandes o colaborativos.
     </Cons>
 </ProCons>
 
-## ¿Qué Aprendimos?
+## ¿Qué aprendimos?
 
 En esta lección, exploramos la **sobrecarga de operadores** en Kotlin y cómo puede mejorar la expresividad y legibilidad del código al permitir el uso de operadores estándar en tipos de datos personalizados. Vimos cómo se implementa la sobrecarga usando la palabra clave `operator` y examinamos ejemplos prácticos, como la sobrecarga de `+` para números complejos e `invoke` para invocación de funciones.
 
-### Puntos Clave:
+### Puntos clave
 
 1. **Flexibilidad y Expresividad**: La sobrecarga de operadores permite crear APIs intuitivas y expresivas, haciendo que los tipos de datos personalizados se comporten de manera similar a los tipos nativos de Kotlin.
-2. **Facilidad en la Implementación de DSLs**: Al sobrecargar operadores como `invoke`, es posible diseñar DSLs que proporcionan una sintaxis fluida y concisa.
-3. **Uso Responsable**: Aunque poderosa, la sobrecarga de operadores debe utilizarse con cuidado para evitar confusión, ambigüedad y dificultades en el mantenimiento del código.
+2. **Facilidad en la implementación de DSLs**: Al sobrecargar operadores como `invoke`, es posible diseñar DSLs que proporcionan una sintaxis fluida y concisa.
+3. **Uso responsable**: Aunque poderosa, la sobrecarga de operadores debe utilizarse con cuidado para evitar confusión, ambigüedad y dificultades en el mantenimiento del código.
+
+---
 
 Al finalizar esta lección, es importante recordar que, si bien la sobrecarga de operadores puede enriquecer el diseño de un programa, debe usarse de manera consistente con las convenciones del lenguaje y las expectativas comunes para garantizar que el código sea claro, predecible y fácil de mantener.
 

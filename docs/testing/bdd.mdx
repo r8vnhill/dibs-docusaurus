@@ -40,7 +40,7 @@ import Explanation from '@site/src/components/admonitions/Explanation'
         <TabItem value="Linux/Mac" label="Linux/Mac">
             ```bash
             mkdir bdd
-            touch bdd/build.gradle.kts
+            echo '// Intentionally left blank' > bdd/build.gradle.kts
             ```
         </TabItem>
     </Tabs>
@@ -48,9 +48,9 @@ import Explanation from '@site/src/components/admonitions/Explanation'
     Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
 </details>
 
-El **Desarrollo Dirigido por Comportamiento** (*Behavior-Driven Development*, BDD) es una metodología ágil que extiende el **Desarrollo Dirigido por Pruebas** (*Test-Driven Development*, TDD) al enfatizar la colaboración entre desarrolladorxs, QA y partes interesadas no técnicas. BDD se centra en el comportamiento esperado del software desde la perspectiva del usuario final.
+El **Desarrollo Dirigido por Comportamiento** (*Behavior-Driven Development*, BDD) es una metodología ágil que extiende el **Desarrollo Dirigido por Pruebas** (*Test-Driven Development*, TDD) al enfatizar la colaboración entre desarrolladorxs, QA y partes interesadas no técnicas. BDD se centra en el comportamiento esperado del software desde la perspectiva de lx usuarix final.
 
-En esta lección, exploraremos cómo implementar BDD utilizando **Kotest**, un marco de pruebas para Kotlin que facilita escribir pruebas legibles y expresivas. Suponemos que ya estás familiarizadx con TDD y ahora quieres integrar BDD en tu flujo de trabajo.
+En esta lección, exploraremos cómo implementar BDD utilizando **Kotest**. Suponemos que ya estás familiarizadx con TDD y ahora quieres integrar BDD en tu flujo de trabajo.
 
 ## Introducción al BDD (Behavior-Driven Development)
 
@@ -100,8 +100,9 @@ Kotest proporciona varios estilos para escribir pruebas en un formato BDD. En es
 
             ```powershell
             $UsersTestPath = "bdd\src\test\kotlin\$Group\users"
-            New-Item -Path "$UsersTestPath\UserServiceTest.kt" `
-                -ItemType "file" -Force
+            New-Item -Path $UsersMainPath -ItemType Directory -Force
+            "package $Group.users" -replace '\\', '.' | 
+                Out-File -FilePath "$UsersTestPath\UserServiceTest.kt"
             ```
         </TabItem>
         <TabItem value="Windows (corto)" label="Windows (corto)">
@@ -111,7 +112,9 @@ Kotest proporciona varios estilos para escribir pruebas en un formato BDD. En es
 
             ```powershell
             $UsersTestPath = "bdd\src\test\kotlin\$Group\users"
-            ni "$UsersTestPath\UserServiceTest.kt" -i f -f
+            md $UsersTestPath
+            "package $Group.users" -replace '\\', '.' > `
+                "$UsersTestPath\UserServiceTest.kt"
             ```
         </TabItem>
         <TabItem value="Linux/Mac" label="Linux/Mac">
@@ -122,7 +125,8 @@ Kotest proporciona varios estilos para escribir pruebas en un formato BDD. En es
             ```bash
             USERS_TEST_PATH="bdd/src/test/kotlin/$GROUP/users"
             mkdir -p $USERS_TEST_PATH
-            touch $USERS_TEST_PATH/UserServiceTest.kt
+            echo "package ${GROUP//\//.}.users" > \
+                "$USERS_TEST_PATH/UserServiceTest.kt"
             ```
         </TabItem>
     </Tabs>
@@ -197,7 +201,7 @@ Esta es la estructura básica de nuestra especificación BDD. Ahora, agregaremos
     - **Prueba esencial**: La prueba verifica que, al registrar un nuevo usuario, este se guarda correctamente en la "base de datos" (representada por una colección `users`).
 </Explanation>
 
-Este enfoque BDD ayuda a que las pruebas reflejen el comportamiento esperado de la biblioteca de software desde una perspectiva clara y centrada en el usuario.
+Este enfoque BDD ayuda a que las pruebas reflejen el comportamiento esperado de la biblioteca de software desde una perspectiva clara y centrada en lx usuarix.
 
 ### Implementación Mínima
 
@@ -211,19 +215,25 @@ Este enfoque BDD ayuda a que las pruebas reflejen el comportamiento esperado de 
             ```powershell
             $UsersMainPath = "bdd\src\main\kotlin\$Group\users"
             New-Item -Path "$UsersMainPath\UserService.kt" `
-                -ItemType "file" -Force
+                -ItemType 'File' -Force
+            "package $Group.users" -replace '\\', '.' | 
+                Out-File -FilePath "$UsersMainPath\UserService.kt"
             ```
         </TabItem>
         <TabItem value="Windows (corto)" label="Windows (corto)">
             ```powershell
             $UsersMainPath = "bdd\src\main\kotlin\$Group\users"
-            ni "$UsersMainPath\UserService.kt" -i f -f
+            md $UsersMainPath
+            "package $Group.users" -replace '\\', '.' > `
+                "$UsersMainPath\UserService.kt"
             ```
         </TabItem>
         <TabItem value="Linux/Mac" label="Linux/Mac">
             ```bash
             USERS_MAIN_PATH="bdd/src/main/kotlin/$GROUP/users"
             mkdir -p $USERS_MAIN_PATH
+            echo "package ${GROUP//\//.}.users" > \
+                "$USERS_MAIN_PATH/UserService.kt"
             ```
         </TabItem>
     </Tabs>
@@ -251,7 +261,7 @@ La prueba debe pasar ahora, confirmando que un usuario puede registrarse exitosa
     Extiene la clase `UserService` para manejar la autenticación exitosa de un usuario. Escribe una especificación BDD y una prueba que verifique que un usuario registrado pueda autenticarse correctamente con su nombre de usuario y contraseña.
     
     <Solution>
-        ```kotlin showLineNumbers title="bdd/src/test/kotlin/com/github/username/users/UserServiceTest.kt"
+        ```kotlin showLineNumbers
         "when authenticating an existing user" - {
             "should return true for valid credentials" {
                 userService.register(USER, PASSWORD)
@@ -260,13 +270,13 @@ La prueba debe pasar ahora, confirmando que un usuario puede registrarse exitosa
         }
         ```
 
-        ```kotlin showLineNumbers title="bdd/src/main/kotlin/com/github/username/users/UserService.kt"
-        fun authenticate(username: String, password: String): Boolean {
-            return _users[username] == password
-        }
+        ```kotlin showLineNumbers
+        fun authenticate(username: String, password: String) = 
+            _users[username] == password
         ```    
     </Solution>
 </Exercise>
+
 ## Segundo Escenario: Registro de Usuario Duplicado
 
 ### Especificación
@@ -342,6 +352,11 @@ Con el escenario definido, podemos llenar los detalles específicos.
     </TabItem>
 </Tabs>
 
+<Explanation>
+    - **Prueba de excepción**: Utilizamos `shouldThrow` para verificar que se arroje una excepción `IllegalArgumentException` cuando se intenta registrar un usuario duplicado.
+    - **Mensaje de error**: Verificamos que el mensaje de la excepción sea `"User already exists"`, lo que indica que el usuario ya está registrado en el sistema.
+</Explanation>
+
 ### Implementación Mínima
 
 Lo siguiente es implementar el código mínimo para que la prueba pase.
@@ -356,7 +371,9 @@ Lo siguiente es implementar el código mínimo para que la prueba pase.
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers
+        ```kotlin showLineNumbers title="bdd/src/main/kotlin/com/github/username/users/UserService.kt"
+        package com.github.username.users
+        
         class UserService {
             private val _users = mutableMapOf<String, String>()
             val users: List<String>
@@ -406,20 +423,20 @@ Lo siguiente es implementar el código mínimo para que la prueba pase.
 ## Ventajas y desventajas de BDD
 
 <ProCons>
-   <Pros>
-      - **Colaboración mejorada**: BDD promueve una comunicación clara entre desarrolladorxs, testers y stakeholders no técnicxs, asegurando que todos compartan un entendimiento común de los requisitos y el comportamiento esperado del sistema.
-      - **Documentación viviente**: Las especificaciones BDD actúan como documentación que refleja el comportamiento actual del sistema, lo que facilita el mantenimiento y la actualización del software a lo largo del tiempo.
-      - **Enfoque en lx usuarix final**: Al definir los escenarios en términos de comportamiento, BDD mantiene el enfoque en cómo el sistema debe funcionar desde la perspectiva de lx usuarix final, mejorando así la alineación con los objetivos del negocio.
-      - **Mayor legibilidad**: Las pruebas BDD escritas con Kotest o marcos similares utilizan un lenguaje cercano al natural, lo que las hace más comprensibles para todas las partes involucradas en el proyecto, incluso aquellas sin conocimientos técnicos profundos.
-      - **Prevención de errores**: Al especificar los escenarios antes de implementar el código, BDD ayuda a identificar y manejar casos excepcionales de forma proactiva, lo que reduce la probabilidad de errores en tiempo de ejecución.
-   </Pros>
-   <Cons>
-      - **Curva de aprendizaje**: Implementar BDD efectivamente puede requerir un cambio de mentalidad y aprendizaje de nuevas herramientas y técnicas, lo que podría ser un desafío para equipos que no estén familiarizados con esta metodología.
-      - **Tiempo adicional**: Escribir especificaciones detalladas y mantenerlas actualizadas puede llevar tiempo, lo que podría ralentizar el proceso de desarrollo inicial en comparación con otros enfoques menos estructurados.
-      - **Dependencia de colaboración**: El éxito de BDD depende en gran medida de la colaboración efectiva entre equipos técnicos y no técnicos. Si esta colaboración no es fluida, el proceso podría resultar ineficaz.
-      - **Sobrecarga en proyectos pequeños**: Para proyectos simples o de corta duración, el enfoque detallado y estructurado de BDD puede resultar excesivo y generar una sobrecarga innecesaria en comparación con TDD o pruebas unitarias tradicionales.
-      - **Complejidad en casos complejos**: En proyectos grandes con múltiples escenarios y flujos de negocio, la gestión de especificaciones BDD puede volverse compleja, requiriendo un enfoque disciplinado para mantener la claridad y la consistencia.
-   </Cons>
+    <Pros>
+        - **Colaboración mejorada**: BDD promueve una comunicación clara entre desarrolladorxs, testers y stakeholders no técnicxs, asegurando que todxs compartan un entendimiento común de los requisitos y el comportamiento esperado del sistema.
+        - **Documentación viviente**: Las especificaciones BDD actúan como documentación que refleja el comportamiento actual del sistema, lo que facilita el mantenimiento y la actualización del software a lo largo del tiempo.
+        - **Enfoque en lx usuarix final**: Al definir los escenarios en términos de comportamiento, BDD mantiene el enfoque en cómo el sistema debe funcionar desde la perspectiva de lx usuarix final, mejorando así la alineación con los objetivos del negocio.
+        - **Mayor legibilidad**: Las pruebas BDD escritas con Kotest o frameworks similares utilizan un lenguaje cercano al natural, lo que las hace más comprensibles para todas las partes involucradas en el proyecto, incluso aquellas sin conocimientos técnicos profundos.
+        - **Prevención de errores**: Al especificar los escenarios antes de implementar el código, BDD ayuda a identificar y manejar casos excepcionales de forma proactiva, lo que reduce la probabilidad de errores en tiempo de ejecución.
+    </Pros>
+    <Cons>
+        - **Curva de aprendizaje**: Implementar BDD efectivamente puede requerir un cambio de mentalidad y aprendizaje de nuevas herramientas y técnicas, lo que podría ser un desafío para equipos que no estén familiarizados con esta metodología.
+        - **Tiempo adicional**: Escribir especificaciones detalladas y mantenerlas actualizadas puede llevar tiempo, lo que podría ralentizar el proceso de desarrollo inicial en comparación con otros enfoques menos estructurados.
+        - **Dependencia de colaboración**: El éxito de BDD depende en gran medida de la colaboración efectiva entre equipos técnicos y no técnicos. Si esta colaboración no es fluida, el proceso podría resultar ineficaz.
+        - **Sobrecarga en proyectos pequeños**: Para proyectos simples o de corta duración, el enfoque detallado y estructurado de BDD puede resultar excesivo y generar una sobrecarga innecesaria en comparación con TDD o pruebas unitarias tradicionales.
+        - **Complejidad en casos complejos**: En proyectos grandes con múltiples escenarios y flujos de negocio, la gestión de especificaciones BDD puede volverse compleja, requiriendo un enfoque disciplinado para mantener la claridad y la consistencia.
+    </Cons>
 </ProCons>
 
 ## ¿Qué aprendimos?

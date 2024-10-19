@@ -1,22 +1,35 @@
 ---
 title: Generación de documentación
 ---
-import References from "../../../src/components/ReferencesComponent";
-import TabItem from "@theme/TabItem";
-import Tabs from "@theme/Tabs";
-import DocumentationIntroText from "../../../src/components/DocumentationIntroText";
-import GithubRepoLink from "../../../src/components/GithubRepoLink";
-import ReadingTime from "../../../src/components/ReadingTime";
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import Tooltip from '@site/src/components/Tooltip'
 
 <ReadingTime/>
-<GithubRepoLink repo={"echo-app-kt"} user={"r8vnhill"} addLineBreak={false}/>
-<GithubRepoLink repo={"echo-app-groovy"} user={"r8vnhill"} />
+<GithubRepoLink repo={"echo-app-kt"} user={"r8vnhill"} />
 
 En esta lección, exploraremos cómo generar documentación efectiva para bibliotecas en Kotlin usando **Dokka**. Aprenderás a configurar Dokka en tu proyecto, generar documentación en distintos formatos y cómo integrarla en el proceso de construcción para mantenerla actualizada. También veremos cómo empaquetar la documentación como parte de tu distribución final, asegurando que sea accesible y fácil de usar para lxs desarrolladorxs que utilicen tu biblioteca.
 
 ## La documentación es vital
 
-<DocumentationIntroText/>
+Una buena documentación facilita el entendimiento y uso de la biblioteca por otrxs desarrolladorxs. Ahorra
+tiempo y recursos al reducir la necesidad de <Tooltip
+    text="Todxs sabemos que el tiempo es dinero, y en una sociedad capitalista, el dinero es la prioridad número uno para las grandes corporaciones.">
+    soporte y consultas frecuentes
+</Tooltip>, mejorando la adopción de la biblioteca, ya que lxs desarrolladorxs prefieren usar herramientas bien
+documentadas.
 
 ### Documentación inadecuada
 
@@ -41,7 +54,7 @@ Una buena documentación debe incluir:
 
 Lo primero que necesitamos para generar documentación es documentación, así que vamos a agregar comentarios de documentación a la biblioteca `lib`.
 
-````kotlin title="lib/src/main/kotlin/com/github/username/echo/Echo.kt"
+````kotlin showLineNumbers title="lib/src/main/kotlin/com/github/username/echo/Echo.kt"
 /**
  * Returns a formatted message with the current timestamp and the provided message.
  *
@@ -73,11 +86,11 @@ Dokka es una herramienta de generación de documentación para proyectos en Kotl
 
 ### Características principales de Dokka
 
-- **Soporte Multiplataforma:** Dokka es compatible con proyectos que utilizan Kotlin Multiplatform, permitiendo generar documentación para código compartido entre diferentes plataformas como JVM, JS y Native.
+- **Soporte multiplataforma:** Dokka es compatible con proyectos que utilizan Kotlin Multiplatform, permitiendo generar documentación para código compartido entre diferentes plataformas como JVM, JS y Native.
 - **Integración con Gradle y Maven:** Dokka se integra fácilmente con sistemas de construcción como Gradle y Maven, permitiendo generar documentación como parte del proceso de construcción del proyecto.
-- **Personalización de Estilos y Formatos:** Ofrece la posibilidad de personalizar el estilo y formato de la documentación generada mediante temas y plantillas, adaptándose a las necesidades específicas del proyecto.
+- **Personalización de estilos y formatos:** Ofrece la posibilidad de personalizar el estilo y formato de la documentación generada mediante temas y plantillas, adaptándose a las necesidades específicas del proyecto.
 - **Soporte para Java y Kotlin:** Dokka puede procesar código escrito tanto en Kotlin como en Java, facilitando la documentación de proyectos mixtos.
-- **Generación de Documentación Tipo Javadoc:** Puede generar documentación en formato Javadoc, lo cual es útil para proyectos que requieren mantener consistencia con documentación existente en Java.
+- **Generación de documentación tipo Javadoc:** Puede generar documentación en formato Javadoc, lo cual es útil para proyectos que requieren mantener consistencia con documentación existente en Java.
 - **Extensibilidad mediante Plugins:** Dokka permite extender su funcionalidad mediante plugins, lo que facilita la adición de características personalizadas o el soporte para nuevos formatos de salida.
 
 ### Cómo utilizar Dokka
@@ -100,7 +113,7 @@ Una vez definido en el catálogo, aplicamos el plugin de Dokka en el archivo `bu
 
 <Tabs groupId={"gradle"}>
     <TabItem value="Gradle Kotlin DSL" label="Gradle Kotlin DSL">
-        ```kotlin title="build.gradle.kts"
+        ```kotlin showLineNumbers title="build.gradle.kts"
         plugins {
             // Otros plugins...
             alias(libs.plugins.dokka)
@@ -145,7 +158,7 @@ Esto nos permite acceder a la API de Dokka desde nuestro archivo de convenciones
 
 <Tabs groupId={"gradle"}>
     <TabItem value="Gradle Kotlin DSL" label="Gradle Kotlin DSL">
-        ```kotlin title="convention-plugins/build.gradle.kts"
+        ```kotlin showLineNumbers title="convention-plugins/build.gradle.kts"
         dependencies {
             // Otras dependencias...
             implementation(libs.dokka)
@@ -166,72 +179,40 @@ Esto nos permite acceder a la API de Dokka desde nuestro archivo de convenciones
 
 Finalmente, creamos el archivo `dokka.conventions.gradle.kts` en el módulo `convention-plugins` con la siguiente configuración para la tarea `DokkaTask`:
 
-<Tabs groupId={"gradle"}>
-    <TabItem value="Gradle Kotlin DSL" label="Gradle Kotlin DSL">
-        ```kotlin title="convention-plugins/src/main/kotlin/dokka.conventions.gradle.kts"
-        import org.jetbrains.dokka.gradle.DokkaTask
+```kotlin showLineNumbers title="convention-plugins/src/main/kotlin/dokka.conventions.gradle.kts"
+import org.jetbrains.dokka.gradle.DokkaTask
 
-        tasks.withType<DokkaTask>().configureEach {   // (1)
-            dokkaSourceSets {
-                configureEach {   // (2)
-                    reportUndocumented = true  // (3)
-                    sourceRoots.from(file("src/main/kotlin"))   // (4)
-                    platform = org.jetbrains.dokka.Platform.jvm  // (5)
-                }
-            }
-            outputDirectory = layout.buildDirectory.dir("dokka/html").get().asFile  // (6)
+tasks.withType<DokkaTask>().configureEach {
+    dokkaSourceSets {
+        configureEach {
+            reportUndocumented = true
+            sourceRoots.from(file("src/main/kotlin"))
+            platform = org.jetbrains.dokka.Platform.jvm
         }
-        ```
-    </TabItem>
-    <TabItem value="Gradle Groovy DSL" label="Gradle Groovy DSL">
-        ```groovy title="convention-plugins/src/main/kotlin/dokka.conventions.gradle"
-        import org.jetbrains.dokka.gradle.DokkaTask
+    }
+    outputDirectory = layout.buildDirectory.dir("dokka/html").get().asFile
+}
+```
 
-        tasks.withType(DokkaTask).configureEach {   // (1)
-            dokkaSourceSets {
-                configureEach {   // (2)
-                    reportUndocumented.set(true)  // (3)
-                    sourceRoots.from(file("src/main/kotlin"))   // (4)
-                    platform.set(org.jetbrains.dokka.Platform.jvm)  // (5)
-                }
-            }
-            outputDirectory.set(layout.buildDirectory.dir("dokka/html"))  // (6)
-        }
-        ```
-    </TabItem>
-</Tabs>
-
-#### Explicación de la configuración
-
-1. **Configurar cada tarea de Dokka:** Definimos configuraciones comunes para todas las tareas `DokkaTask`.
-2. **Configurar los conjuntos de fuentes:** Especificamos los conjuntos de fuentes de Dokka.
-3. **Habilitar el reporte de elementos no documentados:** Dokka generará advertencias para elementos no documentados.
-4. **Definir la raíz de las fuentes:** Establecemos el directorio donde se encuentran los archivos fuente (por ejemplo, `src/main/kotlin`).
-5. **Plataforma de destino:** Definimos la plataforma para la que se genera la documentación, en este caso, Kotlin JVM.
-6. **Directorio de salida:** Indicamos el directorio donde se almacenará la documentación generada en formato HTML.
+<Explanation>
+    - **[3]**: `configureEach` permite definir configuraciones comunes para todas las tareas `DokkaTask`.
+    - **[5]**: Especificamos los conjuntos de fuentes de Dokka.
+    - **[6]**: Dokka generará advertencias para elementos no documentados.
+    - **[7]**: Establecemos el directorio donde se encuentran los archivos fuente (por ejemplo, `src/main/kotlin`).
+    - **[8]**: Definimos la plataforma para la que se genera la documentación, en este caso, Kotlin JVM.
+    - **[11]**: Indicamos el directorio donde se almacenará la documentación generada en formato HTML.
+</Explanation>
 
 ### Generar la documentación
 
 Ahora debemos agregar el plugin ``dokka.conventions`` a la biblioteca de la que queremos generar la documentación, en nuestro caso `lib`:
 
-<Tabs groupId={"gradle"}>
-    <TabItem value="Gradle Kotlin DSL" label="Gradle Kotlin DSL">
-        ```kotlin title="lib/build.gradle.kts"
-        plugins {
-            // Otros plugins...
-            id("dokka.conventions")
-        }
-        ```
-    </TabItem>
-    <TabItem value="Gradle Groovy DSL" label="Gradle Groovy DSL">
-        ```groovy title="lib/build.gradle"
-        plugins {
-            // Otros plugins...
-            id 'dokka.conventions'
-        }
-        ```
-    </TabItem>
-</Tabs>
+```kotlin showLineNumbers title="lib/build.gradle.kts"
+plugins {
+    // Otros plugins...
+    id("dokka.conventions")
+}
+```
 
 Con esto, podemos generar la documentación ejecutando la tarea `dokkaHtml`:
 
@@ -249,72 +230,31 @@ Para integrar la generación de documentación en el proceso de construcción, e
 
 Primero, definimos una tarea que empaquete la documentación generada por **Dokka** en un archivo `.jar`. Esto lo hacemos en el archivo `dokka.conventions.gradle.kts`:
 
-<Tabs groupId={"gradle"}>
-    <TabItem value="Gradle Kotlin DSL" label="Gradle Kotlin DSL">
-
-        ```kotlin title="convention-plugins/src/main/kotlin/dokka.conventions.gradle.kts"
-        // ...
-        tasks.register<Jar>("dokkaJar") {
-            group = "documentation"
-            description = "Creates a JAR with the Dokka documentation"
-            archiveClassifier = "docs"
-            from(tasks.named<DokkaTask>("dokkaHtml").get().outputDirectory)
-        }
-        ```
-
-    </TabItem>
-    <TabItem value="Gradle Groovy DSL" label="Gradle Groovy DSL">
-
-        ```groovy title="convention-plugins/src/main/kotlin/dokka.conventions.gradle"
-        // ...
-        tasks.register(Jar, "dokkaJar") {
-            group = "documentation"
-            description = "Creates a JAR with the Dokka documentation"
-            archiveClassifier = "docs"
-            from(tasks.named(DokkaTask, "dokkaHtml").get().outputDirectory)
-        }
-        ```
-
-    </TabItem>
-</Tabs>
+```kotlin showLineNumbers title="convention-plugins/src/main/kotlin/dokka.conventions.gradle.kts"
+// ...
+tasks.register<Jar>("dokkaJar") {
+    group = "documentation"
+    description = "Creates a JAR with the Dokka documentation"
+    archiveClassifier = "docs"
+    from(tasks.named<DokkaTask>("dokkaHtml").get().outputDirectory)
+}
+```
 
 ### Paso 2: Agregar la tarea `dokkaJar` a la construcción principal
 
 Una vez definida la tarea de empaquetado, la agregamos como dependencia de la tarea principal `fatJar` para que la generación de documentación se ejecute automáticamente como parte del proceso de construcción.
 
-<Tabs groupId={"gradle"}>
-    <TabItem value="Gradle Kotlin DSL" label="Gradle Kotlin DSL">
-
-        ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
-        // ...
-        plugins {
-            id("jvm.conventions")
-            id("dokka.conventions")
-        }
-        // ...
-        tasks.named("fatJar") {
-            dependsOn("dokkaJar")
-        }
-        ```
-
-    </TabItem>
-    <TabItem value="Gradle Groovy DSL" label="Gradle Groovy DSL">
-
-        ```groovy title="lib/build.gradle"
-        // ...
-        plugins {
-            id 'jvm.conventions'
-            id 'dokka.conventions'
-        }
-        // ...
-        tasks.named(Jar, "fatJar") {
-            dependsOn(":lib:dokkaJar")
-            from(":lib:dokkaJar")
-        }
-        ```
-
-    </TabItem>
-</Tabs>
+```kotlin showLineNumbers title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
+// ...
+plugins {
+    id("jvm.conventions")
+    id("dokka.conventions")
+}
+// ...
+tasks.named("fatJar") {
+    dependsOn("dokkaJar")
+}
+```
 
 ### Resultado final
 

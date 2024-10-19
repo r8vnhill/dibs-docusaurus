@@ -1,15 +1,23 @@
 ---
-title: Void-Safety
+title: Void-safety
 ---
-import { LanguageCard } from "@site/src/components/cards/LanguageCard";
-import ReadingTime from '@site/src/components/ReadingTime';
-import References from "@site/src/components/ReferencesComponent";
-import TabItem from '@theme/TabItem';
-import Tabs from '@theme/Tabs';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard, CSharpCard, EiffelCard, RustCard, SwiftCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
 <ReadingTime />
-
-## El Problema de los Punteros Nulos
+<GithubRepoLink user="r8vnhill" repo="" />
 
 Los punteros o referencias nulas, descritos por Tony Hoare como "[el error de mil millones de dólares](https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare/)", son una fuente común de errores en tiempo de ejecución. Este problema ocurre cuando una variable, que se espera que contenga una referencia a un objeto, en realidad contiene un valor nulo. Al intentar acceder a los métodos o propiedades de dicho objeto nulo, se producen fallos críticos.
 
@@ -19,9 +27,9 @@ El manejo inadecuado de valores nulos es una causa importante de errores difíci
 
 ## Enfoques en Diferentes Lenguajes
 
-- **Java**: En Java, las referencias nulas son comunes, lo que obliga a lxs desarrolladorxs a realizar verificaciones constantes para evitar errores, lo que lleva a código redundante y difícil de mantener. Las excepciones `NullPointerException` son frecuentes si no se manejan adecuadamente.
-- **Swift**: Swift utiliza el concepto de **opcionales** (`Optional`), que obligan a lxs desarrolladorxs a manejar explícitamente la posibilidad de que un valor sea nulo. Las variables opcionales se declaran con `?`, y para acceder a su valor de forma segura se usa el *unwrap* opcional o el operador `if let`.
-- **Scala**: Scala introduce el tipo `Option`, el cual obliga a lxs desarrolladorxs a manejar explícitamente la posibilidad de que no haya un valor (`None`). Sin embargo, no elimina por completo el riesgo de `NullPointerException`, ya que `Option` puede contener un valor nulo si no se maneja correctamente.
+- **Java**: En Java, las referencias nulas son comunes, lo que obliga a quien desarrolla a realizar verificaciones constantes para evitar errores, lo que lleva a código redundante y difícil de mantener. Las excepciones `NullPointerException` son frecuentes si no se manejan adecuadamente.
+- **Swift**: Swift utiliza el concepto de **opcionales** (`Optional`), que obligan a quien desarrolla a manejar explícitamente la posibilidad de que un valor sea nulo. Las variables opcionales se declaran con `?`, y para acceder a su valor de forma segura se usa el *unwrap* opcional o el operador `if let`.
+- **Scala**: Scala introduce el tipo `Option`, el cual obliga a quien desarrolla a manejar explícitamente la posibilidad de que no haya un valor (`None`). Sin embargo, no elimina por completo el riesgo de `NullPointerException`, ya que `Option` puede contener un valor nulo si no se maneja correctamente.
 
 <details>
     <summary>
@@ -90,14 +98,11 @@ El manejo inadecuado de valores nulos es una causa importante de errores difíci
 
     #### Explicación
 
-    1. (3-16) **Definimos dos objetos**:
+    1. **Definimos dos objetos**:
         - `persona`, que tiene un atributo `nombre` y un método `saludar` que imprime un saludo.
         - `sinNombre`, que no tiene un nombre definido explícitamente, pero tiene una respuesta predeterminada para el mensaje `nombre`.
-
     2. **Envío de mensajes**: Cuando enviamos el mensaje `saludar` al objeto `persona` o `sinNombre`, Self se encarga de buscar el método correspondiente y ejecutarlo, sin que sea necesario preocuparse por valores nulos.
-
     3. **Delegación dinámica**: Si `personaOMetodo` no está definido o es `nil`, Self no fallará con un "null pointer" error. En su lugar, podemos manejar ese error usando el mensaje `ifError:`, que es una forma de interceptar errores en el envío de mensajes.
-
     4. **Error manejado dinámicamente**: Si intentamos enviar un mensaje a un objeto no existente o no definido (por ejemplo, `nil`), el sistema no falla, sino que nos permite manejar ese escenario de manera flexible, como en el caso final.
 
     #### Comparación
@@ -142,7 +147,13 @@ if (a != null) {
 }
 ```
 
+:::note Smart Casts
+
 Kotlin utiliza los [Smart Casts](https://kotlinlang.org/docs/typecasts.html#smart-casts) para permitir el acceso seguro a las propiedades de una variable tras verificar su nulabilidad.
+
+En el ejemplo anterior, después de verificar que `a` no es nulo, Kotlin automáticamente convierte `a` a un tipo no anulable (`String`) dentro del bloque `if`, permitiendo el acceso seguro a sus propiedades sin necesidad de una conversión explícita.
+
+:::
 
 Para simplificar este proceso, puedes usar el **operador de llamada segura** (`?.`), que realiza la operación solo si la variable no es nula:
 
@@ -150,7 +161,9 @@ Para simplificar este proceso, puedes usar el **operador de llamada segura** (`?
 println(a?.length)
 ```
 
-Aquí, `a?.length` devolverá `null` si `a` es nulo, evitando errores en tiempo de ejecución.
+<Explanation>
+    Aquí, `a?.length` devolverá `null` si `a` es nulo, evitando errores en tiempo de ejecución.
+</Explanation>
 
 #### Función `let`
 
@@ -160,7 +173,9 @@ La función `let` es útil para ejecutar un bloque de código solo cuando una va
 a?.let { str -> println(str.length) }
 ```
 
-En este caso, si `a` no es nulo, el valor de `a` es pasado al bloque como `str`. Dentro del bloque, puedes acceder a las propiedades y métodos de `a` de forma segura utilizando `str`. Si `a` es nulo, el bloque de código no se ejecuta y el programa continúa sin lanzar excepciones.
+<Explanation>
+    En este caso, si `a` no es nulo, el valor de `a` es pasado al bloque como `str`. Dentro del bloque, puedes acceder a las propiedades y métodos de `a` de forma segura utilizando `str`. Si `a` es nulo, el bloque de código no se ejecuta y el programa continúa sin lanzar excepciones.
+</Explanation>
 
 Esto hace que `let` sea una forma limpia y segura de manejar valores opcionales, evitando verificaciones manuales de nulabilidad y mejorando la legibilidad del código.
 
@@ -176,33 +191,24 @@ El operador Elvis (`?:`) ofrece una forma eficiente de manejar valores nulos, pe
 
 ```kotlin
 val a: String? = TODO()
-val l = a?.length ?: -1 // Si 'a' es nulo, 'l' será -1
+val l = a?.length ?: -1
 ```
 
-Este operador es muy útil para evitar valores nulos en el flujo de datos sin agregar condicionales complejos, lo que hace que el código sea más limpio y fácil de leer.
+<Explanation>
+    En este caso, si `a` es nulo, `l` tomará el valor `-1`. De lo contrario, `l` será igual al largo de `a`.
+</Explanation>
 
-:::tip Ejercicio
-<Tabs>
-    <TabItem value="Enunciado" label="Enunciado">
-        1. **Datos de Entrada**: Crea una lista de cadenas opcionales (`List<String?>`). Algunas cadenas pueden ser `null`, y el objetivo es procesar esta lista.
-        2. **Procesamiento de Datos**:
-            - Imprime el largo de cada cadena si no es nula.
-            - Si una cadena es nula, imprime `"Cadena no disponible"`.
-            - Para las cadenas no nulas, convierte el texto a mayúsculas y muéstralo.
-        3. **Salida del Programa**: Imprime el largo de cada cadena, o `"Cadena no disponible"` si es nula. Después, imprime el texto en mayúsculas si la cadena no es nula.
-    </TabItem>
-    <TabItem value="Solución" label="Solución">
+<Exercise>
+    Crea una función `procesarCadenas: (List<String?>) -> Unit` que procese una lista de cadenas opcionales, imprimiendo el largo de cada cadena si no es nula, y convirtiendo el texto a mayúsculas si no es nulo. Si una cadena es nula, imprime `"Cadena no disponible"`.
+    
+    <Solution>
         ```kotlin
         fun procesarCadenas(cadenas: List<String?>) {
             for (cadena in cadenas) {
-                // Usar el operador Elvis ?: para manejar el caso de cadenas nulas
-                val longitud = cadena?.length ?: "Cadena no disponible"
-                println("Longitud: $longitud")
-
-                // Usar let para convertir las cadenas no nulas a mayúsculas
                 cadena?.let {
+                    println("Largo de la cadena: $it")
                     println("Texto en mayúsculas: ${it.uppercase()}")
-                } ?: println("Texto en mayúsculas no disponible")
+                } ?: println("Cadena no disponible")
             }
         }
 
@@ -211,44 +217,29 @@ Este operador es muy útil para evitar valores nulos en el flujo de datos sin ag
             procesarCadenas(cadenas)
         }
         ```
-    </TabItem>
-</Tabs>
-:::
+    </Solution>
+</Exercise>
 
-## ¿Qué Aprendimos?
 
-[//]: # (## En resumen)
+## ¿Qué aprendimos?
 
-[//]: # ()
-[//]: # (La seguridad ante valores nulos, o **void-safety**, es un aspecto clave para evitar errores comunes y costosos en los sistemas de software. Como hemos visto, lenguajes como Kotlin proporcionan herramientas poderosas para manejar estos escenarios, con un sistema de tipos que diferencia claramente entre referencias nulas y no nulas. Al utilizar operadores como `?.` y `?:`, junto con funciones como `let`, Kotlin garantiza que las operaciones con valores opcionales sean seguras, eliminando la posibilidad de errores de `NullPointerException` en tiempo de ejecución.)
+En esta lección, exploramos el concepto de **Void-Safety**, una estrategia esencial en la programación moderna para evitar los errores comunes de referencias nulas. Observamos cómo diferentes lenguajes y frameworks abordan este problema y cómo pueden garantizar la estabilidad y la seguridad en tiempo de ejecución. A continuación, destacamos los puntos clave:
 
-[//]: # ()
-[//]: # (Otras soluciones, como las que hemos visto en lenguajes como Scala y Rust, también abordan el problema de los valores nulos a través de tipos como `Option`, que obligan a manejar de forma explícita la posibilidad de que un valor no esté presente. Estas soluciones mejoran la claridad y seguridad del código, y proporcionan herramientas eficientes para trabajar con valores opcionales, evitando verificaciones manuales y errores difíciles de detectar.)
+### Puntos clave
 
-[//]: # ()
-[//]: # (Manejar la nulabilidad correctamente no solo mejora la calidad del código, sino que también hace que el software sea más robusto y mantenible. En la próxima lección, exploraremos cómo manejar la entrada de usuario.)
+- **El error de las referencias nulas**: La presencia de valores nulos en lenguajes como Java y su manejo inadecuado pueden causar `NullPointerException`, lo que hace necesario un enfoque que asegure la estabilidad del código frente a valores nulos.
+- **Comparación entre lenguajes**: Diferentes lenguajes, como **Java**, **Scala**, **Swift** y **Self**, abordan el problema de manera única. Algunos como **Swift** y **Kotlin** implementan tipos anulables y no anulables, mientras que lenguajes como **Self** utilizan un enfoque basado en el envío de mensajes para manejar la ausencia de valores sin causar errores críticos.
+- **Kotlin y la seguridad frente a nulos**: Kotlin introduce un sistema de tipos que diferencia entre referencias anulables y no anulables, lo que elimina muchos de los problemas causados por los nulos en otros lenguajes. Los constructos como el **operador Elvis** (`?:`), las **llamadas seguras** (`?.`), y la función **let** son herramientas poderosas para manejar valores nulos de manera explícita y eficiente.
+
+---
+
+Este enfoque garantiza que el código no solo sea funcional, sino también seguro y robusto, protegiéndolo de una de las fuentes más comunes de errores en la programación.
 
 <div className="language-card-container">
-    <LanguageCard
-        logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Logo_C_sharp.svg/1200px-Logo_C_sharp.svg.png"
-        language="C#"
-        link="/docs/intro/void/csharp"
-    />
-    <LanguageCard
-        logoSrc="/img/Eiffel_logo.svg.png"
-        language="Eiffel"
-        link="eiffel"
-    />
-    <LanguageCard
-        logoSrc="https://www.svgrepo.com/show/306688/rust.svg"
-        language="Rust"
-        link="/docs/intro/void/rust"
-    />
-    <LanguageCard
-        logoSrc="https://cdn-icons-png.flaticon.com/512/3984/3984314.png"
-        language="Swift"
-        link="/docs/intro/void/swift"
-    />
+    <CSharpCard link="/docs/intro/void/csharp"/>
+    <EiffelCard link="/docs/intro/void/eiffel"/>
+    <RustCard link="/docs/intro/void/rust"/>
+    <SwiftCard link="/docs/intro/void/swift"/>
 </div>
 
 <References references={[
