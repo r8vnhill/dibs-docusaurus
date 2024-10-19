@@ -1,5 +1,5 @@
 ---
-title: "Variables y funciones estáticas en Kotlin"
+title: Variables y funciones estáticas
 ---
 import ReadingTime from '@site/src/components/ReadingTime'
 import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
@@ -200,122 +200,190 @@ En el contexto de una biblioteca, un `object` puede ser útil para agrupar funci
 
 Vamos a definir una especificación BDD para un `TaskManager` que gestiona una lista de tareas. La especificación describe cómo agregar tareas, obtener todas las tareas y limpiar la lista de tareas.
 
-
 ```kotlin showLineNumbers
-package com.example.tasks
+"A task manager" - {
+    "when adding tasks" - {
+        "should be able to get all tasks" {}
+    }
 
-data class Task(val name: String)
+    "when clearing tasks" - {
+        "should have an empty task list" {}
+    }
+}
+```
+
+### Implementación de las pruebas
+
+Vamos a implementar las pruebas para nuestra especificación BDD. Utilizaremos **Property-Based Testing** para generar diferentes tareas de forma aleatoria y asegurar que el `TaskManager` devuelve los resultados correctos al agregar tareas y limpiar la lista.
+
+Es importante siempre tratar de utilizar casos realistas en tus pruebas, ya que esto te permitirá validar el comportamiento de tu código en situaciones reales. Por esto, utilizaremos como ejemplo una lista de compras, para esto podemos utilizar el generador `products: Arb.() -> Arb<Product>`.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        checkAll(Arb.list(arbTask())) { tasks ->
+            tasks.forEach { TaskManager += it }
+            TaskManager.tasks shouldBe tasks
+        }
+        ```
+
+        ```kotlin showLineNumbers
+        checkAll(Arb.list(arbTask())) { tasks ->
+            tasks.forEach { TaskManager += it }
+            TaskManager.clear()
+            TaskManager.tasks shouldBe emptyList()
+        }
+        ```
+
+        ```kotlin showLineNumbers
+        private fun arbTask(): Arb<Task<Product>> = Arb.products()
+            .map { product -> Task(product) }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="static/src/test/kotlin/com/github/usernamestaticfn/tasks/TaskManagerTest.kt"
+        package com.github.username.staticfn.tasks
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.list
+        import io.kotest.property.arbitrary.map
+        import io.kotest.property.arbs.products.Product
+        import io.kotest.property.arbs.products.products
+        import io.kotest.property.checkAll
+
+        class TaskManagerTest : FreeSpec({
+            "A task manager" - {
+                "when adding tasks" - {
+                    "should be able to get all tasks" {
+                        checkAll(Arb.list(arbTask())) { tasks ->
+                            tasks.forEach { TaskManager += it }
+                            TaskManager.tasks shouldBe tasks
+                        }
+                    }
+                }
+
+                "when clearing tasks" - {
+                    "should have an empty task list" {
+                        checkAll(Arb.list(arbTask())) { tasks ->
+                            tasks.forEach { TaskManager += it }
+                            TaskManager.clear()
+                            TaskManager.tasks shouldBe emptyList()
+                        }
+                    }
+                }
+            }
+        })
+
+        private fun arbTask(): Arb<Task<Product>> = Arb.products()
+            .map { product -> Task(product) }
+
+        ```
+    </TabItem>
+</Tabs>
+
+
+### Implementación de `TaskManager`
+
+Ahora vamos a implementar el `TaskManager` que gestiona una lista de tareas. Aquí tienes una implementación básica de `TaskManager`:
+
+```kotlin showLineNumbers title="static/src/main/kotlin/com/github/username/staticfn/tasks/Task.kt"
+package com.github.username.staticfn.tasks
+
+class Task<out T>(val value: T)
+```
+
+```kotlin showLineNumbers title="static/src/main/kotlin/com/github/username/staticfn/tasks/TaskManager.kt"
+package com.github.username.staticfn.tasks
 
 object TaskManager {
-    private val tasks = mutableListOf<Task>()
+    private val _tasks = mutableListOf<Task<*>>()
 
-    fun addTask(task: Task) {
-        tasks.add(task)
+    val tasks: List<Task<*>>
+        get() = _tasks.toList()
+
+    operator fun plusAssign(task: Task<*>) {
+        _tasks += task
     }
 
-    fun getTasks(): List<Task> = tasks.toList()
-
-    fun clearTasks() {
-        tasks.clear()
+    fun clear() {
+        _tasks.clear()
     }
 }
 ```
 
-En este caso:
+<Explanation>
+    - En esta implementación, `TaskManager` es un `object` que contiene una lista mutable de tareas `_tasks`.
+    - La función `plusAssign` (`+=`) permite agregar tareas a la lista.
+    - La función `clear` elimina todas las tareas de la lista.
+    - La propiedad `tasks` devuelve una copia inmutable de la lista de tareas.
+</Explanation>
 
-- **`TaskManager`** es un singleton que gestiona una lista de tareas.
-- Tiene funciones para agregar una tarea, obtener todas las tareas y borrar la lista de tareas.
-
-Puedes interactuar con `TaskManager` sin instanciarlo, lo que facilita su uso en cualquier parte del código:
-
-```kotlin showLineNumbers
-import com.example.tasks.Task
-import com.example.tasks.TaskManager
-
-fun main() {
-    TaskManager.addTask(Task("Learn Kotlin"))
-    TaskManager.addTask(Task("Write Documentation"))
-    
-    println("Tareas actuales: ${TaskManager.getTasks()}")
-    
-    TaskManager.clearTasks()
-    println("Tareas después de limpiar: ${TaskManager.getTasks()}")
-}
-```
-
-Este ejemplo es más fácil de probar, ya que puedes verificar el comportamiento directamente llamando a las funciones de `TaskManager` y observando los cambios en la lista de tareas.
-
-### Pruebas para `TaskManager`
-
-Este ejemplo también es fácil de testear. Aquí te mostramos cómo podrías escribir una prueba simple para verificar el comportamiento de `TaskManager`:
-
-```kotlin showLineNumbers
-import com.example.tasks.Task
-import com.example.tasks.TaskManager
-import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.collections.shouldContainExactly
-
-class TaskManagerTest : StringSpec({
-    "should add and retrieve tasks correctly" {
-        TaskManager.clearTasks()  // Limpiar antes de comenzar
-
-        TaskManager.addTask(Task("Learn Kotlin"))
-        TaskManager.addTask(Task("Write Documentation"))
-
-        TaskManager.getTasks() shouldContainExactly listOf(
-            Task("Learn Kotlin"), Task("Write Documentation")
-        )
-    }
-
-    "should clear tasks correctly" {
-        TaskManager.clearTasks()
-        TaskManager.getTasks() shouldContainExactly emptyList()
-    }
-})
-```
-
-### Explicación del ejemplo:
-
-- **Singletones (`object`)**: El uso de `object` en Kotlin permite crear una instancia única de `TaskManager` que puede ser accesible globalmente.
-- **Pruebas simples**: El ejemplo de `TaskManager` facilita la escritura de pruebas, ya que puedes verificar que las tareas se agregan y se eliminan correctamente.
-
-Este enfoque es mucho más fácil de testear, tanto manualmente como con pruebas automatizadas, y no requiere de configuraciones complejas.
+Implementar un **singleton** en Kotlin utilizando un `companion object` es innecesario, ya que Kotlin proporciona una forma más sencilla y directa para este patrón a través de los **`object`**. En lugar de hacer esto, exploremos un caso donde los **companion objects** realmente brillan: **creación de instancias con lógica adicional o funciones de fábrica**.
 
 ## Companion Objects
 
-En Kotlin, un **companion object** es un bloque dentro de una clase que permite definir miembros que se asocian a la clase en sí, en lugar de a instancias de la clase. Esto es útil cuando necesitas acceder a funciones o variables estáticas relacionadas con una clase específica.
+En Kotlin, un **companion object** es un bloque dentro de una clase que permite definir miembros asociados a la clase en sí, en lugar de a instancias de la clase. Esto es útil cuando necesitas lógica adicional para crear objetos o tener funciones relacionadas con la clase pero que no dependan de una instancia específica.
+
+Supongamos que estamos construyendo una clase `User` y queremos controlar la creación de instancias mediante una función de fábrica que verifica si los datos son válidos.
+
+### Especificación BDD
+
+Comencemos definiendo una especificación BDD para la clase `User`. La especificación describe cómo crear un usuario con un nombre y una edad válidos.
 
 ```kotlin showLineNumbers
-// En el archivo DatabaseConnection.kt
-package com.example.database
+"Given a user" - {
+    "when creating it with a valid age" - {
+        "should be created" {}
+    }
+    "when creating it with an invalid age" - {
+        "should throw an exception" {}
+    }
+}
+```
+```kotlin showLineNumbers
+// En el archivo User.kt
+package com.example.user
 
-class DatabaseConnection private constructor() {
-    // Implementación de la conexión
-
+class User private constructor(val name: String, val age: Int) {
     companion object {
-        private var instance: DatabaseConnection? = null
-
-        fun getInstance(): DatabaseConnection {
-            if (instance == null) {
-                instance = DatabaseConnection()
+        fun create(name: String, age: Int): User? {
+            return if (age >= 18) {
+                User(name, age)
+            } else {
+                null // No se permite crear un usuario menor de edad
             }
-            return instance!!
         }
     }
 }
 ```
 
-Puedes acceder al `companion object` directamente a través del nombre de la clase:
+Aquí, el **companion object** define una función `create`, que es una **función de fábrica**. Verifica la edad del usuario antes de crear una instancia de `User`. 
+
+Puedes acceder a esta función de fábrica directamente a través del nombre de la clase, sin instanciar `User`:
 
 ```kotlin showLineNumbers
-import com.example.database.DatabaseConnection
+import com.example.user.User
 
 fun main() {
-    val connection = DatabaseConnection.getInstance()
+    val user = User.create("Alice", 20)
+    println(user?.name) // Imprime: Alice
+
+    val underageUser = User.create("Bob", 16)
+    println(underageUser) // Imprime: null, ya que no se permite la creación
 }
 ```
 
-En este ejemplo, estamos implementando el **patrón Singleton** utilizando un `companion object`.
+### ¿Por qué usar `companion object`?
+
+En este caso, **companion object** permite asociar la función `create` con la clase `User`, ofreciendo una forma limpia y controlada de crear instancias de `User` con validaciones. 
+
+**Ventajas**:
+- **Funciones de fábrica**: Permite controlar cómo se crean los objetos.
+- **Acceso a miembros estáticos**: Puedes agrupar funciones o constantes relacionadas con la clase sin depender de instancias.
+
+Este enfoque es más común que implementar un singleton manualmente, ya que se ajusta mejor a los casos en los que se necesita lógica adicional para instanciar clases.
 
 ## Comparación entre Funciones de Nivel Superior, `object` y `companion object`
 
