@@ -24,27 +24,63 @@ import RepoClone from '@site/src/components/admonitions/RepoClone'
         Comencemos por crear un módulo para la lección...
     </summary>
 
-    <Tabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path 'anonymous' -ItemType 'directory'
-            '// Intentionally left blank' |
-                Out-File -FilePath 'anonymous/build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            md anonymous
-            '// Intentionally left blank' > anonymous/build.gradle.kts
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            mkdir anonymous
-            echo '// Intentionally left blank' > anonymous/build.gradle.kts
-            ```
-        </TabItem>
-    </Tabs>
+    ```kotlin showLineNumbers title=""
+    val baseDir = "anonymous"
+    val baseDirFile = rootProject.file(baseDir)
+
+    tasks.register("setupAnonymousModule") {
+        doLast {
+            baseDirFile.mkdirs()
+            createGradleBuild(baseDirFile)
+            val main = "main"
+            val test = "test"
+            val anonymous = "anonymous"
+            createFiles(anonymous, test to "AnonymousObjectTest.kt")
+            createFiles(
+                "$anonymous/validation",
+                main to "Validator.kt", test to "ValidatorTest.kt"
+            )
+            createFiles(
+                "$anonymous/people",
+                main to "Person.kt", main to "AbstractPerson.kt",
+                test to "PersonTest.kt"
+            )
+        }
+    }
+
+    fun createGradleBuild(baseDir: File) = baseDir.resolve("build.gradle.kts").apply {
+        if (!exists()) {
+            writeText("// Intentionally left blank")
+            println("File created: $this")
+        } else {
+            println("File already exists: $this")
+        }
+    }
+
+    fun createFiles(packageName: String, vararg files: Pair<String, String>) {
+        val group = rootProject.group.toString().replace(".", "/")
+        files.forEach { (type, fileName) ->
+            baseDirFile.resolve(
+                "src/$type/kotlin/${group.replace(".", "/")}/$packageName"
+            )
+                .apply { mkdirs() }
+                .resolve(fileName).apply {
+                    if (!exists()) {
+                        writeText("package $group.repo\n\n")
+                        println("File created: $this")
+                    } else {
+                        println("File already exists: $this")
+                    }
+                }
+        }
+    }
+    ```
+
+    Preocupate de que el plugin `anonymous` esté aplicado en el archivo `build.gradle.kts` del módulo principal.
+
+    ```bash
+    ./gradlew setupAnonymousModule
+    ```
 
     Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
 </details>
@@ -69,47 +105,6 @@ En Kotlin, los **object expressions** permiten crear tipos anónimos. Un **objec
 
 ## Tipos anónimos con *object expressions* en Kotlin
 
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
-
-    <Tabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-
-            ```powershell
-            $AnonymousTestDir = "anonymous\src\test\kotlin\$Group\anonymous"
-            New-Item -Path "$AnonymousTestDir\AnonymousObjectTest.kt" `
-                -ItemType "file" -Force
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-
-            ```powershell
-            $AnonymousTestDir = "anonymous\src\test\kotlin\$Group\anonymous"
-            ni "$AnonymousTestDir\AnonymousObjectTest.kt" -i 'f' -f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            GROUP="com/github/username"
-            ```
-
-            ```bash
-            ANONYMOUS_TEST_DIR="anonymous/src/test/kotlin/$GROUP/anonymous"
-            mkdir -p $ANONYMOUS_TEST_DIR
-            touch $ANONYMOUS_TEST_DIR/AnonymousObjectTest.kt
-            ```
-        </TabItem>
-    </Tabs>
-</details>
-
 Kotlin introduce una manera elegante de definir **tipos anónimos** a través de **object expressions**.
 
 La sintaxis básica para un **object expression** es la siguiente:
@@ -121,7 +116,7 @@ La sintaxis básica para un **object expression** es la siguiente:
             val name = "Carol Danvers"
             fun greet() = "Hello, $name"
         }
-        anonymousObject.greet()  shouldBe "Hello, Carol Danvers"
+        anonymousObject.greet() shouldBe "Hello, Carol Danvers"
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
@@ -153,43 +148,6 @@ La sintaxis básica para un **object expression** es la siguiente:
 </Explanation>
 
 ### Usar Object Expressions para Validaciones Personalizadas en Bibliotecas
-
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
-
-    <Tabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $ValidatorTestDir = "$AnonymousTestDir\validation"
-            $ValidatorMainDir = "anonymous\src\main\kotlin\$Group\anonymous\validation"
-            New-Item -Path "$ValidatorTestDir\ValidatorTest.kt" `
-                -ItemType "file" -Force
-            New-Item -Path "$ValidatorMainDir\Validator.kt" `
-                -ItemType "file" -Force
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            $ValidatorTestDir = "$AnonymousTestDir\validation"
-            $ValidatorMainDir = "anonymous\src\main\kotlin\$Group\anonymous\validation"
-            ni "$ValidatorTestDir\ValidatorTest.kt" -i 'f' -f
-            ni "$ValidatorMainDir\Validator.kt" -i 'f' -f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            VALIDATOR_TEST_DIR="$AnonymousTestDir/validation"
-            VALIDATOR_MAIN_DIR="anonymous/src/main/kotlin/$GROUP/anonymous/validation"
-            mkdir -p $VALIDATOR_TEST_DIR
-            mkdir -p $VALIDATOR_MAIN_DIR
-            touch $VALIDATOR_TEST_DIR/ValidatorTest.kt
-            touch $VALIDATOR_MAIN_DIR/Validator.kt
-            ```
-        </TabItem>
-    </Tabs>
-</details>
 
 Una de las razones más comunes para usar **object expressions** es crear implementaciones rápidas y reutilizables sin tener que definir una nueva clase completa.
 
@@ -268,50 +226,6 @@ Imagina que estás diseñando una biblioteca de software que permite la validaci
 Este patrón es útil cuando se necesita crear validaciones específicas para ciertos casos, pero no es necesario reutilizarlas más allá del contexto actual.
 
 ### Usar object expressions para extender clases
-
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
-
-    <Tabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $AnonymousMainDir = "anonymous\src\main\kotlin\$Group\anonymous"
-            $PeopleTestDir = "$AnonymousTestDir\people"
-            $PeopleMainDir = "$AnonymousMainDir\people"
-            New-Item -Path "$PeopleTestDir\PersonTest.kt" `
-                -ItemType "file" -Force
-            New-Item -Path "$PeopleMainDir\Person.kt" `
-                -ItemType "file" -Force
-            New-Item -Path "$PeopleMainDir\AbstractPerson.kt" `
-                -ItemType "file" -Force
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            $AnonymousMainDir = "anonymous\src\main\kotlin\$Group\anonymous"
-            $PeopleTestDir = "$AnonymousTestDir\people"
-            $PeopleMainDir = "$AnonymousMainDir\people"
-            ni "$PeopleTestDir\PersonTest.kt" -i 'f' -f
-            ni "$PeopleMainDir\Person.kt" -i 'f' -f
-            ni "$PeopleMainDir\AbstractPerson.kt" -i 'f' -f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            ANONYMOUS_MAIN_DIR="anonymous/src/main/kotlin/$GROUP/anonymous"
-            PEOPLE_TEST_DIR="$AnonymousTestDir/people"
-            PEOPLE_MAIN_DIR="$ANONYMOUS_MAIN_DIR/people"
-            mkdir -p $PEOPLE_TEST_DIR
-            mkdir -p $PEOPLE_MAIN_DIR
-            touch $PEOPLE_TEST_DIR/PersonTest.kt
-            touch $PEOPLE_MAIN_DIR/Person.kt
-            touch $PEOPLE_MAIN_DIR/AbstractPerson.kt
-            ```
-        </TabItem>
-    </Tabs>
-</details>
 
 Un uso **interesante** de las **object expressions** es cuando necesitamos crear prototipos rápidos en nuestros tests, especialmente cuando las subclases tienen comportamientos complejos que complican el proceso de prueba.
 
@@ -400,14 +314,6 @@ Imagina que tienes una clase abstracta que sigue un **template pattern**, y que 
     En este ejemplo, usamos una **object expression** para crear una subclase anónima de `AbstractPerson` con un comportamiento simplificado para los tests.
 </Explanation>
 
-<ProCons>
-    <Pros>
-        - **Prototipos rápidos**: Puedes crear rápidamente instancias de clases abstractas sin necesidad de una implementación completa, lo que te permite enfocarte en aspectos específicos del código que estás probando.
-        - **Aislamiento del comportamiento**: Al sobrescribir métodos abstractos de manera simplificada, puedes aislar la lógica que realmente te interesa probar, evitando la complejidad innecesaria.
-        - **Flexibilidad**: Las **object expressions** ofrecen una forma flexible y ligera de modificar comportamientos, sin necesidad de generar nuevas subclases en archivos separados.        
-    </Pros>
-</ProCons>
-
 Este enfoque es especialmente útil en la creación de bibliotecas de software, donde la capacidad de hacer prototipos y probar diferentes partes de una API sin depender de implementaciones reales reduce la complejidad y mejora la velocidad de desarrollo.
 
 ### Beneficios y limitaciones de los tipos anónimos
@@ -446,12 +352,12 @@ Este enfoque es una herramienta valiosa para situaciones donde la creación de u
 
 <References references={[
     {
-        publisher: "4. Classes, objects, and interfaces",
-        pages: "67–102",
-        type: "book",
-        title: "Kotlin in action",
-        author: "Dmitry Jemerov & Svetlana Isakova",
-        year: "2017",
+        title: "Classes, objects, and interfaces",
         bookTitle: "Kotlin in action",
+        publisher: "Manning Publications Co.",
+        pages: "67–102",
+        year: "2017",
+        author: "Dmitry Jemerov & Svetlana Isakova",
+        type: "book",
     },
 ]}/>

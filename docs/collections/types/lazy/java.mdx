@@ -1,12 +1,23 @@
 ---
-title: Colecciones Perezosas en Java
+title: Colecciones perezosas en Java
 ---
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
-import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
 
 Java, a partir de la versión 8, introdujo la API de **Streams**, la cual permite trabajar con colecciones perezosas de manera declarativa y eficiente. Los **Streams** en Java se comportan de manera similar a las **secuencias** en Kotlin, ya que procesan los elementos de forma perezosa, ejecutando las operaciones intermedias solo cuando se invoca una operación terminal, como `collect()`, `findFirst()`, o `forEach()`.
 
@@ -21,43 +32,83 @@ A continuación, veremos cómo crear un flujo de números enteros en Java y apli
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```java showLineNumbers
-        List<Integer> evenSquares = IntStream.rangeClosed(1, 100)
-            .filter(n -> n % 2 == 0)  // Filtrar solo los números pares
-            .map(n -> n * n)  // Mapear a sus cuadrados
-            .boxed()  // Convertir a Stream de Integer
-            .collect(Collectors.toList());  // Operación terminal: recopilar en una lista
+        var evenSquares = IntStream.rangeClosed(1, 100)
+            .filter(n -> n % 2 == 0)
+            .map(n -> n * n)
+            .boxed()
+            .toList();
+        assertThat(evenSquares, allEvenNumbers());
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```java showLineNumbers
+        ```java showLineNumbers title="src/test/java/cl/ravenhill/collections/lazy/LazyStreamTest.java"
+        package cl.ravenhill.collections.lazy;
+
+        import org.junit.jupiter.api.DisplayName;
+        import org.junit.jupiter.api.Test;
+
         import java.util.stream.IntStream;
-        import java.util.List;
-        import java.util.stream.Collectors;
 
-        public class LazyStreamsExample {
-            public static void main(String[] args) {
-                // Crear un Stream de números del 1 al 100
-                List<Integer> evenSquares = IntStream.rangeClosed(1, 100)
-                    .filter(n -> n % 2 == 0)  // Filtrar solo los números pares
-                    .map(n -> n * n)  // Mapear a sus cuadrados
-                    .boxed()  // Convertir a Stream de Integer
-                    .collect(Collectors.toList());  // Operación terminal: recopilar en una lista
+        import static cl.ravenhill.collections.lazy.AllEvenNumbersMatcher.allEvenNumbers;
+        import static org.hamcrest.MatcherAssert.assertThat;
 
-                System.out.println(evenSquares);
+        public class LazyStreamTest {
+            @DisplayName(
+                    "Given a lazy stream, " +
+                            "when collecting the first 100 squared even numbers, " +
+                            "then it should return a list with only even numbers"
+            )
+            @Test
+            void testCollectFirst100SquaredEvenNumbers() {
+                var evenSquares = IntStream.rangeClosed(1, 100)
+                        .filter(n -> n % 2 == 0)
+                        .map(n -> n * n)
+                        .boxed()
+                        .toList();
+                assertThat(evenSquares, allEvenNumbers());
+            }
+        }
+        ```
+
+        ```java showLineNumbers
+        package cl.ravenhill.collections.lazy;
+
+        import org.hamcrest.Description;
+        import org.hamcrest.TypeSafeMatcher;
+        import org.jetbrains.annotations.Contract;
+        import org.jetbrains.annotations.NotNull;
+
+        import java.util.stream.StreamSupport;
+
+        public class AllEvenNumbersMatcher extends TypeSafeMatcher<Iterable<Integer>> {
+
+            @Override
+            protected boolean matchesSafely(@NotNull Iterable<Integer> integers) {
+                return StreamSupport.stream(integers.spliterator(), false)
+                        .allMatch(integer -> integer % 2 == 0);
+            }
+
+            @Override
+            public void describeTo(@NotNull Description description) {
+                description.appendText("all even numbers");
+            }
+
+            @Contract(" -> new")
+            public static @NotNull AllEvenNumbersMatcher allEvenNumbers() {
+                return new AllEvenNumbersMatcher();
             }
         }
         ```
     </TabItem>
 </Tabs>
 
-#### Explicación del Código
-
-- **[1]** Creación del Stream: Utilizamos `IntStream.rangeClosed(1, 100)` para crear un flujo de números enteros del 1 al 100.
-- **[2-3]** Operaciones Intermedias: Estas operaciones son **perezosas**, no se ejecutan hasta que se llama una operación terminal.
-    - **[2]** ``filter()``: Filtra solo los números pares.
-    - **[3]** ``map()``: Mapea cada número par a su cuadrado.
-- **[4]** ``boxed()``: Convierte el `IntStream` (que trabaja con tipos primitivos) a un `Stream<Integer>`.
-- **[5]** ``collect()``: La operación terminal que recopila los resultados en una lista.
+<Explanation>
+    - `IntStream.rangeClosed(1, 100)`: Crea un flujo de números enteros del 1 al 100.
+    - `filter(n -> n % 2 == 0)`: Filtra los números pares.
+    - `map(n -> n * n)`: Calcula el cuadrado de cada número.
+    - `boxed()`: Convierte los números enteros en objetos `Integer`.
+    - `toList()`: Recolecta los elementos en una lista.
+</Explanation>
 
 ## Operaciones Intermedias y Terminales
 
@@ -81,34 +132,49 @@ Los **Streams** en Java también pueden ser infinitos. Podemos usar el método `
 <Tabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```java showLineNumbers
-        Stream.iterate(0, n -> n + 2)
-            .limit(10)  // Limitar a los primeros 10 números
-            .forEach(System.out::println);  // Operación terminal: imprimir los números
+        var evens = Stream.iterate(2, n -> n + 2)
+            .limit(100)
+            .toList();
+        assertThat(evens, allEvenNumbers());
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
         ```java showLineNumbers
+        package cl.ravenhill.collections.lazy;
+
+        import org.junit.jupiter.api.DisplayName;
+        import org.junit.jupiter.api.Test;
+
         import java.util.stream.Stream;
 
-        public class InfiniteStreamExample {
-            public static void main(String[] args) {
-                // Generar una secuencia infinita de números pares
-                Stream.iterate(0, n -> n + 2)
-                    .limit(10)  // Limitar a los primeros 10 números
-                    .forEach(System.out::println);  // Operación terminal: imprimir los números
+        import static cl.ravenhill.collections.lazy.AllEvenNumbersMatcher.allEvenNumbers;
+        import static org.hamcrest.MatcherAssert.assertThat;
+
+        public class InfiniteStreamTest {
+            @DisplayName(
+                    "Given an infinite stream, " +
+                            "when collecting the first 100 even numbers, " +
+                            "then it should return a list with only even numbers"
+            )
+            @Test
+            void testCollectFirst100SquaredEvenNumbers() {
+                var evens = Stream.iterate(2, n -> n + 2)
+                        .limit(100)
+                        .toList();
+                assertThat(evens, allEvenNumbers());
             }
         }
         ```
     </TabItem>
 </Tabs>
 
-## Explicación del Código
+<Explanation>
+    - `Stream.iterate(2, n -> n + 2)`: Crea un flujo infinito que comienza en 2 y genera los números pares sumando 2 en cada paso.
+    - `limit(100)`: Limita el flujo a los primeros 100 números.
+    - `toList()`: Recolecta los elementos en una lista.
+</Explanation>
 
-- **[1]** ``Stream.iterate(0, n -> n + 2)``: Crea un flujo infinito que comienza en 0 y genera los números pares sumando 2 en cada paso.
-- **[2]** ``limit(10)``: Limita el flujo a los primeros 10 números.
-- **[3]** ``forEach()``: Imprime cada número del flujo. Esta es una operación terminal que inicia el procesamiento del flujo.
-
-## Diferencias entre Java y Kotlin
+## Resumen comparativo
 
 | Característica                    | **Streams en Java**                                                    | **Secuencias en Kotlin**                                            |
 |-----------------------------------|------------------------------------------------------------------------|---------------------------------------------------------------------|
@@ -119,24 +185,40 @@ Los **Streams** en Java también pueden ser infinitos. Podemos usar el método `
 | **Mutabilidad**                   | Los Streams son inmutables y promueven la programación funcional.      | Las secuencias en Kotlin también son inmutables y funcionales.      |
 | **Paralelización**                | Los Streams pueden ser paralelizados fácilmente con `parallelStream()` | No hay soporte directo para paralelización en secuencias en Kotlin. |
 
-:::tip Beneficios de los Streams en Java
+### Beneficios y limitaciones
 
-1. **Procesamiento Perezoso**: Las operaciones en los streams se realizan solo cuando es necesario, evitando la creación de colecciones intermedias innecesarias.
-2. **Soporte para Flujos Infinitos**: Podemos trabajar con flujos infinitos de datos, limitando la cantidad de elementos procesados según sea necesario.
-3. **Paralelización Sencilla**: Los **Streams** permiten paralelizar operaciones de manera eficiente usando `parallelStream()`.
+<ProCons>
+    <Pros>
+        - **Procesamiento perezoso**: Las operaciones intermedias en los Streams solo se ejecutan cuando se invoca una operación terminal, lo que permite evitar cálculos innecesarios y mejora la eficiencia en el manejo de grandes conjuntos de datos.
+        - **Soporte para flujos infinitos**: Streams puede generar secuencias infinitas de datos, como se muestra en el ejemplo de `Stream.iterate()`, lo cual es útil cuando necesitamos procesar solo una parte de una secuencia potencialmente interminable.
+        - **Paralelización sencilla**: Con `parallelStream()`, es fácil ejecutar operaciones de forma paralela, lo que puede mejorar el rendimiento en sistemas con múltiples núcleos, especialmente en tareas que requieren mucho procesamiento.
+        - **Inmutabilidad**: Los Streams promueven un enfoque inmutable y funcional, lo que reduce los efectos secundarios y hace que el código sea más predecible y fácil de mantener.
+        - **Operaciones declarativas**: La API de Streams permite escribir código declarativo y legible, facilitando el uso de operaciones comunes como `map`, `filter`, y `reduce`, sin necesidad de manejar iteraciones explícitas.
+    </Pros>
+    <Cons>
+        - **Necesidad de operación terminal**: Los Streams no ejecutan las operaciones intermedias hasta que se invoca una operación terminal como `collect()` o `forEach()`. Esto puede causar confusión si no se comprende bien el flujo de ejecución.
+        - **Rendimiento en flujos pequeños**: Aunque la paralelización es sencilla, no siempre mejora el rendimiento, especialmente cuando se trabaja con flujos pequeños. La sobrecarga de la paralelización puede, en algunos casos, reducir el rendimiento.
+        - **Uso de recursos**: En algunos casos, el uso excesivo de Streams, especialmente en flujos paralelos, puede resultar en un consumo elevado de memoria y CPU, dependiendo de la operación y la cantidad de datos.
+        - **Complejidad en la depuración**: Dado que las operaciones son perezosas y se ejecutan solo al final, depurar problemas en los Streams puede ser más difícil, ya que las operaciones intermedias no se ejecutan inmediatamente.
+    </Cons>
+</ProCons>
 
-:::
+## ¿Qué aprendimos?
 
-:::danger Consideraciones al Usar Streams en Java
+En esta lección, exploramos cómo usar **Streams** en Java para realizar operaciones sobre colecciones de manera perezosa. Vimos cómo las operaciones intermedias se encadenan y no se ejecutan hasta que se encuentra una operación terminal. Además, analizamos cómo los Streams permiten trabajar con flujos de datos finitos e infinitos de forma eficiente.
 
-- **Operaciones Terminales**: Sin una operación terminal, el flujo no se ejecuta. Por lo tanto, es crucial asegurarse de llamar a una operación terminal como `collect()`, `forEach()`, o `reduce()`.
-- **Paralelización**: Aunque es fácil de implementar, no siempre garantiza una mejora en el rendimiento. La paralelización depende del tipo de operaciones y del hardware subyacente.
+También comparamos los **Streams** en Java con las **secuencias** en Kotlin, destacando las similitudes en la evaluación perezosa, así como las diferencias en cuanto a soporte para flujos infinitos y paralelización.
 
-:::
+### Puntos clave
 
-## Conclusión
+- **Streams perezosos**: Los Streams en Java solo ejecutan operaciones cuando se invoca una operación terminal como `collect()` o `forEach()`, lo que optimiza el rendimiento al evitar la creación de colecciones intermedias.
+- **Flujos infinitos**: Con `Stream.iterate()`, es posible generar secuencias infinitas de datos y procesar solo los primeros `n` elementos usando `limit()`.
+- **Paralelización**: Los Streams en Java permiten paralelizar operaciones usando `parallelStream()`, lo que puede mejorar el rendimiento en sistemas con múltiples núcleos, aunque no siempre garantiza una ganancia significativa.
+- **Comparación con Kotlin**: Las secuencias en Kotlin y los Streams en Java comparten el procesamiento perezoso, pero Java ofrece una solución más directa para la paralelización, mientras que Kotlin es más limitado en este aspecto.
 
-Las **colecciones perezosas** son una poderosa herramienta tanto en **Kotlin** como en **Java**. Ambas lenguajes utilizan un enfoque perezoso para evitar el cálculo innecesario de elementos y mejorar la eficiencia en la manipulación de grandes conjuntos de datos. Mientras que Kotlin utiliza secuencias, Java emplea Streams para lograr un comportamiento similar, proporcionando a lxs desarrolladorxs herramientas para trabajar con flujos de datos de manera eficiente y flexible.
+---
+
+La API de **Streams** en Java proporciona un enfoque funcional y eficiente para procesar grandes conjuntos de datos y secuencias infinitas. El procesamiento perezoso ayuda a evitar cálculos innecesarios y permite optimizar el uso de recursos. Sin embargo, es importante tener en cuenta las limitaciones de la paralelización y la necesidad de invocar operaciones terminales para ejecutar el flujo.
 
 <References references={[
     {
@@ -147,7 +229,7 @@ Las **colecciones perezosas** son una poderosa herramienta tanto en **Kotlin** c
         url: 'https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html',
     },
     {
-        title: "4. Introducing Streams",
+        title: "Introducing Streams",
         bookTitle: "Modern Java in action: lambdas, streams, functional and reactive programming",
         pages: "81-97",
         location: "Shelter Island",

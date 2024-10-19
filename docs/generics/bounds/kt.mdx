@@ -17,37 +17,74 @@ import Explanation from '@site/src/components/admonitions/Explanation'
 import Tooltip from '@site/src/components/Tooltip'
 
 <ReadingTime />
-<GithubRepoLink user="r8vnhill" repo="" />
+<GithubRepoLink user="r8vnhill" repo="generic-programming-kt" />
 
 <details>
     <summary>
         Comencemos por crear un módulo para la lección...
     </summary>
 
-    <Tabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path 'bounds' -ItemType 'directory'
-            '// Intentionally left blank' | `
-                Out-File -FilePath '.\bounds\build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            md 'bounds'
-            '// Intentionally left blank' > '.\bounds\build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            mkdir bounds
-            echo '// Intentionally left blank' > './bounds/build.gradle.kts'
-            ```
-        </TabItem>
-    </Tabs>
-    
+    ```kotlin showLineNumbers title="convention-plugins/src/main/kotlin/bounds.gradle.kts"
+    tasks.register("setupBoundsModule") {
+        val baseDir = "bounds"
+        doLast {
+            // Crear el archivo build.gradle.kts si no existe
+            createFileIfNotExists(
+                rootProject.file(baseDir), "build.gradle.kts", "// Intentionally left blank"
+            )
+
+            // Crear archivos en el paquete "repo"
+            val groupPath = rootProject.group.toString().replace(".", "/")
+            val repoFiles = listOf(
+                "main" to "Repository.kt", "main" to "Entity.kt", "main" to "Serializable.kt",
+                "test" to "RepositoryTest.kt"
+            )
+            createFilesForPackage(baseDir, groupPath, "repo", repoFiles)
+
+            // Crear archivos en el paquete "notifications"
+            val notificationFiles = listOf(
+                "main" to "EmailNotificationSystem.kt", "main" to "NotificationHandler.kt",
+                "main" to "Notification.kt", "test" to "NotificationSystemTest.kt"
+            )
+            createFilesForPackage(baseDir, groupPath, "notifications", notificationFiles)
+        }
+    }
+
+    // Función para crear un archivo si no existe
+    fun createFileIfNotExists(dir: File, fileName: String, content: String) {
+        dir.apply { mkdirs() }
+            .resolve(fileName).apply {
+                if (!exists()) {
+                    writeText(content)
+                    println("File created: $this")
+                } else {
+                    println("File already exists: $this")
+                }
+            }
+    }
+
+    // Función para crear múltiples archivos en un paquete
+    fun createFilesForPackage(
+        baseDir: String, groupPath: String, packageName: String, 
+        files: List<Pair<String, String>>
+    ) {
+        files.forEach { (type, fileName) ->
+            val dir = rootProject.file("$baseDir/src/$type/kotlin/$groupPath/$packageName")
+                .apply { mkdirs() }
+            createFileIfNotExists(dir, fileName, "package ${rootProject.group}.$packageName\n\n")
+        }
+    }
+    ```
+
+    Preocupate de que el plugin `bounds` esté aplicado en el archivo `build.gradle.kts` del módulo principal.
+
+    ```bash
+    ./gradlew setupBoundsModule
+    ```
+
     Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
 </details>
+
 
 La **programación genérica** en Kotlin nos permite crear clases y funciones que pueden trabajar con cualquier tipo, proporcionando una gran flexibilidad y reutilización de código. Sin embargo, a veces necesitamos restringir los tipos que pueden ser utilizados con un genérico. Aquí es donde entran las **cotas superiores** y **cotas inferiores**.
 
@@ -59,77 +96,6 @@ En esta lección, exploraremos:
 - Ejemplos contextualizados en el desarrollo de **bibliotecas de software**.
 
 ## Cotas superiores en genéricos
-
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
-
-    <Tabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-
-            ```powershell
-            $SrcMainDir = "bounds\src\main\kotlin\$Group"
-            $SrcTestDir = "bounds\src\test\kotlin\$Group"
-            $RepoMainDir = "$SrcMainDir\repo"
-            $RepoTestDir = "$SrcTestDir\repo"
-            New-Item -Path $RepoMainDir -ItemType Directory -Force
-            New-Item -Path $RepoTestDir -ItemType Directory -Force
-            "package $Group.repo" -replace '\\', '.' | 
-                Out-File -FilePath "$RepoMainDir\Repository.kt"
-            "package $Group.repo" -replace '\\', '.' |
-                Out-File -FilePath "$RepoMainDir\Entity.kt"
-            "package $Group.repo" -replace '\\', '.' |
-                Out-File -FilePath "$RepoMainDir\Serializable.kt"
-            "package $Group.repo" -replace '\\', '.' |
-                Out-File -FilePath "$RepoTestDir\RepositoryTest.kt"
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-
-            ```powershell
-            $SrcMainDir = "bounds\src\main\kotlin\$Group"
-            $SrcTestDir = "bounds\src\test\kotlin\$Group"
-            $RepoMainDir = "$SrcMainDir\repo"
-            $RepoTestDir = "$SrcTestDir\repo"
-            md $RepoMainDir
-            md $RepoTestDir
-            "package $Group.repo" -replace '\\', '.' > `
-                "$RepoMainDir\Repository.kt"
-            "package $Group.repo" -replace '\\', '.' > `
-                "$RepoMainDir\Entity.kt"
-            "package $Group.repo" -replace '\\', '.' > `
-                "$RepoMainDir\Serializable.kt"
-            "package $Group.repo" -replace '\\', '.' > `
-                "$RepoTestDir\RepositoryTest.kt"
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            GROUP='com/github/username'
-            ```
-
-            ```bash
-            SRC_MAIN_DIR="bounds/src/main/kotlin/$GROUP"
-            SRC_TEST_DIR="bounds/src/test/kotlin/$GROUP"
-            REPO_MAIN_DIR="$SRC_MAIN_DIR/repo"
-            REPO_TEST_DIR="$SRC_TEST_DIR/repo"
-            mkdir -p "$REPO_MAIN_DIR"
-            mkdir -p "$REPO_TEST_DIR"
-            echo "package ${GROUP//\//.}.repo" > "$REPO_MAIN_DIR/Repository.kt"
-            echo "package ${GROUP//\//.}.repo" > "$REPO_MAIN_DIR/Entity.kt"
-            echo "package ${GROUP//\//.}.repo" > "$REPO_MAIN_DIR/Serializable.kt"
-            echo "package ${GROUP//\//.}.repo" > "$REPO_TEST_DIR/RepositoryTest.kt"
-            ```
-        </TabItem>
-    </Tabs>
-</details>
 
 Una **cota superior** restringe el tipo genérico a un subtipo específico. Esto significa que el tipo genérico debe ser la cota superior o un subtipo de ella.
 
@@ -313,54 +279,6 @@ En última instancia, la elección se basa en las preferencias de lx desarrollad
 En Kotlin, las **cotas inferiores** no son compatibles de forma nativa, lo que significa que no se pueden declarar directamente en la definición de un genérico. Sin embargo, es posible **emular** las cotas inferiores utilizando **varianza en sitio de uso**.
 
 ### Emulando Cotas Inferiores con Varianza en Sitio de Uso
-
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
-
-    <Tabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $NotificationsMainDir = "$SrcMainDir\notifications"
-            $NotificationsTestDir = "$SrcTestDir\notifications"
-            New-Item -Path $NotificationsMainDir -ItemType 'directory' -Force
-            New-Item -Path $NotificationsTestDir -ItemType 'directory' -Force
-            "package $Group.notifications" -replace '\\', '.' | 
-                Out-File -FilePath "$NotificationsMainDir\EmailNotificationSystem.kt"
-            "package $Group.notifications" -replace '\\', '.' |
-                Out-File -FilePath "$NotificationsMainDir\NotificationHandler.kt"
-            "package $Group.notifications" -replace '\\', '.' |
-                Out-File -FilePath "$NotificationsTestDir\EmailNotificationSystemTest.kt"
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            $NotificationsMainDir = "$SrcMainDir\notifications"
-            $NotificationsTestDir = "$SrcTestDir\notifications"
-            md $NotificationsMainDir
-            md $NotificationsTestDir
-            "package $Group.notifications" -replace '\\', '.' > `
-                "$NotificationsMainDir\EmailNotificationSystem.kt"
-            "package $Group.notifications" -replace '\\', '.' > `
-                "$NotificationsMainDir\NotificationHandler.kt"
-            "package $Group.notifications" -replace '\\', '.' > `
-                "$NotificationsTestDir\EmailNotificationSystemTest.kt"
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            NOTIFICATIONS_MAIN_DIR="$SRC_MAIN_DIR/notifications"
-            NOTIFICATIONS_TEST_DIR="$SRC_TEST_DIR/notifications"
-            mkdir -p "$NOTIFICATIONS_MAIN_DIR"
-            mkdir -p "$NOTIFICATIONS_TEST_DIR"
-            echo "package ${GROUP//\//.}.notifications" > "$NOTIFICATIONS_MAIN_DIR/EmailNotificationSystem.kt"
-            echo "package ${GROUP//\//.}.notifications" > "$NOTIFICATIONS_MAIN_DIR/NotificationHandler.kt"
-            echo "package ${GROUP//\//.}.notifications" > "$NOTIFICATIONS_TEST_DIR/EmailNotificationSystemTest.kt"
-            ```
-        </TabItem>
-    </Tabs>
-</details>
 
 La varianza en Kotlin permite especificar cómo los subtipos y supertipos se relacionan entre sí en el contexto de una clase genérica. Al utilizar la varianza de manera estratégica, podemos **emular** el comportamiento de las cotas inferiores.
 

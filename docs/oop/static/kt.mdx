@@ -1,5 +1,5 @@
 ---
-title: Variables y funciones estáticas
+title: "Variables y funciones estáticas en Kotlin"
 ---
 import ReadingTime from '@site/src/components/ReadingTime'
 import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
@@ -19,271 +19,338 @@ import RepoClone from '@site/src/components/admonitions/RepoClone'
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="" />
 
-En esta lección, exploraremos cómo trabajar con **variables y funciones estáticas en Kotlin**. A diferencia de Java, Kotlin no utiliza la palabra clave `static`. En su lugar, ofrece mecanismos como **objetos singleton**, **objetos de compañía (companion objects)** y **funciones y variables de nivel superior** para lograr funcionalidades similares.
+<details>
+    <summary>
+        Comencemos por crear un módulo para la lección...
+    </summary>
 
-## Variables y funciones de nivel superior
+    ```kotlin showLineNumbers title=""
+    ```
 
-En Kotlin, podemos declarar variables y funciones fuera de cualquier clase o interfaz. Estas se conocen como **variables y funciones de nivel superior** y son efectivamente estáticas, ya que pertenecen al archivo en el que están definidas y no a una instancia de una clase.
+    Preocupate de que el plugin `static` esté aplicado en el archivo `build.gradle.kts` del módulo principal.
+
+    ```bash
+    ./gradlew
+    ```
+
+    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
+</details>
+
+En el desarrollo de **bibliotecas de software**, es común utilizar variables y funciones que no dependen de instancias específicas de una clase. Estas variables y funciones son conocidas como **estáticas**. En esta lección, exploraremos cómo manejar variables y funciones estáticas en Kotlin.
+
+<Definition title='Funciones estáticas'>
+    Una **función estática** es una función que:
+
+    - **Pertenece a la clase**, no a una instancia de la clase.
+    - **Puede ser invocada sin crear una instancia** de la clase.
+    - **No tiene acceso** a los miembros de instancia (no puede acceder a `this`).
+    - **Comparte el mismo espacio de memoria** para todas las instancias de la clase.
+</Definition>
+
+Este concepto es común en muchos lenguajes de programación y es especialmente útil en bibliotecas de software donde se necesitan funciones utilitarias o constantes que deben ser accesibles globalmente.
+
+Aquí te dejo un ejemplo más sencillo y fácil de testear utilizando funciones de nivel superior, que puedes aplicar en una biblioteca de software.
+
+## Funciones de Nivel Superior en Kotlin
+
+En Kotlin, podemos declarar **funciones y variables de nivel superior** fuera de cualquier clase o interfaz. En el contexto de una biblioteca de software, esto permite definir utilidades que están disponibles sin necesidad de una clase contenedora. 
+
+Veamos un ejemplo de una función simple para calcular el área de un rectángulo.
+
+Aquí tienes una versión mejorada, con una explicación sobre cómo calcular el área de un rectángulo mediante la multiplicación es conceptualmente equivalente a contar unidades dentro de ese rectángulo:
+
+### Especificación BDD
+
+Calcular el área de un rectángulo multiplicando su ancho por su altura es conceptualmente equivalente a contar las unidades (como cuadrados o píxeles) que caben dentro de ese rectángulo. 
+
+Imagina que el rectángulo está dividido en una cuadrícula, donde cada celda representa una unidad de área. Multiplicar el ancho por la altura te da el número total de estas unidades, porque:
+
+- **El ancho** representa cuántas unidades caben en una fila.
+- **La altura** representa cuántas filas de estas unidades hay.
+
+Por lo tanto, multiplicar el ancho por la altura te da el número total de unidades que llenan el rectángulo, lo cual es el área.
+
+Dado esto, podemos escribir una especificación BDD para la función `calculateRectangleArea`:
 
 ```kotlin showLineNumbers
-// Archivo: Utils.kt
-
-// Función de nivel superior
-fun saludo(nombre: String): String {
-    return "Hola, $nombre!"
-}
-
-// Variable de nivel superior
-val PI = 3.1416
-```
-
-Podemos acceder a estas funciones y variables directamente desde cualquier parte del código sin necesidad de crear una instancia o referencia a una clase.
-
-```kotlin showLineNumbers
-fun main() {
-    val mensaje = saludo("Mundo")
-    println(mensaje)  // Salida: Hola, Mundo!
-
-    println("El valor de PI es $PI")  // Salida: El valor de PI es 3.1416
-}
-```
-
-## Objetos singleton (`object`)
-
-El modificador `object` en Kotlin se utiliza para declarar **objetos singleton**. Un objeto singleton es una clase que solo tiene una única instancia en toda la aplicación. Es útil cuando necesitas variables o funciones que pertenezcan a una clase pero no a una instancia específica.
-
-```kotlin showLineNumbers
-object Contador {
-    var valor = 0
-
-    fun incrementar() {
-        valor++
+"Given a rectangle" - {
+    "when calculating its area" - {
+        "should return the same result as counting the units" {}
     }
 }
 ```
 
-Podemos acceder a las propiedades y funciones del objeto singleton directamente a través de su nombre.
+### Implementación de las pruebas
+
+Ahora vamos a implementar las pruebas para nuestra especificación BDD. Utilizaremos **Property-Based Testing** para generar diferentes valores de `width` y `height` de forma aleatoria y asegurar que la función `calculateRectangleArea` devuelve los resultados correctos al compararlos con una implementación alternativa.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        checkAll(
+            Arb.positiveInt(100),
+            Arb.positiveInt(100)
+        ) { width, height ->
+            calculateRectangleArea(width, height) shouldBe
+                    countAreaOnGrid(width, height)
+        }
+        ```
+
+        <Tabs>
+            <TabItem label={"Implementación iterativa"} value={"Implementación iterativa"}>
+                ```kotlin showLineNumbers
+                private fun countAreaOnGrid(width: Int, height: Int): String {
+                    var count = 0
+                    for (i in 1..width) {
+                        for (j in 1..height) {
+                            count++
+                        }
+                    }
+                    return "$count cm²"
+                }
+                ```
+            </TabItem>
+            <TabItem label={"Implementación funcional"} value={"Implementación funcional"}>
+                ```kotlin showLineNumbers
+                private fun countAreaOnGrid(width: Int, height: Int) = (1..width)
+                    .sumOf { _ ->
+                        (1..height).count()
+                    }.let { "$it cm²" }
+                ```
+            </TabItem>
+        </Tabs>
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="src/test/kotlin/com/github/username/staticfn/rectangle/RectangleAreaTest.kt"
+        package com.github.username.staticfn.rectangle
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.positiveInt
+        import io.kotest.property.checkAll
+
+        class RectangleAreaTest : FreeSpec({
+            "Given a rectangle" - {
+                "when calculating its area" - {
+                    "it should return the correct result based on counting units" {
+                        checkAll(
+                            Arb.positiveInt(100),
+                            Arb.positiveInt(100)
+                        ) { width, height ->
+                            calculateRectangleArea(width, height) shouldBe
+                                    countAreaOnGrid(width, height)
+                        }
+                    }
+                }
+            }
+        })
+
+        private fun countAreaOnGrid(width: Int, height: Int) = (1..width)
+            .sumOf { _ ->
+                (1..height).count()
+            }.let { "$it cm²" }
+        ```
+    </TabItem>
+</Tabs>
+
+### Implementación de la función
+
+Finalmente, implementamos la función `calculateRectangleArea` que calcula el área de un rectángulo multiplicando su `width` por su `height` y agregando la unidad de medida:
+
+```kotlin showLineNumbers title="src/main/kotlin/com/github/username/staticfn/rectangle/RectangleUtils.kt"
+package cl.ravenhill.staticfn.rectangle
+
+const val DEFAULT_UNIT = "cm²"
+
+fun calculateRectangleArea(width: Int, height: Int) = 
+    "${width * height} $DEFAULT_UNIT"
+```
+
+Aunque en Kotlin las funciones de nivel superior no están asociadas a una clase en el código fuente, el compilador genera una **clase contenedora estática** para cada archivo que contiene funciones de este tipo. Esto significa que, a nivel de bytecode de la JVM, las funciones de nivel superior se convierten efectivamente en **métodos estáticos**. Esto les permite ser accesibles sin necesidad de instanciar una clase, de manera similar a los métodos estáticos en lenguajes como Java.
+
+<details>
+    <summary>
+        Invocar la función `calculateRectangleArea` desde Java
+    </summary>
+    
+    Si necesitas invocar la función `calculateRectangleArea` desde Java, puedes hacerlo de la siguiente manera:
+
+    ```java
+    import com.github.username.staticfn.rectangle.RectangleUtils;
+
+    public class Main {
+        public static void main(String[] args) {
+            var width = 10;
+            var height = 5;
+            String area = RectangleUtilsKt.calculateRectangleArea(width, height);
+            System.out.println("Area: " + area);
+        }
+    }
+    ```
+</details>
+
+## Objects en Kotlin
+
+Kotlin introduce el concepto de `object`, que permite crear **singletons** de manera sencilla. Un `object` es una declaración que combina la definición de una clase y su instancia en una sola expresión.
+
+En el contexto de una biblioteca, un `object` puede ser útil para agrupar funciones y variables relacionadas. Vamos a ver un ejemplo sencillo usando una lista de tareas (**to-do list**):
+
+### Especificación BDD
+
+Vamos a definir una especificación BDD para un `TaskManager` que gestiona una lista de tareas. La especificación describe cómo agregar tareas, obtener todas las tareas y limpiar la lista de tareas.
+
 
 ```kotlin showLineNumbers
-fun main() {
-    Contador.incrementar()
-    Contador.incrementar()
-    println("El contador es ${Contador.valor}")  // Salida: El contador es 2
+package com.example.tasks
+
+data class Task(val name: String)
+
+object TaskManager {
+    private val tasks = mutableListOf<Task>()
+
+    fun addTask(task: Task) {
+        tasks.add(task)
+    }
+
+    fun getTasks(): List<Task> = tasks.toList()
+
+    fun clearTasks() {
+        tasks.clear()
+    }
 }
 ```
 
-<Explanation>
-- **Objetos singleton**: Proporcionan una manera sencilla de crear variables y funciones que son accesibles globalmente y que mantienen un estado único en toda la aplicación.
-</Explanation>
+En este caso:
 
-## Objetos de compañía (`companion object`)
+- **`TaskManager`** es un singleton que gestiona una lista de tareas.
+- Tiene funciones para agregar una tarea, obtener todas las tareas y borrar la lista de tareas.
 
-Cuando necesitas variables o funciones estáticas asociadas a una clase específica, pero no quieres utilizar un objeto singleton separado, puedes usar un **companion object**. Un `companion object` es un bloque dentro de una clase que permite definir miembros estáticos.
+Puedes interactuar con `TaskManager` sin instanciarlo, lo que facilita su uso en cualquier parte del código:
 
 ```kotlin showLineNumbers
-class Calculadora {
+import com.example.tasks.Task
+import com.example.tasks.TaskManager
+
+fun main() {
+    TaskManager.addTask(Task("Learn Kotlin"))
+    TaskManager.addTask(Task("Write Documentation"))
+    
+    println("Tareas actuales: ${TaskManager.getTasks()}")
+    
+    TaskManager.clearTasks()
+    println("Tareas después de limpiar: ${TaskManager.getTasks()}")
+}
+```
+
+Este ejemplo es más fácil de probar, ya que puedes verificar el comportamiento directamente llamando a las funciones de `TaskManager` y observando los cambios en la lista de tareas.
+
+### Pruebas para `TaskManager`
+
+Este ejemplo también es fácil de testear. Aquí te mostramos cómo podrías escribir una prueba simple para verificar el comportamiento de `TaskManager`:
+
+```kotlin showLineNumbers
+import com.example.tasks.Task
+import com.example.tasks.TaskManager
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldContainExactly
+
+class TaskManagerTest : StringSpec({
+    "should add and retrieve tasks correctly" {
+        TaskManager.clearTasks()  // Limpiar antes de comenzar
+
+        TaskManager.addTask(Task("Learn Kotlin"))
+        TaskManager.addTask(Task("Write Documentation"))
+
+        TaskManager.getTasks() shouldContainExactly listOf(
+            Task("Learn Kotlin"), Task("Write Documentation")
+        )
+    }
+
+    "should clear tasks correctly" {
+        TaskManager.clearTasks()
+        TaskManager.getTasks() shouldContainExactly emptyList()
+    }
+})
+```
+
+### Explicación del ejemplo:
+
+- **Singletones (`object`)**: El uso de `object` en Kotlin permite crear una instancia única de `TaskManager` que puede ser accesible globalmente.
+- **Pruebas simples**: El ejemplo de `TaskManager` facilita la escritura de pruebas, ya que puedes verificar que las tareas se agregan y se eliminan correctamente.
+
+Este enfoque es mucho más fácil de testear, tanto manualmente como con pruebas automatizadas, y no requiere de configuraciones complejas.
+
+## Companion Objects
+
+En Kotlin, un **companion object** es un bloque dentro de una clase que permite definir miembros que se asocian a la clase en sí, en lugar de a instancias de la clase. Esto es útil cuando necesitas acceder a funciones o variables estáticas relacionadas con una clase específica.
+
+```kotlin showLineNumbers
+// En el archivo DatabaseConnection.kt
+package com.example.database
+
+class DatabaseConnection private constructor() {
+    // Implementación de la conexión
+
     companion object {
-        fun sumar(a: Int, b: Int): Int {
-            return a + b
+        private var instance: DatabaseConnection? = null
+
+        fun getInstance(): DatabaseConnection {
+            if (instance == null) {
+                instance = DatabaseConnection()
+            }
+            return instance!!
         }
     }
 }
 ```
 
-Puedes acceder a los miembros del `companion object` utilizando el nombre de la clase.
+Puedes acceder al `companion object` directamente a través del nombre de la clase:
 
 ```kotlin showLineNumbers
-fun main() {
-    val resultado = Calculadora.sumar(5, 3)
-    println("El resultado es $resultado")  // Salida: El resultado es 8
-}
-```
-
-<Explanation>
-- **Companion object**: Permite definir miembros estáticos dentro de una clase, similares a los miembros `static` en Java.
-- **Nombre opcional**: Puedes asignar un nombre al `companion object` si lo deseas, aunque por defecto se llama `Companion`.
-</Explanation>
-
-### Uso de variables estáticas en un companion object
-
-Puedes declarar variables dentro de un `companion object` que actúan como variables estáticas.
-
-```kotlin showLineNumbers
-class Configuracion {
-    companion object {
-        const val VERSION = "1.0.0"
-        var modoDebug = true
-    }
-}
-```
-
-- `const val` se utiliza para constantes en tiempo de compilación.
-- `var` o `val` se utilizan para variables en tiempo de ejecución.
-
-Accediendo a las variables:
-
-```kotlin showLineNumbers
-fun main() {
-    println("Versión: ${Configuracion.VERSION}")  // Salida: Versión: 1.0.0
-    println("Modo debug: ${Configuracion.modoDebug}")  // Salida: Modo debug: true
-
-    Configuracion.modoDebug = false
-    println("Modo debug: ${Configuracion.modoDebug}")  // Salida: Modo debug: false
-}
-```
-
-## Anotación `@JvmStatic`
-
-Si estás interoperando con código Java y necesitas que las funciones o variables dentro de un `companion object` sean tratadas como estáticas en Java, puedes usar la anotación `@JvmStatic`.
-
-```kotlin showLineNumbers
-class Utilidades {
-    companion object {
-        @JvmStatic
-        fun saludar(nombre: String) {
-            println("Hola, $nombre!")
-        }
-    }
-}
-```
-
-En Java, puedes llamar a esta función como si fuera estática:
-
-```java showLineNumbers
-public class Main {
-    public static void main(String[] args) {
-        Utilidades.saludar("Mundo");  // Salida: Hola, Mundo!
-    }
-}
-```
-
-<Explanation>
-- **Interoperabilidad con Java**: La anotación `@JvmStatic` hace que los miembros del `companion object` sean visibles como miembros estáticos en Java.
-</Explanation>
-
-## Objetos anidados (`nested object`)
-
-También puedes declarar objetos dentro de clases o incluso dentro de otros objetos. Estos se conocen como **objetos anidados**.
-
-```kotlin showLineNumbers
-class Externa {
-    object Anidada {
-        fun mensaje() = "Objeto anidado en Externa"
-    }
-}
-```
-
-Accediendo al objeto anidado:
-
-```kotlin showLineNumbers
-fun main() {
-    println(Externa.Anidada.mensaje())  // Salida: Objeto anidado en Externa
-}
-```
-
-## Ejemplo práctico: Logger
-
-Implementemos un ejemplo práctico utilizando un `object` para crear un **Logger** simple.
-
-```kotlin showLineNumbers
-object Logger {
-    fun info(mensaje: String) {
-        println("INFO: $mensaje")
-    }
-
-    fun error(mensaje: String) {
-        println("ERROR: $mensaje")
-    }
-}
-```
-
-Uso del Logger:
-
-```kotlin showLineNumbers
-fun main() {
-    Logger.info("Aplicación iniciada")
-    Logger.error("Ocurrió un error inesperado")
-}
-```
-
-## Comparación con Java
-
-En Java, utilizamos la palabra clave `static` para declarar variables y métodos estáticos dentro de una clase. En Kotlin, este concepto se reemplaza con `object`, `companion object` y funciones de nivel superior.
-
-### Java
-
-```java showLineNumbers
-public class Utilidad {
-    public static void saludar(String nombre) {
-        System.out.println("Hola, " + nombre + "!");
-    }
-}
-```
-
-### Kotlin equivalente
-
-```kotlin showLineNumbers
-class Utilidad {
-    companion object {
-        @JvmStatic
-        fun saludar(nombre: String) {
-            println("Hola, $nombre!")
-        }
-    }
-}
-```
-
-## Resumen
-
-- **Funciones y variables de nivel superior**: Son efectivamente estáticas y pueden ser usadas en cualquier parte sin necesidad de una clase.
-- **Objeto singleton (`object`)**: Crea una única instancia que puede tener propiedades y funciones accesibles globalmente.
-- **Companion object**: Permite definir miembros estáticos dentro de una clase, accesibles a través del nombre de la clase.
-- **Anotación `@JvmStatic`**: Utilizada para interoperabilidad con Java, haciendo que los miembros del `companion object` sean estáticos en Java.
-- **Objetos anidados**: Objetos definidos dentro de clases u otros objetos, útiles para organizar el código.
-
-## Ejercicios
-
-<Exercise>
-1. Crea una clase `Conversor` con un `companion object` que contenga una función `celsiusAFahrenheit(celsius: Double): Double` que convierta grados Celsius a Fahrenheit.
-
-2. Utiliza un `object` llamado `ContadorVisitas` que lleve la cuenta de cuántas veces se ha llamado a una función `registrarVisita()`. Muestra el número total de visitas cada vez que se registra una nueva.
-
-<Solution>
-
-1. **Clase Conversor con companion object**
-
-```kotlin showLineNumbers
-class Conversor {
-    companion object {
-        fun celsiusAFahrenheit(celsius: Double): Double {
-            return celsius * 9/5 + 32
-        }
-    }
-}
+import com.example.database.DatabaseConnection
 
 fun main() {
-    val fahrenheit = Conversor.celsiusAFahrenheit(25.0)
-    println("25 grados Celsius son $fahrenheit grados Fahrenheit")  // Salida: 25 grados Celsius son 77.0 grados Fahrenheit
+    val connection = DatabaseConnection.getInstance()
 }
 ```
 
-2. **Objeto ContadorVisitas**
+En este ejemplo, estamos implementando el **patrón Singleton** utilizando un `companion object`.
 
-```kotlin showLineNumbers
-object ContadorVisitas {
-    var totalVisitas = 0
+## Comparación entre Funciones de Nivel Superior, `object` y `companion object`
 
-    fun registrarVisita() {
-        totalVisitas++
-        println("Visita registrada. Total de visitas: $totalVisitas")
-    }
-}
+| **Característica**               | **Funciones de Nivel Superior**                                              | **Object**                                          | **Companion Object**                                    |
+|----------------------------------|-------------------------------------------------------------------------------|-----------------------------------------------------|---------------------------------------------------------|
+| **Asociación**                   | No asociadas a ninguna clase                                                 | Singleton global                                     | Asociadas a una clase específica                         |
+| **Acceso**                       | Se acceden directamente mediante importaciones                               | Se acceden usando el nombre del `object`             | Se acceden usando el nombre de la clase                  |
+| **Uso Común**                    | Funciones y variables utilitarias generales                                  | Agrupar funciones y variables relacionadas globalmente | Funciones y variables estáticas relacionadas con la clase |
+| **Necesidad de Instanciación**   | No requieren instanciación                                                   | No requieren instanciación                           | No requieren instanciación                               |
+| **Visibilidad de Clase Interna** | No pueden acceder a miembros privados de una clase                           | Pueden acceder a sus propios miembros privados       | Pueden acceder a miembros privados de la clase           |
 
-fun main() {
-    ContadorVisitas.registrarVisita()  // Salida: Visita registrada. Total de visitas: 1
-    ContadorVisitas.registrarVisita()  // Salida: Visita registrada. Total de visitas: 2
-}
-```
+## Beneficios y Limitaciones
 
-</Solution>
-</Exercise>
+<ProCons>
+    <Pros>
+        - **Organización del Código**: Permiten estructurar y organizar funciones y variables de manera lógica, mejorando la legibilidad y mantenibilidad del código.
+        - **Simplicidad de Acceso**: No es necesario instanciar objetos para acceder a las funciones o variables, lo que facilita su uso en diferentes partes del programa.
+        - **Encapsulación**: Con `companion object`, puedes encapsular lógica estática dentro de una clase específica, manteniendo una relación clara entre la clase y sus funciones estáticas.
+        - **Singletones Sencillos**: Los `object` facilitan la creación de singletones sin necesidad de patrones adicionales o código complejo.
+    </Pros>
+    <Cons>
+        - **Carga Inicial**: Las variables estáticas pueden aumentar el tiempo de carga inicial de la aplicación si se inicializan muchas al inicio.
+        - **Limitaciones en Herencia**: Los `object` no pueden heredar de clases que no sean abstractas o interfaces, lo que puede limitar su flexibilidad en ciertos diseños.
+        - **Posibles Confusiones**: Para desarrolladores acostumbrados a otros lenguajes, el uso de `object` y `companion object` puede ser confuso inicialmente, requiriendo una adaptación en la comprensión de estos conceptos.
+        - **Escalabilidad**: El uso excesivo de funciones de nivel superior puede llevar a archivos muy grandes y menos estructurados si no se organizan adecuadamente.
+    </Cons>
+</ProCons>
+
+## ¿Qué Aprendimos?
+
+En esta lección, exploramos cómo manejar variables y funciones estáticas en Kotlin, especialmente en el contexto de **bibliotecas de software**. Vimos que:
+
+- Las **funciones de nivel superior** permiten definir utilidades generales que pueden ser usadas en cualquier parte del código sin necesidad de una clase contenedora. Aunque no se declaran dentro de una clase, el compilador las trata como estáticas, generando una clase contenedora para ellas.
+- Los **objects** son útiles para agrupar funciones y variables en un singleton, facilitando el acceso global y la organización del código.
+- Los **companion objects** permiten asociar funciones y variables estáticas a una clase específica, manteniendo una relación estrecha y permitiendo acceder a miembros privados de la clase.
+- En todos los casos, Kotlin proporciona formas flexibles y eficientes de manejar funciones y variables estáticas, adaptándose a diferentes necesidades de diseño y facilitando el desarrollo de bibliotecas reutilizables y mantenibles.
+
+Este conocimiento es esencial para diseñar bibliotecas de software efectivas en Kotlin, aprovechando sus características para organizar y acceder a funciones y variables de manera óptima, y entendiendo cómo el lenguaje maneja estos conceptos a nivel de compilación y ejecución.

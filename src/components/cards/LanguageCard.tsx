@@ -192,3 +192,13 @@ export const EiffelCard = ({ link }) => {
     link={link}
   />
 }
+
+export const JqwikCard = ({ link }) => {
+  return (
+    <LanguageCard
+      logoSrc="https://www.svgrepo.com/show/184143/java.svg"
+      language="JVM: jqwik"
+      link={link}
+    />
+  );
+};

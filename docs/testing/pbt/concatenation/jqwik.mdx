@@ -1,0 +1,157 @@
+---
+title: "Ejemplo: Concatenación de cadenas en jqwik"
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+En esta lección, vamos a utilizar la biblioteca **Jqwik** para realizar **Property-Based Testing** en Java. Jqwik es una herramienta poderosa para probar propiedades generales sobre tu código, similar a Kotest en Kotlin. A través de Jqwik, podemos definir propiedades que deben cumplirse para cualquier entrada generada, en lugar de depender de casos de prueba específicos.
+
+## Implementación del Test de Concatenación de Strings
+
+Supongamos que estamos verificando que la concatenación de strings funciona correctamente y cumple con propiedades fundamentales, como que la longitud de la concatenación debe ser la suma de las longitudes de los strings originales y las propiedades de los **monoides**. A continuación, implementamos estas propiedades en Jqwik:
+
+<Tabs>
+    <TabItem label="Código esencial" value="Código esencial">
+        ```java showLineNumbers
+        @DisplayName(
+            "Given two strings, " +
+                "when concatenating them, " +
+                "then the length of the result should be the sum of the lengths of the original strings"
+        )
+        @Property
+        void testConcatenation(@ForAll @NotNull String s1, @ForAll @NotNull String s2) {
+            var result = s1 + s2;
+            var expected = s1.length() + s2.length();
+            assertThat(result.length(), equalTo(expected));
+        }
+        ```
+    </TabItem>
+    <TabItem label="Código completo" value="Código completo">
+    ```java showLineNumbers title="src/test/java/com/github/username/strings/StringConcatenationTest.java"
+        package cl.ravenhill.pbt.concatenation;
+
+        import net.jqwik.api.ForAll;
+        import net.jqwik.api.Property;
+        import org.jetbrains.annotations.NotNull;
+        import org.junit.jupiter.api.DisplayName;
+
+        import static org.hamcrest.MatcherAssert.assertThat;
+        import static org.hamcrest.Matchers.equalTo;
+
+        public class StringConcatenationTest {
+            @DisplayName(
+                    "Given two strings, " +
+                            "when concatenating them, " +
+                            "then the length of the result should be the sum of the lengths of the input strings"
+            )
+            @Property
+            void testConcatenationLength(@ForAll @NotNull String s1, @ForAll @NotNull String s2) {
+                var result = s1 + s2;
+                var expected = s1.length() + s2.length();
+                assertThat(result.length(), equalTo(expected));
+            }
+
+            @DisplayName(
+                    "Given a string and an empty string, " +
+                            "when concatenating them to the left, " +
+                            "then the result should be the same as the original string"
+            )
+            @Property
+            void testLeftIdentity(@ForAll @NotNull String s) {
+                @SuppressWarnings("ConcatenationWithEmptyString")
+                var result = "" + s;
+                assertThat(result, equalTo(s));
+            }
+
+            @DisplayName(
+                    "Given a string and an empty string, " +
+                            "when concatenating them to the right, " +
+                            "then the result should be the same as the original string"
+            )
+            @Property
+            void testRightIdentity(@ForAll @NotNull String s) {
+                @SuppressWarnings("ConcatenationWithEmptyString")
+                var result = s + "";
+                assertThat(result, equalTo(s));
+            }
+
+            @DisplayName(
+                    "Given three strings, " +
+                            "when concatenating them, " +
+                            "then the result should be the same regardless of the grouping"
+            )
+            @Property
+            void testAssociativity(
+                @ForAll @NotNull String s1,
+                @ForAll @NotNull String s2,
+                @ForAll @NotNull String s3
+            ) {
+                var result1 = (s1 + s2) + s3;
+                var result2 = s1 + (s2 + s3);
+                assertThat(result1, equalTo(result2));
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+<Explanation>
+    - `@Property`: Anota un método de prueba para indicar que es una propiedad que debe cumplirse para cualquier entrada generada.
+    - `@ForAll`: Anota los parámetros de entrada para indicar que deben ser generados aleatoriamente.
+</Explanation>
+
+## Resumen comparativo
+
+| **Característica**                | **Jqwik**                                                                 | **Kotest**                                                             |
+|-----------------------------------|--------------------------------------------------------------------------|------------------------------------------------------------------------|
+| **Sintaxis de pruebas**           | Usa anotaciones como `@Property` y `@ForAll`, estilo más alineado con JUnit | Usa `checkAll`, con una sintaxis fluida y declarativa                   |
+| **Ecosistema**                    | Integración natural con JUnit y orientado al ecosistema Java               | Integración fluida con Kotlin y fácil uso en proyectos Kotlin           |
+| **Generadores arbitrarios**          | Generadores personalizados usando `Arbitraries` para entradas específicas  | Generadores más sencillos e intuitivos como `Arb.string()`              |
+| **Facilidad de uso**              | Mayor flexibilidad, pero requiere más configuración manual                 | Simplificado para uso rápido en pruebas basadas en propiedades          |
+| **Paralelización**                | No tiene soporte nativo para paralelización automática                     | No cuenta con paralelización directa, pero soporta concurrencia         |
+| **Configuración de proyectos**    | Requiere anotaciones y configuración explícita                             | Integración directa con Kotlin, configuración más simple                |
+
+### Beneficios y limitaciones
+
+<ProCons>
+    <Pros>
+        - **Flexibilidad en la generación de datos**: Jqwik ofrece una gran capacidad para personalizar generadores con `Arbitraries`, lo que permite generar entradas complejas o específicas para las pruebas.
+        - **Integración con JUnit**: Jqwik se integra naturalmente con JUnit 5, lo que facilita su uso en proyectos Java que ya utilizan este framework.
+        - **Testing exhaustivo**: Al igual que Kotest, Jqwik permite realizar pruebas exhaustivas al generar una gran cantidad de casos de prueba aleatorios, asegurando que las propiedades se cumplan bajo diversas condiciones.
+    </Pros>
+    <Cons>
+        - **Mayor complejidad de configuración**: A diferencia de Kotest, que ofrece una configuración más sencilla y directa en el ecosistema de Kotlin, Jqwik requiere más configuración manual, especialmente en proyectos simples.
+        - **Sintaxis más verbosa**: La sintaxis basada en anotaciones de Jqwik es más detallada y puede ser menos fluida que la sintaxis de Kotest, lo que puede dificultar la legibilidad en ciertos casos.
+        - **Limitaciones en la paralelización**: Aunque Jqwik tiene una integración fuerte con JUnit, no cuenta con soporte nativo para paralelización automática, lo que puede limitar su rendimiento en pruebas grandes o complejas.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos el uso de **Jqwik** para realizar **Property-Based Testing** en Java, comparándolo con **Kotest** en Kotlin. Ambos frameworks permiten probar propiedades generales sobre el código de forma exhaustiva, pero Jqwik se integra de manera más natural con el ecosistema de **JUnit** y Java. Vimos cómo implementar pruebas de concatenación de strings, verificando propiedades como la longitud de la concatenación y las leyes de los **monoides**.
+
+### Puntos clave
+
+- **Testing basado en propiedades**: Jqwik y Kotest permiten realizar pruebas exhaustivas, generando automáticamente casos de prueba variados para verificar que se cumplan propiedades fundamentales del código.
+- **Flexibilidad en Jqwik**: Jqwik ofrece una gran personalización mediante generadores como `Arbitraries`, lo que lo hace ideal para proyectos Java que requieren entradas específicas.
+- **Comparación con Kotest**: Mientras que Kotest es más sencillo y está optimizado para Kotlin, Jqwik utiliza un enfoque basado en anotaciones alineado con JUnit, lo que puede ser ventajoso para proyectos en Java.
+- **Limitaciones de Jqwik**: Aunque es muy flexible, requiere más configuración manual y su sintaxis puede ser más verbosa en comparación con Kotest.
+
+---
+
+Jqwik es una excelente opción para proyectos Java que buscan integrar pruebas basadas en propiedades, especialmente en entornos donde ya se utiliza JUnit. Sin embargo, para aquellos que trabajan en el ecosistema de Kotlin, Kotest ofrece una solución más directa y sencilla.

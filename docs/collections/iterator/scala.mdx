@@ -19,18 +19,18 @@ import RepoClone from '@site/src/components/admonitions/RepoClone'
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="" />
 
-# Iterator pattern en Scala
-
 En **Scala**, la biblioteca estándar incluye soporte nativo para el patrón iterador mediante las interfaces `Iterable` e `Iterator`. A continuación, veremos cómo se implementa este patrón en Scala para recorrer una colección de libros.
 
 ## Definir `Iterator` e `Iterable`
 
 Scala tiene una clase `Iterator` en su API estándar, por lo que no es necesario implementarla desde cero. A continuación, se muestra una implementación personalizada para iterar sobre una colección de libros:
 
-```scala showLineNumbers
+```scala showLineNumbers title="src/main/scala/collections/iterator/Book.scala"
+package collections.iterator
+
 case class Book(title: String, author: String)
 
-class Library(private val books: List[Book]) extends Iterable[Book] {
+class Library(books: Book*) extends Iterable[Book] {
   override def iterator: Iterator[Book] = books.iterator
 }
 ```
@@ -44,26 +44,55 @@ En este ejemplo:
 
 El patrón iterador en **Scala** permite recorrer colecciones de manera sencilla utilizando un bucle `for`:
 
-```scala showLineNumbers
-val library = new Library(
-  List(
-    new Book("Scala Programming", "Martin Odersky"),
-    new Book("Functional Programming in Scala", "Paul Chiusano")
-  )
-)
+```scala showLineNumbers title="src/main/scala/collections/iterator/LibraryMain.scala"
+package collections.iterator
 
-for (book <- library) {
-  println(s"${book.title} by ${book.author}")
+@main def libraryMain(): Unit = {
+  val books = List(
+    Book("Programming in Scala", "Odersky"),
+    Book("Scala for the Impatient", "Horstmann"),
+    Book("Scala Cookbook", "Alvin Alexander")
+  )
+  for book <- books do
+    println(book)
 }
 ```
 
-### Comparación entre Scala y Kotlin
+## Resumen comparativo
 
 | Aspecto                          | Kotlin                                    | Scala                                        |
 |----------------------------------|-------------------------------------------|----------------------------------------------|
 | **Definición de `Iterator`**     | Uso nativo de `Iterator` de la biblioteca | Uso nativo de `Iterator` de la biblioteca    |
 | **Implementación de `Iterable`** | `Iterable` nativo, compatible con `for`   | `Iterable` nativo, compatible con `for`      |
 | **Uso del patrón**               | `for` y el método `iterator()`            | Soporte completo con `for` y métodos nativos |
+
+### Beneficios y limitaciones
+
+<ProCons>
+    <Pros>
+        - **Soporte nativo en la API estándar**: Scala proporciona clases `Iterator` e `Iterable` listas para usar, lo que simplifica la implementación y el uso del patrón de iterador sin necesidad de crear estructuras personalizadas.
+        - **Sintaxis concisa y expresiva**: El soporte nativo de `for` en Scala hace que el uso del patrón iterador sea extremadamente fluido y fácil de leer. La sintaxis minimalista reduce la complejidad del código.
+        - **Compatibilidad con colecciones estándar**: Todas las colecciones en Scala ya implementan el patrón iterador, lo que significa que puedes aplicar operaciones como `map`, `filter`, y `foreach` en cualquier `Iterable` de manera natural.
+    </Pros>
+    <Cons>
+        - **Sobrecarga de rendimiento**: Aunque el uso de `Iterator` es eficiente en términos de memoria (ya que es un proceso perezoso), en colecciones grandes puede haber una ligera sobrecarga de rendimiento en comparación con bucles más optimizados.
+        - **Complejidad para colecciones personalizadas**: Si bien el patrón es fácil de usar para las colecciones estándar, implementar un iterador personalizado para estructuras de datos complejas o no lineales puede requerir más esfuerzo en comparación con lenguajes más simplificados.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, vimos cómo **Scala** proporciona un soporte nativo para el patrón iterador mediante las interfaces `Iterator` e `Iterable`. Exploramos cómo implementar un iterador para una colección de libros y cómo usarlo para recorrer dicha colección.
+
+### Puntos clave
+
+- **Uso nativo del patrón iterador**: Scala tiene un soporte completo y eficiente para el patrón iterador a través de sus clases estándar. No necesitas implementar el patrón desde cero, ya que las colecciones de la biblioteca estándar lo soportan de manera fluida.
+- **Iteración sencilla**: Utilizando la sintaxis concisa de Scala, es posible iterar sobre colecciones usando el bucle `for`, lo que hace que la manipulación de colecciones sea más intuitiva y fácil de leer.
+- **Compatibilidad total con operaciones comunes**: Las colecciones de Scala, junto con el patrón iterador, permiten aplicar operaciones funcionales comunes como `map`, `filter`, y `foreach`, mejorando la flexibilidad de manipulación de datos.
+
+---
+
+Al concluir esta lección, ahora comprendes cómo utilizar el patrón iterador en Scala de forma eficiente y cómo este patrón es esencial en la iteración de colecciones, con una sintaxis simple y potente. Este conocimiento te permite aplicar patrones de diseño que fomentan la claridad y el buen uso de recursos en tus proyectos en Scala.
 
 <References references={[
     {
