@@ -1,0 +1,169 @@
+---
+title: Cotas en Java
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+Al igual que en Kotlin, en Java también podemos restringir los tipos genéricos usando cotas superiores, permitiendo que un genérico solo acepte tipos que sean subtipos de una clase o que implementen una interfaz específica. Sin embargo, la forma en que esto se declara y se utiliza es ligeramente diferente.
+
+## Ejemplo de Cotas Superiores en Java
+
+Supongamos que estamos desarrollando una biblioteca de persistencia y queremos crear una clase `Repository` que solo acepte tipos que implementen la interfaz `Entity`. En Java, lo haríamos de la siguiente manera:
+
+```java showLineNumbers
+interface Entity {
+    int getId();
+}
+
+public class Repository<T extends Entity> {
+    private List<T> entities = new ArrayList<>();
+
+    public void save(T entity) {
+        entities.add(entity);
+    }
+
+    public List<T> getEntities() {
+        return entities;
+    }
+}
+```
+
+<Explanation>
+    En Java, la sintaxis para declarar una cota superior es `T extends Entity`, lo que significa que `T` debe ser un subtipo de `Entity` o implementar esta interfaz. Esto restringe el tipo genérico `T` a aquellos que cumplen con la interfaz `Entity`.
+</Explanation>
+
+## Múltiples Restricciones en Java
+
+En Java, al igual que en Kotlin, podemos aplicar múltiples restricciones en los parámetros genéricos. Sin embargo, Java tiene una forma más limitada de hacerlo: solo se permite una clase como cota superior, y el resto de restricciones deben ser interfaces.
+
+### Ejemplo de Múltiples Restricciones en Java
+
+Si queremos aplicar múltiples restricciones en Java, la sintaxis es la siguiente:
+
+```java showLineNumbers
+interface Entity {
+    int getId();
+}
+
+interface Serializable {
+    String serialize();
+}
+
+public class Repository<T extends Entity & Serializable> {
+    private List<T> entities = new ArrayList<>();
+
+    public void save(T entity) {
+        entities.add(entity);
+    }
+
+    public String serializeAll() {
+        return entities.stream()
+            .map(T::serialize)
+            .collect(Collectors.joining(", "));
+    }
+}
+```
+
+<Explanation>
+    En este caso, `T extends Entity & Serializable` significa que `T` debe ser un subtipo de `Entity` **y** también implementar la interfaz `Serializable`. De esta manera, cualquier tipo que se utilice con esta clase cumplirá ambas restricciones.
+</Explanation>
+
+## Cotas Inferiores en Java
+
+Java, a diferencia de Kotlin, sí soporta cotas inferiores de manera nativa utilizando la palabra clave `super`. Esto permite declarar que un tipo genérico debe ser un supertipo de otro, proporcionando una mayor flexibilidad cuando se trabaja con herencia.
+
+### Ejemplo de Cotas Inferiores en Java
+
+En Java, podemos utilizar **cotas inferiores** en los métodos de esta manera:
+
+```java showLineNumbers
+public class NotificationHandler<N extends Notification> {
+    private N notification;
+
+    public void setNotification(N notification) {
+        this.notification = notification;
+    }
+}
+
+public class EmailNotification extends Notification {}
+
+public class NotificationSystem {
+
+    public void registerHandler(NotificationHandler<? super EmailNotification> handler) {
+        // handler puede ser un NotificationHandler de cualquier supertipo de EmailNotification
+    }
+}
+```
+
+<Explanation>
+    En este ejemplo, `NotificationHandler<? super EmailNotification>` significa que `handler` puede ser un `NotificationHandler` de cualquier supertipo de `EmailNotification`. Esto permite una mayor flexibilidad al trabajar con tipos genéricos en Java.
+</Explanation>
+
+## Resumen comparativo
+
+| **Característica**              | **Java**                                                                                      | **Kotlin**                                                                                     |
+|---------------------------------|-----------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| **Cotas superiores**            | Usa `extends` para definir una cota superior en un genérico. Solo acepta subtipos de una clase o interfaz específica. | Similar, pero con la sintaxis `T : UpperBound`. Ofrece mayor flexibilidad con la cláusula `where` para múltiples cotas. |
+| **Múltiples restricciones**     | Permite múltiples restricciones con una clase y varias interfaces (`T extends Class & Interface`). | Usa la cláusula `where` para múltiples restricciones, ofreciendo una forma más explícita y legible. |
+| **Cotas inferiores**            | Soporte nativo para cotas inferiores (`super`), lo que permite definir supertypos en genéricos. | No tiene soporte nativo para cotas inferiores, pero puede emularse con contravarianza (`in`). |
+| **Varianza**                    | Usa comodines (`? extends`, `? super`) para manejar varianza en genéricos. Menos flexible y seguro que Kotlin. | Ofrece **varianza declarativa** con `in` y `out`, lo que permite un manejo más robusto y seguro de subtipos y supertipos. |
+| **Flexibilidad de APIs**        | Las cotas inferiores nativas permiten mayor flexibilidad en ciertas APIs, especialmente cuando se trabaja con jerarquías de tipos. | Aunque no tiene cotas inferiores nativas, la varianza en sitio de uso y la cláusula `where` brindan flexibilidad comparable. |
+
+### Beneficios y limitaciones
+
+<ProCons>
+    <Pros>
+        - **Soporte nativo para cotas inferiores**: Java permite definir cotas inferiores usando `super`, lo que facilita la creación de APIs que acepten supertipos, brindando mayor flexibilidad en la manipulación de jerarquías de tipos.
+        - **Manejo robusto de herencia**: Las cotas superiores (`extends`) y cotas inferiores (`super`) permiten controlar de manera precisa los tipos en una jerarquía, asegurando que las operaciones solo se realicen sobre tipos compatibles.
+        - **Múltiples restricciones en genéricos**: Java permite imponer múltiples restricciones en genéricos usando la combinación de una clase y varias interfaces (`T extends Class & Interface`), lo que ayuda a estructurar mejor las clases genéricas.
+        - **Compatibilidad y madurez**: El sistema de generics de Java ha sido ampliamente utilizado y optimizado a lo largo del tiempo, por lo que cuenta con un soporte sólido y una extensa documentación en la comunidad.
+    </Pros>
+    <Cons>
+        - **Uso de comodines menos seguro**: Los comodines (`? extends`, `? super`) en Java pueden ser menos seguros y más confusos que la varianza declarativa que ofrecen otros lenguajes como Kotlin, lo que puede llevar a errores o limitaciones en ciertas aplicaciones.
+        - **Complejidad en la comprensión**: Aunque el soporte para cotas inferiores y superiores es útil, las declaraciones de genéricos con múltiples restricciones o comodines pueden volverse difíciles de leer y entender, lo que complica el mantenimiento del código.
+        - **Mensajes de error menos claros**: Los mensajes de error relacionados con las restricciones de tipos en genéricos pueden ser difíciles de interpretar en Java, lo que puede complicar la depuración y hacer que el proceso de desarrollo sea más lento.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos las **cotas superiores** y **cotas inferiores** en Java, comparándolas con Kotlin.
+
+### Puntos clave
+
+1. **Cotas superiores**: Java usa `extends` para restringir genéricos a subtipos, mientras que Kotlin ofrece mayor flexibilidad con la cláusula `where`.
+2. **Cotas inferiores**: Java soporta nativamente `super`, lo que facilita el manejo de supertipos en genéricos. Kotlin no tiene soporte directo, pero se puede emular usando varianza con `in`.
+3. **Varianza**: Java utiliza comodines (`? extends`, `? super`), menos seguros que la varianza declarativa (`in`, `out`) de Kotlin.
+
+---
+
+Java ofrece cotas inferiores nativas, pero Kotlin proporciona un sistema más seguro y flexible para manejar genéricos.
+
+<References references={[
+    {
+        title: "Generics<T>",
+        bookTitle: "Java: The comprehensive guide",
+        publisher: "Rheinwerk Publishing/SAP Press",
+        pages: "619–660",
+        year: "2022",
+        author: "C. Ullenboom",
+        type: "book",
+    },
+]}/>

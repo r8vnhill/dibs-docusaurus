@@ -1,478 +1,340 @@
 ---
-title: "Data-driven testing"
+title: Data-Driven Testing
 ---
-import Exercise from "../../../src/components/exercise/Exercise";
-import GithubRepoLink from "../../../src/components/GithubRepoLink";
-import { LanguageCard } from "../../../src/components/cards/LanguageCard";
-import ReadingTime from "../../../src/components/ReadingTime";
-import References from "../../../src/components/ReferencesComponent";
-import Solution from "../../../src/components/exercise/Solution";
-import TabItem from "@theme/TabItem";
-import Tabs from "@theme/Tabs";
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
-<ReadingTime/>
+<ReadingTime />
 <GithubRepoLink repo="example-based-testing" user="r8vnhill"/>
 
-En la lección anterior, aprendimos cómo manejar casos excepcionales en nuestros programas utilizando un enfoque de **Desarrollo Basado en Pruebas (TDD)**, pero dejamos pendiente un paso clave: la **refactorización**. En esta lección, abordaremos cómo podemos mejorar nuestros tests para hacerlos más eficientes y reutilizables.
+En el desarrollo de **bibliotecas de software**, es fundamental asegurar que nuestras funciones y métodos funcionen correctamente con una variedad de entradas. Esto garantiza que otrxs desarrolladorxs puedan confiar en nuestra biblioteca para manejar casos diversos sin errores.
 
-## El problema con nuestros tests actuales
+Sin embargo, escribir pruebas unitarias para cada posible entrada puede volverse tedioso y propenso a errores. Aquí es donde las **Pruebas basadas en datos** (Data-Driven Testing, DDT) entran en juego.
 
-Hasta ahora, hemos escrito pruebas para casos específicos, lo cual funciona bien cuando estamos cubriendo pocos escenarios. Sin embargo, cuando necesitamos probar múltiples casos similares, escribir un test para cada situación puede volverse tedioso, repetitivo, y difícil de mantener.
+En esta lección, exploraremos cómo implementar **Data-Driven Testing** utilizando **Kotest** en Kotlin, para mejorar la eficiencia y la calidad de nuestras pruebas.
 
-Consideremos el siguiente ejemplo:
+## ¿Qué es el Data-Driven Testing?
 
-```kotlin
-"cannot be set to a negative value" {
-    shouldThrowUnit<IllegalArgumentException> {
-        // highlight-next-line
-        bigachu.currentHealthPoints = NEGATIVE_CURRENT_HP
-    }.message shouldBe "Current health points is not in [0, $BAKEMON_MAX_HP]: $NEGATIVE_CURRENT_HP"
-}
+El **Data-Driven Testing** es una técnica que separa los datos de prueba (entradas y salidas esperadas) de la lógica de prueba. En lugar de escribir una prueba individual para cada caso, podemos escribir una sola prueba que se ejecuta múltiples veces con diferentes datos.
 
-"cannot be set to a value exceeding the maximum health" {
-    shouldThrowUnit<IllegalArgumentException> {
-        // highlight-next-line
-        bigachu.currentHealthPoints = OVER_MAX_CURRENT_HP
-    }.message shouldBe "Current health points is not in [0, $BAKEMON_MAX_HP]: $OVER_MAX_CURRENT_HP"
+## Caso de Estudio: Biblioteca de Validación de Contraseñas
+
+Supongamos que estamos desarrollando una biblioteca de software para validar contraseñas según ciertas políticas de seguridad. Nuestra función `isValidPassword` debe verificar si una contraseña cumple con los siguientes criterios:
+
+- **Longitud mínima**: Al menos 8 caracteres.
+- **Contiene números**: Debe incluir al menos un dígito.
+- **Contiene letras mayúsculas y minúsculas**: Debe incluir ambas.
+- **Contiene caracteres especiales**: Debe incluir al menos un carácter especial (e.g., `!@#\$%^&*`).
+
+Queremos asegurarnos de que nuestra función se comporte correctamente con una variedad de contraseñas válidas e inválidas.
+
+### Implementación de la Función de Validación
+
+```kotlin showLineNumbers title="src/main/kotlin/com/github/tu_usuario/validator/PasswordValidator.kt"
+package com.github.tu_usuario.validator
+
+object PasswordValidator {
+
+    private val specialChars = "!@#\$%^&*"
+
+    fun isValidPassword(password: String): Boolean {
+        if (password.length < 8) return false
+        if (!password.any { it.isDigit() }) return false
+        if (!password.any { it.isLowerCase() }) return false
+        if (!password.any { it.isUpperCase() }) return false
+        if (!password.any { it in specialChars }) return false
+        return true
+    }
 }
 ```
 
-Como podemos ver, la lógica del test es prácticamente la misma, pero cambia el valor de `currentHealthPoints` y el mensaje de error esperado. Repetir estos bloques de código no es la manera más eficiente de probar todos los casos posibles.
+### Implementación Manual de Pruebas
 
-### Mejora en los tests: reutilización de lógica
-
-Podemos hacer los tests más flexibles y menos repetitivos si estructuramos nuestras pruebas para aceptar diferentes valores de entrada, manteniendo la lógica común. De esta forma, en lugar de duplicar código, podemos aplicar la misma lógica a distintos escenarios.
-
-En las próximas secciones, exploraremos dos enfoques importantes para mejorar la flexibilidad de nuestros tests: **data-driven testing** y **property-based testing**. Estos enfoques nos ayudarán a escribir pruebas más concisas y efectivas, lo que facilita probar una amplia gama de casos con menos código.
-
-## Data-driven testing
-
-También conocido como **Table-Driven Testing (TDT)**, esta técnica separa los datos de prueba (entradas y salidas) del código de prueba. De esta manera, los casos de prueba pueden ser gestionados y agregados fácilmente modificando solo los datos, mientras que la lógica de prueba permanece inalterada.
-
-Ventajas de DDT:
-
-- **Facilidad de extensión**: Agregar nuevos casos de prueba se reduce a modificar la tabla de datos, sin necesidad de alterar la lógica de prueba.
-- **Mantenimiento eficiente**: La implementación de las pruebas se mantiene igual, reduciendo la duplicación de código y los errores al agregar o modificar casos.
-
-Siempre que sea posible, se recomienda utilizar **DDT** en lugar de tests tradicionales, ya que mejora la claridad y escalabilidad de las pruebas.
-
-### Implementación manual
-
-La implementación manual de **Data-Driven Testing (DDT)** es sencilla y flexible, lo que permite crear pruebas reutilizables para distintos conjuntos de datos. Este enfoque ayuda a simplificar los casos de prueba, especialmente cuando múltiples entradas deben ser validadas de la misma manera. Después de ver este ejemplo manual, compararemos el enfoque con la solución más elegante proporcionada por **Kotest**, que facilita la implementación de DDT.
+#### Paso 1: Crear el Módulo de Pruebas
 
 <details>
     <summary>
-        Comencemos creando un módulo para los tests basados en datos...
+        Crear el módulo <code>password-validator</code> y configurar el entorno de pruebas.
     </summary>
 
     <BoxedTabs groupId={"os"}>
         <TabItem value="Windows" label="Windows">
             ```powershell
-            New-Item -Path 'data-driven-testing\src\test\kotlin' -ItemType Directory -Force
-            Set-Content -Path 'data-driven-testing\build.gradle.kts' -Value '// Intentionally left blank'
+            mkdir -p 'password-validator\src\test\kotlin'
+            '// Intentionally left blank' > 'password-validator\build.gradle.kts'
             ```
         </TabItem>
-        <TabItem value="Windows (corto)" label={"Windows (corto)"}>
-            ```powershell
-            mkdir -p 'data-driven-testing\src\test\kotlin'
-            '// Intentionally left blank' > 'data-driven-testing\build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label={"Linux/Mac"}>
+        <TabItem value="Linux/Mac" label="Linux/Mac">
             ```bash
-            mkdir -p data-driven-testing/src/test/kotlin
-            echo "// Intentionally left blank" > data-driven-testing/build.gradle.kts
+            mkdir -p password-validator/src/test/kotlin
+            echo "// Intentionally left blank" > password-validator/build.gradle.kts
             ```
         </TabItem>
     </BoxedTabs>
 
-    Recuerda añadir el módulo a tu archivo `settings.gradle.kts` para que sea reconocido por Gradle.
+    Asegúrate de agregar el módulo al archivo `settings.gradle.kts`:
+
+    ```kotlin showLineNumbers title="settings.gradle.kts"
+    include(":password-validator")
+    ```
 </details>
 
-A continuación, creamos un archivo de prueba dentro de nuestro módulo de testing:
+#### Paso 2: Escribir Pruebas Manualmente
 
-<details>
-    <summary>
-        Si quieres crear el archivo desde la terminal...
-    </summary>
+Creamos una prueba para validar contraseñas individuales:
 
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $Group = 'com\github\username'
-            $BakemonDir = "data-driven-testing\src\test\kotlin\$Group\bakemon"
-            New-Item -Path "$BakemonDir\BakemonDDTest.kt" -ItemType File -Force
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label={"Windows (corto)"}>
-            ```powershell
-            $Group = 'com\github\username'
-            $BakemonDir = "data-driven-testing\src\test\kotlin\$Group\bakemon"
-            ni "$BakemonDir\BakemonDDTest.kt" -i f -f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label={"Linux/Mac"}>
-            ```bash
-            GROUP="com/github/username"
-            BAKEMON_DIR="data-driven-testing/src/test/kotlin/$GROUP/bakemon"
-            mkdir -p $BAKEMON_DIR
-            touch "$BAKEMON_DIR/BakemonDDTest.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
+```kotlin showLineNumbers title="password-validator/src/test/kotlin/com/github/tu_usuario/validator/PasswordValidatorTest.kt"
+package com.github.tu_usuario.validator
 
-<BoxedTabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers title="data-driven-testing/src/test/kotlin/com/github/username/bakemon/BakemonDDTest.kt"
-        "cannot be set to a value outside of the range [0, maxHealthPoints]" {
-            listOf(-100, -1, 101, 1000).forEach { invalidHp ->
-                shouldThrowUnit<IllegalArgumentException> {
-                    createBakemon("Bigachu", 100).currentHealthPoints = invalidHp
-                }.message shouldBe "Current health points is not in [0, 100]: $invalidHp"
-            }
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+
+class PasswordValidatorTest : StringSpec({
+
+    "should return true for valid password" {
+        val password = "Password1!"
+        PasswordValidator.isValidPassword(password) shouldBe true
+    }
+
+    "should return false for password without digits" {
+        val password = "Password!"
+        PasswordValidator.isValidPassword(password) shouldBe false
+    }
+
+    // Más pruebas individuales...
+})
+```
+
+Como puedes ver, escribir una prueba para cada caso puede volverse repetitivo.
+
+### Implementación de Data-Driven Testing Manualmente
+
+Podemos mejorar nuestras pruebas iterando sobre una lista de contraseñas:
+
+```kotlin showLineNumbers title="password-validator/src/test/kotlin/com/github/tu_usuario/validator/PasswordValidatorTest.kt"
+package com.github.tu_usuario.validator
+
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+
+class PasswordValidatorTest : StringSpec({
+
+    "should validate passwords correctly" {
+        val testCases = listOf(
+            "Password1!" to true,
+            "password1!" to false, // Sin mayúsculas
+            "PASSWORD1!" to false, // Sin minúsculas
+            "Password!" to false,  // Sin dígitos
+            "Password1" to false,  // Sin caracteres especiales
+            "Pass1!" to false,     // Menos de 8 caracteres
+        )
+
+        testCases.forEach { (password, expected) ->
+            PasswordValidator.isValidPassword(password) shouldBe expected
         }
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="data-driven-testing/src/test/kotlin/com/github/username/bakemon/BakemonDDTest.kt"
-        package com.github.username.bakemon
+    }
+})
+```
 
-        import io.kotest.assertions.throwables.shouldThrowUnit
-        import io.kotest.core.spec.style.FreeSpec
-        import io.kotest.matchers.shouldBe
+### Implementación con Kotest y `withData`
 
-        class BakemonDDTest : FreeSpec({
+Kotest proporciona funciones como `forAll` y `withData` para simplificar aún más nuestras pruebas.
 
-            "A Bakémon" - {
-                "should have current health property that" - {
-                    "cannot be set to a value outside the range [0, maxHealthPoints]" {
-                        listOf(-100, -1, 101, 1000).forEach { invalidHp ->
-                            shouldThrowUnit<IllegalArgumentException> {
-                                createBakemon("Bigachu", 100).currentHealthPoints = invalidHp
-                            }.message shouldBe "Current health points is not in [0, 100]: $invalidHp"
-                        }
-                    }
-                }
-            }
-        })
-        ```
-    </TabItem>
-</BoxedTabs>
+#### Paso 1: Agregar la Dependencia de Kotest DataTest
 
-:::info Explicación del Código
+En tu archivo `build.gradle.kts`, agrega:
 
-- **[2]**: Usamos una lista de valores inválidos (`listOf(-100, -1, 101, 1000)`) que representan puntos de salud fuera del rango permitido.
-- **[2-6]**: Utilizamos un bucle `forEach` para recorrer la lista y ejecutar el mismo test para cada valor, verificando que se arroje una excepción `IllegalArgumentException` cuando intentamos asignar un valor no permitido.
-- **[5]** Para cada caso, también verificamos que el mensaje de la excepción coincida con lo esperado.
-
-:::
-
-Este enfoque manual es funcional, pero como veremos más adelante, Kotest ofrece una forma más elegante y versátil de implementar **Data-Driven Testing**.
-
-### Implementación con Kotest
-
-Kotest ofrece una forma más elegante y concisa de implementar **Data-Driven Testing (DDT)** a través de la función `withData`. Esta función permite definir una tabla de datos y ejecutar una lógica de prueba para cada valor, mejorando la legibilidad del código y la organización de los casos de prueba. A diferencia de la implementación manual, `withData` sigue ejecutando todos los casos de prueba incluso si uno de ellos falla, lo que genera un reporte más completo con todos los fallos.
-
-#### Configuración
-
-Para empezar, es necesario agregar la dependencia de **Kotest DataTest** en nuestro proyecto. Si tienes un catálogo de versiones configurado, puedes añadir la biblioteca de pruebas de datos de la siguiente manera:
-
-<BoxedTabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```toml showLineNumbers title="gradle/libs.versions.toml"
-        [libraries]
-        kotest-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest" }
-
-        [bundles]
-        kotest = ["kotest-runner-junit5", "kotest-datatest"]
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```toml showLineNumbers title="gradle/libs.versions.toml"
-        [versions]
-        kotlin = "2.0.20"
-        example-based-testing = "1.0.0"
-        detekt = "1.23.6"
-        kotest = "5.9.1"
-
-        [libraries]
-        kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
-        detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
-        kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
-        kotest-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest" }
-
-        [plugins]
-        detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
-
-        [bundles]
-        kotest = ["kotest-runner-junit5", "kotest-datatest"]
-        ```
-    </TabItem>
-</BoxedTabs>
-
-Este enfoque es ventajoso cuando ya tienes un **bundle** para Kotest configurado, ya que simplemente agregas la nueva biblioteca de pruebas de datos sin modificar mucho la configuración del proyecto.
-
-#### Reescribiendo el Test con `withData`
-
-Una vez que hemos agregado la dependencia, podemos reescribir nuestro test para aprovechar `withData`, lo que simplifica considerablemente la implementación de los casos de prueba:
-
-<BoxedTabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers title="data-driven-testing/src/test/kotlin/com/github/username/bakemon/BakemonDDTest.kt"
-        "cannot be set to a value outside of the range [0, maxHealthPoints]" - {
-            withData(-100, -1, 101, 1000) { invalidHp ->
-                shouldThrowUnit<IllegalArgumentException> {
-                    createBakemon("Bigachu", 100).currentHealthPoints = invalidHp
-                }.message shouldBe "Current health points is not in [0, 100]: $invalidHp"
-            }
-        }
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="data-driven-testing/src/test/kotlin/com/github/username/bakemon/BakemonDDTest.kt"
-        package com.github.username.bakemon
-
-        import io.kotest.assertions.throwables.shouldThrowUnit
-        import io.kotest.core.spec.style.FreeSpec
-        import io.kotest.datatest.withData
-        import io.kotest.matchers.shouldBe
-
-        class BakemonDDTest : FreeSpec({
-
-            "A Bakémon" - {
-                "should have current health property that" - {
-                    "cannot be set to a value outside the range [0, maxHealthPoints]" - {
-                        withData(-100, -1, 101, 1000) { invalidHp ->
-                            shouldThrowUnit<IllegalArgumentException> {
-                                createBakemon("Bigachu", 100).currentHealthPoints = invalidHp
-                            }.message shouldBe "Current health points is not in [0, 100]: $invalidHp"
-                        }
-                    }
-                }
-            }
-        })
-        ```
-    </TabItem>
-</BoxedTabs>
-
-:::tip Ventajas de Usar `withData`
-
-1. **Legibilidad mejorada**: Al eliminar la necesidad de bucles `forEach`, la estructura del test se vuelve más clara y directa.
-2. **Manejo de fallos**: A diferencia de la implementación manual, `withData` continúa ejecutando todos los casos, incluso si uno de ellos falla, generando un reporte con todos los errores al final.
-3. **Sintaxis concisa**: Es más simple y menos propenso a errores, ya que la sintaxis es más concisa y reduce la necesidad de escribir mucho código repetitivo.
-
-:::
-
-:::warning
-
-El **`-`** antes de `withData` es importante, ya que ``withData`` define un conjunto de casos de prueba, no una prueba. Si omites el guion, Kotest intentará ejecutar `withData` como una prueba, lo que generará un error en tiempo de compilación.
-
-:::
-
-## Expandiendo el juego
-
-Ahora, vamos a agregar una funcionalidad que permita a un **Bakémon** atacar a otro, independientemente de su tipo. Cada vez que un Bakémon ataque a otro, reducirá sus puntos de salud en **10**.
-
-Sin embargo, para mantener las reglas del juego claras, si los puntos de salud resultan ser negativos tras el ataque, estos deben ajustarse automáticamente a **0** en lugar de permitir valores negativos.
-
-### Reglas del ataque
-
-1. **Reducción fija**: Cada ataque reduce 10 puntos de salud al Bakémon objetivo.
-2. **Puntos de salud no negativos**: Si los puntos de salud bajan a un valor inferior a **0**, se deben ajustar a **0** automáticamente.
-
-Este ajuste asegura que los puntos de salud no caigan en números negativos, manteniendo la integridad del sistema de salud en el juego.
-
-### Paso 1: Mostrar que falla
-
-Comencemos agregando un método a la interfaz `Bakemon`:
-
-```kotlin title="bakemon/src/main/kotlin/cl/ravenhill/bakemon/Bakemon.kt"
-interface Bakemon {
-    val name: String
-    val maxHealthPoints: Int
-    var currentHealthPoints: Int
-
-    fun attack(target: Bakemon)
+```kotlin showLineNumbers title="password-validator/build.gradle.kts"
+dependencies {
+    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
+    testImplementation("io.kotest:kotest-framework-datatest:5.9.1")
 }
 ```
 
-El siguiente test utiliza **Data-Driven Testing** con Kotest para validar que un Bakémon puede atacar a otro, probando múltiples combinaciones de nombres y puntos de salud de los Bakémon involucrados.
+#### Paso 2: Reescribir las Pruebas con `withData`
 
-<BoxedTabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers title="data-driven-testing/src/test/kotlin/com/github/username/bakemon/BakemonDDTest.kt"
-        "should be able to attack another Bakémon" - {
-            withData("Bigachu", "Psygoose") { attackerName ->
-                withData("Bigachu", "Psygoose") { targetName ->
-                    withData(0, 1, 50, 99, 100) { attackerHealth ->
-                        withData(0, 1, 50, 99, 100) { targetHealth ->
-                            val attacker = createBakemon(attackerName, attackerHealth)
-                            val target = createBakemon(targetName, targetHealth)
+```kotlin showLineNumbers title="password-validator/src/test/kotlin/com/github/tu_usuario/validator/PasswordValidatorTest.kt"
+package com.github.tu_usuario.validator
 
-                            val initialTargetHealth = target.currentHealthPoints
-                            attacker.attack(target)
-                            val expectedDamage = 10
-                            val expectedTargetHealth = initialTargetHealth - expectedDamage
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.datatest.withData
+import io.kotest.matchers.shouldBe
 
-                            target.currentHealthPoints shouldBe expectedTargetHealth
-                        }
+class PasswordValidatorTest : StringSpec({
+
+    "should validate passwords correctly" {
+        withData(
+            "Password1!" to true,
+            "password1!" to false,
+            "PASSWORD1!" to false,
+            "Password!" to false,
+            "Password1" to false,
+            "Pass1!" to false,
+        ) { (password, expected) ->
+            PasswordValidator.isValidPassword(password) shouldBe expected
+        }
+    }
+})
+```
+
+<Explanation>
+- **Uso de `withData`**: Simplifica la iteración sobre los casos de prueba.
+- **Desestructuración**: Utilizamos `(password, expected)` para extraer los valores del par.
+- **Legibilidad**: El código es más limpio y fácil de mantener.
+</Explanation>
+
+### Ampliando las Pruebas con `withData` Anidados
+
+Supongamos que queremos probar múltiples políticas de validación, como diferentes longitudes mínimas o conjuntos de caracteres especiales.
+
+#### Paso 1: Modificar la Función para Aceptar Parámetros
+
+```kotlin showLineNumbers title="src/main/kotlin/com/github/tu_usuario/validator/PasswordValidator.kt"
+package com.github.tu_usuario.validator
+
+object PasswordValidator {
+
+    fun isValidPassword(
+        password: String,
+        minLength: Int = 8,
+        requireDigit: Boolean = true,
+        requireLowerCase: Boolean = true,
+        requireUpperCase: Boolean = true,
+        requireSpecialChar: Boolean = true,
+        specialChars: String = "!@#\$%^&*"
+    ): Boolean {
+        if (password.length < minLength) return false
+        if (requireDigit && !password.any { it.isDigit() }) return false
+        if (requireLowerCase && !password.any { it.isLowerCase() }) return false
+        if (requireUpperCase && !password.any { it.isUpperCase() }) return false
+        if (requireSpecialChar && !password.any { it in specialChars }) return false
+        return true
+    }
+}
+```
+
+#### Paso 2: Escribir Pruebas con `withData` Anidados
+
+```kotlin showLineNumbers title="password-validator/src/test/kotlin/com/github/tu_usuario/validator/PasswordValidatorTest.kt"
+package com.github.tu_usuario.validator
+
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.datatest.withData
+import io.kotest.matchers.shouldBe
+
+class PasswordValidatorTest : StringSpec({
+
+    "should validate passwords with different policies" {
+        val passwords = listOf(
+            "Password1!",
+            "password1!",
+            "PASSWORD1!",
+            "Password!",
+            "Password1",
+            "Pass1!"
+        )
+
+        val minLengths = listOf(6, 8, 10)
+        val requireDigits = listOf(true, false)
+        val requireSpecialChars = listOf(true, false)
+
+        withData(passwords) { password ->
+            withData(minLengths) { minLength ->
+                withData(requireDigits) { requireDigit ->
+                    withData(requireSpecialChars) { requireSpecialChar ->
+                        val isValid = PasswordValidator.isValidPassword(
+                            password,
+                            minLength = minLength,
+                            requireDigit = requireDigit,
+                            requireSpecialChar = requireSpecialChar
+                        )
+                        // Realiza las aserciones necesarias o imprime los resultados
                     }
                 }
             }
         }
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="data-driven-testing/src/test/kotlin/com/github/username/bakemon/BakemonDDTest.kt"
-        package cl.ravenhill.bakemon
+    }
+})
+```
 
-        import io.kotest.assertions.throwables.shouldThrowUnit
-        import io.kotest.core.spec.style.FreeSpec
-        import io.kotest.datatest.withData
-        import io.kotest.matchers.shouldBe
+<Explanation>
+- **`withData` Anidados**: Generan combinaciones de los datos proporcionados.
+- **Flexibilidad**: Podemos probar múltiples configuraciones de políticas de validación.
+- **Cobertura Amplia**: Aseguramos que nuestra función maneja correctamente diferentes escenarios.
+</Explanation>
 
-        class BakemonDDTest : FreeSpec({
+## Consideraciones y Buenas Prácticas
 
-            "A Bakémon" - {
-                "should have current health property that" - {
-                    "cannot be set to a value outside the range [0, maxHealthPoints]" - {
-                        withData(-100, -1, 101, 1000) { invalidHp ->
-                            shouldThrowUnit<IllegalArgumentException> {
-                                createBakemon("Bigachu", 100).currentHealthPoints = invalidHp
-                            }.message shouldBe "Current health points is not in [0, 100]: $invalidHp"
-                        }
-                    }
-                }
+- **Organiza tus datos**: Si los conjuntos de datos son grandes, considera externalizarlos o estructurarlos mejor.
+- **Nombra tus pruebas**: Kotest permite nombrar cada caso, lo que facilita identificar fallos.
+- **Evita la complejidad excesiva**: Anidar muchos `withData` puede hacer que las pruebas sean difíciles de seguir.
 
-                "should be able to attack another Bakémon" - {
-                    withData("Bigachu", "Psygoose") { attackerName ->
-                        withData("Bigachu", "Psygoose") { targetName ->
-                            withData(0, 1, 50, 99, 100) { attackerHealth ->
-                                withData(0, 1, 50, 99, 100) { targetHealth ->
-                                    val attacker = createBakemon(attackerName, attackerHealth)
-                                    val target = createBakemon(targetName, targetHealth)
+## ¿Qué aprendimos?
 
-                                    val initialTargetHealth = target.currentHealthPoints
-                                    attacker.attack(target)
-                                    val expectedDamage = 10
-                                    val expectedTargetHealth = initialTargetHealth - expectedDamage
+En esta lección, exploramos cómo implementar **Data-Driven Testing** en el contexto del desarrollo de una **biblioteca de validación de contraseñas**. Aprendimos a:
 
-                                    target.currentHealthPoints shouldBe expectedTargetHealth
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        })
-        ```
-    </TabItem>
-</BoxedTabs>
+- **Implementar DDT manualmente**: Usando bucles para iterar sobre casos de prueba.
+- **Utilizar Kotest para DDT**: Simplificando nuestras pruebas con `withData` y `withData` anidados.
+- **Mejorar la eficiencia**: Reduciendo la duplicación de código y facilitando el mantenimiento.
+- **Aplicar buenas prácticas**: Organizando nuestros datos y pruebas para mayor claridad.
 
-El uso de `withData` permite combinar varios conjuntos de datos, lo que ayuda a probar diferentes combinaciones de escenarios de ataque entre Bakémon. En este caso, estamos probando múltiples combinaciones de nombres y niveles de salud para asegurarnos de que el Bakémon atacante siempre reduzca la salud del objetivo en **10** puntos. Kotest ejecutará automáticamente todas las combinaciones posibles, proporcionando una forma eficiente de validar el comportamiento del ataque en diversos escenarios.
+## Ejercicio
 
-:::note
-En este caso, dado que son 2 nombres y 5 niveles de salud, se ejecutarán $2 \cdot 2 \cdot 5 \cdot 5 = 100$ casos de prueba distintos con tan solo 19 líneas de código.
-:::
+<Exercise title="Validar Números de Teléfono">
+    Implementa una función `isValidPhoneNumber` que valide números de teléfono según las siguientes reglas:
 
-### Paso 2: Hacer que funcione
+    - Debe tener exactamente 10 dígitos.
+    - Solo puede contener números.
+    - No puede contener espacios ni caracteres especiales.
 
-Para hacer que el test pase, simplemente implementamos el método `attack` dentro de la clase `AbstractBakemon`. El método reduce los puntos de salud del objetivo (`target`) en 10. Si la reducción da como resultado un valor negativo, se maneja la excepción y se ajusta el valor a 0 para evitar tener puntos de salud negativos.
-
-<BoxedTabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers title="bakemon/src/main/kotlin/cl/ravenhill/bakemon/AbstractBakemon.kt"
-        private const val BASE_DAMAGE = 10
-
-        abstract class AbstractBakemon(
-            override val name: String,
-            final override val maxHealthPoints: Int
-        ) : Bakemon {
-            //
-            override fun attack(target: Bakemon) = try {
-                target.currentHealthPoints -= BASE_DAMAGE
-            } catch (e: IllegalArgumentException) {
-                println(e.message)
-                target.currentHealthPoints = 0
-            }
-        }
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="bakemon/src/main/kotlin/cl/ravenhill/bakemon/AbstractBakemon.kt"
-        package com.github.username.bakemon
-
-        private const val BASE_DAMAGE = 10
-
-        abstract class AbstractBakemon(
-            override val name: String,
-            final override val maxHealthPoints: Int
-        ) : Bakemon {
-            override var currentHealthPoints: Int = maxHealthPoints
-                set(value) {
-                    require(value in 0..maxHealthPoints) {
-                        "Current health points is not in [0, $maxHealthPoints]: $value"
-                    }
-                    field = value
-                }
-
-            override fun attack(target: Bakemon) = try {
-                target.currentHealthPoints -= BASE_DAMAGE
-            } catch (e: IllegalArgumentException) {
-                println(e.message)
-                target.currentHealthPoints = 0
-            }
-        }
-        ```
-    </TabItem>
-</BoxedTabs>
-
-:::warning Swallowing Exceptions
-
-- **[11]**: Cuando captures excepciones, es importante no "tragarlas" sin dejar un rastro, ya que esto puede ocultar problemas. En este caso, mostramos un mensaje de error con ``println(e.message)`` para que los errores de salud fuera de rango sean visibles y debidamente manejados. Esto evita comportamientos inesperados y ayuda a identificar problemas durante la depuración. Una alternativa más limpia sería utilizar mecanismos funcionales como `Either` o `Result` para manejar errores de manera más segura y explícita sin arriesgarse a perder información importante.
-
-:::
-
-#### Observaciones
-
-Este código es sencillo y efectivo para los propósitos del test, ya que garantiza que:
-
-- El Bakémon atacado reduce sus puntos de salud en la cantidad definida por `BASE_DAMAGE`.
-- Si los puntos de salud del objetivo caen por debajo de 0, se captura el error y los puntos de salud se ajustan a 0.
-
-Aunque en este caso optamos por no realizar una refactorización adicional, siempre es recomendable revisar nuestro código para identificar posibles mejoras. Algunas consideraciones que podrías tener en mente para futuras mejoras incluyen:
-
-- **Gestión de errores**: Dependiendo de la complejidad de la aplicación, podrías optar por mecanismos más avanzados de manejo de errores o logs para capturar excepciones.
-- **Modularidad**: En proyectos más grandes, podrías mover la lógica de ataque a una clase o componente separada para seguir los principios de responsabilidad única.
-- **Validaciones adicionales**: Podrías considerar añadir validaciones adicionales o ajustables, como permitir diferentes tipos de ataques que afecten el daño.
-
-Recuerda que, aunque en este caso no sea necesario, la refactorización sigue siendo un paso esencial para mantener la calidad del código en proyectos más grandes o complejos.
-
-<Exercise title={"Prueba de calculadora"}>
-    Implementa una clase `CalculatorTest` que pruebe una calculadora simple con las operaciones de suma y resta.
-
-    Tus tests deben probar distintas combinaciones de números y operaciones, utilizando **Data-Driven Testing** con Kotest para simplificar la implementación.
-
-    Para simplificar, haz que cada elemento que le pasas a ``withData`` sea un ``Pair`` donde el primer parámetro sea la operación, y el segundo sea una lambda que realice la misma operación en dos números.
+    Escribe pruebas utilizando **Data-Driven Testing** con Kotest para validar múltiples casos de números de teléfono válidos e inválidos.
 
     <Solution>
-        ```kotlin showLineNumbers
-        class CalculatorTest : FreeSpec({
-            "A calculator" - {
-                "can apply a combination of operations" - {
-                    withData(1, 2, 3, 4) { a ->
-                        withData(1, 2, 3, 4) { b ->
-                            withData(
-                                a + b to { x: Int, y: Int -> x + y },
-                                a - b to { x: Int, y: Int -> x - y }
-                            ) { (expectedResult, operation) ->
-                                val result = operation(a, b)
-                                result shouldBe expectedResult
-                            }
-                        }
-                    }
+        ```kotlin showLineNumbers title="src/main/kotlin/com/github/tu_usuario/validator/PhoneNumberValidator.kt"
+        package com.github.tu_usuario.validator
+
+        object PhoneNumberValidator {
+
+            fun isValidPhoneNumber(phoneNumber: String): Boolean {
+                return phoneNumber.matches(Regex("^\\d{10}\$"))
+            }
+        }
+        ```
+
+        ```kotlin showLineNumbers title="src/test/kotlin/com/github/tu_usuario/validator/PhoneNumberValidatorTest.kt"
+        package com.github.tu_usuario.validator
+
+        import io.kotest.core.spec.style.StringSpec
+        import io.kotest.datatest.withData
+        import io.kotest.matchers.shouldBe
+
+        class PhoneNumberValidatorTest : StringSpec({
+
+            "should validate phone numbers correctly" {
+                withData(
+                    "1234567890" to true,
+                    "0987654321" to true,
+                    "12345" to false,
+                    "12345678901" to false,
+                    "123456789a" to false,
+                    "123 456 7890" to false,
+                    "123-456-7890" to false
+                ) { (phoneNumber, expected) ->
+                    PhoneNumberValidator.isValidPhoneNumber(phoneNumber) shouldBe expected
                 }
             }
         })
@@ -480,34 +342,25 @@ Recuerda que, aunque en este caso no sea necesario, la refactorización sigue si
     </Solution>
 </Exercise>
 
-## ¿Qué aprendimos?
+---
 
-En esta lección, exploramos el concepto de **Data-Driven Testing (DDT)** y cómo podemos utilizarlo para mejorar la eficiencia y legibilidad de nuestros tests al eliminar la repetición de código. Vimos cómo implementar DDT de manera manual, y luego descubrimos cómo Kotest nos proporciona una forma más elegante y simplificada de hacer lo mismo usando la función `withData`. Esto nos permitió probar múltiples combinaciones de datos de manera concisa, manteniendo nuestros tests claros y fáciles de mantener.
-
-Además, expandimos nuestro ejemplo de **Bakémon** para permitir ataques entre personajes, utilizando DDT para validar las diferentes combinaciones de nombres y puntos de salud, garantizando un comportamiento correcto en diferentes escenarios.
-
-<div className="language-card-container">
-    <LanguageCard
-        logoSrc="https://avatars.githubusercontent.com/u/2678858?s=280&v=4"
-        language=".NET: NUnit"
-        link="nunit"
-    />
-    <LanguageCard
-        logoSrc="https://junit.org/junit5/assets/img/junit5-logo.png"
-        language="JVM: JUnit"
-        link="junit"
-    />
-    <LanguageCard
-        logoSrc="https://upload.wikimedia.org/wikipedia/commons/b/ba/Pytest_logo.svg"
-        language="Python: Pytest"
-        link="pytest"
-    />
-    <LanguageCard
-        logoSrc="https://upload.wikimedia.org/wikipedia/en/2/22/Logo_jasmine.svg"
-        language="JavaScript: Jasmine"
-        link="jasmine"
-    />
-</div>
+<References references={[
+    {
+        publisher: "Manning Publications",
+        pages: "177-200",
+        type: "book",
+        title: "Testing Kotlin code",
+        author: "John Doe",
+        year: "2020",
+        bookTitle: "Kotlin in Action",
+    },
+    {
+        title: "Kotest Documentation",
+        url: "https://kotest.io/docs/framework/datatest.html",
+        type: "web",
+        accessed: "2023-10",
+    },
+]}/>
 
 <References references={[
     {
