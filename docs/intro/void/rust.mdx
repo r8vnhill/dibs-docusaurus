@@ -1,10 +1,23 @@
 ---
-title: Void-safety en Rust
+title: Void-Safety en Rust
 ---
-import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
 
 Rust es un lenguaje de programación moderno que aborda el problema de la **nulabilidad** de manera segura mediante el uso de tipos como **`Option`**. Al igual que Kotlin, Rust evita errores comunes como los `NullPointerException` mediante la verificación en tiempo de compilación, asegurando que las referencias nulas sean manejadas de manera explícita.
 
@@ -25,19 +38,17 @@ enum Option<T> {
 
 ### Ejemplo de uso de `Option`
 
-```rust
-fn main() {
-    let some_value: Option<i32> = Some(5);
-    let no_value: Option<i32> = None;
+```rust showLineNumbers
+pub fn void_safety_example() {
+    let some_value: Option<i32> = Some(420);
+    let none_value: Option<i32> = None;
 
-    // Uso de `match` para manejar el valor opcional
     match some_value {
-        Some(val) => println!("El valor es: {}", val),
         None => println!("No hay valor"),
+        Some(val) => println!("El valor es: {}", val),
     }
 
-    // Uso de `if let` para verificar el valor
-    if let Some(val) = no_value {
+    if let Some(val) = none_value {
         println!("El valor es: {}", val);
     } else {
         println!("No hay valor");
@@ -45,12 +56,22 @@ fn main() {
 }
 ```
 
+```rust showLineNumbers
+fn main() {
+    void_safety_example()
+}
+```
+
+<Explanation>
+    El código anterior muestra cómo se puede utilizar el tipo `Option` en Rust para manejar valores opcionales. En la función `void_safety_example`, se crean dos variables `some_value` y `none_value` de tipo `Option<i32>`. Luego, se utiliza un `match` y un `if let` para manejar los casos en los que el valor es `Some` o `None`.
+</Explanation>
+
 ## Operador `?` en Rust
 
 El operador `?` de Rust facilita la propagación de valores opcionales sin tener que escribir código adicional para manejar cada caso posible de `Some` o `None`. Esto es útil cuando se manejan múltiples resultados opcionales, como en el siguiente ejemplo:
 
-```rust
-fn dividir(a: i32, b: i32) -> Option<i32> {
+```rust showLineNumbers
+pub fn divide(a: i32, b: i32) -> Option<i32> {
     if b != 0 {
         Some(a / b)
     } else {
@@ -58,16 +79,26 @@ fn dividir(a: i32, b: i32) -> Option<i32> {
     }
 }
 
-fn calcular() -> Option<i32> {
-    let x = dividir(10, 2)?; // Propaga el valor si es Some, o retorna None si es None
-    let y = dividir(x, 0)?;  // Esta operación devolverá None, interrumpiendo la ejecución
+fn calculate() -> Option<i32> {
+    let x = divide(10, 2)?;
+    let y = divide(x, 0)?;
     Some(y)
 }
 ```
 
-En este código, el operador `?` se asegura de que si `None` es retornado, la función `calcular` también devuelva `None` sin necesidad de escribir condicionales adicionales.
+```rust showLineNumbers
+fn main() {
+    println!("{:?}", divide(10, 2));
+    println!("{:?}", divide(10, 0));
+}
+```
 
-## Comparación Final
+<Explanation>
+    - La función `divide` toma dos números enteros y devuelve un `Option<i32>` con el resultado de la división si `b` no es cero.
+    - La función `calculate` utiliza el operador `?` para propagar los valores opcionales de manera concisa. Si alguna de las divisiones resulta en `None`, la función `calculate` devolverá `None`.
+</Explanation>
+
+## Resumen comparativo
 
 | Aspecto                              | Rust                                                                                                     | Kotlin                                                                                             |
 |--------------------------------------|----------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------|
@@ -77,6 +108,24 @@ En este código, el operador `?` se asegura de que si `None` es retornado, la fu
 | **Evita errores de referencia nula** | Rust no permite referencias nulas, eliminando por completo el riesgo de `NullPointerException`.          | Kotlin previene `NullPointerException` con su sistema de tipos seguro y operadores para anulables. |
 | **Propagación de valores nulos**     | Usa el operador `?` para propagar valores opcionales de forma concisa.                                   | Usa `?.` y el operador Elvis `?:` para manejar y propagar valores nulos.                           |
 | **Unwrapping Forzado**               | Se puede forzar el unwrapping de `Option` usando el método `.unwrap()`, que lanza un error si es `None`. | El operador `!!` se usa para forzar el unwrapping de un valor nulo, lanzando una excepción.        |
+
+### Beneficios y limitaciones
+
+<ProCons>
+    <Pros>
+        - **Seguridad en tiempo de compilación**: Rust garantiza la seguridad en cuanto a referencias nulas, evitando errores como `NullPointerException` en tiempo de ejecución mediante la verificación en tiempo de compilación. Esto mejora la robustez del código.
+        - **Manejo explícito de nulabilidad**: Al requerir que lxs desarrolladorxs utilicen el tipo `Option` para representar valores opcionales, Rust asegura que las posibilidades de valores nulos se manejen explícitamente. Esto fuerza un diseño más cuidadoso y evita el uso indebido de referencias nulas.
+        - **Propagación sencilla de errores**: El operador `?` en Rust simplifica la propagación de errores y valores opcionales, eliminando la necesidad de un manejo detallado de errores en cada punto, lo que hace que el código sea más limpio y legible.
+        - **Eliminación total de `null`**: Al no tener `null` en su sistema de tipos, Rust previene cualquier riesgo de referencias nulas de manera intrínseca, lo que lo hace más seguro en este aspecto comparado con otros lenguajes que permiten referencias nulas.
+    </Pros>
+    <Cons>
+        - **Curva de aprendizaje**: El manejo explícito de nulabilidad con `Option` y las mecánicas adicionales como `unwrap()` o el operador `?` puede ser complicado para principiantes o para quienes vienen de lenguajes que permiten `null` de forma más flexible.
+        - **Sobrecarga cognitiva**: Aunque el manejo explícito de valores opcionales es seguro, puede aumentar la complejidad del código y la carga cognitiva para lxs desarrolladorxs, especialmente en casos donde hay muchos valores opcionales involucrados.
+        - **Unwrapping inseguro**: Aunque Rust proporciona el método `unwrap()` para forzar el acceso a un valor dentro de un `Option`, este puede llevar a errores en tiempo de ejecución si se utiliza sin cuidado, similar a los riesgos del operador `!!` en Kotlin.
+        - **Verboso en algunos casos**: Manejar `Option` y usar `match` o `if let` puede hacer que el código sea más detallado y largo, especialmente en comparación con otros lenguajes que tienen un manejo de nulabilidad más compacto.
+    </Cons>
+</ProCons>
+
 
 <References references={[
     {
