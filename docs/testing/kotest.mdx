@@ -15,11 +15,44 @@ import GithubRepoLink from '@site/src/components/GithubRepoLink'
 import { LanguageCard } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="kotest-intro" />
-
 <RepoClone repoName="kotest-intro" />
+<ModuleSetup module='kotest-intro' task='setupKotestModule'>
+    ```kotlin title="settings.gradle.kts"
+    val baseName = "basic-tests"
+    val baseDir = rootProject.file(baseName)
+    val printError: (String) -> Unit = System.err::println
+
+    tasks.register("setupKotestModule") {
+        doLast {
+            baseDir.mkdirs()
+            createGradleBuild()
+            createMyTestFile()
+        }
+    }
+
+    fun createGradleBuild() = baseDir.resolve("build.gradle.kts")
+        .takeIf { !it.exists() }?.apply {
+            writeText("// Intentionally left blank")
+            println("File created: $this")
+        } ?: printError("File already exists: ${baseDir.resolve("build.gradle.kts")}")
+
+    fun createMyTestFile() {
+        val packageName = "${rootProject.group}.testing.basic"
+        val packagePath = packageName.replace(".", "/")
+        val testFile = baseDir.resolve("src/test/kotlin/$packagePath/MyTest.kt")
+        testFile.parentFile.mkdirs()
+        testFile.takeIf { !it.exists() }?.apply {
+            writeText("package $packageName\n\n")
+            println("File created: $this")
+        } ?: printError("File already exists: $testFile")
+    }
+    ```
+</ModuleSetup>
 
 El **testing** es una parte fundamental del ciclo de vida del desarrollo de software. A través de pruebas, podemos asegurarnos de que una aplicación o sistema funcione correctamente bajo diferentes condiciones, manteniendo su **integridad** y **fiabilidad** a medida que evoluciona.
 
@@ -58,7 +91,7 @@ Kotest se integra fácilmente con otros frameworks y bibliotecas populares en el
 
 Para comenzar a utilizar **Kotest** en nuestro proyecto, lo primero que haremos es agregar las dependencias necesarias en el catálogo de versiones.
 
-<Tabs>
+<BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```toml title="gradle/libs.versions.toml" showLineNumbers
         [versions]
@@ -91,7 +124,7 @@ Para comenzar a utilizar **Kotest** en nuestro proyecto, lo primero que haremos 
         kotest = ["kotest-runner-junit5"]        
         ```
     </TabItem>
-</Tabs>
+</BoxedTabs>
 
 <Explanation>
     En este archivo, definimos la versión de **Kotest** que utilizaremos (`kotest-framework`) y la dependencia de **JUnit 5** para Kotest (`kotest-runner-junit5`). Luego, agrupamos estas dependencias en un **bundle** llamado `kotest`, que nos permitirá añadir más dependencias de Kotest de manera sencilla en el futuro.
@@ -99,7 +132,7 @@ Para comenzar a utilizar **Kotest** en nuestro proyecto, lo primero que haremos 
 
 Ahora podemos aplicar este **bundle** a nuestro proyecto de Gradle:
 
-<Tabs>
+<BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```kotlin showLineNumbers title="build.gradle.kts"
         val kotestBundle = libs.bundles.kotest
@@ -141,7 +174,7 @@ Ahora podemos aplicar este **bundle** a nuestro proyecto de Gradle:
         }
         ```
     </TabItem>
-</Tabs>
+</BoxedTabs>
 
 <Explanation>
     En este bloque de código, aplicamos el **bundle** de Kotest a todos los subproyectos de nuestro proyecto de Gradle, lo que nos permite utilizar Kotest en cualquier módulo de nuestro proyecto.
@@ -151,7 +184,7 @@ Ahora podemos aplicar este **bundle** a nuestro proyecto de Gradle:
 
 Para comenzar a escribir pruebas con **Kotest**, primero crearemos un módulo llamado `basic-tests` y lo agregaremos al archivo `settings.gradle.kts` de nuestro proyecto:
 
-<Tabs>
+<BoxedTabs>
     <TabItem label="Código esencial" value="Código esencial">
         ```kotlin showLineNumbers title="settings.gradle.kts"
         include(":basic-tests")        
@@ -179,54 +212,13 @@ Para comenzar a escribir pruebas con **Kotest**, primero crearemos un módulo ll
         include(":basic-tests")
         ```
     </TabItem>
-</Tabs>
+</BoxedTabs>
 
 Luego, crearemos un archivo `build.gradle.kts` vacío para este módulo, ya que las dependencias comunes estarán configuradas en el bloque `subprojects`.
 
-<Tabs>
-    <TabItem value={"Windows"} label={"Windows"}>
-        ```powershell
-        $Group = 'com\github\username'
-        ```
-
-        ```powershell
-        New-Item -Path 'basic-tests' -ItemType 'Directory'
-        '// Intentionally left blank' | 
-            Out-File -FilePath 'basic-tests/build.gradle.kts' -Force
-        $BasicTestDir = "basic-tests\src\test\kotlin\$Group\basics"
-        New-Item -Path "$BasicTestDir\MyTest.kt" -ItemType "File" -Force
-        ```
-    </TabItem>
-    <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-        ```powershell
-        $Group = 'com\github\username'
-        ```
-
-        ```powershell
-        mkdir 'basic-tests'
-        '// Intentionally left blank' > 'basic-tests/build.gradle.kts'
-        $BasicTestDir = "basic-tests\src\test\kotlin\$Group\basics"
-        ni "$BasicTest\MyTest.kt" -i 'f' -f
-        ```
-    </TabItem>
-    <TabItem value={"macOS/Linux"} label={"macOS/Linux"}>
-        ```bash
-        GROUP="com/github/username"
-        ```
-
-        ```bash
-        mkdir basic-tests
-        echo '// Intentionally left blank' > basic-tests/build.gradle.kts
-        BASIC_TEST_DIR="basic-tests/src/test/kotlin/$GROUP/basics"
-        mkdir -p $BASIC_TEST_DIR
-        touch "$BASIC_TEST_DIR/MyTest.kt"
-        ```
-    </TabItem>
-</Tabs>
-
 Kotest permite escribir pruebas utilizando diferentes estilos; aquí mostramos varios ejemplos:
 
-<Tabs>
+<BoxedTabs>
     <TabItem value={"StringSpec"} label={"StringSpec"}>
         ```kotlin title="basic-tests/src/test/kotlin/com/github/username/basics/MyTest.kt" showLineNumbers
         package com.github.username.basics
@@ -322,7 +314,7 @@ Kotest permite escribir pruebas utilizando diferentes estilos; aquí mostramos v
 
         `BehaviorSpec` también es un estilo BDD que permite describir escenarios complejos usando "given", "when", y "then".
     </TabItem>
-</Tabs>
+</BoxedTabs>
 
 <Explanation>
     1. Creamos una clase de pruebas `MyTest` que extiende una clase base de **Kotest**. Cada estilo (`StringSpec`, `FunSpec`, `FreeSpec`, `WordSpec`, `BehaviorSpec`, etc.) ofrece diferentes formas de estructurar las pruebas, permitiéndote elegir el que más te acomode.

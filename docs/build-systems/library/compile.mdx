@@ -31,7 +31,7 @@ El primer paso para automatizar el empaquetado de la biblioteca será crear un *
 
 En este archivo, definiremos una tarea personalizada que copie los archivos JAR del directorio `build/libs` al directorio `libs` del módulo `app`. Como vimos en la lección sobre [tareas personalizadas](../tasks/custom/custom-kt#tareas-basadas-en-otras-tareas), comenzaremos con una tarea básica y luego la mejoraremos.
 
-<Tabs groupId={"gradle"}>
+<BoxedTabs groupId={"gradle"}>
     <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
         ```kotlin title="convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
         tasks.register<Copy>("copyLib") {
@@ -52,7 +52,7 @@ En este archivo, definiremos una tarea personalizada que copie los archivos JAR 
         Aquí pondía mi implementación en Groovy, si la tuviera.
         ```
     </TabItem>
-</Tabs>
+</BoxedTabs>
 
 Y ahora aplicamos este plugin en el archivo `lib/build.gradle.kts`:
 
@@ -67,7 +67,7 @@ plugins {
 
 Ya que hemos definido la tarea `copyLib`, podemos hacer que esta se ejecute automáticamente antes de la tarea `compileKotlin` en el módulo de la aplicación. Esto garantiza que, cada vez que se compile la biblioteca, también se copie el archivo JAR al módulo `app`.
 
-<Tabs groupId={"gradle"}>
+<BoxedTabs groupId={"gradle"}>
     <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
         ```kotlin title="app/build.gradle.kts"
         // ...
@@ -81,14 +81,14 @@ Ya que hemos definido la tarea `copyLib`, podemos hacer que esta se ejecute auto
         En un futuro cercano, aquí pondría mi implementación en Groovy.
         ```
     </TabItem>
-</Tabs>
+</BoxedTabs>
 
 ### Ejecutando la Tarea
 
 Cuando ejecutes la tarea `build` en el proyecto, se ejecutará primero la tarea `compileKotlin`, seguida de `copyLib`, que copiará el archivo JAR al directorio `libs` del módulo `app`.
 
 :::tip Ejercicio
-<Tabs>
+<BoxedTabs>
     <TabItem value={"Enunciado"} label={"Enunciado"}>
         Ejecuta la tarea `build` y verifica si el archivo JAR de la biblioteca se copia correctamente al módulo `app`. Esto generará un error, ¿puedes identificar la causa?
     </TabItem>
@@ -104,14 +104,14 @@ Cuando ejecutes la tarea `build` en el proyecto, se ejecutará primero la tarea 
 
         Esto ocurre porque copiamos el archivo JAR, pero no configuramos el módulo `app` para utilizarlo como una dependencia.
     </TabItem>
-</Tabs>
+</BoxedTabs>
 :::
 
 ## Configurando la Dependencia
 
 Para que el módulo `app` pueda utilizar la biblioteca empaquetada, actualizaremos las dependencias. Es similar a agregar una dependencia de una biblioteca externa, pero utilizaremos el archivo JAR local en lugar de un repositorio remoto.
 
-<Tabs groupId={"gradle"}>
+<BoxedTabs groupId={"gradle"}>
     <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
         ```kotlin title="app/build.gradle.kts"
         // ...
@@ -130,12 +130,12 @@ Para que el módulo `app` pueda utilizar la biblioteca empaquetada, actualizarem
         Cuenta la leyenda que aquí pondría mi implementación en Groovy.
         ```
     </TabItem>
-</Tabs>
+</BoxedTabs>
 
 Si ejecutas la tarea `build` todo debería funcionar, pero no lo hace debido a un error.
 
 :::tip Ejercicio
-<Tabs>
+<BoxedTabs>
     <TabItem value={"Enunciado"} label={"Enunciado"}>
         Ejecuta la tarea `build` y analiza el error. ¿Puedes identificar la causa? ¿Cómo lo solucionarías?
     </TabItem>
@@ -156,7 +156,7 @@ Si ejecutas la tarea `build` todo debería funcionar, pero no lo hace debido a u
 
         El problema es que `copyLib` se ejecuta antes de que `jar` haya generado el archivo JAR. Para corregirlo, `copyLib` debe depender explícitamente de `jar`.
     </TabItem>
-</Tabs>
+</BoxedTabs>
 :::
 
 <details>
@@ -164,7 +164,7 @@ Si ejecutas la tarea `build` todo debería funcionar, pero no lo hace debido a u
 
     El problema surge porque `copyLib` necesita que `jar` termine antes de ejecutarse. Gradle nos avisa que debemos hacer explícita la dependencia entre estas tareas.
 
-    <Tabs groupId={"gradle"}>
+    <BoxedTabs groupId={"gradle"}>
         <TabItem value={"Gradle Kotlin DSL"} label={"Gradle Kotlin DSL"}>
             ```kotlin title="./convention-plugins/src/main/kotlin/compile.conventions.gradle.kts"
             // ...
@@ -178,7 +178,7 @@ Si ejecutas la tarea `build` todo debería funcionar, pero no lo hace debido a u
             Inserte implementación en Groovy aquí.
             ```
         </TabItem>
-    </Tabs>
+    </BoxedTabs>
 </details>
 
 Aplicando esta corrección, al ejecutar la tarea `build`, la biblioteca se empaquetará y copiará correctamente al módulo `app`, que podrá utilizarla como una dependencia local.
