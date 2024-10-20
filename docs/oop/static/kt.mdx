@@ -15,26 +15,53 @@ import GithubRepoLink from '@site/src/components/GithubRepoLink'
 import { LanguageCard } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 
 <ReadingTime />
-<GithubRepoLink user="r8vnhill" repo="" />
+<GithubRepoLink user="r8vnhill" repo="object-oriented-programming-kt" />
 
-<details>
-    <summary>
-        Comencemos por crear un módulo para la lección...
-    </summary>
+<ModuleSetup module='static' task='setupStaticModule'>
+    ```kotlin showLineNumbers
+    val moduleName = "static"
+    val moduleDir = rootProject.file(moduleName)
 
-    ```kotlin showLineNumbers title=""
+    tasks.register("setupStaticModule") {
+        group = "setup"
+        description = "Creates the necessary files for the lesson on static members"
+
+        doFirst {
+            val buildName = "build.gradle.kts"
+            val printError: (String) -> Unit = System.err::println
+            createModuleDirectory(printError)
+            createBuildFile(buildName, printError)
+        }
+    }
+
+    // Función para crear el directorio del módulo
+    // Si el directorio ya existe, imprime un mensaje de error; de lo contrario,
+    // intenta crearlo
+    fun createModuleDirectory(printError: (String) -> Unit) = moduleDir.run {
+        when {
+            exists() -> printError("Directory already exists: $absolutePath")
+            mkdirs() -> println("Directory created: $absolutePath")
+            else -> printError("Failed to create directory: $absolutePath")
+        }
+    }
+
+    // Función para crear el archivo 'build.gradle.kts'
+    // Si el archivo ya existe, imprime un mensaje de error; de lo contrario, lo
+    // crea con un comentario predeterminado
+    fun createBuildFile(buildName: String, printError: (String) -> Unit) =
+        moduleDir.resolve(buildName).run {
+            if (!exists()) {
+                writeText("// Intentionally left blank")
+                println("File created: $absolutePath")
+            } else {
+                printError("File already exists: $absolutePath")
+            }
+        }
     ```
-
-    Preocupate de que el plugin `static` esté aplicado en el archivo `build.gradle.kts` del módulo principal.
-
-    ```bash
-    ./gradlew
-    ```
-
-    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
-</details>
+</ModuleSetup>
 
 En el desarrollo de **bibliotecas de software**, es común utilizar variables y funciones que no dependen de instancias específicas de una clase. Estas variables y funciones son conocidas como **estáticas**. En esta lección, exploraremos cómo manejar variables y funciones estáticas en Kotlin.
 
@@ -159,7 +186,7 @@ Ahora vamos a implementar las pruebas para nuestra especificación BDD. Utilizar
 Finalmente, implementamos la función `calculateRectangleArea` que calcula el área de un rectángulo multiplicando su `width` por su `height` y agregando la unidad de medida:
 
 ```kotlin showLineNumbers title="src/main/kotlin/com/github/username/staticfn/rectangle/RectangleUtils.kt"
-package cl.ravenhill.staticfn.rectangle
+package com.github.username.staticfn.rectangle
 
 const val DEFAULT_UNIT = "cm²"
 
@@ -342,48 +369,157 @@ Comencemos definiendo una especificación BDD para la clase `User`. La especific
     }
 }
 ```
-```kotlin showLineNumbers
-// En el archivo User.kt
-package com.example.user
+
+### Implementación de las pruebas
+
+Con la especificación BDD en mente, vamos a implementar las pruebas para la clase `User`. Utilizaremos **Property-Based Testing** para generar diferentes nombres y edades de forma aleatoria y asegurar que la función de fábrica `create` devuelve los resultados correctos al crear usuarios.
+
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        checkAll(arbUser(Arb.int(18..200))) { user ->
+            user.shouldHaveName(user.name)
+                .shouldHaveAge(user.age)
+        }
+        ```
+
+        ```kotlin showLineNumbers
+        checkAll(Arb.name(), Arb.int(0..17)) { name, age ->
+            shouldThrow<IllegalArgumentException> {
+                User.create(name.toString(), age)
+            }
+        }
+        ```
+
+        ```kotlin showLineNumbers
+        private fun arbUser(ageArb: Arb<Int>): Arb<User> = Arb.name()
+            .flatMap { name ->
+                ageArb.map { age ->
+                    User.create(name.toString(), age)
+                }
+            }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="static/src/test/kotlin/com/github/username/staticfn/users/UserTest.kt"
+        package com.github.username.matchers
+
+        import com.github.username.staticfn.users.User
+        import io.kotest.matchers.Matcher
+        import io.kotest.matchers.MatcherResult
+        import io.kotest.matchers.should
+
+        fun haveAge(age: Int) = Matcher<User> { user ->
+            MatcherResult(
+                user.age == age,
+                { "User should have age $age but has ${user.age}" },
+                { "User should not have age $age" }
+            )
+        }
+
+        fun User.shouldHaveAge(age: Int): User {
+            should(haveAge(age))
+            return this
+        }
+        ```
+
+        ```kotlin showLineNumbers title="static/src/test/kotlin/com/github/username/staticfn/users/UserTest.kt"
+        package com.github.username.matchers
+
+        import com.github.username.staticfn.users.User
+        import io.kotest.matchers.Matcher
+        import io.kotest.matchers.MatcherResult
+        import io.kotest.matchers.should
+
+        fun haveName(name: String) = Matcher<User> { user ->
+            MatcherResult(
+                user.name == name,
+                { "User should have name $name but has ${user.name}" },
+                { "User should not have name $name" }
+            )
+        }
+
+        fun User.shouldHaveName(name: String): User {
+            should(haveName(name))
+            return this
+        }
+        ```
+
+        ```kotlin showLineNumbers title="static/src/test/kotlin/com/github/username/staticfn/users/UserTest.kt"
+        package com.github.username.staticfn.users
+
+        import com.github.username.matchers.shouldHaveAge
+        import com.github.username.matchers.shouldHaveName
+        import io.kotest.assertions.throwables.shouldThrow
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.flatMap
+        import io.kotest.property.arbitrary.int
+        import io.kotest.property.arbitrary.map
+        import io.kotest.property.arbs.name
+        import io.kotest.property.checkAll
+
+        class UserTest : FreeSpec({
+            "Given a user" - {
+                "when creating it with a valid age" - {
+                    "should be created" {
+                        checkAll(arbUser(Arb.int(18..200))) { user ->
+                            user.shouldHaveName(user.name)
+                                .shouldHaveAge(user.age)
+                        }
+                    }
+                }
+
+                "when creating it with an invalid age" - {
+                    "should throw an exception" {
+                        checkAll(Arb.name(), Arb.int(0..17)) { name, age ->
+                            shouldThrow<IllegalArgumentException> {
+                                User.create(name.toString(), age)
+                            }
+                        }
+                    }
+                }
+            }
+        })
+
+        private fun arbUser(ageArb: Arb<Int>): Arb<User> = Arb.name()
+            .flatMap { name ->
+                ageArb.map { age ->
+                    User.create(name.toString(), age)
+                }
+            }
+        ```
+    </TabItem>
+</Tabs>
+
+<Explanation>
+    - La función de fábrica `create` verifica si la edad es válida antes de crear una instancia de `User`.
+    - Las funciones `shouldHaveName` y `shouldHaveAge` son extensiones de `User` que permiten verificar si un usuario tiene un nombre o una edad específicos.
+</Explanation>
+
+### Implementación de `User`
+
+Finalmente, implementamos la clase `User` con una función de fábrica `create` que verifica si la edad es válida antes de crear una instancia de `User`.
+
+```kotlin showLineNumbers 
+package com.github.username.staticfn.users
 
 class User private constructor(val name: String, val age: Int) {
     companion object {
-        fun create(name: String, age: Int): User? {
-            return if (age >= 18) {
-                User(name, age)
-            } else {
-                null // No se permite crear un usuario menor de edad
+        fun create(name: String, age: Int): User {
+            require(age >= 18) {
+                "Age must be greater than or equal to 18"
             }
+            return User(name, age)
         }
     }
 }
 ```
 
-Aquí, el **companion object** define una función `create`, que es una **función de fábrica**. Verifica la edad del usuario antes de crear una instancia de `User`. 
-
-Puedes acceder a esta función de fábrica directamente a través del nombre de la clase, sin instanciar `User`:
-
-```kotlin showLineNumbers
-import com.example.user.User
-
-fun main() {
-    val user = User.create("Alice", 20)
-    println(user?.name) // Imprime: Alice
-
-    val underageUser = User.create("Bob", 16)
-    println(underageUser) // Imprime: null, ya que no se permite la creación
-}
-```
-
-### ¿Por qué usar `companion object`?
-
-En este caso, **companion object** permite asociar la función `create` con la clase `User`, ofreciendo una forma limpia y controlada de crear instancias de `User` con validaciones. 
-
-**Ventajas**:
-- **Funciones de fábrica**: Permite controlar cómo se crean los objetos.
-- **Acceso a miembros estáticos**: Puedes agrupar funciones o constantes relacionadas con la clase sin depender de instancias.
-
-Este enfoque es más común que implementar un singleton manualmente, ya que se ajusta mejor a los casos en los que se necesita lógica adicional para instanciar clases.
+<Explanation>
+    - La clase `User` tiene un constructor privado para evitar la creación directa de instancias.
+    - La función `create` en el `companion object` de `User` verifica si la edad es válida antes de crear una instancia de `User`.
+</Explanation>
 
 ## Comparación entre Funciones de Nivel Superior, `object` y `companion object`
 
@@ -395,30 +531,32 @@ Este enfoque es más común que implementar un singleton manualmente, ya que se 
 | **Necesidad de Instanciación**   | No requieren instanciación                                                   | No requieren instanciación                           | No requieren instanciación                               |
 | **Visibilidad de Clase Interna** | No pueden acceder a miembros privados de una clase                           | Pueden acceder a sus propios miembros privados       | Pueden acceder a miembros privados de la clase           |
 
-## Beneficios y Limitaciones
+## Beneficios y limitaciones de las funciones y variables estáticas
 
 <ProCons>
     <Pros>
-        - **Organización del Código**: Permiten estructurar y organizar funciones y variables de manera lógica, mejorando la legibilidad y mantenibilidad del código.
-        - **Simplicidad de Acceso**: No es necesario instanciar objetos para acceder a las funciones o variables, lo que facilita su uso en diferentes partes del programa.
-        - **Encapsulación**: Con `companion object`, puedes encapsular lógica estática dentro de una clase específica, manteniendo una relación clara entre la clase y sus funciones estáticas.
-        - **Singletones Sencillos**: Los `object` facilitan la creación de singletones sin necesidad de patrones adicionales o código complejo.
+        - **Fácil acceso global**: Las funciones y variables estáticas o de nivel superior pueden ser accedidas sin necesidad de instanciar una clase. Esto facilita su uso como utilidades o constantes globales en bibliotecas de software.
+        - **Ahorro de recursos**: Al no requerir instanciación, se ahorran recursos, especialmente en casos donde el objeto o la función no necesita mantener estado.
+        - **Simplificación en la organización del código**: Permiten centralizar funciones que no necesitan estar asociadas a un objeto o instancia, simplificando la estructura del código.
     </Pros>
     <Cons>
-        - **Carga Inicial**: Las variables estáticas pueden aumentar el tiempo de carga inicial de la aplicación si se inicializan muchas al inicio.
-        - **Limitaciones en Herencia**: Los `object` no pueden heredar de clases que no sean abstractas o interfaces, lo que puede limitar su flexibilidad en ciertos diseños.
-        - **Posibles Confusiones**: Para desarrolladores acostumbrados a otros lenguajes, el uso de `object` y `companion object` puede ser confuso inicialmente, requiriendo una adaptación en la comprensión de estos conceptos.
-        - **Escalabilidad**: El uso excesivo de funciones de nivel superior puede llevar a archivos muy grandes y menos estructurados si no se organizan adecuadamente.
+        - **Menor flexibilidad**: Al no tener acceso a miembros de instancia, las funciones estáticas o de nivel superior no pueden utilizar o modificar el estado de un objeto, limitando su aplicabilidad en ciertos escenarios.
+        - **Dificultad en la extensión**: Si más adelante se requiere añadir comportamiento dinámico o específico de instancia, migrar de funciones estáticas a funciones de instancia puede ser tedioso y provocar cambios mayores en el código.
+        - **Acoplamiento global**: Las variables estáticas pueden generar un acoplamiento innecesario si se abusa de su uso, especialmente en sistemas grandes donde puede volverse complicado rastrear su impacto.
+        - **Problemas de pruebas**: Las funciones y variables estáticas, al ser accesibles globalmente, pueden ser difíciles de aislar en pruebas unitarias, especialmente cuando afectan el estado global o son compartidas entre múltiples clases.
     </Cons>
 </ProCons>
 
-## ¿Qué Aprendimos?
+## ¿Qué aprendimos?
 
-En esta lección, exploramos cómo manejar variables y funciones estáticas en Kotlin, especialmente en el contexto de **bibliotecas de software**. Vimos que:
+En esta lección, exploramos cómo manejar funciones y variables estáticas en Kotlin, enfocándonos en tres conceptos clave: **funciones de nivel superior**, **objects**, y **companion objects**.
 
-- Las **funciones de nivel superior** permiten definir utilidades generales que pueden ser usadas en cualquier parte del código sin necesidad de una clase contenedora. Aunque no se declaran dentro de una clase, el compilador las trata como estáticas, generando una clase contenedora para ellas.
-- Los **objects** son útiles para agrupar funciones y variables en un singleton, facilitando el acceso global y la organización del código.
-- Los **companion objects** permiten asociar funciones y variables estáticas a una clase específica, manteniendo una relación estrecha y permitiendo acceder a miembros privados de la clase.
-- En todos los casos, Kotlin proporciona formas flexibles y eficientes de manejar funciones y variables estáticas, adaptándose a diferentes necesidades de diseño y facilitando el desarrollo de bibliotecas reutilizables y mantenibles.
+### Puntos clave
 
-Este conocimiento es esencial para diseñar bibliotecas de software efectivas en Kotlin, aprovechando sus características para organizar y acceder a funciones y variables de manera óptima, y entendiendo cómo el lenguaje maneja estos conceptos a nivel de compilación y ejecución.
+- **Funciones de Nivel Superior**: Vimos cómo se pueden declarar funciones y variables fuera de clases o interfaces, lo que permite acceder a ellas sin instanciar clases. Estas funciones se convierten en métodos estáticos en el bytecode de la JVM, siendo eficaces para implementar utilidades globales.  
+- **Objects**: Aprendimos cómo Kotlin facilita la creación de **singletones** a través de los `object`, que permiten agrupar funciones y variables relacionadas en un único punto de acceso global.
+- **Companion Objects**: Exploramos cómo los **companion objects** proporcionan una manera eficiente de definir funciones y variables asociadas a una clase, pero sin la necesidad de instanciarla. Vimos cómo se pueden usar para implementar lógica adicional, como funciones de fábrica para crear objetos.
+
+---
+
+Finalmente, revisamos los **beneficios** y **limitaciones** del uso de funciones y variables estáticas. Si bien proporcionan un acceso global y facilitan el ahorro de recursos, pueden complicar la organización del código en escenarios que requieren mayor flexibilidad, especialmente en sistemas grandes.

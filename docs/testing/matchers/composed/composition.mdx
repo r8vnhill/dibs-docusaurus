@@ -18,9 +18,86 @@ import {
 } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 
 <ReadingTime/>
 <GithubRepoLink user={"r8vnhill"} repo={"assertions-kt"}/>
+
+<ModuleSetup module="composed-matchers" task="setupComposedMatchersModule">
+    ```kotlin showLineNumbers title="convention-plugins/src/main/kotlin/composed.gradle.kts"
+    val moduleName = "composed-matchers"
+    val moduleDir = rootProject.file(moduleName)
+    val printError: (String) -> Unit = System.err::println
+
+    tasks.register("setupComposedMatchersModule") {
+        group = "setup"
+        description =
+            "Creates the necessary files for the lesson on composed matchers"
+
+        doFirst {
+            val buildName = "build.gradle.kts"
+            createModuleDirectory()
+            createBuildFile(buildName)
+            createFiles(
+                packageName = "password",
+                "BeStrongPasswordTest.kt", "BeStrongPassword.kt"
+            )
+            createFiles(
+                packageName = "email",
+                "BeValidEmail.kt"
+            )
+        }
+    }
+
+    // Función para crear el directorio del módulo
+    // Si el directorio ya existe, imprime un mensaje de error; de lo contrario,
+    // intenta crearlo
+    fun createModuleDirectory() = moduleDir.run {
+        when {
+            exists() -> printError("Directory already exists: $absolutePath")
+            mkdirs() -> println("Directory created: $absolutePath")
+            else -> printError("Failed to create directory: $absolutePath")
+        }
+    }
+
+    // Función para crear el archivo 'build.gradle.kts'
+    // Si el archivo ya existe, imprime un mensaje de error; de lo contrario, lo
+    // crea con un comentario predeterminado
+    fun createBuildFile(buildName: String) =
+        moduleDir.resolve(buildName).run {
+            if (!exists()) {
+                writeText("// Intentionally left blank")
+                println("File created: $absolutePath")
+            } else {
+                printError("File already exists: $absolutePath")
+            }
+        }
+
+    // Función para crear archivos en un paquete específico
+    // Si un archivo ya existe, imprime un mensaje de error; de lo contrario, lo
+    // crea con un paquete predeterminado
+    fun createFiles(
+        packageName: String, vararg files: String
+    ) {
+        val group = rootProject.group.toString()
+        files.forEach { fileName ->
+            moduleDir.resolve(
+                "src/test/kotlin/${group.replace(".", "/")}/$packageName"
+            ).run {
+                mkdirs()  // Crea los directorios necesarios
+                resolve(fileName).run {
+                    if (exists()) {
+                        printError("File already exists: $this")
+                    } else {
+                        writeText("package $group.$packageName\n\n")
+                        println("File created: $this")
+                    }
+                }
+            }
+        }
+    }
+    ```
+</ModuleSetup>
 
 Los **matchers** se pueden combinar para crear reglas más complejas mediante la **composición** de otros matchers más simples. Esto permite verificar condiciones complejas de forma declarativa y legible.
 
@@ -31,55 +108,6 @@ Existen dos operaciones lógicas clave para componer matchers:
 
 ### Ejemplo de composición de matchers
 
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
-
-    <Tabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-
-            ```powershell
-            $MatchersDir = "matchers\src\test\kotlin\$Group\matchers\composed"
-            New-Item -Path $MatchersDir -ItemType Directory -Force
-            "$MatchersDir\BeStrongPassword.kt", "$MatchersDir\BeStrongPasswordTest.kt" |
-                ForEach-Object { 
-                    "package $Group.matchers.composed" -replace '\\', '.' | 
-                        Out-File -FilePath "$_.kt" 
-                }
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-
-            ```powershell
-            $MatchersDir = "matchers\src\test\kotlin\$Group\matchers\composed"
-            md $MatchersDir
-            "$MatchersDir\BeStrongPassword.kt", "$MatchersDir\BeStrongPasswordTest.kt" |
-                % { "package $Group.matchers.composed" -replace '\\', '.' > $_ }
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            GROUP='com/github/username'
-            ```
-
-            ```bash
-            MATCHERS_DIR="matchers/src/test/kotlin/$GROUP/matchers/composed"
-            mkdir -p "$MATCHERS_DIR"
-            for FILE in "$MATCHERS_DIR/BeStrongPassword.kt" "$MATCHERS_DIR/BeStrongPasswordTest.kt"; do
-                echo "package ${GROUP//\//.}.matchers.composed" > \
-                    "$FILE"
-            done
-            ```
-        </TabItem>
-    </Tabs>
-</details>
 Vamos a implementar un matcher para verificar que una contraseña es "fuerte". En este contexto, una contraseña fuerte debe:
 
 - Contener al menos un número.
@@ -91,7 +119,7 @@ Vamos a implementar un matcher para verificar que una contraseña es "fuerte". E
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         <Tabs>
             <TabItem value="and" label="and">
-                ```kotlin
+                ```kotlin showLineNumbers
                 val beStrongPassword = containADigit() and
                         contain("[A-Z]".toRegex()) and
                         contain("[a-z]".toRegex()) and
@@ -99,7 +127,7 @@ Vamos a implementar un matcher para verificar que una contraseña es "fuerte". E
                 ```
             </TabItem>
             <TabItem value="all" label="all">
-                ```kotlin title="matchers/src/test/kotlin/com/github/username/matchers/BeStrongPassword.kt"
+                ```kotlin showLineNumbers
                 val beStrongPassword = Matcher.all(
                     containADigit(),
                     contain("[A-Z]".toRegex()),
@@ -113,8 +141,8 @@ Vamos a implementar un matcher para verificar que una contraseña es "fuerte". E
     <TabItem label={"Código completo"} value={"Código completo"}>
         <Tabs>
             <TabItem value="and" label="and">
-                ```kotlin title="matchers/src/test/kotlin/com/github/username/matchers/BeStrongPassword.kt"
-                package com.github.username
+                ```kotlin showLineNumbers title="composed-matchers/src/test/kotlin/com/github/username/password/BeStrongPassword.kt"
+                package com.github.username.password
 
                 import io.kotest.matchers.and
                 import io.kotest.matchers.string.contain
@@ -128,8 +156,8 @@ Vamos a implementar un matcher para verificar que una contraseña es "fuerte". E
                 ```
             </TabItem>
             <TabItem value="all" label="all">
-                ```kotlin title="matchers/src/test/kotlin/com/github/username/matchers/BeStrongPassword.kt"
-                package com.github.username
+                ```kotlin showLineNumbers title="composed-matchers/src/test/kotlin/com/github/username/password/BeStrongPassword.kt"
+                package com.github.username.password
 
                 import io.kotest.matchers.Matcher
                 import io.kotest.matchers.compose.all
@@ -153,20 +181,58 @@ Vamos a implementar un matcher para verificar que una contraseña es "fuerte". E
 
 Una vez que hemos definido el matcher `beStrongPassword`, podemos utilizarlo en nuestras pruebas para asegurarnos de que las contraseñas cumplen con los requisitos de fortaleza:
 
-```kotlin title="matchers/src/test/kotlin/com/github/username/matchers/BeStrongPasswordTest.kt"
-package com.github.username
+<Tabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        "Password1AaBbCcDdEeFf" should beStrongPassword
+        "PasswordAaBbCcDdEeFf" shouldNot beStrongPassword
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="composed-matchers/src/test/kotlin/com/github/username/password/BeStrongPasswordTest.kt"
+        package com.github.username.password
 
-import io.kotest.core.spec.style.FreeSpec
-import io.kotest.matchers.should
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.should
+        import io.kotest.matchers.shouldNot
 
-class StrongPasswordTest : FreeSpec({
-    "A strong password" - {
-        "should contain a digit, uppercase and lowercase letters, and at least 16 characters" {
-            "Password1AaBbCcDdEeFf" should beStrongPassword
-        }
-    }
-})
-```
+        class BeStrongPasswordTest : FreeSpec({
+            "A password" - {
+                ("when it contains a digit, uppercase and lowercase letters, and at " +
+                        "least 16 characters") - {
+                    "then it is considered strong" {
+                        "Password1AaBbCcDdEeFf" should beStrongPassword
+                    }
+                }
+
+                "when it does not contain a digit" - {
+                    "then it is not considered strong" {
+                        "PasswordAaBbCcDdEeFf" shouldNot beStrongPassword
+                    }
+                }
+
+                "when it does not contain an uppercase letter" - {
+                    "then it is not considered strong" {
+                        "password1aabbccddee" shouldNot beStrongPassword
+                    }
+                }
+
+                "when it does not contain a lowercase letter" - {
+                    "then it is not considered strong" {
+                        "PASSWORD1AABBCCDDEE" shouldNot beStrongPassword
+                    }
+                }
+
+                "when it does not have at least 16 characters" - {
+                    "then it is not considered strong" {
+                        "Password1AaBbCc" shouldNot beStrongPassword
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</Tabs>
 
 La composición de matchers es una herramienta poderosa que permite crear validaciones complejas de manera concisa y reutilizable.
 
@@ -191,14 +257,7 @@ La composición de matchers es una herramienta poderosa que permite crear valida
     ]}/>
 
     <Solution>
-        ```kotlin title="matchers/src/test/kotlin/com/github/username/matchers/BeValidEmail.kt"
-        package com.github.username
-
-        import io.kotest.matchers.Matcher
-        import io.kotest.matchers.MatcherResult
-        import io.kotest.matchers.and
-        import io.kotest.matchers.string.contain
-
+        ```kotlin title="composed-matchers/src/test/kotlin/com/github/username/email/BeValidEmail.kt" showLineNumbers
         fun beValidEmail(): Matcher<String> {
             val containsAt = contain("@")
             val hasTextBeforeAt = Matcher<String> { value ->
