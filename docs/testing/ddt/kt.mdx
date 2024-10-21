@@ -52,7 +52,7 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 En el desarrollo de **bibliotecas de software**, es fundamental asegurar que nuestras funciones y métodos funcionen correctamente con una variedad de entradas. Esto garantiza que otrxs desarrolladorxs puedan confiar en nuestra biblioteca para manejar casos diversos sin errores.
 
-Sin embargo, escribir pruebas unitarias para cada posible entrada puede volverse tedioso y propenso a errores. Aquí es donde las **Pruebas basadas en datos** (Data-Driven Testing, DDT) entran en juego.
+Sin embargo, escribir pruebas unitarias para cada posible entrada puede volverse tedioso y propenso a errores. Aquí es donde las **pruebas basadas en datos** (Data-Driven Testing, DDT), **pruebas parametrizadas** o **pruebas de tabla** (table-driven testing) pueden ser útiles. Estas técnicas permiten ejecutar una prueba con múltiples conjuntos de datos, lo que facilita la validación de diferentes escenarios con un solo caso de prueba.
 
 En esta lección, exploraremos cómo implementar **Data-Driven Testing** utilizando **Kotest** en Kotlin, para mejorar la eficiencia y la calidad de nuestras pruebas.
 
@@ -92,191 +92,270 @@ Podemos expresar los criterios de validación de contraseñas utilizando una esp
 
 ### Implementación de las pruebas
 
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        isValid("P@ssw0rd").shouldBeTrue()
+        isValid("P@ssw0r").shouldBeFalse()
+        isValid("p@ssw0rd").shouldBeFalse()
+        isValid("P@SSW0RD").shouldBeFalse()
+        isValid("P@ssword").shouldBeFalse()
+        isValid("Password1").shouldBeFalse()
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="ddt/src/test/kotlin/com/github/username/validator/PasswordValidatorTest.kt"
+        package com.github.username.validator
+
+        import com.github.username.validator.PasswordValidator.isValid
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.booleans.shouldBeFalse
+        import io.kotest.matchers.booleans.shouldBeTrue
+
+        class PasswordValidatorTest : FreeSpec({
+            "Given a password" - {
+                "when validating it" - {
+                    "then it should return true for a strong password" {
+                        isValid("P@ssw0rd").shouldBeTrue()
+                    }
+                    "then it should return false for a weak password" - {
+                        "if it has less than 8 characters" {
+                            isValid("P@ssw0r").shouldBeFalse()
+                        }
+                        "if it has no uppercase letter" {
+                            isValid("p@ssw0rd").shouldBeFalse()
+                        }
+                        "if it has no lowercase letter" {
+                            isValid("P@SSW0RD").shouldBeFalse()
+                        }
+                        "if it has no digits" {
+                            isValid("P@ssword").shouldBeFalse()
+                        }
+                        "if it has no special characters" {
+                            isValid("Password1").shouldBeFalse()
+                        }
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</BoxedTabs>
 
 ### Implementación de la Función de Validación
 
-```kotlin showLineNumbers title="src/main/kotlin/com/github/tu_usuario/validator/PasswordValidator.kt"
-package com.github.tu_usuario.validator
+```kotlin showLineNumbers title="ddt/src/main/kotlin/com/github/username/validator/PasswordValidator.kt"
+package com.github.username.validator
 
 object PasswordValidator {
 
-    private val specialChars = "!@#\$%^&*"
+    private const val SPECIAL_CHARACTERS = "!@#$%^&*()-+"
 
-    fun isValidPassword(password: String): Boolean {
-        if (password.length < 8) return false
-        if (!password.any { it.isDigit() }) return false
-        if (!password.any { it.isLowerCase() }) return false
-        if (!password.any { it.isUpperCase() }) return false
-        if (!password.any { it in specialChars }) return false
-        return true
-    }
+    fun isValid(password: String) = 
+        password.length >= 8 &&
+            password.any { it.isDigit() } &&
+            password.any { it.isLowerCase() } &&
+            password.any { it.isUpperCase() } &&
+            password.any { it in SPECIAL_CHARACTERS }
 }
 ```
 
-### Implementación Manual de Pruebas
+## El problema con nuestras pruebas
 
-#### Paso 1: Crear el Módulo de Pruebas
+Aunque nuestras pruebas actuales son claras y concisas, su estructura se vuelve repetitiva y difícil de mantener a medida que aumentamos los casos de prueba. Cada prueba individual introduce redundancia en la lógica y el código, lo que complica su escalabilidad. Aquí es donde DDT ofrece una solución eficiente, permitiendo que un solo conjunto de pruebas cubra múltiples escenarios de manera organizada y sin duplicación innecesaria.
 
-<details>
-    <summary>
-        Crear el módulo <code>password-validator</code> y configurar el entorno de pruebas.
-    </summary>
+## Implementación manual de DDT
 
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            mkdir -p 'password-validator\src\test\kotlin'
-            '// Intentionally left blank' > 'password-validator\build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            mkdir -p password-validator/src/test/kotlin
-            echo "// Intentionally left blank" > password-validator/build.gradle.kts
-            ```
-        </TabItem>
-    </BoxedTabs>
+La implementación manual de DDT es sencilla y flexible, lo que permite crear pruebas reutilizables para distintos conjuntos de datos. Este enfoque ayuda a simplificar los casos de prueba, especialmente cuando múltiples entradas deben ser validadas de la misma manera. Después de ver este ejemplo manual, compararemos el enfoque con la solución más elegante proporcionada por Kotest, que facilita la implementación de DDT.
 
-    Asegúrate de agregar el módulo al archivo `settings.gradle.kts`:
+Crearemos una prueba para validar contraseñas individuales:
 
-    ```kotlin showLineNumbers title="settings.gradle.kts"
-    include(":password-validator")
-    ```
-</details>
-
-#### Paso 2: Escribir Pruebas Manualmente
-
-Creamos una prueba para validar contraseñas individuales:
-
-```kotlin showLineNumbers title="password-validator/src/test/kotlin/com/github/tu_usuario/validator/PasswordValidatorTest.kt"
-package com.github.tu_usuario.validator
-
-import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.shouldBe
-
-class PasswordValidatorTest : StringSpec({
-
-    "should return true for valid password" {
-        val password = "Password1!"
-        PasswordValidator.isValidPassword(password) shouldBe true
-    }
-
-    "should return false for password without digits" {
-        val password = "Password!"
-        PasswordValidator.isValidPassword(password) shouldBe false
-    }
-
-    // Más pruebas individuales...
-})
-```
-
-Como puedes ver, escribir una prueba para cada caso puede volverse repetitivo.
-
-### Implementación de Data-Driven Testing Manualmente
-
-Podemos mejorar nuestras pruebas iterando sobre una lista de contraseñas:
-
-```kotlin showLineNumbers title="password-validator/src/test/kotlin/com/github/tu_usuario/validator/PasswordValidatorTest.kt"
-package com.github.tu_usuario.validator
-
-import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.shouldBe
-
-class PasswordValidatorTest : StringSpec({
-
-    "should validate passwords correctly" {
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
         val testCases = listOf(
-            "Password1!" to true,
-            "password1!" to false, // Sin mayúsculas
-            "PASSWORD1!" to false, // Sin minúsculas
-            "Password!" to false,  // Sin dígitos
-            "Password1" to false,  // Sin caracteres especiales
-            "Pass1!" to false,     // Menos de 8 caracteres
+            "P@ssw0rd" to true,
+            "P@ssw0r" to false,
+            "p@ssw0rd" to false,
+            "P@SSW0RD" to false,
+            "P@ssword" to false,
+            "Password1" to false
         )
-
         testCases.forEach { (password, expected) ->
-            PasswordValidator.isValidPassword(password) shouldBe expected
+            isValid(password) shouldBe expected
         }
-    }
-})
-```
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        package com.github.usernamevalidator
 
-### Implementación con Kotest y `withData`
+        import com.github.usernamevalidator.PasswordValidator.isValid
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.booleans.shouldBeFalse
+        import io.kotest.matchers.booleans.shouldBeTrue
+        import io.kotest.matchers.shouldBe
 
-Kotest proporciona funciones como `forAll` y `withData` para simplificar aún más nuestras pruebas.
-
-#### Paso 1: Agregar la Dependencia de Kotest DataTest
-
-En tu archivo `build.gradle.kts`, agrega:
-
-```kotlin showLineNumbers title="password-validator/build.gradle.kts"
-dependencies {
-    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
-    testImplementation("io.kotest:kotest-framework-datatest:5.9.1")
-}
-```
-
-#### Paso 2: Reescribir las Pruebas con `withData`
-
-```kotlin showLineNumbers title="password-validator/src/test/kotlin/com/github/tu_usuario/validator/PasswordValidatorTest.kt"
-package com.github.tu_usuario.validator
-
-import io.kotest.core.spec.style.StringSpec
-import io.kotest.datatest.withData
-import io.kotest.matchers.shouldBe
-
-class PasswordValidatorTest : StringSpec({
-
-    "should validate passwords correctly" {
-        withData(
-            "Password1!" to true,
-            "password1!" to false,
-            "PASSWORD1!" to false,
-            "Password!" to false,
-            "Password1" to false,
-            "Pass1!" to false,
-        ) { (password, expected) ->
-            PasswordValidator.isValidPassword(password) shouldBe expected
-        }
-    }
-})
-```
+        class PasswordValidatorTest : FreeSpec({
+            "Given a password" - {
+                "when validating it" - {
+                    "then it should return true if it is strong and false if it is weak" {
+                        val testCases = listOf(
+                            "P@ssw0rd" to true,
+                            "P@ssw0r" to false,
+                            "p@ssw0rd" to false,
+                            "P@SSW0RD" to false,
+                            "P@ssword" to false,
+                            "Password1" to false
+                        )
+                        testCases.forEach { (password, expected) ->
+                            isValid(password) shouldBe expected
+                        }
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</BoxedTabs>
 
 <Explanation>
-- **Uso de `withData`**: Simplifica la iteración sobre los casos de prueba.
-- **Desestructuración**: Utilizamos `(password, expected)` para extraer los valores del par.
-- **Legibilidad**: El código es más limpio y fácil de mantener.
+    - **Lista de Casos de Prueba**: Almacenamos los casos de prueba en una lista de pares `(password, expected)`. Este patrón es común en DDT.
+    - **Iteración sobre los Casos**: Usamos `forEach` para ejecutar la función de validación para cada caso y verificar el resultado.
 </Explanation>
 
-### Ampliando las Pruebas con `withData` Anidados
+## Implementación con Kotest y `withData`
 
-Supongamos que queremos probar múltiples políticas de validación, como diferentes longitudes mínimas o conjuntos de caracteres especiales.
+Kotest ofrece una forma más elegante y concisa de implementar DDT a través de la función `withData`. Esta función permite definir una tabla de datos y ejecutar una lógica de prueba para cada valor, mejorando la legibilidad del código y la organización de los casos de prueba. A diferencia de la implementación manual, `withData` sigue ejecutando todos los casos de prueba incluso si uno de ellos falla, lo que genera un reporte más completo con todos los fallos.
 
-#### Paso 1: Modificar la Función para Aceptar Parámetros
+### Paso 1: Agregar la Dependencia de Kotest DataTest
+
+Primero, debemos agregar la dependencia de **Kotest DataTest** en nuestro catálogo de versiones.
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```toml showLineNumbers
+        [libraries]
+        kotest-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest" }
+
+        [bundles]
+        kotest = ["kotest-runner-junit5", "kotest-datatest"]
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```toml showLineNumbers
+        [versions]
+        kotlin = "2.0.21"
+        data-driven-testing = "1.0.0"
+        detekt = "1.23.7"
+        kotest = "5.9.1"
+
+        [libraries]
+        kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+        detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
+        kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+        kotest-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest" }
+
+        [plugins]
+        detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+
+        [bundles]
+        kotest = ["kotest-runner-junit5", "kotest-datatest"]
+        ```
+    </TabItem>
+</BoxedTabs>
+
+El uso de **bundles** nos permite agrupar varias dependencias relacionadas, como las herramientas de Kotest, para simplificar la gestión de dependencias. Esto evita modificaciones dispersas en los archivos de configuración y facilita la actualización o incorporación de nuevas dependencias de forma centralizada.
+
+### Paso 2: Reescribir las Pruebas con `withData`
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        withData(
+            "P@ssw0rd" to true,
+            "P@ssw0r" to false,
+            "p@ssw0rd" to false,
+            "P@SSW0RD" to false,
+            "P@ssword" to false,
+            "Password1" to false
+        ) { (password, expected) ->
+            isValid(password) shouldBe expected
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        package com.github.username.validator
+
+        import com.github.username.validator.PasswordValidator.isValid
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.datatest.withData
+        import io.kotest.matchers.booleans.shouldBeFalse
+        import io.kotest.matchers.booleans.shouldBeTrue
+        import io.kotest.matchers.shouldBe
+
+        class PasswordValidatorTest : FreeSpec({
+            "Given a password" - {
+                "when validating it" - {
+                    "then it should return true if it is strong and false if it is weak" - {
+                        withData(
+                            "P@ssw0rd" to true,
+                            "P@ssw0r" to false,
+                            "p@ssw0rd" to false,
+                            "P@SSW0RD" to false,
+                            "P@ssword" to false,
+                            "Password1" to false
+                        ) { (password, expected) ->
+                            isValid(password) shouldBe expected
+                        }
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    Utilizamos `withData` para definir una tabla de datos con los casos de prueba y ejecutar la lógica de prueba para cada valor. Esto simplifica la estructura de las pruebas y mejora la legibilidad del código.
+</Explanation>
+
+## Ampliando las Pruebas con `withData` Anidados
+
+Para validar múltiples políticas de contraseñas (como longitudes mínimas y conjuntos de caracteres especiales), podemos usar **`withData` anidados** en Kotest, lo que permite probar combinaciones de casos sin duplicar lógica de prueba.
+
+### Paso 1: Modificar la Función para Aceptar Parámetros
 
 ```kotlin showLineNumbers title="src/main/kotlin/com/github/tu_usuario/validator/PasswordValidator.kt"
 package com.github.tu_usuario.validator
 
 object PasswordValidator {
 
-    fun isValidPassword(
+    private const val SPECIAL_CHARACTERS = "!@#$%^&*()-+"
+
+    fun isValid(
         password: String,
         minLength: Int = 8,
         requireDigit: Boolean = true,
         requireLowerCase: Boolean = true,
         requireUpperCase: Boolean = true,
-        requireSpecialChar: Boolean = true,
-        specialChars: String = "!@#\$%^&*"
-    ): Boolean {
-        if (password.length < minLength) return false
-        if (requireDigit && !password.any { it.isDigit() }) return false
-        if (requireLowerCase && !password.any { it.isLowerCase() }) return false
-        if (requireUpperCase && !password.any { it.isUpperCase() }) return false
-        if (requireSpecialChar && !password.any { it in specialChars }) return false
-        return true
-    }
+        requireSpecialChar: Boolean = true
+    ) = password.length >= minLength &&
+            (!requireDigit || password.any { it.isDigit() }) &&
+            (!requireLowerCase || password.any { it.isLowerCase() }) &&
+            (!requireUpperCase || password.any { it.isUpperCase() }) &&
+            (!requireSpecialChar || password.any { it in SPECIAL_CHARACTERS })
 }
 ```
+
+:::warning **Número de Parámetros**
+
+Este diseño tiene un **problema** de demasiados parámetros, lo que puede reducir la legibilidad y hacer que el código sea más difícil de mantener. Siguiendo los principios de **código limpio**, debemos limitar el número de parámetros a tres como máximo. Una alternativa sería usar un **objeto de configuración** o el **builder pattern** para encapsular las opciones de validación.
+
+Para no desviarnos del objetivo principal de la lección, mantendremos la función como está por simplicidad.
+
+:::
 
 #### Paso 2: Escribir Pruebas con `withData` Anidados
 
