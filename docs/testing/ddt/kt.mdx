@@ -24,8 +24,9 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 <ModuleSetup module='ddt' task='setupDdtModule'>
     ```kotlin showLineNumbers   
     val baseName = "ddt"
-    val baseDir = rootProject.file(baseName)
+    val baseDir: File = rootProject.file(baseName)
     val printError: (String) -> Unit = System.err::println
+    val (main, test) = listOf("main", "test").map { baseDir.resolve("src/$it/kotlin") }
 
     tasks.register("setupDdtModule") {
         group = "setup"
@@ -34,6 +35,13 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
         doLast {
             createModule()
             createBuildFile()
+            createFiles(
+                packageName = "validator",
+                main to "PasswordValidator.kt",
+                test to "PasswordValidatorTest.kt",
+                main to "PhoneNumberValidator.kt",
+                test to "PhoneNumberValidatorTest.kt"
+            )
         }
     }
 
@@ -46,6 +54,20 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
     fun createBuildFile() = baseDir.resolve("build.gradle.kts").run {
         if (exists()) printError("The build file already exists")
         else writeText("// Intentionally left blank\n")
+    }
+
+    fun createFiles(packageName: String, vararg files: Pair<File, String>) {
+        files.forEach { (dir, name) ->
+            val group = rootProject.group.toString()
+            val packageDir = dir.resolve("$group/$packageName".replace(".", "/"))
+            val file = packageDir.resolve(name)
+            if (file.exists()) printError("The file $name already exists")
+            else {
+                packageDir.mkdirs()
+                file.writeText("package $group.$packageName\n\n")
+                println("The file $name was created successfully")
+            }
+        }
     }
     ```
 </ModuleSetup>
@@ -359,147 +381,204 @@ Para no desviarnos del objetivo principal de la lección, mantendremos la funci�
 
 #### Paso 2: Escribir Pruebas con `withData` Anidados
 
-```kotlin showLineNumbers title="password-validator/src/test/kotlin/com/github/tu_usuario/validator/PasswordValidatorTest.kt"
-package com.github.tu_usuario.validator
-
-import io.kotest.core.spec.style.StringSpec
-import io.kotest.datatest.withData
-import io.kotest.matchers.shouldBe
-
-class PasswordValidatorTest : StringSpec({
-
-    "should validate passwords with different policies" {
-        val passwords = listOf(
-            "Password1!",
-            "password1!",
-            "PASSWORD1!",
-            "Password!",
-            "Password1",
-            "Pass1!"
-        )
-
-        val minLengths = listOf(6, 8, 10)
-        val requireDigits = listOf(true, false)
-        val requireSpecialChars = listOf(true, false)
-
-        withData(passwords) { password ->
-            withData(minLengths) { minLength ->
-                withData(requireDigits) { requireDigit ->
-                    withData(requireSpecialChars) { requireSpecialChar ->
-                        val isValid = PasswordValidator.isValidPassword(
-                            password,
-                            minLength = minLength,
-                            requireDigit = requireDigit,
-                            requireSpecialChar = requireSpecialChar
-                        )
-                        // Realiza las aserciones necesarias o imprime los resultados
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        withData(
+            "@" to true, "" to false, "!" to true, "\$" to true
+        ) { (maybeSpecialChar, containsSpecialChar) ->
+            withData(
+                "a" to true, "b" to true, "c" to true, "" to false,
+            ) { (maybeLowerCase, containsLowerCase) ->
+                withData(
+                    "A" to true, "B" to true, "C" to true, "" to false,
+                ) { (maybeUpperCase, containsUpperCase) ->
+                    withData(
+                        "1" to true, "2" to true, "3" to true, "" to false,
+                    ) { (maybeDigit, containsDigit) ->
+                        withData(1, 2, 3, 4) { minLength ->
+                            // ...
+                        }
                     }
                 }
             }
         }
-    }
-})
-```
-
-<Explanation>
-- **`withData` Anidados**: Generan combinaciones de los datos proporcionados.
-- **Flexibilidad**: Podemos probar múltiples configuraciones de políticas de validación.
-- **Cobertura Amplia**: Aseguramos que nuestra función maneja correctamente diferentes escenarios.
-</Explanation>
-
-## Consideraciones y Buenas Prácticas
-
-- **Organiza tus datos**: Si los conjuntos de datos son grandes, considera externalizarlos o estructurarlos mejor.
-- **Nombra tus pruebas**: Kotest permite nombrar cada caso, lo que facilita identificar fallos.
-- **Evita la complejidad excesiva**: Anidar muchos `withData` puede hacer que las pruebas sean difíciles de seguir.
-
-## ¿Qué aprendimos?
-
-En esta lección, exploramos cómo implementar **Data-Driven Testing** en el contexto del desarrollo de una **biblioteca de validación de contraseñas**. Aprendimos a:
-
-- **Implementar DDT manualmente**: Usando bucles para iterar sobre casos de prueba.
-- **Utilizar Kotest para DDT**: Simplificando nuestras pruebas con `withData` y `withData` anidados.
-- **Mejorar la eficiencia**: Reduciendo la duplicación de código y facilitando el mantenimiento.
-- **Aplicar buenas prácticas**: Organizando nuestros datos y pruebas para mayor claridad.
-
-## Ejercicio
-
-<Exercise title="Validar Números de Teléfono">
-    Implementa una función `isValidPhoneNumber` que valide números de teléfono según las siguientes reglas:
-
-    - Debe tener exactamente 10 dígitos.
-    - Solo puede contener números.
-    - No puede contener espacios ni caracteres especiales.
-
-    Escribe pruebas utilizando **Data-Driven Testing** con Kotest para validar múltiples casos de números de teléfono válidos e inválidos.
-
-    <Solution>
-        ```kotlin showLineNumbers title="src/main/kotlin/com/github/tu_usuario/validator/PhoneNumberValidator.kt"
-        package com.github.tu_usuario.validator
-
-        object PhoneNumberValidator {
-
-            fun isValidPhoneNumber(phoneNumber: String): Boolean {
-                return phoneNumber.matches(Regex("^\\d{10}\$"))
-            }
-        }
         ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        
+        ```kotlin showLineNumbers title="ddt/src/test/kotlin/com/github/username/validator/PasswordValidatorTest.kt"
+        package com.github.username
 
-        ```kotlin showLineNumbers title="src/test/kotlin/com/github/tu_usuario/validator/PhoneNumberValidatorTest.kt"
-        package com.github.tu_usuario.validator
-
-        import io.kotest.core.spec.style.StringSpec
+        import com.github.username.PasswordValidator.isValid
+        import io.kotest.core.spec.style.FreeSpec
         import io.kotest.datatest.withData
         import io.kotest.matchers.shouldBe
 
-        class PhoneNumberValidatorTest : StringSpec({
-
-            "should validate phone numbers correctly" {
-                withData(
-                    "1234567890" to true,
-                    "0987654321" to true,
-                    "12345" to false,
-                    "12345678901" to false,
-                    "123456789a" to false,
-                    "123 456 7890" to false,
-                    "123-456-7890" to false
-                ) { (phoneNumber, expected) ->
-                    PhoneNumberValidator.isValidPhoneNumber(phoneNumber) shouldBe expected
+        class PasswordValidatorTest : FreeSpec({
+            "Given a password" - {
+                "when validating it" - {
+                    "then it should return true if it is strong and false if it is weak" - {
+                        withData(
+                            "@" to true, "" to false, "!" to true, "\$" to true
+                        ) { (maybeSpecialChar, containsSpecialChar) ->
+                            withData(
+                                "a" to true, "b" to true, "c" to true, "" to false,
+                            ) { (maybeLowerCase, containsLowerCase) ->
+                                withData(
+                                    "A" to true, "B" to true, "C" to true, "" to false,
+                                ) { (maybeUpperCase, containsUpperCase) ->
+                                    withData(
+                                        "1" to true, "2" to true, "3" to true, "" to false,
+                                    ) { (maybeDigit, containsDigit) ->
+                                        withData(1, 2, 3, 4) { minLength ->
+                                            val password = "$maybeLowerCase$maybeUpperCase$maybeDigit$maybeSpecialChar"
+                                            val expected = containsLowerCase && containsUpperCase &&
+                                            containsDigit && containsSpecialChar &&
+                                            password.length >= minLength
+                                            isValid(
+                                                password,
+                                                minLength,
+                                                requireLowerCase = true,
+                                                requireUpperCase = true,
+                                                requireDigit = true,
+                                                requireSpecialChar = true
+                                            ) shouldBe expected
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         })
         ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    - **Anidamiento de `withData`**: Usamos `withData` anidados para probar combinaciones de casos de prueba sin duplicar la lógica de prueba. Esto simplifica la estructura de las pruebas y mejora la legibilidad del código.
+    - **Construcción de Contraseñas**: Creamos contraseñas combinando los valores de `maybeLowerCase`, `maybeUpperCase`, `maybeDigit` y `maybeSpecialChar` para probar diferentes escenarios.
+</Explanation>
+
+:::tip Cantidad de pruebas
+
+Anidar `withData` puede aumentar significativamente la cantidad de pruebas, lo que puede ser beneficioso para validar múltiples combinaciones de datos. 
+
+En este caso, estamos probando $4^5 = 1024$ combinaciones de datos con 45 líneas de código.
+
+:::
+
+### Beneficios y limitaciones
+
+<ProCons>
+    <Pros>
+        - **Reutilización de código**: La separación de los datos de prueba y la lógica de prueba reduce la duplicación de código y hace que las pruebas sean más fáciles de mantener.
+        - **Cobertura más amplia**: Al poder probar múltiples casos de manera eficiente, se puede garantizar que el sistema se comporta correctamente en una gama más amplia de escenarios.
+        - **Legibilidad mejorada**: Usar estructuras como `withData` en Kotest permite que las pruebas sean más claras y concisas, lo que mejora la comprensión del código.
+        - **Eficiencia en la ejecución**: Se pueden ejecutar varias combinaciones de pruebas en una sola ejecución, reduciendo el tiempo necesario para escribir y ejecutar pruebas individuales.
+    </Pros>
+    <Cons>
+        - **Mayor complejidad**: Si se anidan demasiados niveles de `withData`, las pruebas pueden volverse más difíciles de entender y depurar.
+        - **Cantidad masiva de pruebas**: La generación de combinaciones de pruebas puede llevar a una cantidad de casos de prueba significativamente alta, lo que puede hacer que las ejecuciones sean más lentas.
+        - **Difícil de interpretar los errores**: Si hay muchas combinaciones, puede ser más difícil identificar qué datos específicos causaron un fallo, lo que puede ralentizar la depuración.
+    </Cons>
+</ProCons>
+
+<Exercise title="Validar Números de Teléfono">
+    Implementa una función `isValidPhoneNumber` que valide números de teléfono según las siguientes reglas:
+
+    - Debe tener entre 8 y 11 dígitos, con un + adicional opcional al principio.
+    - El número puede contener espacios o guiones, pero no al principio ni al final.
+    - No puede contener otros caracteres no numéricos.
+
+    Escribe pruebas utilizando **Data-Driven Testing** con Kotest para validar múltiples casos de números de teléfono válidos e inválidos. No es necesario que escribas `withData` anidados.
+
+    <Solution>
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```kotlin showLineNumbers
+                withData(
+                    "12345678" to true,
+                    "123 4567 8910" to true,
+                    "+123-4567-8910" to true,
+                    "-123-4567-8910" to false,
+                    " 123-4567-8910" to false,
+                    "123" to false,
+                ) { (phoneNumber, expected) ->
+                    isValidPhoneNumber(phoneNumber) shouldBe expected
+                }
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```kotlin showLineNumbers title="ddt/src/test/kotlin/com/github/username/validator/PhoneNumberValidatorTest.kt"
+                package com.github.username.validator
+
+                import com.github.username.validator.PhoneNumberValidator.isValidPhoneNumber
+                import io.kotest.core.spec.style.FreeSpec
+                import io.kotest.datatest.withData
+                import io.kotest.matchers.shouldBe
+
+                class PhoneNumberValidatorTest : FreeSpec({
+                    "Given a phone number" - {
+                        "when validating it" - {
+                            "then it should return true if it is valid and false if it is invalid" - {
+                                withData(
+                                    "12345678" to true,
+                                    "123 4567 8910" to true,
+                                    "+123-4567-8910" to true,
+                                    "-123-4567-8910" to false,
+                                    " 123-4567-8910" to false,
+                                    "123" to false,
+                                ) { (phoneNumber, expected) ->
+                                    isValidPhoneNumber(phoneNumber) shouldBe expected
+                                }
+                            }
+                        }
+                    }
+                })
+                ```
+
+                ```kotlin showLineNumbers title="ddt/src/main/kotlin/com/github/username/validator/PhoneNumberValidator.kt"
+                package com.github.username.validator
+
+                object PhoneNumberValidator {
+
+                    fun isValidPhoneNumber(phoneNumber: String): Boolean {
+                        if (!phoneNumber.startsWith("+") && !phoneNumber.first().isDigit())
+                            return false
+                        // Remove all hyphens and spaces from the number
+                        val cleanedNumber = phoneNumber.replace("[- ]".toRegex(), "")
+                        // Check if the number starts with + and remove it
+                        val hasPlusPrefix = cleanedNumber.startsWith("+")
+                        val numberWithoutPlus =
+                            if (hasPlusPrefix) cleanedNumber.substring(1)
+                            else cleanedNumber
+                        // Ensure the number contains only digits
+                        if (!numberWithoutPlus.all { it.isDigit() }) return false
+                        // Validate the length of the number
+                        return numberWithoutPlus.length in 8..11
+                    }
+                }
+                ```
+            </TabItem>
+        </BoxedTabs>
     </Solution>
 </Exercise>
 
+## ¿Qué aprendimos?
+
+En esta lección sobre **Data-Driven Testing** (DDT) con **Kotest**, exploramos cómo utilizar esta técnica para escribir pruebas más eficientes, reutilizables y escalables, tanto para contraseñas como números de teléfono. A través de ejemplos prácticos y el uso de Kotest con la función `withData`, vimos cómo simplificar la validación de múltiples casos de prueba sin duplicar lógica innecesariamente.
+
+### Puntos clave
+
+1. **Separación de datos y lógica de prueba**: DDT nos permite ejecutar una misma lógica de prueba con diferentes conjuntos de datos, reduciendo la duplicación de código y mejorando la mantenibilidad.
+2. **Mejora de la cobertura**: Al probar diferentes escenarios de manera organizada, podemos cubrir una mayor variedad de casos, garantizando un comportamiento correcto en situaciones diversas.
+3. **Uso de `withData`**: Kotest ofrece una forma elegante de implementar DDT a través de `withData`, lo que mejora la legibilidad del código y permite una ejecución más eficiente de las pruebas.
+4. **Anidamiento de `withData`**: En casos más complejos, como la validación de políticas de contraseñas, el uso de `withData` anidados permite probar múltiples combinaciones de datos sin duplicar código, pero con un aumento en la complejidad y la cantidad de pruebas.
+5. **Estrategias de validación flexibles**: Vimos cómo implementar validaciones sencillas y cómo adaptarlas a diferentes requerimientos utilizando Kotest, lo que facilita la ampliación de las pruebas según las necesidades.
+
 ---
 
-<References references={[
-    {
-        publisher: "Manning Publications",
-        pages: "177-200",
-        type: "book",
-        title: "Testing Kotlin code",
-        author: "John Doe",
-        year: "2020",
-        bookTitle: "Kotlin in Action",
-    },
-    {
-        title: "Kotest Documentation",
-        url: "https://kotest.io/docs/framework/datatest.html",
-        type: "web",
-        accessed: "2023-10",
-    },
-]}/>
-
-<References references={[
-    {
-        publisher: "Addison-Wesley",
-        pages: "277–345",
-        type: "book",
-        title: "18. Test Strategy Patterns",
-        author: "Gerard Meszaros",
-        year: "2007",
-        bookTitle: "xUnit test patterns: refactoring test code",
-    },
-]}/>
+Esta lección nos proporciona una base sólida para aplicar Data-Driven Testing en la validación de bibliotecas de software y otros proyectos donde la consistencia y la cobertura de pruebas son fundamentales.
