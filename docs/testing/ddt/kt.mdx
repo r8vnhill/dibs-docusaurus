@@ -19,7 +19,36 @@ import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
-<GithubRepoLink repo="example-based-testing" user="r8vnhill"/>
+<GithubRepoLink repo="data-driven-testing-kt" user="r8vnhill"/>
+<RepoClone repoName="data-driven-testing-kt"/>
+<ModuleSetup module='ddt' task='setupDdtModule'>
+    ```kotlin showLineNumbers   
+    val baseName = "ddt"
+    val baseDir = rootProject.file(baseName)
+    val printError: (String) -> Unit = System.err::println
+
+    tasks.register("setupDdtModule") {
+        group = "setup"
+        description = "Creates the base module and files for the Data-Driven Testing project"
+
+        doLast {
+            createModule()
+            createBuildFile()
+        }
+    }
+
+    fun createModule() = when {
+        baseDir.exists() -> printError("The base directory already exists")
+        baseDir.mkdirs() -> println("The base directory was created successfully")
+        else -> printError("The base directory could not be created")
+    }
+
+    fun createBuildFile() = baseDir.resolve("build.gradle.kts").run {
+        if (exists()) printError("The build file already exists")
+        else writeText("// Intentionally left blank\n")
+    }
+    ```
+</ModuleSetup>
 
 En el desarrollo de **bibliotecas de software**, es fundamental asegurar que nuestras funciones y métodos funcionen correctamente con una variedad de entradas. Esto garantiza que otrxs desarrolladorxs puedan confiar en nuestra biblioteca para manejar casos diversos sin errores.
 
@@ -41,6 +70,28 @@ Supongamos que estamos desarrollando una biblioteca de software para validar con
 - **Contiene caracteres especiales**: Debe incluir al menos un carácter especial (e.g., `!@#\$%^&*`).
 
 Queremos asegurarnos de que nuestra función se comporte correctamente con una variedad de contraseñas válidas e inválidas.
+
+### Especificación BDD
+
+Podemos expresar los criterios de validación de contraseñas utilizando una especificación BDD:
+
+```kotlin showLineNumbers
+"Given a password" - {
+    "when validating it" - {
+        "then it should return true for a strong password" {}
+        "then it should return false for a weak password" - {
+            "if it has less than 8 characters" {}
+            "if it has no uppercase letter" {}
+            "if it has no lowercase letter" {}
+            "if it has no digits" {}
+            "if it has no special characters" {}
+        }
+    }
+}
+```
+
+### Implementación de las pruebas
+
 
 ### Implementación de la Función de Validación
 

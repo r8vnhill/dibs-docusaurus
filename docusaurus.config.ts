@@ -95,7 +95,7 @@ const config: Config = {
             copyright: `Copyright © ${new Date().getFullYear()} Ignacio Slater M. Built with Docusaurus.`,
         },
         prism: {
-            theme: prismThemes.nightOwlLight,
+            theme: prismThemes.vsLight,
             darkTheme: prismThemes.nightOwl,
             additionalLanguages: [
                 'bash',
