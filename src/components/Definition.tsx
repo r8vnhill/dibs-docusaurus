@@ -10,6 +10,7 @@ type DefinitionProps = {
 const Definition: React.FC<DefinitionProps> = ({ title, children, id }) => (
     <div className="definition" id={id}> {}
         <h4>{title}</h4>
+        <hr />
         <p>{children}</p>
     </div>
 );

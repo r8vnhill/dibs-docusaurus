@@ -17,7 +17,7 @@ const ModuleSetup: React.FC<SetupModuleProps> = ({ children, module, task }) => 
   const animationStyles = useSpring({
     from: { maxHeight: 0, opacity: 0 },
     to: {
-      maxHeight: isOpen ? 1000 : 0,
+      maxHeight: isOpen ? 2000 : 0,
       opacity: isOpen ? 1 : 0,
     },
     config: { tension: 300, friction: 30 },
@@ -34,6 +34,7 @@ const ModuleSetup: React.FC<SetupModuleProps> = ({ children, module, task }) => 
       </button>
       <animated.div style={animationStyles} className={styles.content}>
         <div className={styles.innerContent}>
+          <hr />
           {children}
           <p>
             Preocúpate de que el plugin <code>{module}</code> esté aplicado en el
