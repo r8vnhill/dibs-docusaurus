@@ -153,6 +153,7 @@ const sidebars: SidebarsConfig = {
                 'generics/declaration/kt',
                 'generics/use/kt',
                 'generics/bounds/kt',
+                'generics/erasure/kt',
             ],
         },
         {

@@ -26,9 +26,8 @@ const ReadingTime = () => {
         <p>
             ⏱ Dedicación recomendada: {readingTime} {readingTime === 1 ? 'minuto' : 'minutos'}<br/>
             Esto considera la lectura completa del contenido, incluyendo todas las pestañas, ejemplos y ejercicios.
-            <hr/>
         </p>
-
+        <hr/>
     </>;
 };
 

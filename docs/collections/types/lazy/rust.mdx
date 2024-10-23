@@ -1,18 +1,29 @@
 ---
-title: Colecciones Perezosas en Rust
+title: Colecciones perezosas en Rust
 ---
-import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
-<ReadingTime/>
-
-Después de haber explorado en detalle cómo **Kotlin** implementa las **colecciones perezosas** a través de **secuencias** (`Sequence`), es relevante comparar esta funcionalidad con cómo **Rust** maneja conceptos similares mediante **iteradores** (`Iterator`). Ambas lenguajes ofrecen mecanismos para trabajar con colecciones de manera eficiente y bajo demanda, pero lo hacen siguiendo paradigmas y principios de diseño diferentes inherentes a sus respectivos ecosistemas.
-
-## Iteradores en Rust
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="rust-dibs" />
 
 En **Rust**, los **iteradores** son una parte fundamental del lenguaje y su biblioteca estándar. Los iteradores en Rust están diseñados para ser **lazy** por defecto, lo que significa que las operaciones sobre ellos no se ejecutan hasta que se consumen explícitamente. Este enfoque permite la creación de **cadenas de operaciones** eficientes sin la sobrecarga de crear colecciones intermedias en memoria.
 
-### Características Principales de los Iteradores en Rust
+## Características Principales de los Iteradores en Rust
 
 1. **Lazy Evaluation**: Las operaciones en los iteradores no se ejecutan hasta que se llama a un método que consume el iterador, como `collect`, `for_each`, o `next`.
 2. **Composición de Operaciones**: Los iteradores pueden encadenar múltiples transformaciones como `map`, `filter`, `take`, entre otros, creando pipelines de procesamiento de datos.
@@ -20,58 +31,54 @@ En **Rust**, los **iteradores** son una parte fundamental del lenguaje y su bibl
 4. **Propiedad y Prestamos**: Los iteradores respetan las reglas de propiedad y préstamos de Rust, asegurando la seguridad de memoria sin necesidad de un recolector de basura.
 5. **Tipos de Iteradores**: Rust ofrece diferentes tipos de iteradores, incluyendo `IntoIterator`, `Iterator`, y adaptadores específicos como `IntoIter`.
 
-### Implementación de un Iterador Perezoso en Rust
+## Implementación de un Iterador Perezoso en Rust
 
 A continuación, se presenta un ejemplo de cómo implementar y utilizar un iterador perezoso en Rust que genera una secuencia infinita de números pares y toma los primeros 10 elementos.
 
-#### Paso 1: Definir una Estructura de Iterador
-
-```rust
-struct EvenNumbers {
+```rust showLineNumbers title="collections/src/lazy/mod.rs"
+pub struct EvenNumbers {
     current: u32,
 }
 
 impl EvenNumbers {
-    fn new() -> Self {
+    pub fn new() -> Self {
         EvenNumbers { current: 0 }
     }
 }
-```
 
-#### Paso 2: Implementar el Trait `Iterator` para la Estructura
-
-```rust
 impl Iterator for EvenNumbers {
     type Item = u32;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let next_value = self.current;
-        self.current += 2;
-        Some(next_value)
+        let next = self.current;
+        self.current = self.current + 2;
+        Some(next)
     }
 }
 ```
 
-#### Paso 3: Uso del Iterador en el Programa Principal
+Con esto en mente, veamos cómo se utiliza este iterador perezoso en Rust:
 
-```rust
+```rust showLineNumbers title="collections/src/main.rs"
+mod lazy;
+
+use lazy::EvenNumbers;
+
 fn main() {
-    let even_numbers = EvenNumbers::new(); // Crear una instancia del iterador
-    let first_ten_evens: Vec<u32> = even_numbers.take(10).collect(); // Tomar los primeros 10 números pares
-    println!("{:?}", first_ten_evens); // Output: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
+    let mut even_numbers = EvenNumbers::new();
+    let even_numbers: Vec<u32> = EvenNumbers::new().take(5).collect();
+    println!("{:?}", even_numbers);
+    /* Output:
+     [0, 2, 4, 6, 8]
+     */
 }
 ```
 
-### Explicación del Ejemplo
+<Explanation>
+    En este ejemplo, se define un iterador `EvenNumbers` que genera una secuencia infinita de números pares. Luego, se crea una instancia del iterador y se toman los primeros 5 elementos utilizando el método `take`. Finalmente, se consume el iterador y se almacenan los resultados en un vector.
+</Explanation>
 
-1. **Estructura `EvenNumbers`**: Define una estructura que mantiene el estado interno (`current`) para rastrear el número par actual.
-2. **Implementación de `Iterator`**: Al implementar el trait `Iterator` para `EvenNumbers`, se define el método `next`, que produce el siguiente número par incrementando el estado interno.
-3. **Consumo del Iterador**:
-     - **`take(10)`**: Limita el iterador a los primeros 10 elementos.
-     - **`collect()`**: Consume el iterador y recopila los elementos en un vector (`Vec<u32>`).
-4. **Salida**: Imprime la lista de los primeros 10 números pares generados de manera perezosa.
-
-## Comparación Final
+## Resumen comparativo
 
 | **Característica**                  | **Kotlin** (`Sequence`)                               | **Rust** (`Iterator`)                                            |
 |-------------------------------------|-------------------------------------------------------|------------------------------------------------------------------|
@@ -86,11 +93,39 @@ fn main() {
 | **Propiedad y Préstamos**           | No aplica                                             | Estrictamente manejado a través del sistema de préstamos de Rust |
 | **Mutabilidad**                     | Las secuencias son inmutables por defecto             | Los iteradores pueden ser mutables según la implementación       |
 
-## Conclusión
+### Beneficios y limitaciones
 
-Tanto **Kotlin** como **Rust** proporcionan mecanismos robustos para trabajar con colecciones perezosas, cada uno adaptándose a las fortalezas y filosofías de su respectivo lenguaje. **Kotlin** ofrece una sintaxis más sencilla y una integración fluida con la JVM, ideal para desarrolladores que buscan rapidez y facilidad de uso en entornos de alto nivel. **Rust**, por otro lado, brinda un control más granular sobre la implementación de iteradores, aprovechando su sistema de tipos estático y su enfoque en la seguridad de memoria, lo que lo hace ideal para aplicaciones donde el rendimiento y la seguridad son primordiales.
+<ProCons>
+    <Pros>
+        - **Eficiencia**: Los iteradores perezosos en Rust permiten evitar la creación de colecciones intermedias en memoria, lo que reduce el uso de recursos y mejora el rendimiento en grandes conjuntos de datos.
+        - **Zero-Cost Abstractions**: Las operaciones sobre iteradores son optimizadas en tiempo de compilación, lo que significa que el código resultante es tan eficiente como si se hubiera escrito sin abstracciones.
+        - **Seguridad de memoria**: Gracias al sistema de propiedad y préstamos de Rust, los iteradores garantizan que no haya acceso inseguro a la memoria, eliminando la posibilidad de errores comunes como los desbordamientos de buffer o las referencias colgantes.
+        - **Composición fluida**: Los iteradores en Rust permiten encadenar fácilmente operaciones como `map`, `filter`, y `take` de manera fluida, lo que resulta en código limpio y legible.
+        - **Control explícito del estado**: Los desarrolladores pueden definir iteradores personalizados que permiten un control detallado sobre el estado interno y la secuencia de elementos, mejorando la flexibilidad.
+    </Pros>
+    <Cons>
+        - **Curva de aprendizaje**: La implementación de iteradores personalizados puede ser compleja para quienes no están familiarizados con el modelo de propiedad y préstamos de Rust, lo que añade sobrecarga cognitiva al diseño de iteradores.
+        - **Mutabilidad explícita**: A diferencia de otros lenguajes, en Rust los iteradores pueden requerir mutabilidad explícita si modifican su estado interno, lo que puede complicar la implementación en ciertos casos.
+        - **Limitaciones de ergonomía**: Comparado con lenguajes como Kotlin, que tienen construcciones más concisas (`sequence {}`), la implementación de iteradores en Rust puede parecer más verbosa y menos accesible para desarrolladores que buscan soluciones rápidas.
+        - **Colecciones infinitas**: Aunque Rust soporta iteradores infinitos, el manejo de estos casos puede requerir más precauciones y atención para evitar bucles infinitos no controlados, especialmente en entornos concurrentes.
+    </Cons>
+</ProCons>
 
-Al comprender las diferencias y similitudes entre las secuencias de Kotlin y los iteradores de Rust, los desarrolladores pueden elegir la herramienta más adecuada según las necesidades específicas de sus proyectos y el entorno de desarrollo en el que se encuentren trabajando.
+## ¿Qué aprendimos?
+
+En esta lección, exploramos el funcionamiento de las colecciones perezosas en Rust a través de los **iteradores**, que son perezosos por defecto y permiten procesar datos de manera eficiente, sin crear colecciones intermedias innecesarias. Vimos cómo los **iteradores en Rust** ofrecen varias ventajas, como la **optimización de bajo costo** y la **composición fluida de operaciones**.
+
+### Puntos clave
+
+1. **Evaluación perezosa**: Las operaciones en iteradores no se ejecutan hasta que se consumen explícitamente, lo que permite una optimización de recursos.
+2. **Seguridad de memoria**: El sistema de propiedad y préstamos de Rust garantiza que el acceso a la memoria sea seguro sin necesidad de un recolector de basura.
+3. **Control explícito**: Los desarrolladores pueden tener un control detallado sobre el estado de los iteradores, ofreciendo flexibilidad y precisión.
+4. **Eficiencia**: Rust asegura que las abstracciones de los iteradores sean optimizadas en tiempo de compilación, resultando en código altamente eficiente.
+5. **Curva de aprendizaje**: Aunque los iteradores en Rust son poderosos, pueden ser más complejos de implementar en comparación con otros lenguajes que tienen construcciones más concisas.
+
+---
+
+Este enfoque ofrece un balance sólido entre flexibilidad y eficiencia, especialmente cuando se trabaja con grandes cantidades de datos o secuencias infinitas.
 
 <References references={[
     {

@@ -65,6 +65,14 @@ export const ScalaCard = ({ link }) => {
     />
 }
 
+export const ScalaTestCard = ({ link }) => {
+  return <LanguageCard
+        logoSrc="https://www.svgrepo.com/show/354313/scala.svg"
+        language="Scala: ScalaTest"
+        link={link}
+    />
+}
+
 export const MSBuildCard = ({ link }) => {
   return <LanguageCard
     logoSrc="https://upload.wikimedia.org/wikipedia/commons/b/bf/MSBuild_logo.png"

@@ -1,0 +1,154 @@
+---
+title: Funciones y variables estáticas en Java
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+En Java, las variables y funciones estáticas se definen utilizando la palabra clave `static`. Estas pertenecen a la clase en sí misma y no a ninguna instancia particular de la clase. Esto permite acceder a ellas sin necesidad de crear objetos de la clase.
+
+## Funciones y variables estáticas
+
+Las **variables estáticas** son compartidas entre todas las instancias de una clase. Se utilizan comúnmente para definir constantes o variables que deben mantener un valor común en todas las instancias.
+
+```java showLineNumbers title="src/main/java/com/github/username/utils/MathUtils.java"
+package com.github.username.utils;
+
+public class MathUtils {
+    public static final double PI = 3.141592653589793;
+
+    public static int square(int number) {
+        return number * number;
+    }
+}
+```
+
+Para acceder a variables y funciones estáticas, se utiliza el nombre de la clase seguido del operador punto (`.`).
+
+```java showLineNumbers title="src/main/java/com/github/username/Main.java"
+package com.github.username;
+
+import com.github.username.utils.MathUtils;
+
+public class Main {
+    public static void main(String[] args) {
+        // Acceder a la variable estática PI
+        System.out.println("Valor de PI: " + MathUtils.PI);
+        
+        // Invocar la función estática square
+        int result = MathUtils.square(5);
+        System.out.println("Cuadrado de 5: " + result);
+    }
+}
+```
+
+<Explanation>
+    En este ejemplo, accedemos a la constante estática `PI` y a la función estática `square` definidas en la clase `MathUtils`. Al no ser necesaria la creación de una instancia de `MathUtils`, podemos acceder a estos miembros directamente mediante el nombre de la clase.
+</Explanation>
+
+## Clases Estáticas
+
+En Java, además de las variables y funciones estáticas, es posible definir **clases estáticas**. Estas son clases anidadas dentro de otras clases, pero con la diferencia de que no necesitan una instancia de la clase contenedora para ser utilizadas. Este concepto es útil cuando una clase anidada no depende de los miembros de instancia de la clase externa, lo que permite organizar mejor el código y evitar una dependencia innecesaria.
+
+Las clases estáticas se definen utilizando la palabra clave `static` dentro de otra clase. Al igual que los métodos y variables estáticas, las clases estáticas no pueden acceder a los miembros no estáticos de la clase externa directamente, lo que refuerza la idea de que estas clases son completamente independientes de cualquier instancia de la clase contenedora.
+
+```java showLineNumbers title="src/main/java/com/github/username/utils/MathUtils.java"
+package com.github.username.utils;
+
+public class MathUtils {
+
+    // Clase estática anidada
+    public static class Calculator {
+        public static int add(int a, int b) {
+            return a + b;
+        }
+        
+        public static int subtract(int a, int b) {
+            return a - b;
+        }
+    }
+}
+```
+
+Una clase estática se accede de manera similar a cómo se acceden los métodos y variables estáticas: a través del nombre de la clase contenedora, seguido por el nombre de la clase estática anidada.
+
+```java showLineNumbers title="src/main/java/com/github/username/Main.java"
+package com.github.username;
+
+import com.github.username.utils.MathUtils;
+
+public class Main {
+    public static void main(String[] args) {
+        // Acceder a los métodos de la clase estática Calculator
+        int sum = MathUtils.Calculator.add(10, 5);
+        int difference = MathUtils.Calculator.subtract(10, 5);
+
+        System.out.println("Suma: " + sum);  // Suma: 15
+        System.out.println("Diferencia: " + difference);  // Diferencia: 5
+    }
+}
+```
+
+<Explanation>
+    En este ejemplo, `MathUtils.Calculator` es una clase estática que agrupa métodos relacionados con cálculos matemáticos, como `add` y `subtract`. Dado que estas operaciones no dependen del estado de ninguna instancia de `MathUtils`, se agrupan en una clase estática para mantener el código organizado y evitar la creación innecesaria de instancias.
+
+    Al ser una clase estática, `Calculator` puede ser accedida directamente mediante `MathUtils.Calculator` sin la necesidad de instanciar `MathUtils`.
+</Explanation>
+
+## Resumen comparativo
+
+| **Característica**             | **Java**                                                                 | **Kotlin**                                                                |
+|-------------------------------|--------------------------------------------------------------------------|---------------------------------------------------------------------------|
+| **Definición de funciones y variables estáticas** | Se utiliza la palabra clave `static` para declarar funciones y variables estáticas dentro de una clase. | Kotlin no tiene `static`, pero usa funciones y propiedades de nivel superior, o `object`. |
+| **Acceso a funciones/variables estáticas** | Se accede usando el nombre de la clase seguido por `.` (ej. `MathUtils.PI`). | Se accede directamente mediante el nombre de la función de nivel superior o el `object`. |
+| **Clases estáticas**           | Se permiten clases estáticas dentro de otras clases usando `static class`, permitiendo una independencia de la clase contenedora. | Kotlin no tiene clases estáticas anidadas, pero usa `object` para lograr el mismo efecto, creando un singleton. |
+| **Creación de singletons**     | Se debe crear manualmente, o usando el patrón de diseño singleton.       | Usa `object` de manera nativa para definir singletons de manera sencilla.  |
+| **Limitaciones de acceso**     | Las clases estáticas no pueden acceder a miembros no estáticos de la clase externa. | Los `object` tienen las mismas limitaciones que una clase estática.        |
+
+### Beneficios y limitaciones
+
+<ProCons>
+    <Pros>
+        - **Acceso sin instancias**: Al utilizar variables y funciones estáticas, puedes acceder a ellas sin crear instancias de una clase, lo cual es útil para definir utilidades comunes o constantes globales.
+        - **Memoria compartida**: Las variables estáticas son compartidas entre todas las instancias de una clase, lo que permite mantener un estado común que puede ser accedido desde cualquier parte del código.
+        - **Organización de código**: Las clases estáticas y métodos estáticos permiten agrupar funcionalidades relacionadas sin necesidad de crear instancias, mejorando la organización del código.
+        - **Encapsulación**: Las clases estáticas anidadas ayudan a encapsular código que no depende del estado de la clase externa, lo que facilita la modularidad y separación de responsabilidades.
+    </Pros>
+    <Cons>
+        - **Dificultad en pruebas**: Los métodos estáticos pueden ser más difíciles de probar en un entorno de pruebas unitarias, ya que no se pueden simular de manera sencilla como los métodos de instancia.
+        - **Dependencias globales**: El abuso de variables estáticas puede generar dependencias globales en el sistema, lo que aumenta el acoplamiento y puede llevar a efectos secundarios inesperados.
+        - **Limitación de extensibilidad**: Los métodos y variables estáticas no pueden ser sobreescritos o modificados por clases derivadas, lo que limita su extensibilidad y reutilización en jerarquías de clases.
+        - **Acceso limitado a instancias**: Las clases y métodos estáticos no pueden acceder a los miembros no estáticos de la clase externa, lo que reduce la flexibilidad en ciertos escenarios.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, hemos explorado el uso de **funciones y variables estáticas** en Java, cómo se definen, acceden, y cuándo son útiles. También vimos cómo se utilizan **clases estáticas** y cómo estos conceptos pueden mejorar la organización del código en proyectos más grandes.
+
+### Puntos clave
+
+- **Funciones y variables estáticas en Java**: Se declaran usando la palabra clave `static` y pertenecen a la clase, no a una instancia. Esto las convierte en herramientas útiles para definir constantes y métodos utilitarios que deben ser accesibles globalmente.
+- **Acceso a miembros estáticos**: Los miembros estáticos se acceden mediante el nombre de la clase, lo que elimina la necesidad de crear instancias para acceder a ellos.
+- **Clases estáticas anidadas**: Las clases estáticas anidadas son útiles cuando el código dentro de la clase no necesita acceder a los miembros de la clase externa, lo que mejora la encapsulación y modularidad.
+- **Limitaciones y cuidado en su uso**: A pesar de sus ventajas, el uso excesivo de métodos y variables estáticas puede complicar las pruebas, aumentar las dependencias globales, y limitar la extensibilidad del código.
+
+---
+
+En resumen, las funciones y variables estáticas en Java son herramientas poderosas para definir utilidades y constantes que deben ser accesibles sin la necesidad de instancias. Sin embargo, deben utilizarse con precaución debido a las dificultades que pueden presentar en las pruebas, así como los posibles problemas de acoplamiento y extensibilidad que pueden generar. El uso de clases estáticas también proporciona una forma efectiva de organizar el código, siempre y cuando se asegure que no dependan de los miembros de instancia de la clase externa.

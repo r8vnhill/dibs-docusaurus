@@ -115,7 +115,7 @@ const config: Config = {
                 'scala',
                 'scheme',
                 'toml',
-                'gherkin'
+                'gherkin',
             ],
         },
     } satisfies Preset.ThemeConfig,

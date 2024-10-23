@@ -1,14 +1,25 @@
 ---
-title: Configuraciones Globales
+title: Configuraciones globales
 ---
-import References from "../../src/components/ReferencesComponent";
-import Definition from "../../src/components/Definition";
-import ReadingTime from "../../src/components/ReadingTime";
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="echo-app-kt" />
 
 En esta sección, aprenderemos a definir configuraciones que se aplican a todos los submódulos de un proyecto Gradle.
 Estas configuraciones globales se gestionan a través del archivo `build.gradle.kts` ubicado en la raíz del proyecto.
@@ -34,7 +45,7 @@ Para mantener las configuraciones globales de manera organizada y centralizada, 
 todos los archivos de configuración, tanto para parámetros que se pasan a Gradle como para variables globales o de
 entorno.
 
-```properties title="gradle.properties"
+```properties title="gradle.properties" showLineNumbers
 # Parámetros de la JVM
 org.gradle.jvmargs=-Xmx4g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
 systemProp.org.gradle.jvmargs=-Xmx4g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
@@ -48,87 +59,56 @@ org.gradle.daemon=true
 echo.group = cl.ravenhill
 ```
 
-## ¿Qué acabamos de hacer?
-
-- **`org.gradle.jvmargs`**: Configura los argumentos de la JVM, asignando 4 GB de memoria máxima para Gradle y activando el [volcado de heap](https://es.wikipedia.org/wiki/Volcado_de_memoria) en caso de un error de memoria.
-- **`org.gradle.caching`, `org.gradle.parallel`, `org.gradle.daemon`**: Estas propiedades habilitan diversas
-    optimizaciones de Gradle, como la caché de construcción, la ejecución de tareas en paralelo y el uso del daemon de
-    Gradle para mejorar el rendimiento.
-- **`echo.group`**: Definimos una propiedad personalizada para el grupo del proyecto. Este valor se reutilizará en el
-    archivo `build.gradle.kts` para establecer el identificador único del proyecto.
+<Explanation>
+    - **`org.gradle.jvmargs`**: Configura los argumentos de la JVM, asignando 4 GB de memoria máxima para Gradle y activando el [volcado de heap](https://es.wikipedia.org/wiki/Volcado_de_memoria) en caso de un error de memoria.
+    - **`org.gradle.caching`, `org.gradle.parallel`, `org.gradle.daemon`**: Estas propiedades habilitan diversas optimizaciones de Gradle, como la caché de construcción, la ejecución de tareas en paralelo y el uso del daemon de Gradle para mejorar el rendimiento.
+    - **`echo.group`**: Definimos una propiedad personalizada para el grupo del proyecto. Este valor se reutilizará en el archivo `build.gradle.kts` para establecer el identificador único del proyecto.
+</Explanation>
 
 ## `build.gradle.kts`
 
 En el archivo `build.gradle.kts`, utilizamos las propiedades definidas en `gradle.properties` para configurar el grupo
 y la versión del proyecto. También aplicamos el plugin que gestionará las convenciones del proyecto.
 
-<BoxedTabs>
-    <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin title="build.gradle.kts"
-        plugins {
-            id("jvm.conventions") // Aplica el plugin de convenciones para JVM
-        }
 
-        val projectGroup = extra["echo.group"] ?: error("La propiedad 'echo.group' no está definida.")
-        val projectVersion = libs.versions.echo.get()
+```kotlin title="build.gradle.kts" showLineNumbers
+plugins {
+    id("jvm.conventions") // Aplica el plugin de convenciones para JVM
+}
 
-        allprojects {
-            group = projectGroup
-            version = projectVersion
-        }
-        ```
+val projectGroup = extra["echo.group"] 
+    ?: error("La propiedad 'echo.group' no está definida.")
+val projectVersion = libs.versions.echo.get()
 
-        ## ¿Qué acabamos de hacer?
+allprojects {
+    group = projectGroup
+    version = projectVersion
+}
+```
 
-        1. **Cargar propiedades**: Usamos `extra["echo.group"]` para obtener el valor de `echo.group` definido en
-        `gradle.properties`. En caso de que esta propiedad no esté definida, lanzamos un error para evitar fallos
-        silenciosos.
-        2. **Configurar el grupo y la versión**: Establecemos el **grupo** y la **versión** para todos los submódulos del
-        proyecto utilizando `allprojects`. El grupo se obtiene del archivo `gradle.properties`, mientras que la versión se
-        obtiene del archivo `libs.versions.toml`.
-    </TabItem>
-    <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy title="build.gradle"
-        plugins {   //  (1)
-            alias libs.plugins.kotlin
-        }
+<Explanation>
+    - **Cargar propiedades**: Usamos `extra["echo.group"]` para obtener el valor de `echo.group` definido en
+    `gradle.properties`. En caso de que esta propiedad no esté definida, lanzamos un error para evitar fallos
+    silenciosos.
+    - **Configurar el grupo y la versión**: Establecemos el **grupo** y la **versión** para todos los submódulos del
+    proyecto utilizando `allprojects`. El grupo se obtiene del archivo `gradle.properties`, mientras que la versión se
+    obtiene del archivo `libs.versions.toml`.
+</Explanation>
 
-        apply from: "${rootDir}/convention-plugins/jvm.conventions.gradle"  //  (2)
+## ¿Qué aprendimos?
 
-        def projectGroup = project.findProperty("echo.group")   //  (3)
-        if (projectGroup == null) {
-            throw new GradleException("La propiedad 'echo.group' no está definida.")
-        }
+En esta lección, exploramos cómo configurar propiedades globales en un proyecto Gradle utilizando el archivo `gradle.properties` y cómo estas propiedades pueden ser reutilizadas en el archivo `build.gradle.kts` para mantener la consistencia en la configuración de todos los submódulos de un proyecto. También vimos cómo aplicar optimizaciones de rendimiento a Gradle y cómo gestionar propiedades importantes como el **grupo** y la **versión** del proyecto.
 
-        def projectVersion = libs.versions.echo.orNull  //  (3)
-        if (projectVersion == null) {
-            throw new GradleException("La versión 'echo' no está definida en libs.versions.")
-        }
+### Puntos clave
 
-        allprojects {   //  (4)
-            group = projectGroup
-            version = projectVersion
-        }
-        ```
+- **Definición del grupo**: El grupo del proyecto es un identificador único, comúnmente en formato de dominio invertido, que ayuda a evitar conflictos entre proyectos.
+- **Propiedades globales con `gradle.properties`**: Definir parámetros clave como la memoria de la JVM, optimizaciones de Gradle y propiedades personalizadas que pueden ser reutilizadas en todo el proyecto.
+- **Centralización de configuraciones**: Usar el archivo `build.gradle.kts` para aplicar de manera uniforme las configuraciones de grupo y versión a todos los submódulos.
+- **Optimización de Gradle**: Activamos configuraciones como la ejecución paralela, el uso del daemon y la caché de tareas para mejorar el rendimiento del proyecto.
 
-        ### ¿Qué acabamos de hacer?
+---
 
-        1. **Aplicar el plugin de Kotlin**: Utilizamos el bloque `plugins` para aplicar el plugin de Kotlin mediante un alias del catálogo de versiones (`libs.plugins.kotlin`). Esto facilita la configuración del proyecto, utilizando una versión centralizada del plugin que está definida en `libs.versions.toml`.
-        2. **Aplicar un archivo de convenciones de JVM**: Utilizamos el comando `apply from:` para aplicar un script externo llamado `jvm.conventions.gradle`, ubicado en el módulo `convention-plugins`. Este archivo define las convenciones que aplicamos a todos los proyectos que usen la JVM. Al externalizar esta lógica, evitamos duplicar configuraciones en varios subproyectos y mantenemos un punto centralizado para configurar el comportamiento del entorno JVM.
-        3. **Obtener propiedades del proyecto de manera segura**:
-            - **`projectGroup`:** Utilizamos `project.findProperty()` para buscar la propiedad `echo.group` definida en el archivo `gradle.properties`. Si no se encuentra, lanzamos una excepción personalizada para asegurarnos de que no pasamos por alto la ausencia de esta configuración clave.
-            - **`projectVersion`:** Accedemos a la versión de la biblioteca `echo` desde el catálogo de versiones utilizando `libs.versions.echo.orNull`. Si no está definida, lanzamos otra excepción personalizada. Este patrón nos ayuda a manejar las propiedades de manera robusta, garantizando que siempre estén definidas y evitando problemas durante la construcción.
-        4. **Configurar propiedades en todos los subproyectos**: Utilizamos el bloque `allprojects` para aplicar las configuraciones de `group` y `version` a todos los subproyectos del repositorio. De esta forma, mantenemos consistencia en la identificación de los artefactos generados durante el proceso de construcción en todos los módulos del proyecto.
-    </TabItem>
-</BoxedTabs>
-
-## Wrapping Up
-
-En esta sección, aprendimos a configurar las propiedades globales en un proyecto Gradle. Estas configuraciones permiten
-mantener un control centralizado de propiedades clave como el grupo y la versión del proyecto, lo que facilita la
-administración de proyectos con múltiples submódulos y mejora la consistencia en toda la estructura del proyecto. Usar
-el archivo `gradle.properties` y definir estas configuraciones en `build.gradle.kts` ayuda a simplificar la
-configuración y a hacerla más mantenible a largo plazo.
+Este enfoque centralizado y estructurado para gestionar configuraciones globales en Gradle no solo mejora la organización del proyecto, sino que también optimiza su rendimiento y asegura consistencia en todas las configuraciones.
 
 <References references={[
     {

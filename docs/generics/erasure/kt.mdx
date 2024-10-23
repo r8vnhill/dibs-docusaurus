@@ -1,0 +1,201 @@
+---
+title: Type Erasure
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="generics-kt" />
+
+Kotlin es un lenguaje que se ejecuta sobre la Máquina Virtual de Java (JVM) y, por lo tanto, hereda algunas de sus características y limitaciones. Una de estas limitaciones es el **Type Erasure** o borrado de tipos genéricos en tiempo de ejecución. En esta lección, exploraremos qué es el type erasure, cómo afecta a Kotlin, y cómo las **funciones inline** y la **reificación de tipos** nos permiten superar algunas de estas limitaciones.
+
+<Definition title='Type erasure'>
+    El **Type Erasure** es un proceso por el cual la información de tipos genéricos es eliminada (borrada) en tiempo de ejecución por la JVM. Esto significa que, en tiempo de ejecución, la JVM no tiene conocimiento de los tipos genéricos que se usaron en tiempo de compilación.
+</Definition>
+
+## Origen del Type Erasure
+
+El **Type Erasure** tiene su origen en la implementación de **Generics** en Java. En 2004, con la llegada de **Java 5**, se introdujo el sistema de tipos genéricos para permitir que lxs desarrolladorxs pudieran escribir código más seguro y reutilizable. Antes de esta versión, las colecciones y otros tipos no podían especificar qué tipo de objetos contenían, lo que hacía necesario realizar *casts* explícitos y a menudo inseguros, generando errores en tiempo de ejecución como el famoso `ClassCastException`.
+
+Sin embargo, para mantener la compatibilidad con versiones anteriores, los tipos genéricos se implementaron de manera que fueran **borrados** en tiempo de ejecución. Esto aseguraba que el código antiguo, escrito sin genéricos, seguiría funcionando sin necesidad de modificaciones. El compilador de Java genera el bytecode con las mismas instrucciones para las clases con y sin genéricos, lo que implica que durante la ejecución, la JVM no sabe qué tipo concreto se usó en tiempo de compilación.
+
+Por esta razón, **Type Erasure** se convirtió en una característica intrínseca de la JVM, y todos los lenguajes que se ejecutan sobre ella, como Kotlin, heredan esta limitación.
+
+### Ejemplo en Java
+
+Antes de la introducción de generics, una lista de enteros en Java se escribía así:
+
+```java showLineNumbers
+List numbers = new ArrayList();
+numbers.add(1);
+if (numbers.get(0) instanceof Integer) {
+    Integer num = (Integer) numbers.get(0);
+}
+```
+
+El uso de generics en Java 5 mejoró la seguridad del tipo en tiempo de compilación:
+
+```java showLineNumbers
+List<Integer> numbers = new ArrayList<>();
+numbers.add(1);
+Integer num = numbers.get(0);  // No requiere cast explícito
+```
+
+A pesar de esta mejora en seguridad, el type erasure implica que, en tiempo de ejecución, el tipo `List<Integer>` es borrado y tratado simplemente como `List`, lo que impide conocer el tipo `Integer` durante la ejecución. La JVM solo ve una `List` genérica, sin detalles sobre el tipo exacto de sus elementos.
+
+## Ejemplo de Type Erasure
+
+Considera el siguiente código en Kotlin:
+
+```kotlin showLineNumbers
+val list: List<String> = listOf("Kotlin", "Java")
+```
+
+En tiempo de compilación, el compilador sabe que `list` es de tipo `List<String>`. Sin embargo, en tiempo de ejecución, la JVM solo sabe que es una `List`, sin información sobre el tipo de sus elementos.
+
+Esto puede causar problemas si intentamos acceder al tipo genérico en tiempo de ejecución:
+
+```kotlin showLineNumbers
+fun <T> printType(item: T) {
+    println(item::class)
+}
+```
+
+Si llamamos a `printType("Hello")`, la función podrá imprimir el tipo `String`. Sin embargo, si intentamos obtener el tipo genérico `T` en sí, nos encontraremos con limitaciones debido al type erasure.
+
+## Limitaciones debido al Type Erasure
+
+Una consecuencia del type erasure es que no podemos, por ejemplo, comprobar el tipo genérico en tiempo de ejecución:
+
+```kotlin showLineNumbers
+fun <T> checkType(list: List<T>) {
+    if (list is List<String>) {
+        println("Es una lista de Strings")
+    }
+}
+```
+
+El código anterior dará un warning en tiempo de compilación: **`"Unchecked cast: List<T> to List<String>"`**. Esto se debe a que en tiempo de ejecución, la JVM no puede saber si `list` es una `List<String>` o cualquier otra lista genérica.
+
+## Funciones Inline y Reificación de Tipos
+
+Kotlin ofrece una forma de superar algunas de las limitaciones del type erasure mediante el uso de **funciones inline** y **reificación de tipos** (type reification).
+
+### Funciones Inline
+
+Las funciones `inline` en Kotlin son funciones cuyo cuerpo se inserta (o "se inyecta") en el lugar donde se llama a la función durante la compilación. Esto puede mejorar el rendimiento al eliminar la sobrecarga de llamadas a funciones, pero también tiene otros usos.
+
+### Reificación de Tipos
+
+La **reificación de tipos** permite que los tipos genéricos estén disponibles en tiempo de ejecución en funciones inline. Para usarla, debemos marcar el parámetro de tipo con la palabra clave `reified`.
+
+### Sintaxis de una Función Inline con Tipo Reificado
+
+```kotlin showLineNumbers
+inline fun <reified T> myFunction() {
+    // Aquí podemos acceder al tipo T en tiempo de ejecución
+}
+```
+
+## Ejemplo Práctico: Filtrar una Lista por Tipo
+
+Supongamos que tenemos una lista heterogénea y queremos filtrar los elementos de un cierto tipo.
+
+### Sin Type Reification
+
+Intentemos implementar una función que filtre elementos de un cierto tipo:
+
+```kotlin showLineNumbers
+fun <T> filterByType(list: List<Any>): List<T> {
+    for (it in list) {
+        if (it is T) {
+            // Error: Cannot check for instance of erased type: T
+        }
+    }
+}
+```
+
+Este código **no compilará**, ya que el type erasure impide que podamos comprobar si `it is T`.
+
+### Con Type Reification
+
+Utilizando una función inline con tipo reificado, podemos lograr nuestro objetivo:
+
+```kotlin showLineNumbers
+inline fun <reified T> filterByType(list: List<Any>): List<T> {
+    val result = mutableListOf<T>()
+    for (it in list) {
+        if (it is T) {
+            result += it
+        }
+    }
+}
+```
+
+Ahora podemos usar la función:
+
+```kotlin showLineNumbers
+val mixedList: List<Any> = listOf(1, "Kotlin", 2.5, "Java")
+val strings: List<String> = filterByType(mixedList)
+println(strings)  // Output: [Kotlin, Java]
+```
+
+## ¿Cómo Funciona?
+
+Al marcar la función como `inline` y el tipo genérico como `reified`, el compilador insertará el código de la función en cada lugar donde se llame, y reemplazará `T` con el tipo concreto en cada llamada. Esto permite que el tipo esté disponible en tiempo de ejecución.
+
+## Ejemplo Avanzado: Crear Instancias de Tipos Genéricos
+
+Otro uso de la reificación de tipos es crear instancias de tipos genéricos:
+
+```kotlin showLineNumbers
+inline fun <reified T: Any> createInstance() =
+    T::class.java.getDeclaredConstructor().newInstance()
+```
+
+Ahora podemos crear instancias de cualquier tipo que tenga un constructor sin argumentos:
+
+```kotlin showLineNumbers
+class MyClass {
+    init {
+        println("MyClass creada")
+    }
+}
+
+fun main() {
+    val instance: MyClass = createInstance()
+    // Output: MyClass creada
+}
+```
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos el concepto de **type erasure** en Kotlin y cómo afecta el uso de tipos genéricos en tiempo de ejecución, debido a la herencia de la JVM. Vimos que, aunque los genéricos mejoran la seguridad y la reutilización del código en tiempo de compilación, la JVM borra esta información en tiempo de ejecución, lo que genera limitaciones en la inspección y manipulación de tipos genéricos.
+
+Además, aprendimos cómo Kotlin utiliza **funciones inline** y la **reificación de tipos** para superar algunas de las limitaciones impuestas por el type erasure. Esto nos permite acceder a los tipos genéricos en tiempo de ejecución, lo cual sería imposible en situaciones estándar.
+
+### Puntos clave
+
+- **Type Erasure**: Es el proceso por el cual la información de tipos genéricos es borrada en tiempo de ejecución, lo que impide hacer comprobaciones directas de tipos genéricos o crear instancias de ellos.
+- **Funciones Inline**: Mejoran el rendimiento al insertar el código de la función en el lugar donde se invoca y son clave para permitir la reificación de tipos.
+- **Reificación de Tipos**: Permite acceder a los tipos genéricos en tiempo de ejecución dentro de funciones inline mediante la palabra clave `reified`.
+- **Filtrado por Tipo**: Usamos `reified` para crear funciones que filtren listas de objetos heterogéneos basadas en un tipo genérico, eliminando las limitaciones del type erasure.
+- **Instanciación de Tipos Genéricos**: Con la reificación de tipos, también es posible crear instancias de tipos genéricos en tiempo de ejecución, algo que normalmente no se puede hacer en Kotlin.
+
+---
+
+Con estos conceptos, hemos logrado superar una de las principales limitaciones heredadas de la JVM y hemos aprendido a manejar genéricos de manera más poderosa y flexible en Kotlin.
