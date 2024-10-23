@@ -210,3 +210,11 @@ export const JqwikCard = ({ link }) => {
     />
   );
 };
+
+export const JUnitCard = ({ link }) => {
+  return <LanguageCard
+    logoSrc="https://junit.org/junit5/assets/img/junit5-logo.png"
+    language="JVM: JUnit 5"
+    link={link}
+  />
+}
