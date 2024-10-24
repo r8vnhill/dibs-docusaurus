@@ -1,5 +1,5 @@
 ---
-title: "Ejemplo: Concatenación de Strings"
+title: "Caso de estudio: Concatenación de cadenas"
 ---
 import ReadingTime from '@site/src/components/ReadingTime'
 import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
@@ -15,41 +15,29 @@ import GithubRepoLink from '@site/src/components/GithubRepoLink'
 import { LanguageCard, JqwikCard } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
 <GithubRepoLink repo={"property-based-testing-kt"} user={"r8vnhill"}/>
+<ModuleSetup module='str-cat' task='setupStrCatModule'>
+    ```kotlin showLineNumbers title="convention-plugins/src/main/kotlin/str-cat.gradle.kts"
+    import tasks.ModuleSetupTask
 
-<details>
-    <summary>
-        Comencemos por crear un módulo para la lección...
-    </summary>
+    tasks.register<ModuleSetupTask>("setupStrCatModule") {
+        description = "Creates the base module and files for the string concatenation properties lesson"
+        moduleName.set("str-cat")
 
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path 'str-cat' -ItemType Directory
-            '// Intentionally left blank' |
-                Out-File -FilePath 'str-cat\build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            md str-cat
-            '// Intentionally left blank' > 'str-cat\build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            mkdir str-cat
-            echo '// Intentionally left blank' > \
-                'str-cat/build.gradle.kts'
-            ```
-        </TabItem>
-    </BoxedTabs>
-
-    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
-</details>
+        doLast {
+            createFiles(
+                packageName = "string",
+                test to "StringConcatenationLengthTest.kt",
+                test to "StringConcatenationMonoidTest.kt",
+            )
+        }
+    }
+    ```
+</ModuleSetup>
 
 Supongamos que queremos asegurarnos de que la concatenación de strings en nuestro proyecto funciona de forma correcta. En lugar de probar casos específicos con entradas puntuales, podemos buscar definir propiedades generales que deberían cumplirse sin importar los valores de entrada. Esto nos lleva a preguntarnos: ¿qué propiedades fundamentales debe respetar la concatenación de strings?
 
@@ -71,9 +59,9 @@ Añade las dependencias correspondientes en el archivo `versions.toml`:
     <TabItem label={"Código completo"} value={"Código completo"}>
         ```toml showLineNumbers
         [versions]
-        kotlin = "2.0.20"
+        kotlin = "2.0.21"
         pbt = "1.0.0"
-        detekt = "1.23.6"
+        detekt = "1.23.7"
         kotest = "5.9.1"
 
         [libraries]
@@ -98,61 +86,16 @@ Este enfoque mantiene tu archivo de dependencias limpio y organizado, permitiend
 
 ## Implementación del Test
 
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-
-            ```powershell
-            $StringTestDir = "src\test\kotlin\$Group\strings"
-            New-Item -Path $StringTestDir -ItemType Directory -Force
-            "package $Group.strings" -replace '\\', '.' | 
-                Out-File -FilePath "$StringTestDir\StringConcatenationTest.kt"
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-
-            ```powershell
-            $StringTestDir = "src\test\kotlin\$Group\strings"
-            md $StringTestDir
-            "package $Group.strings" -replace '\\', '.' > `
-                "$StringTestDir\StringConcatenationTest.kt"
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            GROUP="com/github/username"
-            ```
-
-            ```bash
-            STRING_TEST_DIR="src/test/kotlin/$GROUP/strings"
-            mkdir -p "$STRING_TEST_DIR"
-            echo "package ${GROUP//\//.}.strings" > \
-                "$STRING_TEST_DIR/StringConcatenationTest.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
-
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers title="src/test/kotlin/com/github/username/strings/StringConcatenationTest.kt"
+        ```kotlin showLineNumbers
         checkAll(Arb.string(), Arb.string()) { s1, s2 ->
             (s1 + s2) shouldHaveLength (s1.length + s2.length)
         }
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="src/test/kotlin/com/github/username/strings/StringConcatenationTest.kt"
+        ```kotlin showLineNumbers title="src/test/kotlin/com/github/username/strings/StringConcatenationLengthTest.kt"
         package com.github.username.strings
 
         import io.kotest.core.spec.style.FreeSpec
@@ -161,7 +104,7 @@ Este enfoque mantiene tu archivo de dependencias limpio y organizado, permitiend
         import io.kotest.property.arbitrary.string
         import io.kotest.property.checkAll
 
-        class StringConcatenationTest : FreeSpec({
+        class StringConcatenationLengthTest : FreeSpec({
             "A String" - {
                 "when concatenated" - {
                     "should have the sum of the lengths of the original strings" {
@@ -241,14 +184,8 @@ Podemos verificar que la concatenación de strings sigue las leyes de los monoid
         import io.kotest.property.arbitrary.string
         import io.kotest.property.checkAll
 
-        class StringConcatenationTest : FreeSpec({
+        class StringConcatenationMonoidTest : FreeSpec({
             "String concatenation" - {
-                "should have a length equal to the sum of the input strings' lengths" {
-                    checkAll(Arb.string(), Arb.string()) { s1, s2 ->
-                        (s1 + s2).length shouldBe s1.length + s2.length
-                    }
-                }
-
                 "should follow monoid laws" - {
                     "left identity" {
                         checkAll(Arb.string()) { s ->

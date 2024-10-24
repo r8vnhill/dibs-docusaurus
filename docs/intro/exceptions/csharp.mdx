@@ -40,7 +40,7 @@ En **C#**, puedes lanzar una excepción con la palabra clave `throw`, similar a 
         ```csharp showLineNumbers title="Exceptions/Divider.cs"
         namespace Exceptions;
 
-        public class Divider
+        public static class Divider
         {
             public static int Divide(int dividend, int divisor)
             {
@@ -80,28 +80,54 @@ Al igual que en Kotlin, **C#** utiliza la estructura `try-catch` para capturar e
         ```csharp showLineNumbers
         try
         {
-            return a / b;
+            return Divide(dividend, divisor);
         }
         catch (ArgumentException e)
         {
-            // Handle ArgumentException
+            // Handle exception
         }
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```csharp showLineNumbers
-        int SafeDivide(int a, int b)
+        ```csharp showLineNumbers title="Exceptions/Divider.cs"
+        namespace Exceptions;
+
+        public static class Divider
         {
-            try
+            public static int Divide(int dividend, int divisor)
             {
-                return a / b;
+                if (divisor == 0)
+                {
+                    throw new ArgumentException("Divisor cannot be zero", nameof(divisor));
+                }
+                return dividend / divisor;
             }
-            catch (DivideByZeroException e)
+            
+            public static int SafeDivide(int dividend, int divisor)
             {
-                Console.WriteLine($"Error: {e.Message}");
-                return 0; // Retorna 0 si ocurre una excepción
+                try
+                {
+                    return Divide(dividend, divisor);
+                }
+                catch (ArgumentException e)
+                {
+                    Console.WriteLine(e.Message);
+                    return 0;
+                }
             }
         }
+        ```
+
+        ```csharp showLineNumbers title="Exceptions/Program.cs"
+        using Exceptions;
+
+        Console.WriteLine(Divider.SafeDivide(10, 2));
+        Console.WriteLine(Divider.SafeDivide(10, 0));
+        /* Output:
+        5
+        Divisor cannot be zero (Parameter 'divisor')
+        0
+        */
         ```
     </TabItem>
 </BoxedTabs>
@@ -129,41 +155,113 @@ En **C#**, el bloque `finally` también es opcional y se ejecuta después del bl
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
         ```kotlin showLineNumbers
-        using System;
-        using System.IO;
+        namespace Exceptions;
 
-        void ReadFile(string path)
+        public static class FileReader
         {
-            StreamReader? reader = null;
-            try
+            public static void ReadFile(string path)
             {
-                // Leer archivo
-                reader = new StreamReader(path);
-                var content = reader.ReadToEnd();
-                Console.WriteLine("Contenido del archivo:");
-                Console.WriteLine(content);
-            }
-            catch (FileNotFoundException e)
-            {
-                Console.WriteLine($"Error: Archivo no encontrado. {e.Message}");
-            }
-            catch (UnauthorizedAccessException e)
-            {
-                Console.WriteLine($"Error: Acceso denegado al archivo. {e.Message}");
-            }
-            finally
-            {
-                // Asegurar que el archivo sea cerrado
-                if (reader != null)
+                StreamReader? reader = null;
+                try
                 {
-                    reader.Close();
-                    Console.WriteLine("El archivo fue cerrado correctamente.");
+                    // Leer archivo
+                    reader = new StreamReader(path);
+                    var content = reader.ReadToEnd();
+                    Console.WriteLine("Contenido del archivo:");
+                    Console.WriteLine(content);
+                }
+                catch (FileNotFoundException e)
+                {
+                    Console.WriteLine($"Error: Archivo no encontrado. {e.Message}");
+                }
+                catch (UnauthorizedAccessException e)
+                {
+                    Console.WriteLine($"Error: Acceso denegado al archivo. {e.Message}");
+                }
+                finally
+                {
+                    // Asegurar que el archivo sea cerrado
+                    if (reader != null)
+                    {
+                        reader.Close();
+                        Console.WriteLine("El archivo fue cerrado correctamente.");
+                    }
                 }
             }
         }
         ```
     </TabItem>
 </BoxedTabs>
+
+## Bloque `using`: Manejo automático de recursos
+
+En **C#**, el manejo de recursos que deben ser liberados correctamente, como archivos o conexiones a bases de datos, se facilita con el bloque **`using`**. Este bloque asegura que los recursos que implementan la interfaz **`IDisposable`** se liberen automáticamente al final de su uso, independientemente de si ocurre una excepción. Esto es fundamental para evitar fugas de recursos o memoria.
+
+### Ejemplo básico de `using`
+
+A continuación se muestra un ejemplo donde se utiliza un **`StreamReader`** para leer un archivo. El bloque **`using`** garantiza que el archivo sea cerrado al finalizar, lo que sucede automáticamente al salir del bloque:
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```csharp showLineNumbers
+        using var stream = new FileStream(path, FileMode.Open);
+        var content = reader.ReadToEnd();
+        Console.WriteLine(content);
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```csharp showLineNumbers title="Exceptions/FileReader.cs"
+        namespace Exceptions;
+
+        public static class FileReader
+        {
+            public static void ReadFile(string path)
+            {
+                using var stream = new FileStream(path, FileMode.Open);
+                var content = reader.ReadToEnd();
+                Console.WriteLine(content);
+            }
+        }
+        ```
+    </TabItem>
+</BoxedTabs>
+
+En este ejemplo, **`StreamReader`** implementa la interfaz **`IDisposable`**, lo que asegura que su método **`Dispose()`** sea llamado automáticamente cuando el bloque **`using`** termina, incluso si ocurre una excepción durante la ejecución.
+
+### Manejo de múltiples recursos
+
+En versiones recientes de **C#**, es posible declarar varios recursos **`IDisposable`** en un solo bloque **`using`**. Esto permite manejar varios recursos de forma concisa y asegura que todos sean liberados al finalizar.
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```csharp showLineNumbers
+        using var stream = new FileStream(path, FileMode.Open);
+        using var reader = new StreamReader(stream);
+        var content = reader.ReadToEnd();
+        Console.WriteLine("Contenido del archivo:");
+        Console.WriteLine(content);
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```csharp showLineNumbers title="Exceptions/FileReader.cs"
+        namespace Exceptions;
+
+        public static class FileReader
+        {
+            public static void ReadFile(string path)
+            {
+                using var stream = new FileStream(path, FileMode.Open);
+                using var reader = new StreamReader(stream);
+                var content = reader.ReadToEnd();
+                Console.WriteLine("Contenido del archivo:");
+                Console.WriteLine(content);
+            }
+        }
+        ```
+    </TabItem>
+</BoxedTabs>
+
+En este caso, tanto el **`FileStream`** como el **`StreamReader`** serán liberados al salir del bloque **`using`**, asegurando una correcta gestión de los recursos.
 
 ## Excepciones Personalizadas
 
@@ -172,30 +270,34 @@ Al igual que en Kotlin, puedes crear tus propias excepciones en **C#** extendien
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```csharp showLineNumbers
-        public class StopLovingException(string message) : Exception(message);
-
-        void ValidateAge(int age) {
-            if (age >= 70) {
-                throw new StopLovingException("And, darling, I will be loving you 'til we're 70");
-            }
+        if (age >= 70)
+        {
+            throw new StopLovingException(
+                "And, darling, I will be loving you 'til we're 70");
         }
+        ```
+
+        ```csharp showLineNumbers
+        public class StopLovingException(string message) : 
+            Exception(message);
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```csharp showLineNumbers title="Exceptions/StopLovingException.cs"
+        ```csharp showLineNumbers title="Exceptions/EdSheeran.cs"
         namespace Exceptions;
 
-        public class StopLovingException(string message) : Exception(message);
-        ```
-
-        ```csharp showLineNumbers title="Program.cs"
-        using Exceptions;
-
-        void ValidateAge(int age) {
-            if (age >= 70) {
-                throw new StopLovingException("And, darling, I will be loving you 'til we're 70");
+        public static class EdSheeran
+        {
+            public static void ValidateAge(int age) {
+                if (age >= 70) {
+                    throw new StopLovingException(
+                        "And, darling, I will be loving you 'til we're 70");
+                }
             }
         }
+
+        public class StopLovingException(string message) : 
+            Exception(message);
         ```
     </TabItem>
 </BoxedTabs>
@@ -207,23 +309,7 @@ En **C#**, si no capturas una excepción, esta se propagará hacia arriba en la 
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```csharp showLineNumbers
-        public static void Main(string[] args)
-        {
-            try
-            {
-                ReadConfigFile("config.json");
-            }
-            catch (FileNotFoundException ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-            catch (IOException ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-        }
-
-        private static void ReadConfigFile(string filePath)
+        public static void ReadConfigFile(string filePath)
         {
             if (!File.Exists(filePath))
             {
@@ -239,36 +325,64 @@ En **C#**, si no capturas una excepción, esta se propagará hacia arriba en la 
             }
         }
         ```
+
+        ```csharp showLineNumbers
+        try
+        {
+            FileReader.ReadConfigFile("config.json");
+        }
+        catch (FileNotFoundException ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        catch (IOException ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```csharp showLineNumbers
-        namespace CSharp;
+        ```csharp showLineNumbers title="Exceptions/FileReader.cs"
+        namespace Exceptions;
 
-        internal static class ConfigReader
+        public static class FileReader
         {
-            public static void Main(string[] args)
+            public static void ReadFile(string path)
             {
+                StreamReader? reader = null;
                 try
                 {
-                    ReadConfigFile("config.json");
+                    // Leer archivo
+                    reader = new StreamReader(path);
+                    var content = reader.ReadToEnd();
+                    Console.WriteLine("Contenido del archivo:");
+                    Console.WriteLine(content);
                 }
-                catch (FileNotFoundException ex)
+                catch (FileNotFoundException e)
                 {
-                    Console.WriteLine(ex.Message);
+                    Console.WriteLine($"Error: Archivo no encontrado. {e.Message}");
                 }
-                catch (IOException ex)
+                catch (UnauthorizedAccessException e)
                 {
-                    Console.WriteLine(ex.Message);
+                    Console.WriteLine($"Error: Acceso denegado al archivo. {e.Message}");
+                }
+                finally
+                {
+                    // Asegurar que el archivo sea cerrado
+                    if (reader != null)
+                    {
+                        reader.Close();
+                        Console.WriteLine("El archivo fue cerrado correctamente.");
+                    }
                 }
             }
-
-            private static void ReadConfigFile(string filePath)
+            
+            public static void ReadConfigFile(string filePath)
             {
                 if (!File.Exists(filePath))
                 {
                     throw new FileNotFoundException($"Configuration file not found: {filePath}");
                 }
-
                 try
                 {
                     Console.WriteLine("Configuration loaded successfully.");
@@ -280,10 +394,27 @@ En **C#**, si no capturas una excepción, esta se propagará hacia arriba en la 
             }
         }
         ```
+
+        ```csharp showLineNumbers title="Exceptions/Program.cs"
+        using Exceptions;
+
+        try
+        {
+            FileReader.ReadConfigFile("config.json");
+        }
+        catch (FileNotFoundException ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        catch (IOException ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        ```
     </TabItem>
 </BoxedTabs>
 
-## Comparación Final
+## Resumen comparativo
 
 | Característica                         | Kotlin                                  | C#                          |
 |----------------------------------------|-----------------------------------------|-----------------------------|
@@ -294,24 +425,37 @@ En **C#**, si no capturas una excepción, esta se propagará hacia arriba en la 
 | **Declaración de excepciones**         | No requiere declaración                 | No requiere declaración     |
 | **Ausencia de excepciones chequeadas** | Sí                                      | Sí                          |
 
-:::tip Ventajas de C#
+<ProCons>
+    <Pros>
+        - **Manejo robusto**: C# proporciona una forma clara y estructurada de manejar excepciones, con soporte para bloques `try-catch-finally`.
+        - **Compatibilidad**: Al igual que Kotlin, **C#** es ampliamente utilizado, lo que facilita la integración en entornos corporativos.
+        - **Excepciones personalizadas**: Es fácil crear excepciones específicas, lo que permite un control más preciso sobre el manejo de errores.        
+    </Pros>
+    <Cons>
+        - **Excepciones no chequeadas**: Al igual que en Kotlin, todas las excepciones en C# son no chequeadas, lo que puede llevar a una falta de previsión sobre las excepciones que una función podría lanzar.
+        - **Mayor verbosidad**: Aunque las excepciones en C# son similares a Kotlin, la sintaxis puede ser más extensa, especialmente cuando se manejan errores personalizados.
+    </Cons>
+</ProCons>
 
-1. **Manejo robusto**: C# proporciona una forma clara y estructurada de manejar excepciones, con soporte para bloques `try-catch-finally`.
-2. **Compatibilidad**: Al igual que Kotlin, **C#** es ampliamente utilizado, lo que facilita la integración en entornos corporativos.
-3. **Excepciones personalizadas**: Es fácil crear excepciones específicas, lo que permite un control más preciso sobre el manejo de errores.
+## ¿Qué aprendimos?
 
-:::
+En esta lección, exploramos el manejo de excepciones en **C#**, destacando sus similitudes y diferencias con **Kotlin** y otros lenguajes.
 
-:::danger Desventajas de C#
+### Puntos clave
 
-1. **Excepciones no chequeadas**: Al igual que en Kotlin, todas las excepciones en C# son no chequeadas, lo que puede llevar a una falta de previsión sobre las excepciones que una función podría lanzar.
-2. **Mayor verbosidad**: Aunque las excepciones en C# son similares a Kotlin, la sintaxis puede ser más extensa, especialmente cuando se manejan errores personalizados.
+1. **Lanzar y capturar excepciones**: 
+   - En **C#**, utilizamos la palabra clave `throw` para lanzar excepciones, similar a cómo lo hacemos en Kotlin.
+   - La estructura `try-catch` es usada para capturar y manejar excepciones en ambos lenguajes, lo que proporciona una forma clara y directa de gestionar errores en tiempo de ejecución.
+2. **Bloque `finally`**: 
+   - Tanto en **C#** como en **Kotlin**, el bloque `finally` es opcional y se usa para asegurar que ciertos recursos sean liberados, independientemente de si se lanzó una excepción o no.
+3. **Excepciones personalizadas**: 
+   - Al igual que en **Kotlin**, puedes crear excepciones personalizadas en **C#** extendiendo la clase `Exception`, permitiendo un manejo de errores más específico según las necesidades de la aplicación.
+4. **Propagación de excepciones**: 
+   - En **C#**, las excepciones no capturadas se propagan hacia arriba en la pila de llamadas, similar a **Kotlin**. No es necesario declarar las excepciones que puede lanzar una función, lo que simplifica la firma de los métodos.
 
-:::
+---
 
-## ¿Qué Aprendimos?
-
-En esta comparación entre **Kotlin** y **C#**, hemos visto que ambos lenguajes manejan las excepciones de manera similar, con `throw`, `try-catch`, y la capacidad de personalizar excepciones. Mientras que **C#** ofrece una estructura robusta y ampliamente utilizada para manejar errores, **Kotlin** simplifica la gestión de excepciones con una sintaxis más concisa y funcional, y hace uso de tipos anulables o `Result` para manejar errores de manera más funcional.
+El manejo de excepciones en **C#** es robusto y flexible, proporcionando mecanismos familiares y efectivos para controlar errores en aplicaciones. Si bien la sintaxis es un poco más detallada que en **Kotlin**, **C#** ofrece las mismas capacidades fundamentales para capturar, lanzar y manejar excepciones de manera estructurada.
 
 <References references={[
 

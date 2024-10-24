@@ -23,11 +23,11 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 JUnit 5 proporciona soporte para pruebas parametrizadas a través de su módulo `junit-jupiter-params`. Este enfoque es ligeramente diferente de Kotest en términos de configuración y sintaxis, pero ofrece las mismas capacidades fundamentales: ejecutar la misma prueba con diferentes conjuntos de datos.
 
-### Ejemplo en JUnit 5
+## Usando `@CsvSource`
 
 Imaginemos que queremos realizar las mismas validaciones de contraseñas que hicimos con Kotest. Con JUnit 5, podemos utilizar la anotación `@ParameterizedTest` para definir la prueba y `@CsvSource` para proporcionar los datos de prueba.
 
-```java
+```java showLineNumbers
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -44,6 +44,7 @@ public class PasswordValidatorTest {
         "'P@ssword', false",
         "'Password1', false"
     })
+    @DisplayName("Given a password, when validating it, then it should meet the criteria")
     void testIsValidPassword(String password, boolean expected) {
         boolean result = PasswordValidator.isValid(password);
         assertEquals(expected, result);
@@ -51,22 +52,157 @@ public class PasswordValidatorTest {
 }
 ```
 
-## Diferencias Clave
+## Usando `@MethodSource`
 
-### 1. **Sintaxis**
+En su lugar, JUnit ofrece opciones como `@ParameterizedTest` y `@MethodSource`, pero estas son útiles para casos lineales, donde se prueban múltiples variaciones de un solo conjunto de datos, no para combinaciones complejas de múltiples conjuntos de pruebas.
 
-- En **Kotest**, las pruebas con datos se definen usando `withData`, que permite definir una tabla de datos o listas y realizar múltiples verificaciones en un solo bloque de prueba. Esto facilita anidar pruebas y organizar casos de prueba complejos.
-- En **JUnit 5**, se usa `@ParameterizedTest` junto con `@CsvSource` o `@MethodSource` para definir los casos de prueba. Este enfoque es más explícito en términos de anotaciones y puede ser más fácil de entender para quienes ya están familiarizados con JUnit.
+```java showLineNumbers
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import java.util.stream.Stream;
 
-### 2. **Manejo de Errores**
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-- **Kotest** permite continuar ejecutando todas las pruebas, incluso si alguna falla, proporcionando un reporte completo de los errores al final. Además, las herramientas de Kotest son más expresivas, ofreciendo mensajes de error claros.
-- En **JUnit 5**, si un caso de prueba falla, ese caso es reportado individualmente. Sin embargo, el manejo de errores en JUnit puede resultar más básico en comparación con Kotest, que tiene soporte nativo para `shouldBe` y otras funciones de validación más concisas.
+public class PasswordValidatorTest {
 
-### 3. **Anidamiento de Pruebas**
+    @ParameterizedTest
+    @MethodSource("passwordCombinations")
+    @DisplayName("Given a password, when validating it, then it should meet the criteria")
+    void testIsValidPassword(String password, boolean expected) {
+        boolean result = PasswordValidator.isValid(password);
+        assertEquals(expected, result);
+    }
 
-- **Kotest** sobresale en el anidamiento de `withData`. Esto permite probar múltiples combinaciones de datos sin tener que duplicar la lógica de las pruebas. En el caso de políticas de validación complejas, el anidamiento es muy útil.
+    static Stream<Arguments> passwordCombinations() {
+        return Stream.of(
+            // Probar combinaciones de mayúsculas, minúsculas, números y caracteres especiales
+            arguments("P@ssw0rd", true),
+            arguments("P@ssw", false),
+            arguments("password123!", false),
+            arguments("P@SSW0", false),
+            arguments("Password1", false)
+        );
+    }
+}
+```
 
-- En **JUnit 5**, el anidamiento no es tan flexible como en Kotest. Para casos simples de pruebas con datos, JUnit funciona bien, pero para combinaciones más complejas de datos de prueba, es necesario usar otros enfoques más manuales, como `@MethodSource` con bucles anidados.
+### Alternativa para anidar combinaciones complejas
 
-### `@MethodSource`
+El anidamiento en Kotest es mucho más fluido. Para algo como este en **JUnit**, donde intentas probar diferentes combinaciones de datos (por ejemplo, combinaciones de caracteres en contraseñas), deberías calcular esas combinaciones previamente y luego inyectarlas en un único método de prueba a través de `@MethodSource`. Esto, sin embargo, no es lo mismo que la funcionalidad de anidamiento natural de Kotest.
+
+```java showLineNumbers
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.params.provider.Arguments;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Stream;
+
+public class PasswordValidatorTest {
+
+    @ParameterizedTest
+    @MethodSource("passwordCombinations")
+    @DisplayName("Given a password, when validating it, then it should meet the criteria")
+    void testIsValidPassword(String password, int minLength, boolean requireDigit,
+                             boolean requireLowerCase, boolean requireUpperCase, 
+                             boolean requireSpecialChar, boolean expected) {
+        boolean result = PasswordValidator.isValid(password, minLength, requireDigit,
+                requireLowerCase, requireUpperCase, requireSpecialChar);
+        assertEquals(expected, result);
+    }
+
+    static Stream<Arguments> passwordCombinations() {
+        List<String> specialChars = Arrays.asList("@", "", "!", "$");
+        List<Boolean> containsSpecialChar = Arrays.asList(true, false, true, true);
+
+        List<String> lowerCases = Arrays.asList("a", "b", "c", "");
+        List<Boolean> containsLowerCase = Arrays.asList(true, true, true, false);
+
+        List<String> upperCases = Arrays.asList("A", "B", "C", "");
+        List<Boolean> containsUpperCase = Arrays.asList(true, true, true, false);
+
+        List<String> digits = Arrays.asList("1", "2", "3", "");
+        List<Boolean> containsDigit = Arrays.asList(true, true, true, false);
+
+        List<Integer> minLengths = Arrays.asList(1, 2, 3, 4);
+
+        return specialChars.stream().flatMap(specialChar ->
+            lowerCases.stream().flatMap(lowerCase ->
+                upperCases.stream().flatMap(upperCase ->
+                    digits.stream().flatMap(digit ->
+                        minLengths.stream().map(minLength -> {
+                            String password = lowerCase + upperCase + digit + specialChar;
+
+                            boolean expected = 
+                                containsLowerCase.get(lowerCases.indexOf(lowerCase)) &&
+                                containsUpperCase.get(upperCases.indexOf(upperCase)) &&
+                                containsDigit.get(digits.indexOf(digit)) &&
+                                containsSpecialChar.get(specialChars.indexOf(specialChar)) &&
+                                password.length() >= minLength;
+
+                            return Arguments.of(
+                                password, minLength, true, true, true, true, expected
+                            );
+                        })
+                    )
+                )
+            )
+        );
+    }
+}
+```
+
+## Resumen comparativo
+
+| **Característica**                | **Kotest**                                                                 | **JUnit 5**                                                             |
+|-----------------------------------|--------------------------------------------------------------------------|------------------------------------------------------------------------|
+| **Sintaxis para pruebas parametrizadas** | Utiliza `withData`, lo que permite definir múltiples casos de prueba de forma concisa y clara. | Usa `@ParameterizedTest` con `@CsvSource` o `@MethodSource`, más explícito pero también más verboso. |
+| **Anidamiento de pruebas**        | Permite anidar de manera natural pruebas con múltiples combinaciones de datos utilizando `withData`. | No tiene soporte nativo para el anidamiento. Las combinaciones complejas deben generarse manualmente usando `@MethodSource`. |
+| **Manejo de combinaciones complejas** | Fácil de implementar, permitiendo múltiples combinaciones de datos con menos esfuerzo. | Requiere generar las combinaciones de datos de manera manual antes de pasarlas a las pruebas. |
+| **Manejo de errores**             | Kotest continúa ejecutando todas las pruebas, incluso si una falla, proporcionando reportes completos de errores. | JUnit reporta cada fallo individualmente, lo que puede hacer que las ejecuciones sean más fragmentadas. |
+| **Legibilidad y mantenibilidad**  | Muy legible y conciso, especialmente para pruebas con combinaciones complejas o anidadas. | Se vuelve menos legible y más complejo cuando se manejan muchas combinaciones o configuraciones. |
+| **Flexibilidad para pruebas complejas** | Altamente flexible y adecuado para pruebas con múltiples variaciones y casos de uso más complejos. | Requiere más trabajo manual para lograr la misma flexibilidad, especialmente con pruebas combinatorias. |
+
+### Beneficios y limitaciones de JUnit
+
+<ProCons>
+    <Pros>
+        - **Familiaridad**: JUnit es ampliamente conocido y utilizado en el ecosistema Java, lo que significa que muchxs desarrolladorxs ya están familiarizados con su sintaxis y patrones de uso.
+        - **Simplicidad para casos simples**: Para escenarios lineales de pruebas parametrizadas, JUnit 5 es directo y fácil de configurar utilizando `@ParameterizedTest` y `@CsvSource`.
+        - **Flexibilidad en las fuentes de datos**: Permite usar diferentes fuentes de datos (`@CsvSource`, `@MethodSource`, `@EnumSource`) para definir las entradas de las pruebas.
+        - **Compatibilidad con otras herramientas**: JUnit está bien integrado con muchas herramientas de desarrollo y CI/CD, como Maven, Gradle, y diversos IDEs.
+    </Pros>
+    <Cons>
+        - **Falta de soporte nativo para anidamiento**: JUnit no tiene un mecanismo nativo para manejar combinaciones complejas de datos o pruebas anidadas, lo que hace que su uso en estos casos sea más manual y menos eficiente.
+        - **Mayor verbosidad**: En comparación con Kotest, JUnit requiere más código para lograr pruebas parametrizadas y combinaciones complejas, lo que puede afectar la legibilidad y mantenibilidad del código.
+        - **Menor expresividad en las aserciones**: JUnit proporciona aserciones básicas, pero carece de las expresiones concisas y detalladas que ofrece Kotest para validaciones más ricas, como `shouldBe`.
+        - **Manejo de errores más limitado**: Cuando una prueba falla en JUnit, reporta el error individualmente y no tiene un mecanismo para continuar ejecutando todas las pruebas, lo que puede hacer que el diagnóstico de múltiples errores sea más tedioso.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, hemos comparado cómo se implementa el **Data-Driven Testing** en **JUnit 5** y **Kotest**, destacando las diferencias clave entre ambas bibliotecas.
+
+### Puntos clave
+
+1. **Sintaxis y simplicidad**: 
+   - JUnit 5 utiliza una sintaxis más explícita con anotaciones como `@ParameterizedTest`, `@CsvSource`, y `@MethodSource`, lo cual es más familiar para quienes ya usan JUnit, pero puede volverse verboso para casos complejos.
+   - Kotest, por otro lado, ofrece una sintaxis más concisa y poderosa con `withData`, lo que simplifica la creación de pruebas parametrizadas y anidadas.
+2. **Anidamiento de pruebas**:
+   - Kotest sobresale en la capacidad de anidar pruebas y manejar combinaciones complejas de datos de manera natural y legible.
+   - En JUnit 5, el anidamiento no es nativo, y es necesario calcular y organizar las combinaciones de datos manualmente, lo que puede resultar en código más complicado y menos eficiente.
+3. **Manejo de errores**:
+   - Kotest sigue ejecutando todas las pruebas incluso si alguna falla, proporcionando un reporte más completo y claro al final de la ejecución.
+   - En JUnit, los errores se reportan de manera individual y la ejecución se detiene en cuanto una prueba falla, lo que puede complicar la depuración cuando se prueban múltiples casos.
+4. **Flexibilidad y legibilidad**:
+   - Kotest es más flexible para escenarios con múltiples combinaciones de datos o configuraciones complejas, lo que lo hace ideal para pruebas de alta variabilidad.
+   - JUnit es menos flexible en este sentido y tiende a volverse más difícil de mantener cuando se requiere manejar muchas combinaciones.
+
+---
+
+Ambas herramientas son poderosas y útiles, pero su elección depende de las necesidades específicas del proyecto. **Kotest** es ideal para pruebas con múltiples combinaciones de datos y escenarios más complejos, mientras que **JUnit 5** sigue siendo una excelente opción para quienes buscan una integración directa y familiar en el ecosistema de Java, especialmente para pruebas más simples y lineales.
+
