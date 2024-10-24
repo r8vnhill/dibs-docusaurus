@@ -22,7 +22,7 @@ La **varianza** es un concepto esencial en la programación genérica que determ
 
 Este enfoque es particularmente útil cuando trabajamos con **bibliotecas de software** que utilizan clases o interfaces genéricas invariables, y necesitamos flexibilidad adicional al utilizarlas en nuestros propios proyectos.
 
-## ¿Por qué necesitamos Varianza en Sitio de Uso?
+## ¿Por qué necesitamos varianza en sitio de uso?
 
 Imagina que estás utilizando una biblioteca que define una clase genérica invariante:
 
@@ -32,18 +32,18 @@ class Box<T>(val value: T)
 
 Si queremos escribir una función que pueda aceptar un `Box` de cualquier subtipo de `Animal`, no podemos hacerlo directamente debido a la **invarianza**. Aquí es donde la varianza en sitio de uso entra en juego.
 
-## Proyecciones de Tipo
+## Proyecciones de tipo
 
 La **varianza en sitio de uso** se logra mediante **proyecciones de tipo**, que nos permiten adaptar la varianza de un tipo genérico en el punto de uso.
 
-### Sintaxis de Proyecciones
+### Sintaxis de proyecciones
 
 - **Covarianza en sitio de uso**: `out T`
 - **Contravarianza en sitio de uso**: `in T`
 
 Estas palabras clave se utilizan al especificar el tipo genérico en una función o clase.
 
-## Ejemplo Práctico: Procesamiento de Eventos
+## Ejemplo práctico: Procesamiento de eventos
 
 Supongamos que estamos trabajando con una biblioteca que define una clase `EventHandler` invariante:
 
@@ -65,19 +65,19 @@ class HoverEvent : Event
 
 ```kotlin showLineNumbers
 fun registerClickHandler(handler: EventHandler<ClickEvent>) {
-    // Registro del manejador
+    // Registro del handler
 }
 ```
 
 El problema aquí es que no podemos pasar un `EventHandler<Event>` a esta función, debido a la invarianza.
 
-### Solución con Varianza en Sitio de Uso
+### Solución con varianza en sitio de uso
 
 Podemos utilizar una proyección de tipo para permitir que la función acepte `EventHandler` de tipos más generales:
 
 ```kotlin showLineNumbers
 fun registerClickHandler(handler: EventHandler<in ClickEvent>) {
-    // Registro del manejador
+    // Registro del handler
 }
 ```
 
@@ -102,18 +102,17 @@ registerClickHandler(generalHandler) // Funciona correctamente
    </Cons>
 </ProCons>
 
-## Proyecciones de Estrella (`*`)
+## Proyecciones de estrella (`*`)
 
 En ocasiones, no nos importa el tipo genérico específico, y solo queremos acceder a los miembros que no dependen de él. Para estos casos, Kotlin ofrece las **proyecciones de estrella**.
 
-### Ejemplo con Proyección de Estrella
+### Ejemplo con proyección de estrella
 
 Supongamos que queremos imprimir el tamaño de una lista, sin importar su tipo de elemento:
 
 ```kotlin showLineNumbers
-fun printListSize(list: List<*>) {
+fun printListSize(list: List<*>) =
     println("La lista tiene ${list.size} elementos")
-}
 ```
 
 Aquí, `List<*>` es una lista de algún tipo desconocido, y solo podemos acceder a los miembros que no dependen del tipo genérico `T`.
@@ -123,7 +122,6 @@ Aquí, `List<*>` es una lista de algún tipo desconocido, y solo podemos acceder
       - **Simplicidad**: Las proyecciones de estrella (`*`) simplifican el manejo de tipos genéricos cuando no importa el tipo específico. Esto es útil para escribir funciones que solo necesitan trabajar con las propiedades comunes de una estructura, como el tamaño de una lista.
       - **Versatilidad**: Permite trabajar con cualquier instancia de un tipo genérico sin conocer o especificar su tipo exacto, lo que facilita la integración con bibliotecas y código de terceros donde los tipos genéricos pueden ser variados.
       - **Compatibilidad en funciones utilitarias**: Es ideal para escribir funciones utilitarias genéricas que solo necesitan leer datos y no modificar la colección o estructura, garantizando seguridad y flexibilidad.
-
    </Pros>
    <Cons>
       - **Acceso limitado**: El uso de proyecciones de estrella restringe el acceso a elementos específicos del tipo genérico. Solo se puede interactuar con miembros que no dependan del tipo genérico, limitando la funcionalidad en ciertos contextos.

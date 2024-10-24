@@ -42,8 +42,10 @@ Antes de la introducción de generics, una lista de enteros en Java se escribía
 ```java showLineNumbers
 List numbers = new ArrayList();
 numbers.add(1);
+// Usamos instanceof para asegurarnos de que el cast sea seguro
 if (numbers.get(0) instanceof Integer) {
     Integer num = (Integer) numbers.get(0);
+    System.out.println(num);
 }
 ```
 
@@ -53,6 +55,7 @@ El uso de generics en Java 5 mejoró la seguridad del tipo en tiempo de compilac
 List<Integer> numbers = new ArrayList<>();
 numbers.add(1);
 Integer num = numbers.get(0);  // No requiere cast explícito
+System.out.println(num);
 ```
 
 A pesar de esta mejora en seguridad, el type erasure implica que, en tiempo de ejecución, el tipo `List<Integer>` es borrado y tratado simplemente como `List`, lo que impide conocer el tipo `Integer` durante la ejecución. La JVM solo ve una `List` genérica, sin detalles sobre el tipo exacto de sus elementos.
@@ -70,9 +73,8 @@ En tiempo de compilación, el compilador sabe que `list` es de tipo `List<String
 Esto puede causar problemas si intentamos acceder al tipo genérico en tiempo de ejecución:
 
 ```kotlin showLineNumbers
-fun <T> printType(item: T) {
+fun <T> printType(item: T) =
     println(item::class)
-}
 ```
 
 Si llamamos a `printType("Hello")`, la función podrá imprimir el tipo `String`. Sin embargo, si intentamos obtener el tipo genérico `T` en sí, nos encontraremos con limitaciones debido al type erasure.
@@ -110,6 +112,10 @@ inline fun <reified T> myFunction() {
     // Aquí podemos acceder al tipo T en tiempo de ejecución
 }
 ```
+
+### ¿Cómo Funciona?
+
+Al marcar la función como `inline` y el tipo genérico como `reified`, el compilador insertará el código de la función en cada lugar donde se llame, y reemplazará `T` con el tipo concreto en cada llamada. Esto permite que el tipo esté disponible en tiempo de ejecución.
 
 ## Ejemplo Práctico: Filtrar una Lista por Tipo
 
@@ -153,10 +159,6 @@ val mixedList: List<Any> = listOf(1, "Kotlin", 2.5, "Java")
 val strings: List<String> = filterByType(mixedList)
 println(strings)  // Output: [Kotlin, Java]
 ```
-
-## ¿Cómo Funciona?
-
-Al marcar la función como `inline` y el tipo genérico como `reified`, el compilador insertará el código de la función en cada lugar donde se llame, y reemplazará `T` con el tipo concreto en cada llamada. Esto permite que el tipo esté disponible en tiempo de ejecución.
 
 ## Ejemplo Avanzado: Crear Instancias de Tipos Genéricos
 
