@@ -39,7 +39,7 @@ Recordemos que el **Principio de Responsabilidad Única** (SRP) establece que un
 
 :::
 
-## Ejemplo: Fibonacci Revisited
+## Caso de estudio: Fibonacci revisited
 
 Hasta ahora, hemos creado una tarea que imprime los primeros 10 números de la secuencia de Fibonacci. Supongamos que
 ahora queremos extender esta tarea para calcular la secuencia hasta un número específico proporcionado por lx usuarix. Para hacer esto, definiremos la tarea como una clase en un archivo `.kt`.
@@ -47,35 +47,9 @@ ahora queremos extender esta tarea para calcular la secuencia hasta un número e
 Primero, creamos un paquete llamado `tasks` en el directorio `src/main/kotlin` del módulo `convention-plugins`.
 Dentro de este paquete, crearemos un archivo llamado `FibonacciTask.kt` con el siguiente contenido:
 
-<details>
-    <summary>Si quieres crear el archivo desde la terminal...</summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $TasksDir = "convention-plugins\src\main\kotlin\tasks"
-            New-Item -Path "$TasksDir\FibonacciTask.kt" -ItemType "File" -Force
-            ```
-        </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-            ```powershell
-            $TasksDir = "convention-plugins\src\main\kotlin\tasks"
-            ni "$TasksDir\FibonacciTask.kt" -i 'f' -f
-            ```
-        </TabItem>
-        <TabItem value="Unix" label="Unix">
-            ```bash
-            TASKS_DIR="convention-plugins/src/main/kotlin/tasks"
-            mkdir -p "$TASKS_DIR"
-            touch "$TASKS_DIR/FibonacciTask.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
-
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin title="convention-plugins/src/main/kotlin/tasks/FibonacciTask.kt" showLineNumbers
+        ```kotlin showLineNumbers
         abstract class FibonacciTask : DefaultTask() {
             @get:Input
             abstract val number: Property<Int>
@@ -97,15 +71,6 @@ Dentro de este paquete, crearemos un archivo llamado `FibonacciTask.kt` con el s
             }
         }
         ```
-
-        <Explanation>
-            - **[1-20]**: Definimos una clase que extiende `DefaultTask`. Lo más común es que las tareas en Gradle hereden de `DefaultTask`. Notamos que la clase es **abstracta**, lo que indica que ciertos parámetros de la tarea, como el input, deben ser definidos antes de usarla.
-            - **[2]**: Anotamos la propiedad `number` con `@get:Input` para indicar que es un input de la tarea. Esto permite que Gradle detecte cambios y decida si es necesario ejecutar la tarea nuevamente.
-            - **[3]**: Utilizamos un `Property<Int>` para almacenar el número hasta el cual queremos calcular la secuencia de Fibonacci. `Property` es como una caja que contiene un valor mutable que Gradle puede monitorear.
-            - **[5-19]**: Definimos el método `calculateFibonacci` y lo anotamos con `@TaskAction`. Este método contiene la lógica principal de la tarea. Gradle lo ejecuta automáticamente cuando la tarea se llama, ejecutándose entre los bloques `doFirst` y `doLast`.
-            - **[7]**: Utilizamos `number.get()` para obtener el valor del número proporcionado por lx usuarix.
-            - **[8-10]**: Validamos que el número sea mayor o igual a 0. Si no lo es, lanzamos una excepción `StopExecutionException` para detener la ejecución de la tarea. Gradle manejará esta excepción y mostrará un mensaje de error.
-        </Explanation>
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
         <BoxedTabs>
@@ -182,6 +147,16 @@ Dentro de este paquete, crearemos un archivo llamado `FibonacciTask.kt` con el s
     </TabItem>
 </BoxedTabs>
 
+
+<Explanation>
+    - **[1-20]**: Definimos una clase que extiende `DefaultTask`. Lo más común es que las tareas en Gradle hereden de `DefaultTask`. Notamos que la clase es **abstracta**, lo que indica que ciertos parámetros de la tarea, como el input, deben ser definidos antes de usarla.
+    - **[2]**: Anotamos la propiedad `number` con `@get:Input` para indicar que es un input de la tarea. Esto permite que Gradle detecte cambios y decida si es necesario ejecutar la tarea nuevamente.
+    - **[3]**: Utilizamos un `Property<Int>` para almacenar el número hasta el cual queremos calcular la secuencia de Fibonacci. `Property` es como una caja que contiene un valor mutable que Gradle puede monitorear.
+    - **[5-19]**: Definimos el método `calculateFibonacci` y lo anotamos con `@TaskAction`. Este método contiene la lógica principal de la tarea. Gradle lo ejecuta automáticamente cuando la tarea se llama, ejecutándose entre los bloques `doFirst` y `doLast`.
+    - **[7]**: Utilizamos `number.get()` para obtener el valor del número proporcionado por lx usuarix.
+    - **[8-10]**: Validamos que el número sea mayor o igual a 0. Si no lo es, lanzamos una excepción `StopExecutionException` para detener la ejecución de la tarea. Gradle manejará esta excepción y mostrará un mensaje de error.
+</Explanation>
+
 ### Registro de la tarea en un archivo `*.gradle.kts`
 
 Para usar nuestra tarea, debemos registrarla en algún archivo `*.gradle.kts`. Aquí te mostramos cómo hacerlo en el
@@ -255,29 +230,6 @@ se ejecute.
 
 Implementaremos una tarea para procesar archivos de texto. Tendremos archivos de entrada y salida. El texto debe ser
 tomado de un archivo de texto (input), transformado en mayúsculas, y ser guardado en otro archivo de texto (output).
-
-<details>
-    <summary>Si quieres crear los archivos desde la terminal...</summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path "$TasksDir\UppercaseTask.kt" `
-                -ItemType "File" -Force
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            ni "$TasksDir\UppercaseTask.kt" -i 'f' -f
-            ```
-        </TabItem>
-        <TabItem value="Unix" label="Unix">
-            ```bash
-            touch "$TASKS_DIR/UppercaseTask.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
 
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>

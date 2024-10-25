@@ -1,5 +1,5 @@
 ---
-title: "Ejemplo: Obtener el máximo de una lista"
+title: "Caso de estudio: Máximo de una lista"
 ---
 import ReadingTime from '@site/src/components/ReadingTime'
 import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
@@ -15,101 +15,34 @@ import GithubRepoLink from '@site/src/components/GithubRepoLink'
 import { LanguageCard, QuickCheckCard, ScalaTestCard } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
-<GithubRepoLink user="r8vnhill" repo="property-based-testing-kt" />
+<GithubRepoLink user="r8vnhill" repo="testing-kt" />
+<ModuleSetup module='biggest' task='setupBiggestModule'>
+    ```kotlin showLineNumbers title="convention-plugins/src/main/kotlin/biggest.gradle.kts"
+    import tasks.ModuleSetupTask
 
-<details>
-    <summary>
-        Comencemos por crear un módulo para la lección...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path 'biggest' -ItemType 'directory'
-            '// Intentionally left blank' |
-                Out-File -FilePath 'biggest/build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            md 'biggest'
-            '// Intentionally left blank' > 'biggest/build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            mkdir biggest
-            echo '// Intentionally left blank' > biggest/build.gradle.kts
-            ```
-        </TabItem>
-    </BoxedTabs>
-
-    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
-</details>
+    tasks.register<ModuleSetupTask>("setupBiggestModule") {
+        description = "Creates the base module and files for the testing introductory lesson"
+        module.set("pbt:biggest")
+        doLast {
+            createFiles(
+                "biggest",
+                main to "Biggest.kt",
+                test to "BiggestTest.kt",
+            )
+        }
+    }
+    ```
+</ModuleSetup>
 
 Otro ejemplo es encontrar el máximo de una lista de enteros. La dificultad aquí radica en definir una propiedad que no coincida exactamente con nuestra implementación, pero que siga validando su correctitud. Una forma eficaz de definir estas propiedades es pensar en implementaciones alternativas, que aunque más verbosas o ineficientes, nos ayuden a verificar el comportamiento de la función.
 
 Por ejemplo, obtener el máximo de una lista puede lograrse en $O(n)$ mediante una búsqueda secuencial. Una implementación equivalente, aunque menos eficiente, sería ordenar la lista en orden creciente en  $O(n \log n)$ y luego tomar el último elemento en $O(1)$.
 
 ## Test
-
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $Group = "com\github\username"
-            ```
-
-            ```powershell
-            $BiggestTestDir = "biggest\src\test\kotlin\$Group\biggest"
-            $BiggestMainDir = "biggest\src\main\kotlin\$Group\biggest"
-            $BiggestTestDir | New-Item -ItemType Directory -Force
-            $BiggestMainDir | New-Item -ItemType Directory -Force
-            "package $Group.biggest" -replace '\\', '.' | 
-                Out-File -FilePath "$BiggestTestDir\BiggestTest.kt"
-            "package $Group.biggest" -replace '\\', '.' |
-                Out-File -FilePath "$BiggestMainDir\Biggest.kt"
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            $Group = "com\github\username"
-            ```
-
-            ```powershell
-            $BiggestTestDir = "biggest\src\test\kotlin\$Group\biggest"
-            $BiggestMainDir = "biggest\src\main\kotlin\$Group\biggest"
-            $BiggestTestDir, $BiggestMainDir | % { md $_ }
-            "package $Group.biggest" -replace '\\', '.' > `
-                "$BiggestTestDir\BiggestTest.kt"
-            "package $Group.biggest" -replace '\\', '.' > `
-                "$BiggestMainDir\Biggest.kt"
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            GROUP=com/github/username
-            ```
-
-            ```bash
-            BIGGEST_TEST_DIR=biggest/src/test/kotlin/$GROUP/biggest
-            BIGGEST_MAIN_DIR=biggest/src/main/kotlin/$GROUP/biggest
-            mkdir -p $BIGGEST_TEST_DIR $BIGGEST_MAIN_DIR
-            echo "package ${GROUP//\//.}.biggest" > \
-                $BIGGEST_TEST_DIR/BiggestTest.kt
-            echo "package ${GROUP//\//.}.biggest" > \
-                $BIGGEST_MAIN_DIR/Biggest.kt
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
 
 Siguiendo el enfoque BDD, comenzamos declarando la estructura básica de nuestro test.
 

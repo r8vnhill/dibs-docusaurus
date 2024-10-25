@@ -41,28 +41,38 @@ Aquí definimos `Either` para fines didácticos, pero en Haskell ya está defini
 A continuación, veamos cómo podríamos probar las leyes de la mónada `Either` en Haskell:
 
 ```haskell
-import Test.QuickCheck
+module Main where
+    import Test.QuickCheck
+    import Control.Monad (liftM2)
 
-instance (Arbitrary a, Arbitrary b) => Arbitrary (Either a b) where
-    arbitrary = oneof [Left <$> arbitrary, Right <$> arbitrary]
+    -- Left identity property: return a >>= f == f a
+    prop_left_identity :: Int -> Fun Int (Either String Int) -> Bool
+    prop_left_identity a (Fun _ f) = (return a >>= f) == f a
 
--- Probar la ley de identidad izquierda: return a >>= f == f a
-prop_left_identity :: Eq b => Either String Int -> (Int -> Either String b) -> Bool
-prop_left_identity a f = (return a >>= f) == f a
+    -- Right identity property: m >>= return == m
+    prop_right_identity :: Either String Int -> Bool
+    prop_right_identity m = (m >>= return) == m
 
--- Probar la ley de la derecha: m >>= return == m
-prop_right_identity :: Either String Int -> Bool
-prop_right_identity m = (m >>= return) == m
+    -- Associativity property: (m >>= f) >>= g == m >>= (\x -> f x >>= g)
+    prop_associativity :: Either String Int
+                       -> Fun Int (Either String Int)
+                       -> Fun Int (Either String Int)
+                       -> Bool
+    prop_associativity m (Fun _ f) (Fun _ g) = ((m >>= f) >>= g) == (m >>= (\x -> f x >>= g))
 
--- Probar la ley de la asociatividad: (m >>= f) >>= g == m >>= (\x -> f x >>= g)
-prop_associativity :: Either String Int -> 
-    (Int -> Either String Int) -> (Int -> Either String Int) -> Bool
-prop_associativity m f g = ((m >>= f) >>= g) == (m >>= (\x -> f x >>= g))
+    main :: IO ()
+    main = do
+        quickCheck prop_left_identity
+        quickCheck prop_right_identity
+        quickCheck prop_associativity
 ```
 
 <Explanation>
-    En este ejemplo, utilizamos la biblioteca `QuickCheck` para probar las leyes de la mónada `Either`. Definimos instancias arbitrarias para `Either` y luego probamos las leyes de identidad izquierda, derecha y asociatividad.
+    - **prop_left_identity**: Esta propiedad evalúa la ley de identidad izquierda, `return a >>= f == f a`. Usamos `Fun` de `QuickCheck` para manejar el tipo de función `Int -> Either String Int` en la propiedad. El patrón `(Fun _ f)` extrae la función generada.
+    - **prop_right_identity**: Aquí verificamos la ley de identidad derecha `m >>= return == m`, donde `m` es un valor de tipo `Either String Int`.
+    - **prop_associativity**: Esta propiedad evalúa la ley de asociatividad `(m >>= f) >>= g == m >>= (\x -> f x >>= g)`. Al igual que en `prop_left_identity`, usamos `Fun` para manejar funciones generadas que operan sobre el tipo `Either`.
 </Explanation>
+
 
 ## Resumen comparativo
 
@@ -79,15 +89,15 @@ prop_associativity m f g = ((m >>= f) >>= g) == (m >>= (\x -> f x >>= g))
 
 <ProCons>
     <Pros>
-        - **Soporte nativo**: `Either` es parte de la biblioteca estándar de Haskell, lo que simplifica su uso sin necesidad de dependencias adicionales.
-        - **Manejo explícito de errores**: Haskell obliga a manejar los errores de manera explícita usando `Either`, lo que reduce el riesgo de errores inesperados en tiempo de ejecución y mejora la robustez del código.
-        - **Integración con el sistema de tipos**: El sistema de tipos de Haskell, combinado con `Either`, permite una mayor seguridad en el manejo de errores, asegurando que los errores potenciales sean tratados correctamente a nivel de compilación.
-        - **Composición funcional**: Al ser una mónada, `Either` facilita el encadenamiento de operaciones que pueden fallar, lo que permite escribir código más modular y expresivo.
-        - **Funcionalidades Utilitarias**: Haskell ofrece varias funciones utilitarias, como `either`, `lefts`, y `rights`, que hacen que trabajar con `Either` sea más sencillo y efectivo.
+        - **Manejo de errores robusto**: `Either` en Haskell permite un control detallado de los errores, ya que los errores y resultados exitosos se gestionan explícitamente en el tipo. Esto reduce la probabilidad de errores en tiempo de ejecución y facilita la depuración.
+        - **Composición monádica fluida**: La instancia monádica de `Either` permite encadenar funciones y gestionar errores en un flujo de código funcional, lo que mejora la claridad y la concisión del código.
+        - **Funciones utilitarias nativas**: Haskell incluye una variedad de funciones predefinidas para trabajar con `Either`, como `lefts`, `rights` y `either`, que simplifican las operaciones comunes sin necesidad de librerías adicionales.
+        - **Tipado estático avanzado**: El sistema de tipos de Haskell mejora la seguridad del código, ya que el compilador verifica que todos los posibles casos de `Either` sean manejados correctamente, minimizando errores en tiempo de ejecución.
     </Pros>
     <Cons>
-        - **Curva de aprendizaje**: Para desarrolladores que no están familiarizados con la programación funcional o con las mónadas, `Either` y sus operadores monádicos (`>>=`) pueden ser difíciles de entender al principio.
-        - **Complejidad en el manejo de errores**: Aunque `Either` es efectivo para manejar errores, en algunos casos puede hacer que el código sea más complejo, ya que cada posible error debe ser gestionado explícitamente.
+        - **Curva de aprendizaje pronunciada**: El concepto de `Either` como una mónada, junto con las convenciones de Haskell, puede ser complejo para quienes no están familiarizados con la programación funcional.
+        - **Verboso para casos simples**: En situaciones sencillas, `Either` puede parecer excesivo, ya que requiere tratar explícitamente cada caso de error, lo cual puede hacer que el código se vea más detallado o verboso.
+        - **Limitaciones en interoperabilidad**: Dado que `Either` y otras abstracciones funcionales son específicas de Haskell, llevar este tipo de manejo de errores a lenguajes no funcionales puede ser complicado y puede requerir cambios significativos en el enfoque.
     </Cons>
 </ProCons>
 
@@ -105,3 +115,15 @@ En esta lección, exploramos cómo Haskell maneja los errores de forma segura ut
 ---
 
 Este enfoque de manejo de errores mejora la seguridad y la legibilidad del código, aunque puede requerir una curva de aprendizaje para aquellos que no estén familiarizados con la programación funcional y las mónadas.
+
+<References references={[
+    {
+        title: "Introducing Monads",
+        bookTitle: "Effective Haskell: Solving real-world problems with strongly typed functional programming",
+        publisher: "The Pragmatic Bookshelf",
+        pages: "333–363",
+        year: "2022",
+        author: "R. Skinner",
+        type: "book",
+    },
+]}/>

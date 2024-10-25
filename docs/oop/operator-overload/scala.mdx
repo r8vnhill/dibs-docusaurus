@@ -1,68 +1,358 @@
 ---
-title: scala
+title: Sobrecarga de operadores en Scala
 ---
-import References from "/src/components/ReferencesComponent";
-import ReadingTime from '/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
 import Tabs from '@theme/Tabs'
 import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="scala-dibs" />
 
-## Scala
+Scala permite sobrecargar operadores mediante la definición de métodos con nombres que coinciden con los operadores estándar. A diferencia de Kotlin, donde la sobrecarga de operadores se declara explícitamente con la palabra clave `operator`, Scala simplemente permite el uso de nombres de operadores como `+`, `-`, `*`, `/` para definir el comportamiento del operador sobrecargado.
 
-En **Scala**, no existe el concepto de "sobrecarga de operadores" como en otros lenguajes, ya que todos los operadores son simplemente funciones con nombres simbólicos. Esto significa que puedes definir cualquier función con un símbolo como nombre (como `+`, `-`, `*`, etc.), y el compilador lo tratará como si fuera un operador.
+## Ejemplo Práctico: Sobrecarga del Operador `+` en Scala para Números Complejos
 
-## Definición de funciones con nombres simbólicos en Scala
+Podemos comenzar escribiendo tests para la clase `Complex` que representará números complejos y sobrecargará el operador `+` para sumar dos números complejos o un número complejo y un `Double`:
 
-En lugar de sobrecargar operadores, en Scala simplemente se define una función con el símbolo deseado como nombre. Por ejemplo, para la clase `Complex`, podemos definir una función `+` de la siguiente manera:
+<BoxedTabs>
+    <TabItem value="Scala 3" label="Scala 3">
+      <BoxedTabs>
+          <TabItem label={"Código esencial"} value={"Código esencial"}>
+              ```scala showLineNumbers
+              forAll(genComplex, genComplex) { (c1, c2) =>
+                  val c3 = c1 + c2
+                  c3.real shouldBe c1.real + c2.real
+              }
+              ```
 
-```scala
-case class Complex(real: Double, imaginary: Double) {
+              ```scala showLineNumbers
+              forAll(genComplex, Gen.choose(-100.0, 100.0)) { (c, d) =>
+                  val c2 = c + d
+                  c2.real shouldBe c.real + d
+              }
+              ```
 
-  def +(other: Complex): Complex =
-    Complex(this.real + other.real, this.imaginary + other.imaginary)
+              ```scala showLineNumbers
+              private def genComplex: Gen[Complex] =
+                  Gen.zip(Gen.choose(-100.0, 100.0), Gen.choose(-100.0, 100.0))
+                    .map(Complex.apply.tupled)
+              ```
+          </TabItem>
+          <TabItem label={"Código completo"} value={"Código completo"}>
+              ```scala showLineNumbers title="scala-3/oop/operator-overload/src/test/scala/complex/ComplexTest.scala"
+              package cl.ravenhill
+              package complex
 
-  override def toString: String = s"($real, $imaginary)"
-}
-```
+              import org.scalacheck.Gen
+              import org.scalatest.freespec.AnyFreeSpec
+              import org.scalatest.matchers.should.Matchers
+              import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-## Uso en Scala
+              class ComplexTest extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks:
+                  "A complex number" - {
+                      "when adding it to another complex number" - {
+                          "then the real part should be the sum of the real parts" in {
+                              forAll(genComplex, genComplex) { (c1, c2) =>
+                                  val c3 = c1 + c2
+                                  c3.real shouldBe c1.real + c2.real
+                              }
+                          }
 
-El uso de funciones con nombres simbólicos en Scala se ve igual que el uso de operadores tradicionales en otros lenguajes:
+                          "then the imaginary part should be the sum of the imaginary " +
+                            "parts" in {
+                              forAll(genComplex, genComplex) { (c1, c2) =>
+                                  val c3 = c1 + c2
+                                  c3.imaginary shouldBe c1.imaginary + c2.imaginary
+                              }
+                          }
+                      }
 
-```scala
-object Main extends App {
-  val number1 = Complex(1.0, 2.0)
-  val number2 = Complex(3.0, 4.0)
-  val sumResult = number1 + number2
-  println(s"Suma: $sumResult")
-}
-```
+                      "when adding it to a real number" - {
+                          "then the real part should be the sum of the real part and the " +
+                            "real number" in {
+                              forAll(genComplex, Gen.choose(-100.0, 100.0)) { (c, d) =>
+                                  val c2 = c + d
+                                  c2.real shouldBe c.real + d
+                              }
+                          }
 
-Salida:
+                          "then the imaginary part should remain unchanged" in {
+                              forAll(genComplex, Gen.choose(-100.0, 100.0)) { (c, d) =>
+                                  val c2 = c + d
+                                  c2.imaginary shouldBe c.imaginary
+                              }
+                          }
+                      }
+                  }
 
-```
-Suma: (4.0, 6.0)
-```
+                  private def genComplex: Gen[Complex] =
+                      Gen.zip(Gen.choose(-100.0, 100.0), Gen.choose(-100.0, 100.0))
+                        .map(Complex.apply.tupled)
+              ```
+          </TabItem>
+      </BoxedTabs>
+    </TabItem>
+    <TabItem value="Scala 2" label="Scala 2">
+      <BoxedTabs>
+          <TabItem label={"Código esencial"} value={"Código esencial"}>
+              ```scala showLineNumbers
+              forAll(genComplex, genComplex) { (c1, c2) =>
+                  val c3 = c1 + c2
+                  c3.real shouldBe c1.real + c2.real
+              }
+              ```
 
-## Comparación
+              ```scala showLineNumbers
+              forAll(genComplex, Gen.choose(-100.0, 100.0)) { (c, d) =>
+                  val c2 = c + d
+                  c2.real shouldBe c.real + d
+              }
+              ```
 
-| Característica         | Kotlin                              | Scala                                     |
-|------------------------|-------------------------------------|-------------------------------------------|
-| Definición de operador | `operator fun plus(other: Complex)` | `def +(other: Complex): Complex`          |
-| Palabra clave          | `operator`                          | No es necesaria                           |
-| Operadores predefinidos| Solo operadores específicos         | Los operadores son nombres simbólicos     |
-| Expresividad           | Similar a las funciones regulares   | Cualquier símbolo puede ser usado         |
-| Uso en código          | `val result = obj1 + obj2`          | `val result = obj1 + obj2`                |
+              ```scala showLineNumbers
+              private def genComplex: Gen[Complex] =
+                  Gen.zip(Gen.choose(-100.0, 100.0), Gen.choose(-100.0, 100.0))
+                    .map(case (real, imaginary) => new Complex(real, imaginary))
+              ```
+          </TabItem>
+          <TabItem label={"Código completo"} value={"Código completo"}>
+              ```scala showLineNumbers title="scala-2/oop/operator-overload/src/test/scala/complex/ComplexTest.scala"
+              package cl.ravenhill
+              package complex
 
-## Semejanzas con Kotlin
+              import org.scalatest.freespec.AnyFreeSpec
+              import org.scalatest.matchers.should.Matchers
+              import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+              import ComplexImplicits._
+              import org.scalacheck.Gen
 
-- **Simplicidad**: Ambos lenguajes permiten definir funciones que se comportan como operadores de manera simple y clara, mejorando la legibilidad del código.
-- **Inmutabilidad**: Tanto en Kotlin como en Scala, las operaciones que involucran objetos como `Complex` no modifican el estado del objeto, sino que devuelven un nuevo objeto.
-- **Concisión**: Ambos lenguajes permiten escribir código conciso, y las funciones se comportan como operadores de una manera muy intuitiva.
+              class ComplexTest extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks {
+                  "A complex number" - {
+                      "when adding it to another complex number" - {
+                          "then the real part should be the sum of the real parts" in {
+                              forAll(genComplex, genComplex) { (c1, c2) =>
+                                  val c3 = c1 + c2
+                                  c3.real shouldBe c1.real + c2.real
+                              }
+                          }
 
-## Diferencias con Kotlin
+                          "then the imaginary part should be the sum of the imaginary parts" in {
+                              forAll(genComplex, genComplex) { (c1, c2) =>
+                                  val c3 = c1 + c2
+                                  c3.imaginary shouldBe c1.imaginary + c2.imaginary
+                              }
+                          }
+                      }
 
-- **Palabra clave `operator`**: En Kotlin, la palabra clave `operator` es necesaria para marcar una función que puede usarse como un operador, mientras que en Scala no se requiere ninguna palabra clave especial.
-- **Uso de cualquier símbolo en Scala**: Scala permite una mayor flexibilidad al permitir que cualquier símbolo sea el nombre de una función, mientras que Kotlin tiene un conjunto predefinido de operadores que se pueden sobrecargar.
-- **Funciones simbólicas en general**: Mientras que Kotlin restringe los operadores a un conjunto limitado de nombres, Scala permite que cualquier método con nombre simbólico (no solo `+` o `-`, por ejemplo) se use de forma similar a los operadores, lo que ofrece más expresividad y flexibilidad.
+                      "when adding it to a real number" - {
+                          "then the real part should be the sum of the real part and the real number" in {
+                              forAll(genComplex, Gen.choose(-100.0, 100.0)) { (c, d) =>
+                                  val c2 = c + d
+                                  c2.real shouldBe c.real + d
+                              }
+                          }
+
+                          "then the imaginary part should remain unchanged" in {
+                              forAll(genComplex, Gen.choose(-100.0, 100.0)) { (c, d) =>
+                                  val c2 = c + d
+                                  c2.imaginary shouldBe c.imaginary
+                              }
+                          }
+                      }
+                  }
+
+                  private def genComplex: Gen[Complex] =
+                      Gen.zip(Gen.choose(-100.0, 100.0), Gen.choose(-100.0, 100.0))
+                        .map { case (real, imaginary) => new Complex(real, imaginary) }
+              }
+              ```
+          </TabItem>
+      </BoxedTabs>
+    </TabItem>
+</BoxedTabs>
+
+
+A continuación, vemos cómo implementar el operador `+` para sumar números complejos en Scala:
+
+<BoxedTabs>
+    <TabItem value="Scala 3" label="Scala 3">
+      <BoxedTabs>
+          <TabItem label={"Código esencial"} value={"Código esencial"}>
+              ```scala showLineNumbers
+              class Complex(val real: Double, val imaginary: Double):
+                  def +(that: Complex): Complex =
+                      Complex(real + that.real, imaginary + that.imaginary)
+
+              extension (c: Complex)
+                  def +(d: Double): Complex = Complex(c.real + d, c.imaginary)
+              ```
+          </TabItem>
+          <TabItem label={"Código completo"} value={"Código completo"}>
+              ```scala showLineNumbers title="scala-3/oop/operator-overload/src/main/scala/complex/Complex.scala"
+              package cl.ravenhill
+              package complex
+
+              import scala.annotation.targetName
+
+              class Complex(val real: Double, val imaginary: Double):
+                  @targetName("add")
+                  def +(that: Complex): Complex =
+                      Complex(real + that.real, imaginary + that.imaginary)
+
+              extension (c: Complex)
+                  @targetName("add")
+                  def +(d: Double): Complex = Complex(c.real + d, c.imaginary)
+              ```
+          </TabItem>
+      </BoxedTabs>
+
+      <Explanation>
+          - **Método `+` para `Complex`**: Aquí definimos el método `+` para sumar dos números complejos. Scala permite que el operador `+` se utilice directamente en la definición del método.
+          - **Método `+` para `Double`**: Sobrecargamos `+` como un método de extensión para permitir sumar un `Double` a un número complejo.
+      </Explanation>
+    </TabItem>
+    <TabItem value="Scala 2" label="Scala 2">
+      <BoxedTabs>
+          <TabItem label={"Código esencial"} value={"Código esencial"}>
+              ```scala showLineNumbers
+              class Complex(val real: Double, val imaginary: Double) {
+                  def +(that: Complex): Complex =
+                      new Complex(real + that.real, imaginary + that.imaginary)
+              }
+
+              object ComplexImplicits {
+                  implicit class ComplexOps(c: Complex) {
+                      def +(d: Double): Complex = new Complex(c.real + d, c.imaginary)
+                  }
+              }
+              ```
+          </TabItem>
+          <TabItem label={"Código completo"} value={"Código completo"}>
+              ```scala showLineNumbers title="scala-2/oop/operator-overload/src/main/scala/complex/Complex.scala"
+              package cl.ravenhill
+              package complex
+
+              class Complex(val real: Double, val imaginary: Double) {
+                  def +(that: Complex): Complex =
+                      new Complex(real + that.real, imaginary + that.imaginary)
+              }
+
+              object ComplexImplicits {
+                  implicit class ComplexOps(c: Complex) {
+                      def +(d: Double): Complex = new Complex(c.real + d, c.imaginary)
+                  }
+              }
+              ```
+          </TabItem>
+      </BoxedTabs>
+
+      <Explanation>
+          - **Método `+` para `Complex`**: Definimos el método `+` para sumar dos números complejos.
+          - **Método `+` para `Double`**: Sobrecargamos `+` utilizando una clase implícita para permitir sumar un `Double` a un número complejo.
+      </Explanation>
+    </TabItem>
+</BoxedTabs>
+
+En Scala, la llamada a `a + b` es equivalente a `a.+(b)`. Esta equivalencia permite que cualquier método cuyo nombre sea un operador (como `+`, `-`, etc.) pueda usarse de forma infija, lo que hace que la sintaxis sea concisa y expresiva.
+
+## Ejemplo de Invocación de Función con `apply`
+
+Scala también permite sobrecargar el operador `()` mediante el método `apply`, que hace que un objeto se comporte como una función cuando se invoca. Esto es similar al operador `invoke` en Kotlin.
+
+<BoxedTabs>
+    <TabItem value="Scala 3" label="Scala 3">
+        ```scala
+        package cl.ravenhill
+        package greet
+
+        class Greeter(val greeting: String):
+            def apply(name: String): String = s"$greeting, $name!"
+        ```
+    </TabItem>
+    <TabItem value="Scala 2" label="Scala 2">
+        ```scala
+        package cl.ravenhill
+        package greet
+
+        class Greeter(val greeting: String) {
+            def apply(name: String): String = s"$greeting, $name!"
+        }
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    Definimos el método `apply` en la clase `Greeter` para permitir que un objeto `Greeter` se comporte como una función que toma un nombre y devuelve un saludo personalizado.
+</Explanation>
+
+**Uso:**
+
+<BoxedTabs>
+    <TabItem value="Scala 3" label="Scala 3">
+        ```scala
+        val greeter = Greeter("Hello")
+        val greeting = greeter("Alice")+
+        println(greeting) // Output: Hello, Alice!
+        ```
+    </TabItem>
+    <TabItem value="Scala 2" label="Scala 2">
+        ```scala
+        val greeter = new Greeter("Hello")
+        val greeting = greeter("Alice")
+        println(greeting) // Output: Hello, Alice!
+        ```
+    </TabItem>
+</BoxedTabs>
+
+## Resumen comparativo
+
+| **Característica**               | **Scala**                                                                                                         | **Kotlin**                                                                                                        |
+|----------------------------------|-------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| **Sobrecarga de operadores**     | Se realiza definiendo métodos con nombres de operadores (`+`, `-`, etc.), sin palabra clave especial.             | Requiere la palabra clave `operator` antes del nombre de la función (`operator fun plus`).                       |
+| **Método de extensión para operadores** | Usa clases implícitas (Scala 2) o `extension` (Scala 3) para añadir operadores a tipos existentes.               | Usa funciones de extensión directamente para definir operadores adicionales en tipos existentes.                |
+| **Uso del operador `apply`**     | El método `apply` permite que los objetos se llamen como funciones usando paréntesis, sin necesidad de operadores adicionales. | Usa el operador `invoke` para lograr que el objeto actúe como función.                                          |
+| **Sintaxis infija**              | La llamada `a + b` es equivalente a `a.+(b)`, lo que permite utilizar métodos de operador como llamadas infijas.  | También permite el uso de llamadas infijas con operadores sobrecargados, al definir `operator fun plus`.       |
+| **Limitaciones**                 | No requiere una palabra clave como `operator`, lo que puede hacer más fácil la sobrecarga accidental de métodos. | Usa `operator` para claridad, evitando sobrecarga accidental y dejando claro el propósito de la función.       |
+
+### Beneficios y limitaciones de Scala
+
+<ProCons>
+    <Pros>
+        - **Flexibilidad de diseño**: La posibilidad de definir métodos de extensión mediante clases implícitas (Scala 2) o `extension` (Scala 3) permite adaptar tipos existentes sin modificar su implementación original.
+        - **Uso intuitivo de `apply`**: El método `apply` permite que los objetos se comporten como funciones, lo cual es útil para la creación de DSLs y facilita patrones de diseño funcionales.
+        - **Compatibilidad con llamadas infijas**: Scala permite utilizar métodos sobrecargados de operadores en formato infijo (por ejemplo, `a + b`), lo que mejora la legibilidad al hacer que el código sea más natural y fluido.
+    </Pros>
+    <Cons>
+        - **Sobrecarga accidental**: La ausencia de una palabra clave como `operator` facilita la sobrecarga accidental de métodos, lo que puede llevar a ambigüedades o comportamientos no deseados si no se tiene cuidado.
+        - **Complejidad de las clases implícitas en Scala 2**: La implementación de métodos de extensión con clases implícitas en Scala 2 puede hacer el código más difícil de seguir, especialmente para quienes no son familiares a los implicits de Scala.
+        - **Potencial de confusión en operadores personalizados**: La flexibilidad de definir operadores personalizados puede llevar a un uso confuso o no intuitivo, especialmente si los operadores se utilizan en contextos que se alejan de su significado habitual.
+   </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos la **sobrecarga de operadores en Scala** y su utilidad para hacer que el código sea más expresivo y fácil de leer. La sobrecarga de operadores permite que los tipos definidos por el usuario se comporten de manera similar a los tipos primitivos, utilizando operadores como `+`, `-`, y `*`. También examinamos cómo **Scala permite que los objetos actúen como funciones** a través del método `apply`, una característica que facilita el diseño de **DSLs** y patrones funcionales.
+
+### Puntos clave:
+
+1. **Flexibilidad en la sobrecarga de operadores**: En Scala, no se necesita una palabra clave adicional para definir operadores, lo cual simplifica la sintaxis, aunque puede llevar a sobrecargas accidentales.
+2. **Métodos de extensión**: Scala 2 utiliza clases implícitas para extender tipos existentes, mientras que Scala 3 introduce `extension`, facilitando aún más la extensión de tipos.
+3. **Patrones de diseño funcional**: El método `apply` permite que los objetos sean invocables como funciones, lo cual es particularmente útil en el desarrollo de DSLs.
+4. **Cuidado en el uso**: La sobrecarga de operadores en Scala es poderosa, pero debe usarse con claridad y consistencia para evitar confusión o ambigüedad en el código.
+
+---
+
+Este enfoque en Scala proporciona herramientas flexibles para enriquecer el diseño de clases y hacer que las operaciones sean más naturales y expresivas, con el compromiso de utilizarlas de manera responsable para mantener la claridad del código.
