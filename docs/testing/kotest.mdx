@@ -17,107 +17,34 @@ import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
 import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import ModuleSetupTask from '@site/src/components/code-blocks/ModuleSetupTask.mdx'
 
 <ReadingTime />
-<GithubRepoLink user="r8vnhill" repo="kotest-intro" />
-<RepoClone repoName="kotest-intro" />
-<ModuleSetup module='kotest-intro' task='setupKotestModule'>
-    ```kotlin showLineNumbers title="convention-plugins/src/main/kotlin/tasks/ModuleSetupTask.kt"
-    package tasks
+<GithubRepoLink user="r8vnhill" repo="testing-kt" />
+<RepoClone repoName="testing-kt" />
+<ModuleSetup module='intro' task='setupIntroModule'>
+    <ModuleSetupTask />    
 
-    import org.gradle.api.DefaultTask
-    import org.gradle.api.provider.Property
-    import org.gradle.api.tasks.Input
-    import org.gradle.api.tasks.Internal
-    import org.gradle.api.tasks.TaskAction
-    import java.io.File
-
-    private val printError: (String) -> Unit = System.err::println
-
-    abstract class ModuleSetupTask : DefaultTask() {
-
-        init {
-            group = "setup"
-        }
-
-        @get:Input
-        abstract val moduleName: Property<String>
-
-        @get:Internal
-        val main
-            get() = baseDir.resolve("src/main/kotlin")
-
-        @get:Internal
-        val test
-            get() = baseDir.resolve("src/test/kotlin")
-
-        private val baseDir: File
-            get() = project.rootProject.file(moduleName)
-
-        @TaskAction
-        fun setupModule() {
-            createModuleDirectory()
-            createBuildFile()
-        }
-
-        private fun createModuleDirectory() = baseDir.run {
-            when {
-                exists() -> printError("Directory already exists: $absolutePath")
-                mkdirs() -> println("Directory created: $absolutePath")
-                else -> printError("Failed to create directory: $absolutePath")
-            }
-        }
-
-        private fun createBuildFile() = baseDir.resolve("build.gradle.kts").run {
-            if (exists()) printError("The build file already exists")
-            else writeText("// Intentionally left blank\n")
-        }
-
-        fun createFiles(packageName: String, vararg files: Pair<File, String>) {
-            files.forEach { (dir, name) ->
-                val group = project.rootProject.group.toString()
-                val packageDir = dir.resolve("$group/$packageName".replace(".", "/"))
-                val file = packageDir.resolve(name)
-                if (file.exists()) {
-                    printError("The file $name already exists")
-                } else {
-                    packageDir.mkdirs()
-                    file.writeText("package $group.$packageName\n\n")
-                    println("The file $name was created successfully")
-                }
-            }
-        }
-    }
-    ```
+    Con la tarea definida, podemos registrarla de la siguiente manera:
 
     ```kotlin title="settings.gradle.kts"
-    val baseName = "basic-tests"
-    val baseDir = rootProject.file(baseName)
-    val printError: (String) -> Unit = System.err::println
+    import tasks.ModuleSetupTask
 
-    tasks.register("setupKotestModule") {
+    tasks.register<ModuleSetupTask>("setupIntroModule") {
+        description = "Creates the base module and files for the testing introductory lesson"
+        module.set("intro")
+
         doLast {
-            baseDir.mkdirs()
-            createGradleBuild()
-            createMyTestFile()
+            createFiles(
+                "intro",
+                test to "MyStringSpecTest.kt",
+                test to "MyFunSpecTest.kt",
+                test to "MyFreeSpecTest.kt",
+                test to "MyWordSpecTest.kt",
+                test to "MyBehaviorSpecTest.kt",
+                test to "MyFeatureSpecTest.kt",
+            )
         }
-    }
-
-    fun createGradleBuild() = baseDir.resolve("build.gradle.kts")
-        .takeIf { !it.exists() }?.apply {
-            writeText("// Intentionally left blank")
-            println("File created: $this")
-        } ?: printError("File already exists: ${baseDir.resolve("build.gradle.kts")}")
-
-    fun createMyTestFile() {
-        val packageName = "${rootProject.group}.testing.basic"
-        val packagePath = packageName.replace(".", "/")
-        val testFile = baseDir.resolve("src/test/kotlin/$packagePath/MyTest.kt")
-        testFile.parentFile.mkdirs()
-        testFile.takeIf { !it.exists() }?.apply {
-            writeText("package $packageName\n\n")
-            println("File created: $this")
-        } ?: printError("File already exists: $testFile")
     }
     ```
 </ModuleSetup>
@@ -175,9 +102,9 @@ Para comenzar a utilizar **Kotest** en nuestro proyecto, lo primero que haremos 
     <TabItem label={"Código completo"} value={"Código completo"}>
         ```toml showLineNumbers title="gradle/libs.versions.toml"
         [versions]
-        kotlin = "2.0.20"
-        kotest-intro = "1.0.0"
-        detekt = "1.23.6"
+        kotlin = "2.0.21"
+        testing = "1.0.0"
+        detekt = "1.23.7"
         kotest-framework = "5.9.1"
 
         [libraries]
@@ -189,7 +116,7 @@ Para comenzar a utilizar **Kotest** en nuestro proyecto, lo primero que haremos 
         detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 
         [bundles]
-        kotest = ["kotest-runner-junit5"]        
+        kotest = ["kotest-runner-junit5"]
         ```
     </TabItem>
 </BoxedTabs>
@@ -250,68 +177,35 @@ Ahora podemos aplicar este **bundle** a nuestro proyecto de Gradle:
 
 ### Escribiendo Pruebas con Kotest
 
-Para comenzar a escribir pruebas con **Kotest**, primero crearemos un módulo llamado `basic-tests` y lo agregaremos al archivo `settings.gradle.kts` de nuestro proyecto:
-
-<BoxedTabs>
-    <TabItem label="Código esencial" value="Código esencial">
-        ```kotlin showLineNumbers title="settings.gradle.kts"
-        include(":basic-tests")        
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="settings.gradle.kts"
-        rootProject.name = "kotest-intro"
-
-        pluginManagement {
-            includeBuild("convention-plugins")
-            repositories {
-                mavenCentral()
-                gradlePluginPortal()
-            }
-        }
-
-        dependencyResolutionManagement {
-            @Suppress("UnstableApiUsage")
-            repositories {
-                mavenCentral()
-            }
-        }
-
-        include(":basic-tests")
-        ```
-    </TabItem>
-</BoxedTabs>
-
-Luego, crearemos un archivo `build.gradle.kts` vacío para este módulo, ya que las dependencias comunes estarán configuradas en el bloque `subprojects`.
-
 Kotest permite escribir pruebas utilizando diferentes estilos; aquí mostramos varios ejemplos:
 
 <BoxedTabs>
     <TabItem value={"StringSpec"} label={"StringSpec"}>
-        ```kotlin title="basic-tests/src/test/kotlin/com/github/username/basics/MyTest.kt" showLineNumbers
+        ```kotlin title="intro/src/test/kotlin/com/github/username/basics/MyTest.kt" showLineNumbers
         package com.github.username.basics
 
         import io.kotest.core.spec.style.StringSpec
         import io.kotest.matchers.shouldBe
 
-        class MyTest : StringSpec({
+        class MyStringSpecTest : StringSpec({
             "String length should be equal to the number of characters" {
                 val str = "Hello, World!"
                 str.length shouldBe 13
             }
         })
+
         ```
 
         `StringSpec` permite escribir pruebas de manera declarativa utilizando cadenas como descripciones.
     </TabItem>
     <TabItem value={"FunSpec"} label={"FunSpec"}>
-        ```kotlin title="basic-tests/src/test/kotlin/com/github/username/basics/MyTest.kt" showLineNumbers
+        ```kotlin title="intro/src/test/kotlin/com/github/username/basics/MyTest.kt" showLineNumbers
         package com.github.username.basics
 
         import io.kotest.core.spec.style.FunSpec
         import io.kotest.matchers.shouldBe
 
-        class MyTest : FunSpec({
+        class MyFunSpecTest : FunSpec({
             context("String length") {
                 test("Should be equal to the number of characters") {
                     val str = "Hello, World!"
@@ -324,13 +218,13 @@ Kotest permite escribir pruebas utilizando diferentes estilos; aquí mostramos v
         `FunSpec` permite escribir pruebas en forma de funciones, similar a otros frameworks de pruebas.
     </TabItem>
     <TabItem value={"FreeSpec"} label={"FreeSpec"}>
-        ```kotlin title="basic-tests/src/test/kotlin/com/github/username/basics/MyTest.kt" showLineNumbers
+        ```kotlin title="intro/src/test/kotlin/com/github/username/basics/MyTest.kt" showLineNumbers
         package com.github.username.basics
 
         import io.kotest.core.spec.style.FreeSpec
         import io.kotest.matchers.shouldBe
 
-        class MyTest : FreeSpec({
+        class MyFreeSpecTest : FreeSpec({
             "String length" - {
                 "should be equal to the number of characters" {
                     val str = "Hello, World!"
@@ -343,13 +237,13 @@ Kotest permite escribir pruebas utilizando diferentes estilos; aquí mostramos v
         `FreeSpec` permite estructurar las pruebas en bloques anidados, lo que da mayor flexibilidad.
     </TabItem>
     <TabItem value={"WordSpec"} label={"WordSpec"}>
-        ```kotlin title="basic-tests/src/test/kotlin/com/github/username/basics/MyTest.kt" showLineNumbers
+        ```kotlin title="intro/src/test/kotlin/com/github/username/basics/MyWordSpecTest.kt" showLineNumbers
         package com.github.username.basics
 
         import io.kotest.core.spec.style.WordSpec
         import io.kotest.matchers.shouldBe
 
-        class MyTest : WordSpec({
+        class MyWordSpecTest : WordSpec({
             "String length" should {
                 "be equal to the number of characters" {
                     val str = "Hello, World!"
@@ -362,13 +256,13 @@ Kotest permite escribir pruebas utilizando diferentes estilos; aquí mostramos v
         `WordSpec` sigue un estilo BDD (Behavior-Driven Development), muy útil para describir comportamientos de forma natural.
     </TabItem>
     <TabItem value={"BehaviorSpec"} label={"BehaviorSpec"}>
-        ```kotlin title="basic-tests/src/test/kotlin/com/github/username/basics/MyTest.kt" showLineNumbers
+        ```kotlin title="intro/src/test/kotlin/com/github/username/basics/MyBehaviorSpecTest.kt" showLineNumbers
         package com.github.username.basics
 
         import io.kotest.core.spec.style.BehaviorSpec
         import io.kotest.matchers.shouldBe
 
-        class MyTest : BehaviorSpec({
+        class MyBehaviorSpecTest : BehaviorSpec({
             given("a string") {
                 `when`("calculating its length") {
                     then("it should be equal to the number of characters") { 
@@ -381,6 +275,25 @@ Kotest permite escribir pruebas utilizando diferentes estilos; aquí mostramos v
         ```
 
         `BehaviorSpec` también es un estilo BDD que permite describir escenarios complejos usando "given", "when", y "then".
+    </TabItem>
+    <TabItem value={"FeatureSpec"} label={"FeatureSpec"}>
+        ```kotlin title="intro/src/test/kotlin/com/github/username/basics/MyFeatureSpecTest.kt" showLineNumbers
+        package com.github.username.basics
+
+        import io.kotest.core.spec.style.FeatureSpec
+        import io.kotest.matchers.shouldBe
+
+        class MyFeatureSpecTest : FeatureSpec({
+            feature("String length") {
+                scenario("Should be equal to the number of characters") {
+                    val str = "Hello, World!"
+                    str.length shouldBe 13
+                }
+            }
+        })
+        ```
+
+        `FeatureSpec` permite organizar las pruebas en torno a características o funcionalidades específicas.
     </TabItem>
 </BoxedTabs>
 

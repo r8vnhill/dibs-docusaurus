@@ -14,78 +14,39 @@ import Corollary from '@site/src/components/Corollary'
 import GithubRepoLink from '@site/src/components/GithubRepoLink'
 import { LanguageCard, JavaCard } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
-import Tooltip from '@site/src/components/Tooltip'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="generic-programming-kt" />
+<ModuleSetup module='bounds' task='setupBoundsModule'>
+```kotlin showLineNumbers title="convention-plugins/src/main/kotlin/bounds.gradle.kts"
+import tasks.ModuleSetupTask
 
-<details>
-    <summary>
-        Comencemos por crear un módulo para la lección...
-    </summary>
+tasks.register<ModuleSetupTask>("setupBoundsModule") {
+    description = "Creates the base module and files for the bounds lesson"
+    module.set("bounds")
 
-    ```kotlin showLineNumbers title="convention-plugins/src/main/kotlin/bounds.gradle.kts"
-    tasks.register("setupBoundsModule") {
-        val baseDir = "bounds"
-        doLast {
-            // Crear el archivo build.gradle.kts si no existe
-            createFileIfNotExists(
-                rootProject.file(baseDir), "build.gradle.kts", "// Intentionally left blank"
-            )
-
-            // Crear archivos en el paquete "repo"
-            val groupPath = rootProject.group.toString().replace(".", "/")
-            val repoFiles = listOf(
-                "main" to "Repository.kt", "main" to "Entity.kt", "main" to "Serializable.kt",
-                "test" to "RepositoryTest.kt"
-            )
-            createFilesForPackage(baseDir, groupPath, "repo", repoFiles)
-
-            // Crear archivos en el paquete "notifications"
-            val notificationFiles = listOf(
-                "main" to "EmailNotificationSystem.kt", "main" to "NotificationHandler.kt",
-                "main" to "Notification.kt", "test" to "NotificationSystemTest.kt"
-            )
-            createFilesForPackage(baseDir, groupPath, "notifications", notificationFiles)
-        }
+    doLast {
+        createFiles(
+            "repo",
+            main to "Repository.kt",
+            main to "Entity.kt",
+            main to "Serializable.kt",
+            test to "RepositoryTest.kt"
+        )
+        createFiles(
+            "notifications",
+            main to "EmailNotificationSystem.kt",
+            main to "NotificationHandler.kt",
+            main to "Notification.kt",
+            test to "NotificationSystemTest.kt"
+        )
     }
-
-    // Función para crear un archivo si no existe
-    fun createFileIfNotExists(dir: File, fileName: String, content: String) {
-        dir.apply { mkdirs() }
-            .resolve(fileName).apply {
-                if (!exists()) {
-                    writeText(content)
-                    println("File created: $this")
-                } else {
-                    println("File already exists: $this")
-                }
-            }
-    }
-
-    // Función para crear múltiples archivos en un paquete
-    fun createFilesForPackage(
-        baseDir: String, groupPath: String, packageName: String, 
-        files: List<Pair<String, String>>
-    ) {
-        files.forEach { (type, fileName) ->
-            val dir = rootProject.file("$baseDir/src/$type/kotlin/$groupPath/$packageName")
-                .apply { mkdirs() }
-            createFileIfNotExists(dir, fileName, "package ${rootProject.group}.$packageName\n\n")
-        }
-    }
-    ```
-
-    Preocupate de que el plugin `bounds` esté aplicado en el archivo `build.gradle.kts` del módulo principal.
-
-    ```bash
-    ./gradlew setupBoundsModule
-    ```
-
-    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
-</details>
-
+}
+```
+</ModuleSetup>
 
 La **programación genérica** en Kotlin nos permite crear clases y funciones que pueden trabajar con cualquier tipo, proporcionando una gran flexibilidad y reutilización de código. Sin embargo, a veces necesitamos restringir los tipos que pueden ser utilizados con un genérico. Aquí es donde entran las **cotas superiores** y **cotas inferiores**.
 

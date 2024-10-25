@@ -1,0 +1,154 @@
+---
+title: Varianza en sitio de declaración en Scala
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="scala-dibs" />
+
+En Scala, los parámetros de tipo en sitio de declaración se especifican usando `+T` para covarianza y `-T` para contravarianza:
+
+<BoxedTabs>
+    <TabItem value="Scala 3" label="Scala 3">
+        ```scala
+        trait Producer[+T]:
+            def produce(): T
+
+        trait Consumer[-T]:
+            def consume(item: T): Unit
+        ```
+    </TabItem>
+    <TabItem value="Scala 2" label="Scala 2">
+        ```scala
+        trait Producer[+T] {
+            def produce(): T
+        }
+
+        trait Consumer[-T] {
+            def consume(item: T): Unit
+        }
+        ```
+    </TabItem>
+</BoxedTabs>
+
+## Ejemplo en Scala: Procesamiento de Datos
+
+Para el ejemplo de procesamiento de datos, supongamos que tenemos una jerarquía de datos en Scala similar a la de Kotlin:
+
+```scala
+class Data
+class TextData extends Data
+class ImageData extends Data
+```
+
+Queremos definir una interfaz `DataProcessor` que procese datos de forma genérica. Usamos `-T` para indicar contravarianza, ya que `DataProcessor` **consume** datos de tipo `T`:
+
+<BoxedTabs>
+    <TabItem value="Scala 3" label="Scala 3">
+        ```scala
+        trait DataProcessor[-T]:
+            def process(data: T): Unit
+        ```
+    </TabItem>
+    <TabItem value="Scala 2" label="Scala 2">
+        ```scala
+        trait DataProcessor[-T] {
+            def process(data: T): Unit
+        }
+        ```
+    </TabItem>
+</BoxedTabs>
+
+Esto nos permite hacer lo siguiente:
+
+<BoxedTabs>
+    <TabItem value="Scala 3" label="Scala 3">
+        ```scala
+        class GeneralProcessor extends DataProcessor[Data]:
+            def process(data: Data): Unit = println("Processing data")
+
+        val generalProcessor: DataProcessor[Data] = GeneralProcessor()
+        val textProcessor: DataProcessor[TextData] = generalProcessor
+        ```
+    </TabItem>
+    <TabItem value="Scala 2" label="Scala 2">
+        ```scala
+        class GeneralProcessor extends DataProcessor[Data] {
+            def process(data: Data): Unit = println("Processing data")
+        }
+
+        val generalProcessor: DataProcessor[Data] = new GeneralProcessor()
+        val textProcessor: DataProcessor[TextData] = generalProcessor
+        ```
+    </TabItem>
+</BoxedTabs>
+
+## Resumen comparativo
+
+| **Característica**                  | **Scala**                                                                                     | **Kotlin**                                                                                   |
+|-------------------------------------|-----------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|
+| **Varianza en sitio de declaración**| Usa `+T` para covarianza y `-T` para contravarianza en la declaración de tipos                | Usa `out T` para covarianza e `in T` para contravarianza en la declaración de tipos          |
+| **Flexibilidad en colecciones mutables** | Permite usar la varianza en colecciones mutables con restricciones                           | Prefiere limitar el uso de varianza en colecciones mutables para evitar inconsistencias de tipos |
+| **Restricciones en parámetros de tipo** | Los tipos covariantes (`+T`) solo pueden usarse en posiciones de salida; contravariantes (`-T`) solo en entrada | Similar: `out T` (covariante) solo en salida e `in T` (contravariante) solo en entrada      |
+| **Flexibilidad en jerarquías de tipos** | Mayor flexibilidad en la asignación de tipos derivados a supertipos gracias a la varianza declarada en colecciones | Similar, permite la asignación segura de subtipos a supertipos en colecciones inmutables    |
+
+### Beneficios y limitaciones
+
+<ProCons>
+   <Pros>
+      - **APIs flexibles y reutilizables**: La varianza en sitio de declaración permite diseñar APIs adaptables, especialmente útil en bibliotecas que necesitan soportar múltiples tipos sin requerir sobrecarga adicional.
+      - **Mayor seguridad de tipos en compilación**: Al definir la varianza en la declaración, el compilador puede verificar la seguridad de los tipos de entrada y salida, lo que reduce errores en tiempo de ejecución.
+      - **Simplificación de la sintaxis**: Definir la varianza una sola vez en la declaración facilita la implementación y lectura del código en comparación con definir la varianza en cada uso.
+      - **Compatibilidad con colecciones inmutables**: Facilita el uso de subtipos en estructuras de datos inmutables, permitiendo flexibilidad en funciones que operan en listas, secuencias y otros contenedores sin modificar su tipo base.
+   </Pros>
+   <Cons>
+      - **Complejidad en conceptos de tipado**: La varianza en sitio de declaración introduce una capa adicional de complejidad en la comprensión de subtipos y supertipos, que puede resultar confusa para personas nuevas en el uso de generics avanzados.
+      - **Limitaciones en métodos y operaciones**: Las restricciones de uso de varianza pueden impedir ciertas operaciones con tipos genéricos dentro de una clase, como en el caso de la covarianza, donde no se permite usar el tipo en posiciones de entrada.
+      - **Error de compilación menos intuitivos**: Los errores relacionados con varianza pueden ser difíciles de interpretar y depurar, especialmente cuando las reglas de varianza en sitio de declaración limitan el uso esperado en el código.
+      - **No aplicable a todos los casos**: En situaciones donde el tipo genérico necesita flexibilidad tanto de entrada como de salida, la varianza en sitio de declaración puede no ser suficiente, y puede requerirse una varianza en sitio de uso o un rediseño de la API.
+   </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos la **varianza en sitio de declaración** en **Scala** y cómo se compara con su uso en **Kotlin**. La varianza permite definir de forma precisa el comportamiento de los tipos genéricos en relación con sus subtipos, mejorando la seguridad y flexibilidad de las APIs. En particular, vimos que tanto Scala como Kotlin permiten declarar varianza para asegurar un uso coherente de los tipos en las jerarquías de datos, aunque ambos lenguajes difieren en sus sintaxis y en cómo gestionan la flexibilidad en colecciones mutables.
+
+### Puntos clave
+
+- **Scala** utiliza `+T` y `-T` para especificar covarianza y contravarianza en sitio de declaración, mientras que **Kotlin** usa `out T` y `in T`.
+- La varianza en sitio de declaración en ambos lenguajes aporta seguridad de tipos y permite asignar subtipos a supertipos en estructuras de datos inmutables.
+- Scala y Kotlin comparten limitaciones en cuanto al uso de parámetros de tipo variante en posiciones incorrectas (covarianza en entrada y contravarianza en salida).
+- La flexibilidad en APIs y colecciones inmutables es una ventaja clave de la varianza en sitio de declaración, aunque su uso adecuado requiere un conocimiento sólido del sistema de tipos.
+
+---
+
+Ambos lenguajes ofrecen ventajas únicas en su implementación de la varianza, permitiendo construir **APIs seguras, adaptables y eficientes** para manejar diversos tipos de datos en aplicaciones robustas.
+
+Type Parameterization. (2021). En Martin Odersky, Lex Spoon, Bill Venners, & Frank Sommers, Programming in Scala (5th ed., pp. 394–415). Artima Press.
+
+<References references={[
+    {
+        title: "Type Parameterization",
+        bookTitle: "Programming in Scala",
+        publisher: "Artima Press",
+        pages: "394–415",
+        year: "2021",
+        author: "Martin Odersky, Lex Spoon, Bill Venners, & Frank Sommers",
+        type: "book",
+    },
+]}/>

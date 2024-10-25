@@ -1,23 +1,33 @@
 ---
 title: Mónadas
 ---
-import { LanguageCard } from "/src/components/cards/LanguageCard";
-import Corollary from "/src/components/Corollary";
-import Definition from "/src/components/Definition";
-import GitHubRepoLink from "/src/components/GithubRepoLink";
-import ReadingTime from '/src/components/ReadingTime';
-import References from "/src/components/ReferencesComponent";
-import TabItem from "@theme/TabItem";
-import Tabs from "@theme/Tabs";
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
-<ReadingTime/>
-<GitHubRepoLink repo={"functional-programming-kt"} user={"r8vnhill"}/>
+<ReadingTime />
+<GithubRepoLink repo={"functional-programming-kt"} user={"r8vnhill"}/>
+<ModuleSetup module="monads" task="setupMonadsModule">
+    ```kotlin showLineNumbers
 
+    ```
+</ModuleSetup>
 <Definition title={"Mónada"}>
-    Una **Mónada** es una abstracción en la teoría de categorías que extiende el concepto de un **functor**, permitiendo no solo mapear una función sobre una estructura de datos, sino también encadenar operaciones dependientes de forma secuencial. En programación funcional, una mónada es un tipo que implementa dos operaciones clave: $\mathrm{unit}$ (también conocida como $\mathrm{pure}$ o $\mathrm{return}$), que introduce un valor en la estructura monádica, y $\mathrm{flatMap}$ (también conocida como $\mathrm{bind}$, que aplica una función que devuelve otra estructura monádica, aplastando la estructura resultante para evitar anidaciones.
+    Una **Mónada** es una abstracción en la teoría de categorías que extiende el concepto de un **functor**, permitiendo no solo mapear una función sobre una estructura de datos, sino también encadenar operaciones dependientes de forma secuencial. En programación funcional, una mónada es un tipo que implementa dos operaciones clave: $\mathrm{pure}$ (también conocida como $\mathrm{unit}$ o $\mathrm{return}$), que introduce un valor en la estructura monádica, y $\mathrm{flatMap}$ (también conocida como $\mathrm{bind}$), que aplica una función que devuelve otra estructura monádica, aplastando la estructura resultante para evitar anidaciones.
 </Definition>
-
 <Corollary>
     Si tienes una estructura como `Option`, `List` o `Result`, y puedes encadenar operaciones sin preocuparte por valores vacíos, errores o el manejo explícito de efectos, entonces estás utilizando una mónada. Las mónadas permiten manejar flujos de operaciones de manera segura y ordenada.
 </Corollary>
@@ -26,21 +36,21 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 Para que una estructura sea considerada una **mónada**, debe cumplir con las siguientes tres leyes fundamentales. Estas leyes aseguran la coherencia de las operaciones monádicas y permiten el encadenamiento predecible de transformaciones.
 
-1. **Ley de Identidad Izquierda**: Si aplicamos la función de $\mathrm{unit}$ a un valor y luego lo encadenamos con una función $f$ mediante $\mathrm{flatMap}$, debe ser equivalente a aplicar directamente $f$ al valor.
+1. **Ley de Identidad Izquierda**: Si aplicamos la función de $\mathrm{pure}$ a un valor y luego lo encadenamos con una función $f$ mediante $\mathrm{flatMap}$, debe ser equivalente a aplicar directamente $f$ al valor.
 
     <center>
         $
-        \mathrm{flatMap}(f) \circ \mathrm{unit} = f
+        \mathrm{pure}(x) \, \mathrm{flatMap} \, f = f(x)
         $
     </center>
 
     **Intuición**: Tomar un valor, envolverlo en una mónada y luego aplicar una función `f` debe ser lo mismo que aplicar `f` directamente al valor.
 
-2. **Ley de Identidad Derecha**: Si tenemos una mónada $m$ y la encadenamos con la función $\mathrm{unit}$ mediante $\mathrm{flatMap}$, el resultado debe ser la misma mónada $m$.
+2. **Ley de Identidad Derecha**: Si tenemos una mónada $m$ y la encadenamos con la función $\mathrm{pure}$ mediante $\mathrm{flatMap}$, el resultado debe ser la misma mónada $m$.
 
     <center>
         $
-        m \, \mathrm{flatMap} \, \mathrm{unit} = m
+        m \, \mathrm{flatMap} \, \mathrm{pure} = m
         $
     </center>
 
@@ -58,69 +68,9 @@ Para que una estructura sea considerada una **mónada**, debe cumplir con las si
 
 Estas leyes aseguran que las mónadas respeten un comportamiento coherente y predecible al trabajar con efectos y transformaciones encadenadas, garantizando que el flujo de operaciones sea estable independientemente del orden en el que se apliquen las transformaciones.
 
-## Implementación de Mónadas en Kotlin
-
-<details>
-    <summary>
-        Comencemos por crear un módulo para la lección
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path "monads\src\main\kotlin" -ItemType Directory -Force
-            Set-Content -Path "monads\build.gradle.kts" -Value "// Intentionally left blank"
-            ```
-        </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-            ```powershell
-            mkdir -p monads\src\main\kotlin
-            '// Intentionally left blank' > monads\build.gradle.kts
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            mkdir -p monads/src/main/kotlin
-            echo "// Intentionally left blank" > monads/build.gradle.kts
-            ```
-        </TabItem>
-    </BoxedTabs>
-
-    Recuerda agregar el módulo a tu archivo `settings.gradle.kts` para que sea reconocido por Gradle.
-</details>
+## Caso de estudio: Mónada `Box`
 
 ### Creando la Clase ``Box``
-
-<details>
-    <summary>
-        Si prefieres crear el archivo desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $Group = 'com\github\username'
-            $MonadsDir = "monads\src\main\kotlin\$Group"
-            New-Item -Path "$MonadsDir\Box.kt" -ItemType File -Force
-            ```
-        </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-            ```powershell
-            $Group = 'com\github\username'
-            $MonadsDir = "monads\src\main\kotlin\$Group"
-            ni "$MonadsDir\Box.kt" -i f -f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            GROUP="com/github/username"
-            MONADS_DIR="monads/src/main/kotlin/$GROUP"
-            mkdir -p "$MONADS_DIR"
-            touch "$MONADS_DIR/Box.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
 
 Al igual que con los functores, comenzaremos con una estructura simple llamada `Box` que encapsula un valor y nos permitirá implementar las operaciones monádicas.
 
@@ -130,82 +80,152 @@ package com.github.username
 data class Box<out A>(val value: A)
 ```
 
-### Implementando la Mónada para ``Box``
-
-<details>
-    <summary>
-        Si prefieres crear el archivo desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path "$MonadsDir\BoxMonad.kt" -ItemType File -Force
-            ```
-        </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-            ```powershell
-            ni "$MonadsDir\BoxMonad.kt" -i f -f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            touch "$MONADS_DIR/BoxMonad.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
+### Implementando la mónada para ``Box``
 
 ```kotlin showLineNumbers title="monads/src/main/kotlin/com/github/username/monads/BoxMonad.kt"
 package com.github.username.monads
 
 object BoxMonad {
-    fun <A> unit(a: A): Box<A> = Box(a)
+    fun <A> pure(a: A): Box<A> = Box(a)
     fun <A, B> Box<A>.flatMap(f: (A) -> Box<B>): Box<B> = f(value)
 }
 ```
 
-:::info Explicación del Código
+<Explanation>
+    La implementación de la mónada `Box` consta de dos funciones:
 
-- **[4]** `unit`: La función `unit` toma un valor de tipo `A` y lo envuelve en una caja `Box`.
-- **[5]** `flatMap`: La función `flatMap` toma una función `f` que mapea un valor de tipo `A` a una caja `Box<B>`. Extrae el valor de la caja actual y aplica la función `f` para obtener una nueva caja `Box<B>`.
+    - **`pure`**: Toma un valor de tipo `A` y lo envuelve en una caja `Box`.
+    - **`flatMap`**: Toma una función `f` que mapea un valor de tipo `A` a una caja `Box<B>`. Extrae el valor de la caja actual y aplica la función `f` para obtener una nueva caja `Box<B>`.
+</Explanation>
 
-:::
-
-### Verificando las Leyes de las Mónadas
+### Verificando las leyes de las mónadas
 
 Vamos a escribir pruebas para verificar que nuestra implementación de `BoxMonad` cumple con las leyes de las mónadas.
 
-#### Ley de Identidad Izquierda
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        #### Ley de identidad izquierda
 
-```kotlin showLineNumbers
-val leftIdentity = with(BoxMonad) {
-    unit(420).flatMap { Box(it) }
-}
-println("Monad adheres to the left identity law: ${leftIdentity == box}")
-```
+        ```kotlin showLineNumbers
+        checkAll(Arb.int(), Arb.int()) { a, b ->
+            val f: (Int) -> Box<Int> = { Box(it * b) }
+            BoxMonad.run {
+                pure(a).flatMap(f) shouldBe f(a)
+            }
+        }
+        ```
 
-#### Ley de Identidad Derecha
+        #### Ley de identidad derecha
 
-```kotlin showLineNumbers
-val box: Box<Int> = Box(420)
-val rightIdentity = with(BoxMonad) {
-    box.flatMap { pure(it) }
-}
-println("Monad adheres to the right identity law: ${rightIdentity == box}")
-```
+        ```kotlin showLineNumbers
+        checkAll(Arb.int()) { a ->
+            BoxMonad.run {
+                pure(a).flatMap { pure(it) } shouldBe pure(a)
+            }
+        }
+        ```
 
-#### Ley de Asociatividad
+        #### Ley de asociatividad
 
-```kotlin showLineNumbers
-val composition = with(BoxMonad) {
-    box.flatMap { Box(it + 1) }.flatMap { Box(it * 2) }
-}
-val composed = with(BoxMonad) {
-    box.flatMap { Box((it + 1) * 2) }
-}
-println("Monad adheres to the composition law: ${composition == composed}")
-```
+        ```kotlin showLineNumbers
+        checkAll(Arb.int(), Arb.int(), Arb.int()) { a, b, c ->
+            val f: (Int) -> Box<Int> = { Box(it * b) }
+            val g: (Int) -> Box<Int> = { Box(it + c) }
+            BoxMonad.run {
+                pure(a).flatMap(f).flatMap(g) shouldBe 
+                    pure(a).flatMap { f(it).flatMap(g) }
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        package cl.ravenhill.monads
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.int
+        import io.kotest.property.checkAll
+
+        class BoxMonadTest : FreeSpec({
+            "Given a box monad" - {
+                // Left identity
+                "when wrapping a value in the monadic context" - {
+                    ("then chaining a function should be the same as applying the " +
+                            "function to the value"){
+                        checkAll(Arb.int(), Arb.int()) { a, b ->
+                            val f: (Int) -> Box<Int> = { Box(it * b) }
+                            BoxMonad.run {
+                                pure(a).flatMap(f) shouldBe f(a)
+                            }
+                        }
+                    }
+                }
+
+                // Right identity
+                "when chaining a function that returns the monadic context" - {
+                    ("then the result should be the same as the original monadic " +
+                            "context") {
+                        checkAll(Arb.int()) { a ->
+                            BoxMonad.run {
+                                pure(a).flatMap { pure(it) } shouldBe pure(a)
+                            }
+                        }
+                    }
+                }
+
+                // Associativity
+                "when chaining two functions" - {
+                    ("then the result should be the same as chaining the result of " +
+                            "the first function with the second") {
+                        checkAll(Arb.int(), Arb.int(), Arb.int()) { a, b, c ->
+                            val f: (Int) -> Box<Int> = { Box(it * b) }
+                            val g: (Int) -> Box<Int> = { Box(it + c) }
+                            BoxMonad.run {
+                                pure(a).flatMap(f).flatMap(g) shouldBe
+                                        pure(a).flatMap { f(it).flatMap(g) }
+                            }
+                        }
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</BoxedTabs>
+
+## Beneficios y limitaciones de las mónadas
+
+<ProCons>
+    <Pros>
+        - **Manejo seguro de efectos**: Las mónadas permiten encapsular efectos como errores, valores ausentes o flujos asincrónicos, lo que evita errores comunes como `null` o excepciones no controladas. Esto aumenta la robustez y la seguridad del código.
+        - **Encadenamiento limpio de operaciones**: Gracias a `flatMap`, las operaciones dependientes pueden encadenarse de forma secuencial, manteniendo el código conciso y fácil de seguir.
+        - **Reutilización y componibilidad**: Las mónadas facilitan la creación de estructuras reutilizables y componibles, permitiendo que las funciones se manejen de manera coherente sin importar el tipo de efecto (por ejemplo, valores opcionales, listas, o resultados de operaciones).
+        - **Control explícito de errores**: Con estructuras como `Option` o `Either`, las mónadas ayudan a hacer explícito el manejo de errores y valores ausentes, mejorando la legibilidad y evitando errores inesperados en el flujo de ejecución.
+    </Pros>
+    <Cons>
+        - **Complejidad conceptual**: El concepto de las mónadas puede resultar abstracto y difícil de entender para personas sin experiencia en programación funcional, ya que introduce un nuevo paradigma de manipulación de efectos.
+        - **Propagación del tipo monádico**: Al usar mónadas, las funciones deben adaptarse para devolver valores en el mismo contexto monádico, lo que puede requerir cambios significativos en el código si se introduce en un sistema sin una estructura funcional previa.
+        - **Rendimiento en ciertos contextos**: En algunos casos, especialmente en estructuras monádicas anidadas o en aplicaciones de bajo nivel, el uso extensivo de mónadas puede introducir una sobrecarga en términos de rendimiento o memoria.
+        - **Limitaciones de control de flujo**: Las mónadas encapsulan operaciones secuenciales, lo que puede dificultar el uso en estructuras de control de flujo más complejas (por ejemplo, bucles o condiciones) sin reestructurar el código de manera funcional.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos el concepto de **mónadas** en programación funcional y sus aplicaciones prácticas para manejar flujos de datos y efectos de manera segura y estructurada. Vimos que las mónadas son una abstracción poderosa que permite realizar operaciones secuenciales sobre datos y efectos sin comprometer la seguridad o claridad del código.
+
+### Puntos clave
+
+1. **Manejo de efectos con seguridad**: Las mónadas nos permiten encapsular efectos como errores y valores opcionales en un contexto seguro, mejorando la robustez del código al reducir errores comunes.
+2. **Encadenamiento y composición**: Con operaciones como `flatMap`, es posible encadenar funciones de manera limpia y sin anidación excesiva, lo que facilita la comprensión y la mantenibilidad del código.
+3. **Leyes monádicas**: Las leyes de identidad y asociatividad garantizan que las operaciones sobre mónadas se comporten de manera coherente y predecible, manteniendo la estabilidad del flujo de operaciones.
+4. **Balance entre beneficios y limitaciones**: Aunque las mónadas ofrecen grandes ventajas en términos de manejo seguro de efectos y estructura del código, también introducen una complejidad conceptual y pueden tener sobrecargas de rendimiento en ciertos contextos.
+
+---
+
+Con este conocimiento, podemos tomar decisiones informadas sobre cuándo y cómo utilizar mónadas en nuestros proyectos, especialmente en escenarios donde el manejo seguro de efectos y la composición de funciones es crucial. Las mónadas, al igual que otras abstracciones funcionales, nos brindan herramientas efectivas para estructurar aplicaciones complejas y mantenibles.
 
 <div className="language-card-container">
     <LanguageCard
@@ -230,5 +250,4 @@ println("Monad adheres to the composition law: ${composition == composed}")
         type: "book",
         author: 'Marco Vermeulen, Rúnar Bjarnason, Paul Chiusano',
     },
-]}
-/>
+]}/>

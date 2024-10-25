@@ -69,8 +69,7 @@ const sections: CourseSection[] = [
             "Funciones de alto orden",
             "Funciones lambda",
             "Tipos de datos algebráicos",
-            "Optimización de funciones recursivas",
-            "Funtores",
+            "Functores",
             "Mónadas"
         ],
     },

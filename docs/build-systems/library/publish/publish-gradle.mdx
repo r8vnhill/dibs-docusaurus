@@ -1,12 +1,25 @@
 ---
-title: Publicación de Bibliotecas
+title: Publicación de bibliotecas
 ---
-import TabItem from "@theme/TabItem";
-import Tabs from "@theme/Tabs";
-import ReadingTime from "../../../../src/components/ReadingTime";
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="echo-app-kt" addLineBreak={false}/>
 
 ## Publicando un release
 
@@ -68,35 +81,16 @@ Para publicar paquetes en GitHub Packages, necesitamos un **token de acceso pers
 
 :::
 
-Ahora, debemos tener acceso desde el script de construcción a este token y a nuestro nombre de usuario de GitHub. Para ello, podemos utilizar variables de entorno o un archivo de configuración externo. Utilizaremos variables de entorno en este caso.
+Ahora, debemos tener acceso desde el script de construcción a este token y a nuestro nombre de usuario de GitHub. Para ello, podemos utilizar variables de entorno o un archivo de configuración externo. Utilizaremos un archivo de configuración para mantener la información segura y accesible desde el script de construcción.
 
-Crea una variable de entorno llamada `GITHUB_USER` con tu nombre de usuario de GitHub y otra llamada `GITHUB_TOKEN` con el token de acceso que generaste anteriormente.
+### Crear un archivo de configuración
 
-:::info
+Crea un archivo de configuración llamado `github.properties` en el directorio raíz de tu proyecto con la siguiente estructura:
 
-Puedes crear variables de entorno en tu sistema operativo haciendo:
-
-<BoxedTabs groupId={"os"}>
-    <TabItem value={"Windows"} label={"Windows"}>
-        ```powershell
-        [System.Environment]::SetEnvironmentVariable( "GITHUB_TOKEN", "tu-token", "Machine")
-        ```
-
-        Puede que necesites reiniciar tu terminal o sesión para que los cambios surtan efecto.
-
-        **Nota:** Necesitas tener **privilegios de administrador** para establecer una variable de entorno a nivel de máquina. Si no los tienes, ejecuta PowerShell como administrador
-
-        Si prefieres utilizar una interfaz gráfica puedes utilizar una herramienta como [Rapid Environment Editor](https://www.rapidee.com/en/download).
-    </TabItem>
-    <TabItem value={"Unix"} label={"Unix"}>
-        ```bash title="Bash"
-        echo 'export GITHUB_TOKEN = "tu-token"' >> ~/.bashrc
-        source ~/.bashrc
-        ```
-    </TabItem>
-</BoxedTabs>
-
-:::
+```properties title="github.properties"
+github.token=ghp_tu-token
+github.username=tu-usuario
+```
 
 ### Configurar Gradle para publicar en GitHub Packages
 
@@ -123,202 +117,192 @@ abstract class ArtifactExtension {
 
 Luego, crearemos la extensión en `publish.conventions.gradle.kts` y lo utilizaremos en el `build` de nuestra biblioteca.
 
-<BoxedTabs groupId="gradle"> 
-    <TabItem value="Gradle Kotlin DSL" label="Gradle Kotlin DSL">
-        ```kotlin title="convention-plugins/src/main/kotlin/publish.conventions.gradle.kts"
-        import extensions.ArtifactExtension
+```kotlin title="convention-plugins/src/main/kotlin/publish.conventions.gradle.kts"
+import extensions.ArtifactExtension
 
-        // ...
+// ...
 
-        project.extensions.create<ArtifactExtension>("artifact")
-        ```
-    </TabItem>
-    <TabItem value="Gradle Groovy DSL" label="Gradle Groovy DSL">
-        ```groovy title="convention-plugins/src/main/kotlin/publish.conventions.gradle.kts"
-        import extensions.ArtifactExtension
-
-        // ...
-
-        project.extensions.create(ArtifactExtension, "artifact")
-        ```
-    </TabItem>
-</BoxedTabs>
+project.extensions.create<ArtifactExtension>("artifact")
+```
 
 <BoxedTabs>
     <TabItem value={"Paso 1"} label={"Paso 1"}>
-        <BoxedTabs groupId={"gradle"}>
-            <TabItem value={"Kotlin Gradle DSL"} label={"Kotlin Gradle DSL"}>
-                ```kotlin title="convention-plugins/src/main/kotlin/publish.conventions.gradle.kts"
-                // ...
-                afterEvaluate { }
-                ```
-            </TabItem>
-            <TabItem value={"Groovy Gradle DSL"} label={"Groovy Gradle DSL"}>
-                ```groovy title="publish.conventions.gradle"
+        ```kotlin title="convention-plugins/src/main/kotlin/publish.conventions.gradle.kts"
+        // ...
+        val githubProperties = Properties().apply {
+            load(rootProject.file("github.properties").reader())
+        }
 
-                ```
-            </TabItem>
-        </BoxedTabs>
+        val githubToken: String = githubProperties.getProperty("github.token")
+        val githubUser: String = githubProperties.getProperty("github.username")
 
-        Registraremos la tarea de publicación **después** de evaluar el proyecto, ya que necesitamos acceder a las extensiones y tareas que se definen durante la evaluación.
+        afterEvaluate { }
+        ```
+
+        <Explanation>
+            En este paso, cargamos las propiedades del archivo `github.properties` que contienen el token de acceso y el nombre de usuario de GitHub. Registraremos la tarea de publicación **después** de evaluar el proyecto, ya que necesitamos acceder a las extensiones y tareas que se definen durante la evaluación.
+        </Explanation>
     </TabItem>
     <TabItem value={"Paso 2"} label={"Paso 2"}>
-        <BoxedTabs groupId={"gradle"}>
-            <TabItem value={"Kotlin Gradle DSL"} label={"Kotlin Gradle DSL"}>
-                ```kotlin title="convention-plugins/src/main/kotlin/publish.conventions.gradle.kts"
-                // ...
-                afterEvaluate {
-                    val artifactExtension = project.extensions.getByType<ArtifactExtension>()
+        ```kotlin title="convention-plugins/src/main/kotlin/publish.conventions.gradle.kts"
+        // ...
+        afterEvaluate {
+            val artifactExtension = project.extensions.getByType<ArtifactExtension>()
 
-                    project.extensions.getByType<FatJarExtension>().apply {
-                        implementationTitle = artifactExtension.artifactName
-                        implementationVersion = artifactExtension.artifactVersion
-                    }
-                }
-                ```
-            </TabItem>
-            <TabItem value={"Groovy Gradle DSL"} label={"Groovy Gradle DSL"}>
-                ```groovy title="publish.conventions.gradle"
+            project.extensions.getByType<FatJarExtension>().apply {
+                implementationTitle = artifactExtension.artifactName
+                implementationVersion = artifactExtension.artifactVersion
+            }
+        }
+        ```
 
-                ```
-            </TabItem>
-        </BoxedTabs>
-
-        En este paso, asignamos las propiedades `implementationTitle` e `implementationVersion` del plugin `FatJarExtension` utilizando los valores de `artifactName` y `artifactVersion`, respectivamente. Para lograr esto, es necesario acceder a la extensión del proyecto **después** de que se haya evaluado, garantizando que las configuraciones y tareas estén completamente definidas.
+        <Explanation>
+            En este paso, asignamos las propiedades `implementationTitle` e `implementationVersion` del plugin `FatJarExtension` utilizando los valores de `artifactName` y `artifactVersion`, respectivamente. Para lograr esto, es necesario acceder a la extensión del proyecto **después** de que se haya evaluado, garantizando que las configuraciones y tareas estén completamente definidas.
+        </Explanation>
     </TabItem>
     <TabItem value={"Paso 3"} label={"Paso 3"}>
-        <BoxedTabs groupId={"gradle"}>
-            <TabItem value={"Kotlin Gradle DSL"} label={"Kotlin Gradle DSL"}>
-                ```kotlin title="convention-plugins/src/main/kotlin/publish.conventions.gradle.kts"
-                // ...
-                afterEvaluate {
-                    // ...
-                    publishing { }
-                }
-                ```
-            </TabItem>
-            <TabItem value={"Groovy Gradle DSL"} label={"Groovy Gradle DSL"}>
-                ```groovy title="publish.conventions.gradle"
+        ```kotlin title="convention-plugins/src/main/kotlin/publish.conventions.gradle.kts"
+        // ...
+        afterEvaluate {
+            // ...
+            publishing { }
+        }
+        ```
 
-                ```
-            </TabItem>
-        </BoxedTabs>
-
-        El bloque `publishing` nos permite definir las publicaciones de Maven y especificar los repositorios donde se almacenarán los artefactos generados. A través de este bloque, podemos configurar los detalles de cada publicación y gestionar los destinos de despliegue.
+        <Explanation>
+            El bloque `publishing` nos permite definir las publicaciones de Maven y especificar los repositorios donde se almacenarán los artefactos generados. A través de este bloque, podemos configurar los detalles de cada publicación y gestionar los destinos de despliegue.
+        </Explanation>
     </TabItem>
     <TabItem value={"Paso 4"} label={"Paso 4"}>
-        <BoxedTabs groupId={"gradle"}>
-            <TabItem value={"Kotlin Gradle DSL"} label={"Kotlin Gradle DSL"}>
-                ```kotlin title="convention-plugins/src/main/kotlin/publish.conventions.gradle.kts"
-                // ...
-                afterEvaluate {
-                    // ...
-                    publishing {
-                        publications { }
-                    }
-                }
-                ```
-            </TabItem>
-            <TabItem value={"Groovy Gradle DSL"} label={"Groovy Gradle DSL"}>
-                ```groovy title="publish.conventions.gradle"
+        ```kotlin title="convention-plugins/src/main/kotlin/publish.conventions.gradle.kts"
+        // ...
+        afterEvaluate {
+            // ...
+            publishing {
+                publications { }
+            }
+        }
+        ```
 
-                ```
-            </TabItem>
-        </BoxedTabs>
-
-        El bloque `publications` nos permite definir las publicaciones de Maven que se generarán, especificando los artefactos y las fuentes que formarán parte de cada publicación.
+        <Explanation>
+            El bloque `publications` nos permite definir las publicaciones de Maven que se generarán, especificando los artefactos y las fuentes que formarán parte de cada publicación.
+        </Explanation>
     </TabItem>
     <TabItem value={"Paso 5"} label={"Paso 5"}>
-        <BoxedTabs groupId={"gradle"}>
-            <TabItem value={"Kotlin Gradle DSL"} label={"Kotlin Gradle DSL"}>
-                ```kotlin title="convention-plugins/src/main/kotlin/publish.conventions.gradle.kts"
-                // ...
-                afterEvaluate {
-                    // ...
-                    publishing {
-                        publications {
-                            create<MavenPublication>("mavenKotlin") { }
-                        }
-                    }
+        ```kotlin title="convention-plugins/src/main/kotlin/publish.conventions.gradle.kts"
+        // ...
+        afterEvaluate {
+            // ...
+            publishing {
+                publications {
+                    create<MavenPublication>("mavenKotlin") { }
                 }
-                ```
-            </TabItem>
-            <TabItem value={"Groovy Gradle DSL"} label={"Groovy Gradle DSL"}>
-                ```groovy title="publish.conventions.gradle"
+            }
+        }
+        ```
 
-                ```
-            </TabItem>
-        </BoxedTabs>
-
-        En este paso, creamos una publicación de Maven llamada `mavenKotlin`, que incluirá los artefactos generados por la biblioteca, listos para ser distribuidos.
+        <Explanation>
+            En este paso, creamos una publicación de Maven llamada `mavenKotlin`, que incluirá los artefactos generados por la biblioteca, listos para ser distribuidos.
+        </Explanation>
     </TabItem>
     <TabItem value={"Paso 6"} label={"Paso 6"}>
-        <BoxedTabs groupId={"gradle"}>
-            <TabItem value={"Kotlin Gradle DSL"} label={"Kotlin Gradle DSL"}>
-                ```kotlin title="convention-plugins/src/main/kotlin/publish.conventions.gradle.kts"
-                // ...
-                afterEvaluate {
-                    // ...
-                    publishing {
-                        publications {
-                            create<MavenPublication>("mavenKotlin") {
-                                groupId = project.group.toString()
-                                artifactId = artifactExtension.artifactName
-                                version = artifactExtension.artifactVersion
+        ```kotlin title="convention-plugins/src/main/kotlin/publish.conventions.gradle.kts"
+        // ...
+        afterEvaluate {
+            // ...
+            publishing {
+                publications {
+                    create<MavenPublication>("mavenKotlin") {
+                        groupId = project.group.toString()
+                        artifactId = artifactExtension.artifactName
+                        version = artifactExtension.artifactVersion
 
-                                from(components["kotlin"])
+                        from(components["kotlin"])
 
-                                artifact(tasks["dokkaJar"])
-                                artifact(tasks["fatJar"])
-                            }
-                        }
+                        artifact(tasks["dokkaJar"])
+                        artifact(tasks["fatJar"])
                     }
                 }
-                ```
-            </TabItem>
-            <TabItem value={"Groovy Gradle DSL"} label={"Groovy Gradle DSL"}>
-                ```groovy title="publish.conventions.gradle"
+            }
+        }
+        ```
 
-                ```
-            </TabItem>
-        </BoxedTabs>
-
-        En este paso, configuramos los detalles clave de la publicación de Maven, como el `groupId`, `artifactId` y `version`, además de los artefactos y las fuentes que se incluirán en la publicación.
+        <Explanation>
+            En este paso, configuramos los detalles clave de la publicación de Maven, como el `groupId`, `artifactId` y `version`, además de los artefactos y las fuentes que se incluirán en la publicación.
+        </Explanation>
     </TabItem>
     <TabItem value={"Paso 7"} label={"Paso 7"}>
-        <BoxedTabs groupId={"gradle"}>
-            <TabItem value={"Kotlin Gradle DSL"} label={"Kotlin Gradle DSL"}>
-                ```kotlin title="convention-plugins/src/main/kotlin/publish.conventions.gradle.kts"
+        ```kotlin title="convention-plugins/src/main/kotlin/publish.conventions.gradle.kts"
+        // ...
+        afterEvaluate {
+            // ...
+            publishing {
                 // ...
-                afterEvaluate {
-                    // ...
-                    publishing {
-                        // ...
-                        repositories {
-                            maven {
-                                name = "GitHubPackages"
-                                url = uri("https://maven.pkg.github.com/tu-usuario/tu-repositorio")
+                repositories {
+                    maven {
+                        name = "GitHubPackages"
+                        url = uri("https://maven.pkg.github.com/tu-usuario/echo-app-kt")
 
-                                credentials {
-                                    username = System.getenv("GITHUB_USER") ?: error("GITHUB_USER is not set")
-                                    password = System.getenv("GITHUB_TOKEN") ?: error("GITHUB_TOKEN is not set")
-                                }
-                            }
+                        credentials {
+                            username = githubUser
+                            password = githubToken
                         }
                     }
                 }
-                ```
-            </TabItem>
-            <TabItem value={"Groovy Gradle DSL"} label={"Groovy Gradle DSL"}>
-                ```groovy title="publish.conventions.gradle"
+            }
+        }
+        ```
 
-                ```
-            </TabItem>
-        </BoxedTabs>
+        <Explanation>
+            Finalmente, configuramos GitHub Packages como el repositorio de destino para la publicación, definiendo la URL y las credenciales necesarias para la autenticación y el despliegue de los artefactos.
+        </Explanation>
 
-        Finalmente, configuramos GitHub Packages como el repositorio de destino para la publicación, definiendo la URL y las credenciales necesarias para la autenticación y el despliegue de los artefactos.
+        :::info 
+
+        Reemplaza `tu-usuario` por tu nombre de usuario de GitHub y `echo-app-kt` por el nombre de tu repositorio.
+        :::
+
     </TabItem>
 </BoxedTabs>
+
+### `.gitignore`
+
+Es MUY IMPORTANTE que agregues el archivo `github.properties` al `.gitignore` para evitar subir tus credenciales a GitHub. A continuación te proporcionamos un ejemplo de archivo `.gitignore` que puedes utilizar:
+
+```gitignore
+.gradle
+build
+.idea
+**/build/
+!src/**/build/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+.gradletasknamecache
+.project
+.classpath
+*.class
+*.log
+*.ctxt
+.mtj.tmp/
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
+
+github.properties
+```
+
+:::tip gitignore.io
+
+Si necesitas un `.gitignore` personalizado, puedes utilizar [gitignore.io](https://www.toptal.com/developers/gitignore) para generar uno basado en tus necesidades específicas.
+
+:::
 
 ### 🚀 Publicar en GitHub Packages
 
@@ -345,12 +329,14 @@ echolib = "1.0.0" # Versión de la librería
 
 [libraries]
 # ...
-echo = { module = "cl.ravenhill:echo-app-lib", version.ref = "echolib" }
+echo = { module = "com.github.tu-usuario:echo-app-lib", version.ref = "echolib" }
 # ...
 ```
 
 :::warning
+
 Ten en cuenta que si nombraras la versión como `echo-lib` en vez de `echolib`, habría un conflicto de nombres, ya que tanto `echo` como `echo-lib` tendrían el mismo prefijo. Esto haría que Gradle no pudiera diferenciar entre `echo` de `libs.versions.echo` y `libs.versions.echo.lib`. Otra solución sería renombrar `echo` a `echo-app`.
+
 :::
 
 Luego, indicamos a _Gradle_ que busque el paquete en **GitHub Packages**:
@@ -384,15 +370,17 @@ dependencies {
 
 ¡Listo! Ahora solo sincroniza el proyecto, y la biblioteca estará disponible para su uso en tu aplicación.
 
-## Conclusión
+## ¿Qué aprendimos?
 
-La publicación de bibliotecas en GitHub Packages ofrece una forma eficiente y sencilla de compartir tus artefactos de software con otros desarrolladores. Al configurar correctamente tu entorno de publicación con Gradle, puedes distribuir tus bibliotecas en distintos proyectos, asegurando que estén accesibles para su uso y actualización continua.
+En esta lección, vimos cómo publicar bibliotecas en GitHub utilizando dos métodos principales: la creación de releases en GitHub y la publicación en GitHub Packages. Ambos enfoques ofrecen ventajas que permiten compartir y distribuir bibliotecas de manera eficiente y segura, facilitando su reutilización en otros proyectos y asegurando un control preciso sobre las versiones.
 
-A lo largo de este proceso, aprendiste a:
+### Puntos clave
 
-- Crear un release en GitHub y subir tus artefactos generados.
-- Configurar GitHub Packages como repositorio para la distribución de tu biblioteca.
-- Definir publicaciones en Gradle, incluyendo artefactos y fuentes.
-- Utilizar una biblioteca publicada en otros proyectos agregándola como dependencia.
+- **Releases en GitHub**: Esta opción permite compartir una versión específica de la biblioteca de manera directa, ofreciendo archivos de descarga que incluyen el código compilado y su documentación. Es útil para distribuir versiones estáticas y fáciles de implementar.
+- **GitHub Packages**: Esta solución avanzada permite gestionar versiones de la biblioteca mediante un repositorio de Maven, lo cual facilita la integración automática en proyectos que requieran versiones específicas. Incluye soporte para múltiples formatos de paquetes, lo cual es ideal para proyectos en diversos lenguajes y entornos.
+- **Automatización con Gradle**: Configuramos Gradle para que gestione las credenciales de acceso a GitHub y automatice el proceso de publicación, asegurando una configuración segura y eficiente.
+- **Control de acceso y seguridad**: La publicación en GitHub Packages requiere de un token de acceso personal con permisos específicos, lo cual protege la biblioteca y permite un control detallado sobre quiénes pueden acceder a los recursos publicados.
 
-Con esta configuración, no solo mejoras la visibilidad y reutilización de tu código, sino que también simplificas el proceso de integración para otros desarrolladores. ¡Ahora estás listo para compartir tu trabajo con el mundo! 🚀✨
+---
+
+Publicar bibliotecas de forma eficiente no solo facilita el trabajo colaborativo, sino que también garantiza que las versiones correctas de las bibliotecas estén disponibles para otros desarrolladores y proyectos. Estos métodos permiten mantener una gestión de dependencias organizada, confiable y segura, cumpliendo con los estándares de calidad requeridos en la industria del software.

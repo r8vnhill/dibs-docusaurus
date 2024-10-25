@@ -115,9 +115,7 @@ El bloque `finally` es opcional y se ejecuta independientemente de si una excepc
                         println("Ocurrió un error al leer el archivo: ${e.message}")
                     } finally {
                         try {
-                            if (fileReader != null) {
-                                fileReader.close()
-                            }
+                            fileReader?.close()
                             println("El archivo ha sido cerrado.")
                         } catch (e: IOException) {
                             println("Error al cerrar el archivo: ${e.message}")
@@ -142,7 +140,7 @@ El bloque `finally` es opcional y se ejecuta independientemente de si una excepc
 
                 :::info Explicación de las mejoras
 
-                En la segunda implementación, se utiliza la función de extensión `use` para abrir el archivo y asegurarse de que se cierre automáticamente al salir del bloque `use`. Esto evita la necesidad de un bloque `finally` y simplifica el código.
+                En la segunda implementación, se utiliza la función `use` para abrir el archivo y asegurarse de que se cierre automáticamente al salir del bloque `use`. Esto evita la necesidad de un bloque `finally` y simplifica el código.
 
                 :::
             </TabItem>
@@ -206,28 +204,31 @@ fun validateAge(age: Int) {
         - **Separación de lógica**: Las excepciones separan la lógica principal del manejo de errores, haciendo que el flujo principal del programa sea más limpio y fácil de seguir.
         - **Propagación automática**: En Kotlin y otros lenguajes similares, las excepciones no capturadas se propagan automáticamente, lo que permite delegar el manejo de errores a niveles superiores cuando sea apropiado, manteniendo la simplicidad en las funciones más pequeñas.
         - **Flexibilidad con excepciones personalizadas**: La posibilidad de crear excepciones personalizadas permite definir tipos específicos de errores que pueden ser manejados de manera distinta, mejorando la semántica y facilitando el manejo específico de ciertos escenarios.
-        - **Integración con estructuras de recursos**: Kotlin ofrece características como la función de extensión `use`, que simplifica la gestión de recursos (como archivos) y asegura que los recursos se liberen correctamente, incluso en caso de error, sin necesidad de bloques `finally` explícitos.
+        - **Integración con estructuras de recursos**: Kotlin ofrece características como la función `use`, que simplifica la gestión de recursos (como archivos) y asegura que los recursos se liberen correctamente, incluso en caso de error, sin necesidad de bloques `finally` explícitos.
     </Pros>
     <Cons>
         - **Sobrecarga en el control de flujo**: En algunos casos, las excepciones pueden ser usadas indebidamente como un mecanismo de control de flujo, lo cual complica la comprensión y mantenimiento del código, además de impactar negativamente en el rendimiento.
         - **Ausencia de excepciones chequeadas**: En Kotlin (a diferencia de Java), no existen excepciones chequeadas, lo que implica que los errores potenciales no son detectados en tiempo de compilación. Esto puede hacer que algunas excepciones pasen desapercibidas si no se documentan adecuadamente.
-        - **Coste en rendimiento**: Lanzar y capturar excepciones puede ser costoso en términos de rendimiento, especialmente en contextos donde se producen con frecuencia. Otros paradigmas, como el uso de monadas en lenguajes funcionales (ej., Scala) o el manejo de errores basado en resultados (`Result` en Rust), suelen ser más eficientes.
+        - **Coste en rendimiento**: Lanzar y capturar excepciones puede ser costoso en términos de rendimiento, especialmente en contextos donde se producen con frecuencia. Otros paradigmas, como el uso de monadas en lenguajes funcionales (e.g., Scala) o el manejo de errores basado en resultados (`Result` en Rust), suelen ser más eficientes.
         - **Complejidad en la depuración**: En grandes aplicaciones, si las excepciones se manejan en niveles superiores y no se registran adecuadamente en los niveles inferiores, puede resultar difícil identificar el origen exacto del error.
-        - **Curva de aprendizaje en otros paradigmas**: En lenguajes y paradigmas donde se usan alternativas a las excepciones (como el uso de tipos que representan éxito o error, ej., `Option` o `Result` en Rust y Scala), es importante aprender un enfoque diferente, lo que puede ser confuso para quienes vienen de lenguajes con manejo tradicional de excepciones como Kotlin o Java.
     </Cons>
 </ProCons>
 
 ## ¿Qué Aprendimos?
 
-En esta lección, exploramos cómo manejar excepciones en Kotlin y destacamos las ventajas y desventajas de este enfoque en comparación con otros lenguajes y paradigmas:
+En esta lección, hemos explorado el manejo de excepciones en Kotlin, identificando sus similitudes y diferencias con otros lenguajes como Java y C#.
 
-- **Manejo centralizado de errores**: Las excepciones permiten simplificar y centralizar el manejo de errores, lo que mejora la organización y legibilidad del código. En aplicaciones grandes, esta centralización es crucial para mantener la eficiencia y evitar duplicación.
-- **Separación clara de la lógica**: Las excepciones separan el flujo principal del código de los escenarios de error, permitiendo que el código sea más limpio y fácil de seguir. Esto se traduce en una implementación más estructurada y mantenible.
-- **Flexibilidad y personalización**: Kotlin permite la creación de excepciones personalizadas, brindando una forma de manejar errores de manera específica y semánticamente clara, lo cual mejora la legibilidad y expresividad del código.
+### Puntos clave:
 
-En contraposición, vimos algunos desafíos, como la **sobrecarga en el control de flujo**, el **costo en rendimiento**, y la **complejidad en depuración** en aplicaciones grandes. Además, exploramos cómo otros lenguajes y paradigmas, como Rust y Scala, abordan el manejo de errores con alternativas que pueden ser más eficientes en ciertos contextos.
+1. **Lanzar y capturar excepciones**: Kotlin utiliza `throw` para lanzar excepciones y la expresión `try-catch` para capturarlas. Este mecanismo permite manejar errores de manera estructurada y evita la propagación de errores imprevistos en el código.
+2. **Uso de bloques `finally`**: Los bloques `finally` permiten garantizar la ejecución de código de limpieza, independientemente de si ocurre una excepción o no. Esto es útil para liberar recursos como archivos abiertos o conexiones.
+3. **Optimización con `use`**: La función de extensión `use` permite manejar recursos de manera segura y automática, asegurando que los recursos se cierren correctamente sin necesidad de un bloque `finally`.
+4. **Propagación de excepciones**: En Kotlin, las excepciones no capturadas se propagan automáticamente hacia la función llamante. Aunque Kotlin no maneja excepciones chequeadas como Java, es importante documentar claramente las excepciones que una función puede lanzar.
+5. **Excepciones personalizadas**: Kotlin permite la creación de excepciones personalizadas mediante la herencia de `Exception` o `RuntimeException`, lo que facilita el manejo de errores específicos y semánticamente significativos en el contexto de una aplicación.
 
-Al comprender las excepciones en Kotlin, así como sus beneficios y limitaciones, se puede tomar decisiones más informadas sobre cuándo y cómo utilizarlas eficazmente en nuestros proyectos.
+---
+
+En resumen, el manejo de excepciones en Kotlin es poderoso y flexible, permitiendo un control robusto de errores. Sin embargo, es esencial utilizarlas de manera adecuada para mantener un equilibrio entre la claridad del código y la eficiencia.
 
 <div className="language-card-container">
     <LanguageCard
@@ -263,5 +264,12 @@ Al comprender las excepciones en Kotlin, así como sus beneficios y limitaciones
         year: "2017",
         type: "book",
         author: 'Dmitry Jemerov & Svetlana Isakova'
+    },
+]} additionalReferences={[
+    {
+        title: "Exceptions",
+        url: "https://kotlinlang.org/docs/exceptions.html",
+        accessedDate: "24 de octubre de 2024",
+        type: "web",
     },
 ]}/>

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useSpring, animated } from "react-spring";
 import CodeBlock from "@theme/CodeBlock";
 import styles from "./ModuleSetup.module.css";
+import Admonition from "@theme/Admonition";
 
 interface SetupModuleProps {
   children: React.ReactNode;
@@ -9,7 +10,11 @@ interface SetupModuleProps {
   task: string;
 }
 
-const ModuleSetup: React.FC<SetupModuleProps> = ({ children, module, task }) => {
+const ModuleSetup: React.FC<SetupModuleProps> = ({
+  children,
+  module,
+  task,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggle = () => setIsOpen(!isOpen);
@@ -17,7 +22,7 @@ const ModuleSetup: React.FC<SetupModuleProps> = ({ children, module, task }) => 
   const animationStyles = useSpring({
     from: { maxHeight: 0, opacity: 0 },
     to: {
-      maxHeight: isOpen ? 2000 : 0,
+      maxHeight: isOpen ? 4000 : 0,
       opacity: isOpen ? 1 : 0,
     },
     config: { tension: 300, friction: 30 },
@@ -35,14 +40,22 @@ const ModuleSetup: React.FC<SetupModuleProps> = ({ children, module, task }) => 
       <animated.div style={animationStyles} className={styles.content}>
         <div className={styles.innerContent}>
           <hr />
+          <Admonition type="tip" title="Be lazy...">
+            <p>Puedes ejecutar el siguiente comando para crear el módulo </p>
+            <CodeBlock language="bash">{`./gradlew ${task}`}</CodeBlock>
+          </Admonition>
+          <p>
+            Mientras se crean los archivos necesarios, puedes leer el código
+            para saber qué está pasando.
+          </p>
           {children}
           <p>
-            Preocúpate de que el plugin <code>{module}</code> esté aplicado en el
-            archivo <code>build.gradle.kts</code> de tu proyecto.
+            Preocúpate de que el plugin <code>{module}</code> esté aplicado en
+            el archivo <code>build.gradle.kts</code> de tu proyecto.
           </p>
           <CodeBlock language="bash">{`./gradlew ${task}`}</CodeBlock>
           <p>
-            Recuerda agregar el nuevo módulo al archivo{" "}
+            Preocúpate de que el nuevo módulo esté incluido en el archivo{" "}
             <code>settings.gradle.kts</code>.
           </p>
         </div>

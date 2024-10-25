@@ -62,7 +62,7 @@ En **Scala**, puedes lanzar una excepción usando la palabra clave `throw`, tal 
     <TabItem value={"2"} label={"Scala 2"}>
     <BoxedTabs>
         <TabItem label={"Código esencial"} value={"Código esencial"}>
-            ```kotlin showLineNumbers
+            ```scala showLineNumbers
             def divide(a: Int, b: Int): Int = if (b == 0) {
                 throw new IllegalArgumentException("Cannot divide by zero")
             } else {
@@ -71,7 +71,26 @@ En **Scala**, puedes lanzar una excepción usando la palabra clave `throw`, tal 
             ```
         </TabItem>
         <TabItem label={"Código completo"} value={"Código completo"}>
-            ```kotlin showLineNumbers
+            ```scala showLineNumbers title="scala-2/intro/exceptions/src/main/scala/cl/ravenhill/math/Divider.scala"
+            package cl.ravenhill
+            package math
+
+            object Divider {
+                def divide(a: Int, b: Int): Int = if (b == 0) {
+                    throw new IllegalArgumentException("Cannot divide by zero")
+                } else {
+                    a / b
+                }
+
+                def main(args: Array[String]): Unit = {
+                    println(divide(10, 2))
+                    println(divide(10, 0))
+                    /* Output:
+                    5
+                    Exception in thread "main" java.lang.IllegalArgumentException: Cannot divide by zero
+                    */
+                }
+            }
             ```
         </TabItem>
     </BoxedTabs>
@@ -84,26 +103,82 @@ Para manejar excepciones, **Scala** utiliza `try-catch` de una manera muy simila
 
 <BoxedTabs groupId={"scala"}>
     <TabItem value={"3"} label={"Scala 3"}>
-        ```scala showLineNumbers
-        def safeDivide(a: Int, b: Int): Int = try
-            a / b
-        catch
-            case e: ArithmeticException =>
-                println(s"Error: ${e.getMessage}")
-                0
-        ```
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```scala showLineNumbers
+                def safeDivide(a: Int, b: Int): Option[Int] = try
+                    Some(divide(a, b))
+                catch
+                    case e: IllegalArgumentException => None
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```scala showLineNumbers title="scala-3/intro/exceptions/src/main/scala/math/Divider.scala"
+                package cl.ravenhill
+                package math
+
+                def divide(a: Int, b: Int): Int = if b == 0 then
+                    throw new IllegalArgumentException("Cannot divide by zero")
+                else
+                    a / b
+
+                def safeDivide(a: Int, b: Int): Option[Int] = try
+                    Some(divide(a, b))
+                catch
+                    case e: IllegalArgumentException => None
+
+                @main def foo(): Unit =
+                    println(safeDivide(10, 2))
+                    println(safeDivide(10, 0))
+                    /* Output:
+                    Some(5)
+                    None
+                    */
+                ```
+            </TabItem>
+        </BoxedTabs>
     </TabItem>
     <TabItem value={"2"} label={"Scala 2"}>
-        ```scala showLineNumbers
-        def safeDivide(a: Int, b: Int): Int = try {
-            a / b
-        } catch {
-            case e: ArithmeticException => {
-                println(s"Error: ${e.getMessage}")
-                0
-            }
-        }
-        ```
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```scala showLineNumbers
+                def safeDivide(a: Int, b: Int): Option[Int] = try {
+                    Some(divide(a, b))
+                } catch {
+                    case e: IllegalArgumentException => None
+                }
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```scala showLineNumbers title="scala-2/intro/exceptions/src/main/scala/cl/ravenhill/math/Divider.scala"
+                package cl.ravenhill
+                package math
+
+                object Divider {
+                    def divide(a: Int, b: Int): Int = if (b == 0) {
+                        throw new IllegalArgumentException("Cannot divide by zero")
+                    } else {
+                        a / b
+                    }
+
+                    def safeDivide(a: Int, b: Int): Option[Int] = try {
+                        Some(divide(a, b))
+                    } catch {
+                        case e: IllegalArgumentException => None
+                    }
+
+                    def main(args: Array[String]): Unit = {
+                        println(safeDivide(10, 2))
+                        println(safeDivide(10, 0))
+                        /* Output:
+                        Some(5)
+                        None
+                        */
+                    }
+                }
+                ```
+            </TabItem>
+        </BoxedTabs>
     </TabItem>
 </BoxedTabs>
 
@@ -113,14 +188,45 @@ Al igual que en Kotlin, en Scala puedes usar el bloque `finally` para ejecutar c
 
 <BoxedTabs groupId={"scala"}>
     <TabItem value={"3"} label={"Scala 3"}>
-        ```scala showLineNumbers
-        def readFile(path: String): String = try
-            "File content"  // Lógica de lectura de archivos
-        catch
-            case e: Exception => s"Error: ${e.getMessage}"
-        finally
-            println("Cleaning up resources")
-        ```
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```scala showLineNumbers
+                try
+                    // Código que puede lanzar una excepción
+                catch
+                    case e: Exception =>
+                        // Manejo de la excepción
+                finally
+                    // Código que se ejecuta siempre
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```scala showLineNumbers title="scala-3/intro/exceptions/src/main/scala/reader/readFile.scala"
+                package cl.ravenhill
+                package reader
+
+                import java.io.{File, FileReader, IOException}
+                import scala.io.Source
+
+                def readFile(filePath: String): Unit =
+                    var source: Option[Source] = None
+                    try
+                        val file = File(filePath)
+                        source = Some(Source.fromFile(file))
+                        val content = source.get.mkString
+                        println(s"Contenido del archivo:\n$content")
+                    catch
+                        case e: IOException =>
+                            println(s"Ocurrió un error al leer el archivo: ${e.getMessage}")
+                    finally
+                        try
+                            source.foreach(_.close())
+                        catch
+                            case e: IOException =>
+                                println(s"Error al cerrar el archivo: ${e.getMessage}")
+                ```
+            </TabItem>
+        </BoxedTabs>
     </TabItem>
     <TabItem value={"2"} label={"Scala 2"}>
         ```scala showLineNumbers

@@ -12,15 +12,112 @@ import Hint from '@site/src/components/exercise/Hint'
 import Definition from '@site/src/components/Definition'
 import Corollary from '@site/src/components/Corollary'
 import GithubRepoLink from '@site/src/components/GithubRepoLink'
-import { LanguageCard, JavaCard, RustCard, ScalaCard, TypeScriptCard } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
-import RepoClone from "@site/src/components/admonitions/RepoClone"
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import { LanguageCard, JavaCard, RustCard, ScalaCard, TypeScriptCard } from '@site/src/components/cards/LanguageCard'
 
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="generic-programming-kt" />
-
 <RepoClone groupId="generic-programming" repoName="generic-programming-kt" />
+<ModuleSetup module='intro' task='setupIntroModule'>
+    Primero definiremos una tarea reutilizable para esta unidad, no te dejes intimidar por la cantidad de código, es solo una plantilla para crear módulos en el proyecto que ya viene incluido en el repositorio. Sin embargo, comprender cómo funciona puede ser útil como práctica y repaso sobre tareas de Gradle.
+
+    ```kotlin showLineNumbers title="convention-plugins/src/main/kotlin/tasks/ModuleSetupTask.kt"
+    package tasks
+
+    import org.gradle.api.DefaultTask
+    import org.gradle.api.provider.Property
+    import org.gradle.api.tasks.Input
+    import org.gradle.api.tasks.Internal
+    import org.gradle.api.tasks.TaskAction
+    import java.io.File
+
+    private val printError: (String) -> Unit = System.err::println
+
+    abstract class ModuleSetupTask : DefaultTask() {
+
+        @get:Input
+        abstract val module: Property<String>
+
+        @get:Internal
+        val main: File
+            get() = baseDir.resolve("src/main/kotlin")
+
+        @get:Internal
+        val test: File
+            get() = baseDir.resolve("src/test/kotlin")
+
+        private val baseDir: File
+            get() = project.rootProject.file(module)
+
+        init {
+            group = "setup"
+        }
+
+        @TaskAction
+        fun setupSubmodule() {
+            createSettingsFile()
+            createModuleDirectory()
+            createBuildFile()
+        }
+
+        private fun createSettingsFile() {
+            val settingsFile = project.file("settings.gradle.kts")
+            if (!settingsFile.exists()) {
+                settingsFile.writeText("rootProject.name = \"${project.name}\"\n")
+                settingsFile.writeText("include(\"${module.get()}\")")
+            } else if (module.get() !in settingsFile.readText()) {
+                settingsFile.appendText("\ninclude(\"${module.get()}\")")
+            }
+            println("The module ${module.get()} was added to the settings file")
+        }
+
+
+        private fun createModuleDirectory() = baseDir.run {
+            when {
+                exists() -> printError("Directory already exists: $absolutePath")
+                mkdirs() -> println("Directory created: $absolutePath")
+                else -> printError("Failed to create directory: $absolutePath")
+            }
+        }
+
+        private fun createBuildFile() = baseDir.resolve("build.gradle.kts").run {
+            if (exists()) printError("The build file already exists")
+            else {
+                writeText("// Intentionally left blank\n")
+                println("The build file was created successfully")
+            }
+        }
+
+        fun createFiles(packageName: String, vararg files: Pair<File, String>) {
+            files.forEach { (dir, name) ->
+                val group = project.rootProject.group.toString()
+                val packageDir = dir.resolve("$group/$packageName".replace(".", "/"))
+                val file = packageDir.resolve(name)
+                if (file.exists()) {
+                    printError("The file $name already exists")
+                } else {
+                    packageDir.mkdirs()
+                    file.writeText("package $group.$packageName\n\n")
+                    println("The file $name was created successfully")
+                }
+            }
+        }
+    }
+    ```
+
+    <Explanation>
+        Esta tarea de Gradle crea un módulo para la lección actual, con un directorio de código fuente principal y de prueba, y un archivo `build.gradle.kts` vacío. También agrega el módulo al archivo `settings.gradle.kts` si no está presente. Puedes utilizar esta tarea para configurar los módulos de las lecciones en el proyecto.
+    </Explanation>
+
+    Luego, podemos utilizar esta tarea para crear el módulo de la lección:
+
+    ```kotlin showLineNumbers
+    ```
+</ModuleSetup>
+
 <details>
     <summary>
         Comencemos por crear un módulo para la lección...

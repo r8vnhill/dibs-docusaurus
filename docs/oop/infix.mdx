@@ -61,6 +61,139 @@ Para definir una función infija en Kotlin, se utiliza la siguiente estructura:
     </TabItem>
 </BoxedTabs>
 
+## Caso de estudio: Matcher en Kotest
+
+Un uso común de expresiones infijas en Kotlin es el framework de pruebas **Kotest**, donde las expresiones infijas permiten crear **matchers** que hacen que las pruebas sean más legibles y expresivas.
+
+Por ejemplo, en una prueba unitaria, podemos verificar la longitud mínima de un nombre de usuario usando Kotest y una expresión infija, lo cual mejora la claridad del test:
+
+<BoxedTabs>
+<TabItem label={"Código esencial"} value={"Código esencial"}>
+```kotlin showLineNumbers
+infix fun Username.shouldHaveMinimumLength(length: Int): Username {
+    this should haveMinimumLength(length)
+    return this
+}
+```
+</TabItem>
+<TabItem label={"Código completo"} value={"Código completo"}>
+```kotlin showLineNumbers title="infix/src/test/kotlin/cl/ravenhill/matchers/haveMinimumLength.kt"
+package com.github.username.matchers
+
+import com.github.username.users.Username
+import io.kotest.matchers.Matcher
+import io.kotest.matchers.MatcherResult
+import io.kotest.matchers.should
+import io.kotest.matchers.shouldNot
+
+fun haveMinimumLength(length: Int) = Matcher<Username> { username ->
+    MatcherResult(
+        username.value.length >= length,
+        { "Username should have a minimum length of $length" },
+        { "Username should not have a minimum length of $length" }
+    )
+}
+
+infix fun Username.shouldHaveMinimumLength(length: Int): Username {
+    this should haveMinimumLength(length)
+    return this
+}
+```
+</TabItem>
+</BoxedTabs>
+
+<Explanation>
+En este ejemplo, la función infija `shouldHaveMinimumLength` permite verificar si un `Username` tiene la longitud mínima requerida, aumentando la legibilidad de las pruebas.
+</Explanation>
+
+### Uso de la función en pruebas unitarias
+
+El uso de `shouldHaveMinimumLength` en pruebas unitarias facilita la generación de valores aleatorios para verificar esta condición:
+
+<BoxedTabs>
+<TabItem label={"Código esencial"} value={"Código esencial"}>
+```kotlin showLineNumbers
+checkAll(
+    Arb.int(0..10).flatMap { length ->
+        Arb.usernames()
+            .filter { it.value.length >= length }
+            .map { length to Username(it.value) }
+    }
+) { (length, username) ->
+    username shouldHaveMinimumLength length
+}
+```
+
+```kotlin showLineNumbers
+checkAll(
+    Arb.usernames().flatMap { username ->
+        Arb.int(username.value.length + 1..100)
+            .map { it to Username(username.value) }
+    }
+) { (length, username) ->
+    shouldThrow<AssertionError> {
+        username shouldHaveMinimumLength length
+    }
+}
+```
+</TabItem>
+<TabItem label={"Código completo"} value={"Código completo"}>
+```kotlin showLineNumbers title="infix/src/test/kotlin/cl/ravenhill/validation/HaveMinimumLengthTest.kt"
+package cl.ravenhill.validation
+
+import cl.ravenhill.matchers.shouldHaveMinimumLength
+import cl.ravenhill.users.Username
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.FreeSpec
+import io.kotest.property.Arb
+import io.kotest.property.arbitrary.filter
+import io.kotest.property.arbitrary.flatMap
+import io.kotest.property.arbitrary.int
+import io.kotest.property.arbitrary.map
+import io.kotest.property.arbs.usernames
+import io.kotest.property.checkAll
+
+class HaveMinimumLengthTest : FreeSpec({
+    "Given a username" - {
+        "when testing if it has a minimum length" - {
+            "should pass if the username has the minimum length" {
+                checkAll(
+                    Arb.int(0..10).flatMap { length ->
+                        Arb.usernames()
+                            .filter { it.value.length >= length }
+                            .map { it.value }
+                            .map { length to Username(it) }
+                    }
+                ) { (length, username) ->
+                    username shouldHaveMinimumLength length
+                }
+            }
+
+            "should fail if the username does not have the minimum length" {
+                checkAll(
+                    Arb.usernames().flatMap { username ->
+                        Arb.int(username.value.length + 1..100)
+                            .map { it to Username(username.value) }
+                    }
+                ) { (length, username) ->
+                    shouldThrow<AssertionError> {
+                        username shouldHaveMinimumLength length
+                    }
+                }
+            }
+        }
+    }
+})
+```
+</TabItem>
+</BoxedTabs>
+
+<Explanation>
+    - **Generación de valores aleatorios**: Creamos nombres de usuario aleatorios con diferentes longitudes para validar el matcher.
+    - **Uso de `shouldHaveMinimumLength`**: La función infija se emplea para verificar fácilmente si un nombre de usuario cumple con la longitud mínima.
+    - **Manejo de excepciones**: Cuando un nombre de usuario no cumple con la longitud mínima, el test lanza una excepción como se espera.
+</Explanation>
+
 ## Ejemplo de Uso en Bibliotecas de Software
 
 Consideremos una biblioteca que maneja **validaciones** para un sistema de registro de usuarios. En lugar de usar validaciones con una sintaxis extensa, podemos utilizar **funciones infijas** para que el código sea más legible.

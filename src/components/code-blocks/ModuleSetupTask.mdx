@@ -1,0 +1,214 @@
+import Explanation from '@site/src/components/admonitions/Explanation'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import TabItem from '@theme/TabItem'
+
+Primero definiremos una tarea reutilizable para esta unidad, no te dejes intimidar por la cantidad de código, es solo una plantilla para crear módulos en el proyecto que ya viene incluido en el repositorio. Sin embargo, comprender cómo funciona puede ser útil como práctica y repaso sobre tareas de Gradle.
+
+<BoxedTabs>
+    <TabItem label={"Parte 1"} value={"Parte 1"}>
+        ```kotlin showLineNumbers
+        abstract class ModuleSetupTask : DefaultTask() {
+            init {
+                group = "setup"
+            }
+        }
+        ```
+
+        <Explanation>
+            Creamos una tarea abstracta que extiende de `DefaultTask` y le asignamos un grupo llamado `setup`. Esta tarea servirá como base para las tareas de configuración de módulos en el proyecto.
+        </Explanation>
+    </TabItem>
+    <TabItem label={"Parte 2"} value={"Parte 2"}>
+        ```kotlin showLineNumbers
+        @get:Input
+        abstract val module: Property<String>
+
+        @get:Internal
+        val main: File
+            get() = baseDir.resolve("src/main/kotlin")
+
+        @get:Internal
+        val test: File
+            get() = baseDir.resolve("src/test/kotlin")
+
+        private val baseDir: File
+            get() = project.file(module.get().replace(":", "/"))
+        ```
+
+        <Explanation>
+            Agregamos propiedades para el nombre del módulo, los directorios `main` y `test` del módulo, y el directorio base del módulo. Estas propiedades son necesarias para configurar los módulos en el proyecto.
+
+            - `@get:Input` indica que la propiedad `module` es de entrada para la tarea, lo que significa que el valor de esta propiedad puede ser configurado desde fuera de la tarea.
+            - `@get:Internal` indica que las propiedades `main` y `test` son internas a la tarea y no deben ser configuradas desde fuera de la tarea.
+        </Explanation>
+    </TabItem>
+    <TabItem label={"Parte 3"} value={"Parte 3"}>
+        ```kotlin showLineNumbers
+        private fun createSettingsFile() {
+            val settingsFile = project.file("settings.gradle.kts")
+            if (!settingsFile.exists()) {
+                settingsFile.writeText("rootProject.name = \"${project.name}\"\n")
+                settingsFile.writeText("include(\"${module.get()}\")")
+            } else if (module.get() !in settingsFile.readText()) {
+                settingsFile.appendText("\ninclude(\"${module.get()}\")")
+            }
+            println("The module ${module.get()} was added to the settings file")
+        }
+        ```
+
+        <Explanation>
+            Creamos una función privada `createSettingsFile` que se encarga de agregar el módulo al archivo de configuración `settings.gradle.kts`. Si el archivo no existe, se crea con el nombre del proyecto y se incluye el módulo. Si el módulo ya está incluido en el archivo, se agrega al final del archivo.
+        </Explanation>
+    </TabItem>
+    <TabItem label={"Parte 4"} value={"Parte 4"}>
+        ```kotlin showLineNumbers
+        private fun createModuleDirectory() = baseDir.run {
+            when {
+                exists() -> printError("Directory already exists: $absolutePath")
+                mkdirs() -> println("Directory created: $absolutePath")
+                else -> printError("Failed to create directory: $absolutePath")
+            }
+        }
+        ```
+
+        <Explanation>
+            Creamos una función privada `createModuleDirectory` que se encarga de crear el directorio del módulo. Si el directorio ya existe, se imprime un mensaje de error. Si el directorio se crea correctamente, se imprime un mensaje de éxito. Si falla la creación del directorio, se imprime un mensaje de error.
+        </Explanation>
+    </TabItem>
+    <TabItem label={"Parte 5"} value={"Parte 5"}>
+        ```kotlin showLineNumbers
+        private fun createBuildFile() = baseDir.resolve("build.gradle.kts").run {
+            if (exists()) printError("The build file already exists")
+            else {
+                writeText("// Intentionally left blank\n")
+                println("The build file was created successfully")
+            }
+        }
+        ```
+
+        <Explanation>
+            Creamos una función privada `createBuildFile` que se encarga de crear el archivo de configuración `build.gradle.kts` en el directorio del módulo. Si el archivo ya existe, se imprime un mensaje de error. Si el archivo se crea correctamente, se imprime un mensaje de éxito.
+        </Explanation>
+    </TabItem>
+    <TabItem label={"Parte 6"} value={"Parte 6"}>
+        ```kotlin showLineNumbers
+        fun createFiles(packageName: String, vararg files: Pair<File, String>) {
+            files.forEach { (dir, name) ->
+                val group = project.rootProject.group.toString()
+                val packageDir = dir.resolve("$group/$packageName".replace(".", "/"))
+                val file = packageDir.resolve(name)
+                if (file.exists()) {
+                    printError("The file $name already exists")
+                } else {
+                    packageDir.mkdirs()
+                    file.writeText("package $group.$packageName\n\n")
+                    println("The file $name was created successfully")
+                }
+            }
+        }
+        ```
+
+        <Explanation>
+            Creamos una función `createFiles` que se encarga de crear archivos en un directorio específico. La función recibe el nombre del paquete y una lista de pares de archivos y nombres. Para cada par, se crea un directorio con el nombre del paquete y se escribe un archivo con el nombre y el contenido del paquete. Si el archivo ya existe, se imprime un mensaje de error. Si el archivo se crea correctamente, se imprime un mensaje de éxito.
+        </Explanation>
+    </TabItem>
+    <TabItem label={"Parte 7"} value={"Parte 7"}>
+        ```kotlin showLineNumbers
+        @TaskAction
+        fun setupSubmodule() {
+            createSettingsFile()
+            createModuleDirectory()
+            createBuildFile()
+        }
+        ```
+
+        <Explanation>
+            Creamos una función `setupSubmodule` que se encarga de configurar el módulo. Esta función llama a las funciones `createSettingsFile`, `createModuleDirectory` y `createBuildFile` para agregar el módulo al archivo de configuración, crear el directorio del módulo y crear el archivo de configuración del módulo, respectivamente.
+        </Explanation>
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        package tasks
+
+        import org.gradle.api.DefaultTask
+        import org.gradle.api.provider.Property
+        import org.gradle.api.tasks.Input
+        import org.gradle.api.tasks.Internal
+        import org.gradle.api.tasks.TaskAction
+        import java.io.File
+
+        private val printError: (String) -> Unit = System.err::println
+
+        abstract class ModuleSetupTask : DefaultTask() {
+
+            @get:Input
+            abstract val module: Property<String>
+
+            @get:Internal
+            val main: File
+                get() = baseDir.resolve("src/main/kotlin")
+
+            @get:Internal
+            val test: File
+                get() = baseDir.resolve("src/test/kotlin")
+
+            private val baseDir: File
+                get() = project.file(module.get().replace(":", "/"))
+
+            init {
+                group = "setup"
+            }
+
+            @TaskAction
+            fun setupSubmodule() {
+                createSettingsFile()
+                createModuleDirectory()
+                createBuildFile()
+            }
+
+            private fun createSettingsFile() {
+                val settingsFile = project.file("settings.gradle.kts")
+                if (!settingsFile.exists()) {
+                    settingsFile.writeText("rootProject.name = \"${project.name}\"\n")
+                    settingsFile.writeText("include(\"${module.get()}\")")
+                } else if (module.get() !in settingsFile.readText()) {
+                    settingsFile.appendText("\ninclude(\"${module.get()}\")")
+                }
+                println("The module ${module.get()} was added to the settings file")
+            }
+
+
+            private fun createModuleDirectory() = baseDir.run {
+                when {
+                    exists() -> printError("Directory already exists: $absolutePath")
+                    mkdirs() -> println("Directory created: $absolutePath")
+                    else -> printError("Failed to create directory: $absolutePath")
+                }
+            }
+
+            private fun createBuildFile() = baseDir.resolve("build.gradle.kts").run {
+                if (exists()) printError("The build file already exists")
+                else {
+                    writeText("// Intentionally left blank\n")
+                    println("The build file was created successfully")
+                }
+            }
+
+            fun createFiles(packageName: String, vararg files: Pair<File, String>) {
+                files.forEach { (dir, name) ->
+                    val group = project.rootProject.group.toString()
+                    val packageDir = dir.resolve("$group/$packageName".replace(".", "/"))
+                    val file = packageDir.resolve(name)
+                    if (file.exists()) {
+                        printError("The file $name already exists")
+                    } else {
+                        packageDir.mkdirs()
+                        file.writeText("package $group.$packageName\n\n")
+                        println("The file $name was created successfully")
+                    }
+                }
+            }
+        }
+        ```
+    </TabItem>
+</BoxedTabs>

@@ -18,12 +18,12 @@ En ambos lenguajes, se puede lanzar una excepción usando `throw` en Kotlin y `r
 
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```python showLineNumbers title="playground.py"
+        ```python showLineNumbers
         raise ValueError("Cannot divide by zero")
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```python showLineNumbers title="playground.py"
+        ```python showLineNumbers title="src/intro/exceptions/divide.py"
         def divide(a: int, b: int) -> int:
             if b == 0:
                 raise ValueError("Cannot divide by zero")
@@ -32,11 +32,11 @@ En ambos lenguajes, se puede lanzar una excepción usando `throw` en Kotlin y `r
         if __name__ == '__main__':
             print(divide(10, 2))
             print(divide(10, 0))
-        # Output:
-        # 5
-        # Traceback (most recent call last):
-        # ...
-        # ValueError: Cannot divide by zero
+            # Output:
+            # 5
+            # Traceback (most recent call last):
+            # ...
+            # ValueError: Cannot divide by zero
         ```
     </TabItem>
 </BoxedTabs>
@@ -49,29 +49,31 @@ Ambos lenguajes usan `try-catch` (o `try-except` en Python) para capturar excepc
 
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```python showLineNumbers title="playground.py"
+        ```python showLineNumbers
         try:
-            return a / b
-        except ZeroDivisionError as e:
-            print(f"Error: {e}")
+            return divide(a, b)
+        except ValueError as e:
             return None
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```python showLineNumbers title="playground.py"
-        def safe_divide(a: float, b: float) -> float | None:
+        ```python showLineNumbers title="src/intro/exceptions/safe_divide.py"
+        from typing import Optional
+
+        from intro.exceptions.divide import divide
+
+
+        def safe_divide(a: int, b: int) -> Optional[int]:
             try:
-                return a / b
-            except ZeroDivisionError as e:
-                print(f"Error: {e}")
+                return divide(a, b)
+            except ValueError as e:
                 return None
 
         if __name__ == '__main__':
-            print(safe_divide(1.0, 2.0))
-            print(safe_divide(1.0, 0.0))
+            print(safe_divide(10, 2))
+            print(safe_divide(10, 0))
             # Output:
-            # 0.5
-            # Error: float division by zero
+            # 5
             # None
         ```
     </TabItem>
@@ -94,13 +96,13 @@ En ambos lenguajes, el bloque `finally` se ejecuta siempre, independientemente d
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
         ```python showLineNumbers title="playground.py"
-        def read_file(path):
+        def read_file(path: str) -> None:
             reader = None
             try:
-                with open(path, 'r') as reader:
-                    content = reader.read()
-                    print("File content:")
-                    print(content)
+                reader = open(path, 'r')
+                content = reader.read()
+                print("File content:")
+                print(content)
             except FileNotFoundError as e:
                 print(f"Error: File not found. {e}")
             except PermissionError as e:
@@ -111,7 +113,77 @@ En ambos lenguajes, el bloque `finally` se ejecuta siempre, independientemente d
                     print("File closed")
         ```
     </TabItem>
+    <TabItem label={"Código completo (mejorado)"} value={"Código completo (mejorado)"}>
+        ```python showLineNumbers title="playground.py"
+        def read_file(path: str) -> None:
+            try:
+                with open(path, 'r') as reader:
+                    content = reader.read()
+                    print("File content:\n", content)
+            except FileNotFoundError:
+                print(f"Error: File '{path}' not found.")
+            except PermissionError:
+                print(f"Error: Permission denied for '{path}'.")
+        ```
+
+        :::info Explicación de las mejoras
+
+        - Se utiliza un bloque `with` para abrir el archivo, lo que garantiza que se cierre automáticamente al salir del bloque.
+        - Se eliminó la verificación manual de si el archivo está cerrado, ya que el bloque `with` se encarga de cerrarlo automáticamente.
+
+        :::
+    </TabItem>
 </BoxedTabs>
+
+## Bloque `else`
+
+En Python, además de `try`, `except`, y `finally`, existe el bloque `else`, que se ejecuta si **no** se lanza ninguna excepción en el bloque `try`. Este bloque es útil para separar el código que se ejecuta solo cuando el `try` es exitoso del manejo de errores en el bloque `except`, lo que mejora la claridad del flujo de control y hace el código más explícito.
+
+<BoxedTabs>
+<TabItem label="Ejemplo de uso" value="Ejemplo de uso">
+```python showLineNumbers
+def process_file(path: str) -> None:
+    try:
+        with open(path, 'r') as reader:
+            content = reader.read()
+    except FileNotFoundError:
+        print("Error: El archivo no fue encontrado.")
+    except PermissionError:
+        print("Error: No tienes permiso para abrir este archivo.")
+    else:
+        print("Archivo procesado exitosamente:")
+        print(content)
+    finally:
+        print("Proceso terminado.")
+```
+</TabItem>
+</BoxedTabs>
+
+### Explicación del bloque `else`
+
+- **Ubicación y propósito**: El bloque `else` se coloca entre el `except` y `finally`. Solo se ejecuta si no ocurre ninguna excepción en el bloque `try`, lo que lo convierte en un espacio seguro para código que solo debe ejecutarse en una ejecución sin errores.
+- **Claridad en el flujo de control**: Al usar `else`, el código mantiene un flujo claro y evita la confusión de que el bloque `finally` solo ejecuta limpieza o cierre de recursos, y no ejecución de lógica adicional.
+
+### Ejemplo práctico
+
+En este ejemplo, el bloque `else` se usa para asegurar que el contenido del archivo solo se imprime si la lectura fue exitosa, manteniendo la separación entre el manejo de errores (`except`) y el procesamiento de datos (`else`):
+
+```python
+def analyze_data_file(path: str) -> None:
+    try:
+        with open(path, 'r') as file:
+            data = file.read()
+    except FileNotFoundError:
+        print("Error: Archivo no encontrado.")
+    except PermissionError:
+        print("Error: Permiso denegado.")
+    else:
+        print("Análisis de datos completo:\n", data)
+    finally:
+        print("Ejecución finalizada.")
+```
+
+Aquí, `else` asegura que el bloque de análisis (`print("Análisis de datos completo...")`) se ejecuta únicamente en caso de éxito, facilitando la lectura y minimizando errores en el manejo de excepciones y control de flujo.
 
 ## Excepciones Personalizadas
 
