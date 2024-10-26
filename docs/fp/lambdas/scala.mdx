@@ -1,16 +1,25 @@
 ---
-title: Funciones Lambda en Scala
+title: Funciones lambda en Scala
 ---
-import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
-<ReadingTime/>
-
-En esta sección, exploraremos las **funciones lambda** en **Scala**, comparándolas con las de **Kotlin** que hemos visto anteriormente. Scala es un lenguaje que combina programación orientada a objetos y funcional, y las funciones lambda son una característica central que permite escribir código conciso y expresivo.
-
-Analizaremos la sintaxis, el uso de lambdas en funciones de orden superior, la desestructuración, y destacaremos las diferencias y ventajas que Scala ofrece en comparación con Kotlin. Además, haremos una distinción entre **Scala 2** y **Scala 3**, ya que Scala 3 introduce mejoras significativas en este ámbito.
-
-### Definición
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="scala-dibs" />
 
 Una **función lambda** en Scala es una función anónima que puede ser tratada como un valor: asignada a una variable, pasada como argumento o devuelta desde otra función. La sintaxis general de una función lambda en Scala es:
 
@@ -18,116 +27,321 @@ Una **función lambda** en Scala es una función anónima que puede ser tratada 
 (argumentos) => cuerpo
 ```
 
-#### Ejemplo en Scala 2
+<BoxedTabs>
+    <TabItem value="Scala 3" label="Scala 3">
+      <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```scala showLineNumbers
+                val add = (x: Int, y: Int) => x + y
+                val add2 = add(2, _)
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```scala showLineNumbers title="scala-3/fp/lambdas/src/main/scala/add.scala"
+                package cl.ravenhill
 
-```scala
-val sumar = (a: Int, b: Int) => a + b
-```
+                val add = (x: Int, y: Int) => x + y
 
-Aquí, `sumar` es una función que toma dos enteros `a` y `b`, y devuelve su suma.
+                val add2 = add(2, _)
 
-Para llamarla:
+                @main def testAdd2(): Unit =
+                    println(add2(3))
+                    /* Output:
+                    5
+                    */
+                ```
+            </TabItem>
+      </BoxedTabs>
+    </TabItem>
+    <TabItem value="Scala 2" label="Scala 2">
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```scala showLineNumbers
+                val add = (x: Int, y: Int) => x + y
+                val add2 = add(2, _)
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```scala showLineNumbers title="scala-2/fp/lambdas/src/main/scala/Add.scala"
+                package cl.ravenhill
 
-```scala
-val resultado = sumar(5, 10)  // resultado: 15
-```
+                object Lambdas {
+                    private val add: (Int, Int) => Int = (x: Int, y: Int) => x + y
 
-#### Ejemplo en Scala 3
+                    private val add2: Int => Int = add(2, _)
 
-En Scala 3, la sintaxis es aún más concisa gracias a mejoras en la inferencia de tipos:
+                    def main(args: Array[String]): Unit = {
+                        println(add2(3))
+                        /* Output:
+                        5
+                        */
+                    }
+                }
+                ```
+            </TabItem>
+        </BoxedTabs>
+    </TabItem>
+</BoxedTabs>
 
-```scala
-val sumar = (a, b) => a + b  // Si el contexto permite inferir los tipos
-```
-
-Scala 3 permite omitir los tipos de los parámetros si el compilador puede inferirlos a partir del contexto.
-
-### Lambdas en Scala con funciones de orden superior
+## Lambdas en Scala con funciones de orden superior
 
 Al igual que en Kotlin, las lambdas en Scala se utilizan comúnmente con **funciones de orden superior**.
 
 Por ejemplo, usando `filter` en una lista:
 
-```scala
-val numeros = List(1, 2, 3, 4, 5)
-val numerosPares = numeros.filter(n => n % 2 == 0)
-println(numerosPares)  // Output: List(2, 4)
-```
+<BoxedTabs>
+    <TabItem value="Scala 3" label="Scala 3">
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```scala showLineNumbers
+                val numbers = List(1, 2, 3, 4, 5)
+                val evenNumbers = numbers.filter(_ % 2 == 0)
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```scala showLineNumbers title="scala-3/fp/lambdas/src/main/scala/filter.scala"
+                package cl.ravenhill
 
-También podemos usar la sintaxis abreviada con el comodín `_`:
+                @main def mainFilter(): Unit =
+                    val numbers = List(1, 2, 3, 4, 5)
+                    val evenNumbers = numbers.filter(_ % 2 == 0)
+                    println(evenNumbers)
+                    /* Output:
+                    List(2, 4)
+                    */
+                ```
+            </TabItem>
+        </BoxedTabs>
+    </TabItem>
+    <TabItem value="Scala 2" label="Scala 2">
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```scala showLineNumbers
+                val numbers = List(1, 2, 3, 4, 5)
+                val evenNumbers = numbers.filter(_ % 2 == 0)
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```scala showLineNumbers title="scala-2/fp/lambdas/src/main/scala/Filter.scala"
+                package cl.ravenhill
 
-```scala
-val numerosPares = numeros.filter(_ % 2 == 0)
-```
+                object Filter {
+                    def main(args: Array[String]): Unit = {
+                        val numbers = List(1, 2, 3, 4, 5)
+                        val evenNumbers = numbers.filter(_ % 2 == 0)
+                        println(evenNumbers)
+                        /* Output:
+                        List(2, 4)
+                        */
+                    }
+                }
+                ```
+            </TabItem>
+        </BoxedTabs>
+    </TabItem>
+</BoxedTabs>
 
-Esto es equivalente y mejora la legibilidad del código.
-
-### Aplicando lambdas en funciones de orden superior
+## Aplicando lambdas en funciones de orden superior
 
 Puedes crear tus propias funciones de orden superior que acepten lambdas como parámetros:
 
-```scala
-def procesarEnteros(a: Int, b: Int, operacion: (Int, Int) => Int): Int =
-  operacion(a, b)
+<BoxedTabs>
+    <TabItem value="Scala 3" label="Scala 3">
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```scala showLineNumbers
+                private def processInts(a: Int, b: Int, operation: (Int, Int) => Int): Int =
+                    operation(a, b)
+                ```
 
-val suma = procesarEnteros(3, 4, (x, y) => x + y)
-println(suma)  // Output: 7
-```
+                ```scala showLineNumbers
+                val sum = processInts(3, 4, _ + _)
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```scala showLineNumbers title="scala-3/fp/lambdas/src/main/scala/processInts.scala"
+                package cl.ravenhill
 
-En este ejemplo:
+                private def processInts(a: Int, b: Int, operation: (Int, Int) => Int): Int =
+                    operation(a, b)
 
-- La función `procesarEnteros` acepta dos enteros y una lambda que define cómo operarlos.
-- Al llamar a `procesarEnteros`, proporcionamos una lambda que suma los dos números.
+                @main def testProcessInts(): Unit =
+                    val sum = processInts(3, 4, _ + _)
+                    println(sum)
+                    /* Output:
+                    7
+                    */
+                ```
+            </TabItem>
+        </BoxedTabs>
+    </TabItem>
+    <TabItem value="Scala 2" label="Scala 2">
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```scala showLineNumbers
+                private def processInts(a: Int, b: Int, operation: (Int, Int) => Int): Int =
+                    operation(a, b)
+                ```
+                ```scala showLineNumbers
+                val sum = processInts(3, 4, _ + _)
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```scala showLineNumbers title="scala-2/fp/lambdas/src/main/scala/ProcessInts.scala"
+                package cl.ravenhill
 
-### Desestructuración en lambdas
+                object ProcessInts {
+                    private def processInts(a: Int, b: Int, operation: (Int, Int) => Int): Int =
+                        operation(a, b)
+
+                    def main(args: Array[String]): Unit = {
+                        val sum = processInts(3, 4, _ + _)
+                        println(sum)
+                        /* Output:
+                        7
+                        */
+                    }
+                }
+                ```
+            </TabItem>
+        </BoxedTabs>
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    - La función `processInts` acepta dos enteros y una lambda que define cómo operarlos.
+    - Al llamar a `processInts`, proporcionamos una lambda que suma los dos números.
+</Explanation>
+
+## Desestructuración en lambdas
 
 Scala permite desestructurar los parámetros de una lambda utilizando **pattern matching** directamente en la definición de la función anónima.
 
-#### Ejemplo de desestructuración
+### Ejemplo de desestructuración
 
-```scala
-val pares = List((1, 2), (3, 4), (5, 6))
-val sumas = pares.map { case (a, b) => a + b }
-println(sumas)  // Output: List(3, 7, 11)
-```
+<BoxedTabs>
+    <TabItem value="Scala 3" label="Scala 3">
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```scala showLineNumbers
+                val pairs = List((1, 2), (3, 4), (5, 6))
+                val sums = pairs.map { (x, y) => x + y }
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```scala showLineNumbers title="scala-3/fp/lambdas/src/main/scala/sumPairs.scala"
+                package cl.ravenhill
 
-En este ejemplo:
+                @main def testSumPairs(): Unit =
+                    val pairs = List((1, 2), (3, 4), (5, 6))
+                    val sums = pairs.map((x, y) => x + y)
+                    println(sums)
+                    /* Output:
+                    List(3, 7, 11)
+                    */
+                ```
+            </TabItem>
+        </BoxedTabs>
+        <Explanation>
+            - En este ejemplo, `(x, y)` desestructura cada tupla en sus componentes `x` e `y`.
+            - La función lambda suma los componentes desestructurados.
+        </Explanation>
+    </TabItem>
+    <TabItem value="Scala 2" label="Scala 2">
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```scala showLineNumbers
+                val pairs = List((1, 2), (3, 4), (5, 6))
+                val sums = pairs.map { case (x: Int, y: Int) => x + y }
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```scala showLineNumbers title="scala-2/fp/lambdas/src/main/scala/SumPairs.scala"
+                package cl.ravenhill
 
-- Usamos `case (a, b)` para desestructurar cada tupla en sus componentes `a` y `b`.
-- La función lambda suma los componentes desestructurados.
+                object SumPairs {
+                    def main(args: Array[String]): Unit = {
+                        val pairs = List((1, 2), (3, 4), (5, 6))
+                        val sums = pairs.map { case (x: Int, y: Int) => x + y }
+                        println(sums)
+                        /* Output:
+                        List(3, 7, 11)
+                        */
+                    }
+                }
+                ```
+            </TabItem>
+        </BoxedTabs>
+        <Explanation>
+            - Usamos `case (x: Int, y: Int)` para desestructurar cada tupla en sus componentes `x` e `y`.
+            - La función lambda suma los componentes desestructurados.
+        </Explanation>
+    </TabItem>
+</BoxedTabs>
 
 Scala permite desestructurar estructuras anidadas:
 
-```scala
-val lista = List((1, (2, 3)), (4, (5, 6)))
-val sumas = lista.map { case (a, (b, c)) => a + b + c }
-println(sumas)  // Output: List(6, 15)
-```
+<BoxedTabs>
+    <TabItem value="Scala 3" label="Scala 3">
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```scala showLineNumbers
+                val nestedPairs = List((1, (2, 3)), (4, (5, 6)))
+                val sums = nestedPairs.map { case (x, (y, z)) => x + y + z }
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```scala showLineNumbers
+                package cl.ravenhill
+
+                @main def testNestedSums(): Unit =
+                    val nestedPairs = List((1, (2, 3)), (4, (5, 6)))
+                    val sums = nestedPairs.map { case (x, (y, z)) => x + y + z }
+                    println(sums)
+                    /* Output:
+                    List(6, 15)
+                    */
+                ```
+            </TabItem>
+        </BoxedTabs>
+    </TabItem>
+    <TabItem value="Scala 2" label="Scala 2">
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```scala showLineNumbers
+                val nestedPairs = List((1, (2, 3)), (4, (5, 6)))
+                val sums = nestedPairs.map { case (x, (y, z)) => x + y + z }
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```scala showLineNumbers
+                package cl.ravenhill
+
+                object NestedSums {
+                    def main(args: Array[String]): Unit = {
+                        val nestedPairs = List((1, (2, 3)), (4, (5, 6)))
+                        val sums = nestedPairs.map { case (x, (y, z)) => x + y + z }
+                        println(sums)
+                        /* Output:
+                        List(6, 15)
+                        */
+                    }
+                }
+                ```
+            </TabItem>
+        </BoxedTabs>
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    Usamos `case (x, (y, z))` para desestructurar cada tupla anidada en sus componentes `x`, `y` y `z`.
+</Explanation>
 
 Este nivel de desestructuración no es directamente posible en Kotlin dentro de lambdas.
 
-### Características adicionales de Scala en lambdas
+## Características adicionales de Scala en lambdas
 
-#### Inferencia de tipos mejorada (Scala 3)
-
-Scala 3 mejora la inferencia de tipos, permitiendo omitir más información de tipo en las lambdas:
-
-```scala
-val sumar = (a, b) => a + b  // Tipos inferidos si el contexto lo permite
-```
-
-#### Sintaxis de placeholder (`_`)
-
-Scala permite utilizar el placeholder `_` para simplificar aún más las lambdas:
-
-```scala
-val incrementar: Int => Int = _ + 1
-println(incrementar(5))  // Output: 6
-```
-
-Aquí, `_ + 1` es una lambda que toma un parámetro y le suma 1.
-
-#### Currificación y aplicación parcial
+### Currificación y aplicación parcial
 
 Scala soporta la **currificación**, permitiendo definir funciones que se pueden aplicar parcialmente:
 
@@ -139,7 +353,7 @@ println(sumarCinco(10))  // Output: 15
 
 Esto facilita la creación de funciones a partir de otras, fijando algunos parámetros.
 
-#### Funciones de múltiples parámetros y listas de parámetros
+### Funciones de múltiples parámetros y listas de parámetros
 
 Scala permite definir funciones con múltiples listas de parámetros:
 
@@ -149,14 +363,14 @@ def funcion(a: Int)(b: Int)(c: Int): Int = a + b + c
 
 Esto es útil para currificación y para manejar parámetros implicitos (contextuales).
 
-#### Tipos de función avanzados
+### Tipos de función avanzados
 
 Scala tiene un sistema de tipos más potente que Kotlin en cuanto a funciones:
 
 - **Funciones polimórficas**: Puedes definir funciones que operan sobre tipos genéricos con más flexibilidad.
 - **Tipos de función de orden superior**: Permite tipos de funciones que aceptan o devuelven otras funciones con tipos genéricos.
 
-### Diferencias entre Scala 2 y Scala 3
+## Diferencias entre Scala 2 y Scala 3
 
 Scala 3 introduce varias mejoras en las lambdas:
 
@@ -164,7 +378,7 @@ Scala 3 introduce varias mejoras en las lambdas:
 - **Sintaxis más concisa**: Se simplifica la escritura de lambdas y tipos.
 - **Funciones anónimas con múltiples parámetros**: Se mejora la sintaxis para lambdas con varios parámetros.
 
-#### Ejemplo de mejora en Scala 3
+### Ejemplo de mejora en Scala 3
 
 Scala 2:
 
@@ -180,7 +394,7 @@ val combinar: (Int, Int) => Int = _ + _
 
 En Scala 3, podemos usar `_ + _` para indicar una función que suma dos parámetros.
 
-### Comparación con Kotlin
+## Comparación con Kotlin
 
 | **Característica**                                 | **Scala**                                                  | **Kotlin**                                                                              |
 |----------------------------------------------------|------------------------------------------------------------|-----------------------------------------------------------------------------------------|
@@ -192,7 +406,7 @@ En Scala 3, podemos usar `_ + _` para indicar una función que suma dos parámet
 | **Sistema de tipos de funciones**                  | Más expresivo y potente, con tipos de orden superior       | Menos avanzado en este aspecto                                                          |
 | **Funciones de contexto**                          | Soportadas en Scala 3 (`using` clauses)                    | Soportadas mediante receptores de contexto (`context receivers`) en versiones recientes |
 
-### Ventajas de Scala respecto a Kotlin en lambdas
+## Ventajas de Scala respecto a Kotlin en lambdas
 
 - **Mayor flexibilidad en desestructuración**: Scala permite desestructurar parámetros en lambdas de forma más potente, incluyendo patrones anidados y pattern matching completo.
 - **Sintaxis más concisa con placeholders**: El uso de `_` permite escribir lambdas de manera más compacta, pero el abuso de esta característica puede afectar la legibilidad.
@@ -200,7 +414,7 @@ En Scala 3, podemos usar `_ + _` para indicar una función que suma dos parámet
 - **Sistema de tipos más avanzado**: Permite expresar tipos de funciones más complejos y polimórficos.
 - **Pattern matching en lambdas**: Scala permite usar pattern matching directamente en los parámetros de las lambdas, ofreciendo mayor expresividad.
 
-### Conclusión
+## Conclusión
 
 Scala ofrece un conjunto de características avanzadas para trabajar con funciones lambda, proporcionando mayor flexibilidad y expresividad en comparación con Kotlin. Las mejoras introducidas en **Scala 3** refuerzan estas capacidades, simplificando la sintaxis y ampliando la inferencia de tipos.
 
