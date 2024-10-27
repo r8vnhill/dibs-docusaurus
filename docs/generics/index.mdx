@@ -17,136 +17,45 @@ import RepoClone from '@site/src/components/admonitions/RepoClone'
 import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 import { LanguageCard, JavaCard, RustCard, ScalaCard, TypeScriptCard } from '@site/src/components/cards/LanguageCard'
+import ModuleSetupTask from '@site/src/components/code-blocks/ModuleSetupTask.mdx'
 
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="generic-programming-kt" />
 <RepoClone groupId="generic-programming" repoName="generic-programming-kt" />
 <ModuleSetup module='intro' task='setupIntroModule'>
-    Primero definiremos una tarea reutilizable para esta unidad, no te dejes intimidar por la cantidad de código, es solo una plantilla para crear módulos en el proyecto que ya viene incluido en el repositorio. Sin embargo, comprender cómo funciona puede ser útil como práctica y repaso sobre tareas de Gradle.
-
-    ```kotlin showLineNumbers title="convention-plugins/src/main/kotlin/tasks/ModuleSetupTask.kt"
-    package tasks
-
-    import org.gradle.api.DefaultTask
-    import org.gradle.api.provider.Property
-    import org.gradle.api.tasks.Input
-    import org.gradle.api.tasks.Internal
-    import org.gradle.api.tasks.TaskAction
-    import java.io.File
-
-    private val printError: (String) -> Unit = System.err::println
-
-    abstract class ModuleSetupTask : DefaultTask() {
-
-        @get:Input
-        abstract val module: Property<String>
-
-        @get:Internal
-        val main: File
-            get() = baseDir.resolve("src/main/kotlin")
-
-        @get:Internal
-        val test: File
-            get() = baseDir.resolve("src/test/kotlin")
-
-        private val baseDir: File
-            get() = project.rootProject.file(module)
-
-        init {
-            group = "setup"
-        }
-
-        @TaskAction
-        fun setupSubmodule() {
-            createSettingsFile()
-            createModuleDirectory()
-            createBuildFile()
-        }
-
-        private fun createSettingsFile() {
-            val settingsFile = project.file("settings.gradle.kts")
-            if (!settingsFile.exists()) {
-                settingsFile.writeText("rootProject.name = \"${project.name}\"\n")
-                settingsFile.writeText("include(\"${module.get()}\")")
-            } else if (module.get() !in settingsFile.readText()) {
-                settingsFile.appendText("\ninclude(\"${module.get()}\")")
-            }
-            println("The module ${module.get()} was added to the settings file")
-        }
-
-
-        private fun createModuleDirectory() = baseDir.run {
-            when {
-                exists() -> printError("Directory already exists: $absolutePath")
-                mkdirs() -> println("Directory created: $absolutePath")
-                else -> printError("Failed to create directory: $absolutePath")
-            }
-        }
-
-        private fun createBuildFile() = baseDir.resolve("build.gradle.kts").run {
-            if (exists()) printError("The build file already exists")
-            else {
-                writeText("// Intentionally left blank\n")
-                println("The build file was created successfully")
-            }
-        }
-
-        fun createFiles(packageName: String, vararg files: Pair<File, String>) {
-            files.forEach { (dir, name) ->
-                val group = project.rootProject.group.toString()
-                val packageDir = dir.resolve("$group/$packageName".replace(".", "/"))
-                val file = packageDir.resolve(name)
-                if (file.exists()) {
-                    printError("The file $name already exists")
-                } else {
-                    packageDir.mkdirs()
-                    file.writeText("package $group.$packageName\n\n")
-                    println("The file $name was created successfully")
-                }
-            }
-        }
-    }
-    ```
-
-    <Explanation>
-        Esta tarea de Gradle crea un módulo para la lección actual, con un directorio de código fuente principal y de prueba, y un archivo `build.gradle.kts` vacío. También agrega el módulo al archivo `settings.gradle.kts` si no está presente. Puedes utilizar esta tarea para configurar los módulos de las lecciones en el proyecto.
-    </Explanation>
+    <ModuleSetupTask />
 
     Luego, podemos utilizar esta tarea para crear el módulo de la lección:
 
     ```kotlin showLineNumbers
+    import tasks.ModuleSetupTask
+
+    tasks.register<ModuleSetupTask>("setupIntroModule") {
+        description = "Creates the base module and files for the intro lesson"
+        module.set("intro")
+
+        doLast {
+            createFiles(
+                "id",
+                main to "Identity.kt",
+                test to "IdentityTest.kt"
+            )
+            createFiles(
+                "box",
+                main to "Box.kt",
+                test to "BoxTest.kt"
+            )
+            createFiles(
+                "repo",
+                main to "Repository.kt",
+                main to "User.kt",
+                main to "UserRepository.kt",
+                test to "UserRepositoryTest.kt"
+            )
+        }
+    }
     ```
 </ModuleSetup>
-
-<details>
-    <summary>
-        Comencemos por crear un módulo para la lección...
-    </summary>
-
-    <BoxedTabs groupId="os">
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path 'basics' -ItemType Directory
-            '// Intentionally left blank' |
-                Out-File -FilePath 'basics\build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            md basics
-            '// Intentionally left blank' > basics\build.gradle.kts
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            mkdir basics
-            echo '// Intentionally left blank' > basics/build.gradle.kts
-            ```
-        </TabItem>
-    </BoxedTabs>
-
-    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
-</details>
 
 La **programación genérica** es un paradigma clave en el diseño de software moderno que permite escribir código más flexible, reutilizable y robusto. Este enfoque permite trabajar con tipos abstractos, sin la necesidad de especificar los tipos concretos de antemano, facilitando el manejo de diferentes tipos de datos con un solo conjunto de funciones o estructuras.
 
@@ -155,7 +64,7 @@ En esencia, la **programación genérica** es la aplicación práctica del **pol
 El **polimorfismo paramétrico** es un concepto fundamental en la programación de tipos que permite que las funciones y los tipos sean definidos sin especificar todos los tipos concretos. En lugar de operar sobre tipos concretos, el polimorfismo paramétrico permite que las funciones y los tipos trabajen de manera abstracta con uno o más tipos, lo que proporciona mayor flexibilidad y reutilización de código.
 
 <Definition title={"Polimorfismo Paramétrico"} id="definition">
-    capacidad de definir una función o una estructura de datos de forma que funcione para cualquier tipo, sin estar limitada a un tipo específico. Se dice que una función es paramétricamente polimórfica cuando puede operar sobre cualquier tipo de entrada sin hacer suposiciones sobre las propiedades de ese tipo.
+    Capacidad de definir una función o una estructura de datos de forma que funcione para cualquier tipo, sin estar limitada a un tipo específico. Se dice que una función es paramétricamente polimórfica cuando puede operar sobre cualquier tipo de entrada sin hacer suposiciones sobre las propiedades de ese tipo.
 </Definition>
 
 ## Ejemplo de Polimorfismo Paramétrico
@@ -190,12 +99,12 @@ En este ejemplo, `a` es un **parámetro de tipo**. En lugar de fijar el tipo de 
 
     - **Generics**: Permite definir funciones y estructuras de datos genéricas que pueden trabajar con cualquier tipo. Por ejemplo, la función de identidad en ML se define de manera que puede aceptar y devolver cualquier tipo.
 
-    ```ocaml showLineNumbers title="identity.ml"
-    (* Función de identidad en ML *)
-    let identity x = x
-    ```
+        ```ocaml showLineNumbers
+        (* Función de identidad en ML *)
+        let identity x = x
+        ```
 
-    Aquí, `identity` tiene el tipo `'a -> 'a`, donde `'a` es un tipo genérico que puede ser cualquier tipo concreto.
+        Aquí, `identity` tiene el tipo `'a -> 'a`, donde `'a` es un tipo genérico que puede ser cualquier tipo concreto.
     - **Reutilización de Código**: Gracias al polimorfismo paramétrico, es posible escribir código más abstracto y reutilizable, evitando la duplicación de funciones para diferentes tipos.
     - **Seguridad de Tipos**: El sistema de tipos de ML verifica que las operaciones realizadas sobre los tipos sean seguras, previniendo errores comunes como los de tipos incompatibles en tiempo de compilación.
 
@@ -223,62 +132,31 @@ En este ejemplo, `a` es un **parámetro de tipo**. En lugar de fijar el tipo de 
 
 Kotlin soporta el polimorfismo paramétrico a través de **tipos genéricos**. Puedes definir funciones, clases e interfaces que operen sobre tipos genéricos, lo que les permite ser reutilizados con cualquier tipo específico.
 
-### Funciones Genéricas
-
 <details>
     <summary>
-        Si quieres crear los archivos desde la terminal...
+        Diferencia con Java: Tipos Crudos
     </summary>
 
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
+    A diferencia de **Java**, **Kotlin** siempre requiere que los argumentos de tipo sean especificados explícitamente o inferidos por el compilador. Esto se debe a que los genéricos fueron introducidos en Java a partir de la versión 1.5, lo que obligó al lenguaje a mantener la compatibilidad con el código anterior. Por esta razón, Java permite el uso de un tipo genérico sin especificar los argumentos de tipo, conocido como **tipo crudo** (*raw type*).
 
-            ```powershell
-            $GenericTestDir = "basics\src\test\kotlin\$Group\generics"
-            $GenericMainDir = "basics\src\main\kotlin\$Group\generics"
-            $GenericTestDir | New-Item -ItemType Directory -Force
-            $GenericMainDir | New-Item -ItemType Directory -Force
-            "package $Group.generics" -replace '\\', '.' | 
-                Out-File -FilePath "$GenericTestDir\IdentityTest.kt"
-            "package $Group.generics" -replace '\\', '.' | 
-                Out-File -FilePath "$GenericMainDir\Identity.kt"
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
+    Por ejemplo, en Java puedes declarar una variable de tipo `List` sin especificar qué tipo de elementos contiene:
 
-            ```powershell
-            $GenericTestDir = "basics\src\test\kotlin\$Group\generics"
-            $GenericMainDir = "basics\src\main\kotlin\$Group\generics"
-            $GenericTestDir, $GenericMainDir | % { md $_ }
-            "package $Group.generics" -replace '\\', '.' > `
-                "$GenericTestDir\IdentityTest.kt"
-            "package $Group.generics" -replace '\\', '.' > `
-                "$GenericMainDir\Identity.kt"
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            GROUP=com/github/username
-            ```
+    ```java
+    List myList = new ArrayList();  // Uso de tipo crudo en Java
+    ```
 
-            ```bash
-            GENERIC_TEST_DIR="basics/src/test/kotlin/$GROUP/generics"
-            GENERIC_MAIN_DIR="basics/src/main/kotlin/$GROUP/generics"
-            mkdir -p $GENERIC_TEST_DIR $GENERIC_MAIN_DIR
-            echo "package ${GROUP//\//.}.generics" > \
-                $GENERIC_TEST_DIR/IdentityTest.kt
-            echo "package ${GROUP//\//.}.generics" > \
-                $GENERIC_MAIN_DIR/Identity.kt
-            ```
-        </TabItem>
-    </BoxedTabs>
+    Este tipo de declaración es posible en Java por razones de compatibilidad histórica, pero no está presente en Kotlin. Dado que Kotlin ha tenido soporte para genéricos desde su inicio, no permite el uso de **tipos crudos**, promoviendo así una mayor seguridad de tipos.
+
+    En Kotlin, siempre debes especificar los argumentos de tipo o permitir que el compilador los infiera:
+
+    ```kotlin
+    val myList: List<Int> = listOf(1, 2, 3)  // En Kotlin los tipos deben ser especificados
+    ```
+
+    Esto garantiza que el tipo de los elementos en la lista esté claro y seguro en tiempo de compilación.
 </details>
+
+### Funciones Genéricas
 
 La función `identity` es una implementación clásica y sencilla que devuelve exactamente el valor que recibe como argumento, sin realizar ninguna modificación. En Kotlin, podemos implementarla fácilmente utilizando un parámetro de tipo genérico, lo que permite que funcione con cualquier tipo de dato.
 
@@ -309,24 +187,24 @@ Ahora, implementamos los detalles de los casos de prueba, utilizando Kotest para
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```kotlin showLineNumbers
-        "when calling it with a string" {
-            checkAll(Arb.string()) { s ->
-                identity(s) shouldBe s
-            }
+        checkAll(Arb.string()) { s ->
+            identity(s) shouldBe s
         }
+        ```
 
-        "when calling it with an integer" {
-            checkAll(Arb.int()) { i ->
-                identity(i) shouldBe i
-            }
+        ```kotlin showLineNumbers
+        checkAll(Arb.int()) { i ->
+            identity(i) shouldBe i
         }
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="basics/src/test/kotlin/com/github/username/generics/IdentityTest.kt"
-        package com.github.username.generics
+        ```kotlin showLineNumbers title="intro/src/test/kotlin/com/github/username/id/IdentityTest.kt"
+        package com.username.github.id
 
         import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.booleans.shouldBeFalse
+        import io.kotest.matchers.booleans.shouldBeTrue
         import io.kotest.matchers.shouldBe
         import io.kotest.property.Arb
         import io.kotest.property.arbitrary.int
@@ -353,8 +231,8 @@ Ahora, implementamos los detalles de los casos de prueba, utilizando Kotest para
 
                 "when calling it with a boolean" - {
                     "should return the same boolean" {
-                        identity(true) shouldBe true
-                        identity(false) shouldBe false
+                        identity(true).shouldBeTrue()
+                        identity(false).shouldBeFalse()
                     }
                 }
             }
@@ -367,7 +245,7 @@ Ahora, implementamos los detalles de los casos de prueba, utilizando Kotest para
 
 Finalmente, la función `identity` en Kotlin es simple y genérica. La definimos utilizando un parámetro de tipo `T`:
 
-```kotlin showLineNumbers title="basics/src/main/kotlin/com/github/username/generics/Identity.kt"
+```kotlin showLineNumbers title="intro/src/main/kotlin/com/github/username/id/Identity.kt"
 package com.github.username.generics
 
 fun <T> identity(value: T): T = value
@@ -381,39 +259,6 @@ fun <T> identity(value: T): T = value
 
 
 ### Clases Genéricas
-
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            "package $Group.generics" -replace '\\', '.' | 
-                Out-File -FilePath "$GenericTestDir\BoxTest.kt"
-            "package $Group.generics" -replace '\\', '.' |
-                Out-File -FilePath "$GenericMainDir\Box.kt"  
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            "package $Group.generics" -replace '\\', '.' > `
-                "$GenericTestDir\BoxTest.kt"
-            "package $Group.generics" -replace '\\', '.' > `
-                "$GenericMainDir\Box.kt"
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            echo "package ${GROUP//\//.}.generics" > \
-                $GENERIC_TEST_DIR/BoxTest.kt
-            echo "package ${GROUP//\//.}.generics" > \
-                $GENERIC_MAIN_DIR/Box.kt
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
 
 El polimorfismo paramétrico también puede ser aplicado en la definición de clases genéricas. Por ejemplo, podemos definir una clase `Box` que almacene un valor de cualquier tipo `T`.
 
@@ -444,22 +289,20 @@ Luego, implementamos los detalles de los casos de prueba, utilizando Kotest para
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```kotlin showLineNumbers
-        "when creating it with an integer" {
-            checkAll(Arb.int()) { i ->
-                Box(i).value shouldBe i
-            }
+        checkAll(Arb.int()) { i ->
+            Box(i).value shouldBe i
         }
+        ```
 
-        "when creating it with a string" {
-            checkAll(Arb.string()) { s ->
-                Box(s).value shouldBe s
-            }
+        ```kotlin showLineNumbers
+        checkAll(Arb.string()) { s ->
+            Box(s).value shouldBe s
         }
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="basics/src/test/kotlin/com/github/username/generics/BoxTest.kt"
-        package com.github.username.generics
+        ```kotlin showLineNumbers title="intro/src/test/kotlin/com/github/username/box/BoxTest.kt"
+        package com.username.github.box
 
         import io.kotest.core.spec.style.FreeSpec
         import io.kotest.matchers.shouldBe
@@ -502,70 +345,24 @@ Luego, implementamos los detalles de los casos de prueba, utilizando Kotest para
 
 Finalmente, la clase `Box` en Kotlin es genérica y flexible. La definimos utilizando un parámetro de tipo `T`:
 
-```kotlin showLineNumbers title="basics/src/main/kotlin/com/github/username/generics/Box.kt"
-package com.github.username.generics
+```kotlin showLineNumbers title="intro/src/main/kotlin/com/github/username/box/Box.kt"
+package com.github.username.box
 
 class Box<T>(val value: T)
 ```
 
 <Explanation>
-    - **`<T>`** es un parámetro de tipo genérico que i
-    ndica que la clase `Box` puede almacenar cualquier tipo de dato.
+    - **`<T>`** es un parámetro de tipo genérico que indica que la clase `Box` puede almacenar cualquier tipo de dato.
     - La clase `Box` tiene un atributo `value` que almacena el valor de tipo `T` proporcionado al crear una instancia de `Box`.
     - El compilador determinará el tipo `T` en tiempo de compilación en función del tipo de dato que se pase al constructor de `Box`.
 </Explanation>
 
 ### Interfaces Genéricas
 
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $RepoTestDir = "$GenericTestDir\repo"
-            $RepoMainDir = "$GenericMainDir\repo"
-            New-Item -Path $RepoTestDir, $RepoMainDir `
-                -ItemType Directory -Force
-            "$RepoTestDir\UserRepositoryTest.kt", "$RepoMainDir\Repository.kt", `
-                "$RepoMainDir\User.kt", "$RepoMainDir\UserRepository.kt" |
-                ForEach-Object { 
-                    "package $Group.generics.repo" -replace '\\', '.' |
-                        Out-File -FilePath $_ 
-                }
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            $RepoTestDir = "$GenericTestDir\repo"
-            $RepoMainDir = "$GenericMainDir\repo"
-            md $RepoTestDir, $RepoMainDir
-            "$RepoTestDir\UserRepositoryTest.kt", "$RepoMainDir\Repository.kt", `
-                "$RepoMainDir\User.kt", "$RepoMainDir\UserRepository.kt" | % { 
-                    "package $Group.generics.repo" -replace '\\', '.' > $_ 
-                }
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            REPO_TEST_DIR="$GENERIC_TEST_DIR/repo"
-            REPO_MAIN_DIR="$GENERIC_MAIN_DIR/repo"
-            mkdir -p $REPO_TEST_DIR $REPO_MAIN_DIR
-            for file in "$REPO_TEST_DIR/UserRepositoryTest.kt" "$REPO_MAIN_DIR/Repository.kt" \
-                        "$REPO_MAIN_DIR/User.kt" "$REPO_MAIN_DIR/UserRepository.kt"; do
-                echo "package ${GROUP//\//.}.generics.repo" > $file
-            done
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
-
 Kotlin permite el uso de **interfaces genéricas**, lo que proporciona flexibilidad para definir contratos que pueden adaptarse a múltiples tipos de datos. Por ejemplo, podemos crear una interfaz genérica `Repository` que describa operaciones comunes para cualquier entidad:
 
-```kotlin showLineNumbers title="basics/src/main/kotlin/com/github/username/generics/repo/Repository.kt"
-package com.github.username.generics.repo
+```kotlin showLineNumbers title="intro/src/main/kotlin/com/github/username/repo/Repository.kt"
+package com.github.username.repo
 
 interface Repository<T, K> {
     fun save(item: T)
@@ -602,22 +399,20 @@ A continuación, se presentan los detalles de los casos de prueba para verificar
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```kotlin showLineNumbers
-        "should return the user if it was saved" {
-            checkAll(arbUser()) { user ->
-                val repository = UserRepository()
-                repository.findById(user.id).shouldBeNull()
-                repository.save(user)
-                repository.findById(user.id)
-                    .shouldNotBeNull()
-                    .shouldBe(user)
-            }
+        checkAll(arbUser()) { user ->
+            val repository = UserRepository()
+            repository.findByUsername(user.username).shouldBeNull()
+            repository.save(user)
+            repository.findByUsername(user.username)
+                .shouldNotBeNull()
+                .shouldBe(user)
         }
+        ```
 
-        "should return null if the user was not saved" {
-            checkAll(arbUser()) { user ->
-                val repository = UserRepository()
-                repository.findById(user.id).shouldBeNull()
-            }
+        ```kotlin showLineNumbers
+        checkAll(arbUser()) { user ->
+            val repository = UserRepository()
+            repository.findByUsername(user.username).shouldBeNull()
         }
         ```
 
@@ -631,8 +426,8 @@ A continuación, se presentan los detalles de los casos de prueba para verificar
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="basics/src/test/kotlin/com/github/username/generics/repo/UserRepositoryTest.kt"
-        package com.github.username.generics.repo
+        ```kotlin showLineNumbers title="intro/src/test/kotlin/com/github/username/repo/UserRepositoryTest.kt"
+        package com.github.username.repo
 
         import io.kotest.core.spec.style.FreeSpec
         import io.kotest.matchers.nulls.shouldBeNull
@@ -692,20 +487,20 @@ Este enfoque garantiza que el repositorio funcione correctamente para distintos 
 
 Luego, podemos implementar esta interfaz para el caso específico de un repositorio de usuarios:
 
-```kotlin showLineNumbers title="basics/src/main/kotlin/com/github/username/generics/repo/User.kt"
-package com.github.username.generics.repo
+```kotlin showLineNumbers title="intro/src/main/kotlin/com/github/username/repo/UserRepository.kt"
+package com.github.username.repo
 
 class User(val username: String, val name: String)
 ```
 
-```kotlin showLineNumbers title="basics/src/main/kotlin/com/github/username/generics/repo/UserRepository.kt"
-package com.github.username.generics.repo
+```kotlin showLineNumbers title="intro/src/main/kotlin/com/github/username/repo/UserRepository.kt"
+package com.github.username.repo
 
 class UserRepository : Repository<User, String> {
     private val users = mutableMapOf<String, User>()
-    
+
     override fun save(item: User) {
-        users[item.username] = item    
+        users[item.username] = item
     }
 
     override fun findByKey(key: String) = users[key]
@@ -723,7 +518,7 @@ class UserRepository : Repository<User, String> {
         - **Compatibilidad con otros paradigmas**: La programación genérica se integra bien con otros paradigmas como la programación funcional, permitiendo un código más expresivo.
     </Pros>
     <Cons>
-        - **Complejidad adicional**: El uso de tipos genéricos puede incrementar la complejidad del código, lo que puede dificultar su comprensión, especialmente para quienes no están familiarizadxs con el concepto.
+        - **Complejidad adicional**: El uso de tipos genéricos puede incrementar la complejidad del código, lo que puede dificultar su comprensión, especialmente para personas no familiarizadas con el concepto.
         - **Errores de inferencia**: En algunos casos, la inferencia de tipos puede no ser suficiente o comportarse de manera inesperada, lo que lleva a la necesidad de especificar explícitamente los tipos.
         - **Limitaciones del sistema de tipos**: No todos los lenguajes soportan características avanzadas de tipos genéricos como los límites superiores e inferiores o la varianza, lo que puede reducir su poder expresivo en algunos casos.
         - **Sobrecarga de compilación**: En lenguajes con un sistema de tipos estricto, el uso intensivo de genéricos puede aumentar el tiempo de compilación, especialmente en proyectos grandes.
@@ -752,3 +547,22 @@ En resumen, la programación genérica es una herramienta poderosa que nos permi
     <ScalaCard link='/docs/generics/scala' />
     <TypeScriptCard link='/docs/generics/typescript' />
 </div>
+
+<References references={[
+    {
+        title: "Generics",
+        bookTitle: "Kotlin in Action",
+        publisher: "Manning Publications Co",
+        pages: "223–253",
+        year: "2017",
+        author: "Dmitry Jemerov & Svetlana Isakova",
+        type: "book",
+    },
+]} additionalReferences={[
+    {
+        title: "Generics: In, out, where",
+        url: "https://kotlinlang.org/docs/generics.html",
+        accessedDate: "26 de octubre de 2024",
+        type: "web",
+    },
+]}/>
