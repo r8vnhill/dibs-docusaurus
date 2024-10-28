@@ -1,33 +1,74 @@
 ---
 title: Programación Orientada a Objetos en Python
 ---
-import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="python-dibs" />
 
 ## Singleton
 
 En **Python**, no hay un equivalente directo a la palabra clave `object` de Kotlin para crear singletons. Sin embargo, se puede implementar un singleton mediante un patrón de diseño, utilizando decoradores o metaclases. Python requiere pasos explícitos para garantizar que solo exista una instancia de la clase, mientras que en Kotlin, el uso de `object` es directo y conveniente.
 
-```python showLineNumbers
-from typing import Any
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers
+        class SingletonMeta(type):
+            _instances = {}
 
-class SingletonMeta(type):
-    _instances: dict[type, Any] = {}
+            def __call__(cls, *args, **kwargs):
+                if cls not in cls._instances:
+                    instance = super().__call__(*args, **kwargs)
+                    cls._instances[cls] = instance
+                return cls._instances[cls]
+        
+        class MySingleton(metaclass=SingletonMeta):
+            name = "Singleton"
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="src/intro/oop/singleton.py"
+        from typing import Any
 
-    def __call__(cls: type, *args: Any, **kwargs: Any) -> Any:
-        if cls not in cls._instances:
-            instance = super().__call__(*args, **kwargs)
-            cls._instances[cls] = instance
-        return cls._instances[cls]
+        class SingletonMeta(type):
+            _instances: dict[type, Any] = {}
 
-class MySingleton(metaclass=SingletonMeta):
-    name: str = "Singleton"
+            # noinspection PyUnresolvedReferences
+            def __call__(cls: type, *args: Any, **kwargs: Any) -> Any:
+                if cls not in cls._instances:
+                    instance = super().__call__(*args, **kwargs)
+                    cls._instances[cls] = instance
+                return cls._instances[cls]
 
-    def greet(self) -> str:
-        return f"Hello, {self.name}"
-```
+        class MySingleton(metaclass=SingletonMeta):
+            name: str = "Singleton"
+
+        if __name__ == "__main__":
+            s1 = MySingleton()
+            s2 = MySingleton()
+            print(s1 is s2)  # True
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    En Python, un singleton se puede implementar utilizando una metaclase personalizada que controle la creación de instancias de la clase. La metaclase `SingletonMeta` se encarga de mantener un diccionario de instancias y garantizar que solo exista una instancia de la clase `MySingleton`. Al llamar a `MySingleton()`, la metaclase verifica si ya existe una instancia y la devuelve en lugar de crear una nueva.
+</Explanation>
 
 ## Clases
 
@@ -37,51 +78,260 @@ Tanto en **Python** como en **Kotlin**, las clases se utilizan para definir las 
 
 En **Python**, no existen interfaces en el sentido estricto de Kotlin. En su lugar, Python utiliza **protocolos** (a partir de Python 3.8 con `typing.Protocol`) para definir contratos de comportamiento.
 
-```python showLineNumbers
-from typing import Protocol
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers
+        class Greeter(Protocol):
+            def greet(self) -> str:
+                ...
 
-class Greeter(Protocol):
-    def greet(self) -> str:
-        ...
+        class Walker(Protocol):
+            def walk(self) -> str:
+                ...
+        
+        class Person:
+            def __init__(self, name: str) -> None:
+                self.name = name
 
-class Walker(Protocol):
-    def walk(self) -> str:
-        ...
+            def greet(self) -> str:
+                return f"Hello, {self.name}"
 
-class Person:
-    def __init__(self, name: str) -> None:
-        self.name = name
+            def walk(self) -> str:
+                return "Walking..."
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="src/intro/oop/protocols.py"
+        from typing import Protocol, runtime_checkable
 
-    def greet(self) -> str:
-        return f"Hello, {self.name}"
+        @runtime_checkable
+        class Greeter(Protocol):
+            def greet(self) -> str:
+                ...
 
-    def walk(self) -> str:
-        return "Walking..."
+        @runtime_checkable
+        class Walker(Protocol):
+            def walk(self) -> str:
+                ...
 
-# Verificamos que Person cumple con los protocolos
-def introduce(entity: Greeter & Walker) -> None:
-    print(entity.greet())
-    print(entity.walk())
+        class Person:
+            def __init__(self, name: str) -> None:
+                self.name = name
 
-# Uso
-person = Person("Deku")
-introduce(person)
-```
+            def greet(self) -> str:
+                return f"Hello, {self.name}"
 
-## Encapsulación
+            def walk(self) -> str:
+                return "Walking..."
 
-La encapsulación en **Python** se logra mediante convención, utilizando un prefijo de guion bajo (`_`) para señalar que un atributo o método es privado. No existe un control estricto como en Kotlin, que permite especificar el nivel de acceso con `public`, `private`, `protected` e `internal`.
+        def introduce(entity: object) -> None:
+            if isinstance(entity, Greeter) and isinstance(entity, Walker):
+                print(entity.greet())
+                print(entity.walk())
+            else:
+                raise TypeError("The entity must implement both Greeter and Walker")
 
-**Diferencia clave**: Kotlin impone un control más estricto sobre la visibilidad de los miembros de una clase, mientras que Python sigue una convención que no restringe el acceso de manera efectiva, dejando la responsabilidad al desarrollador.
+        if __name__ == '__main__':
+            person = Person("Deku")
+            introduce(person)
+        ```
+    </TabItem>
+</BoxedTabs>
 
-## Constructores
+<Explanation>
+    En Python, los protocolos se utilizan para definir contratos de comportamiento sin especificar la implementación. En el ejemplo, `Greeter` y `Walker` son protocolos que definen los métodos `greet` y `walk`, respectivamente. La clase `Person` implementa ambos protocolos y puede ser pasada a la función `introduce`, que verifica si la entidad cumple con los protocolos antes de invocar los métodos.
+</Explanation>
 
-Python y Kotlin manejan constructores de manera diferente. En **Python**, la inicialización de una clase se realiza con el método `__init__`, que actúa como el constructor. A diferencia de Kotlin, que permite definir **constructores primarios y secundarios**, Python solo admite un método de inicialización por clase, aunque se pueden usar valores predeterminados y parámetros con `*args` y `**kwargs` para simular constructores secundarios.
+## Encapsulación en Python
 
-**Diferencia clave**: Kotlin ofrece un enfoque más estructurado con constructores primarios y secundarios, permitiendo sobrecargar constructores de manera explícita, mientras que Python se basa en su flexibilidad de parámetros para lograr algo similar.
+En **Python**, la encapsulación se basa en convenciones más que en restricciones estrictas del lenguaje. Un solo guion bajo (`_`) al inicio del nombre de un atributo o método indica que es "privado" o de uso interno, aunque esto no impide su acceso desde fuera de la clase. Es una manera de señalar a otrxs programadorxs que ese miembro no debe ser usado directamente, pero no hay un mecanismo estricto que lo impida.
 
-## Compatibilidad con Tipado
+Para un mayor nivel de encapsulación, se puede usar un **doble guion bajo** (`__`), lo que activa el *name mangling* (alteración del nombre) en Python. Esto complica el acceso directo a los atributos o métodos desde fuera de la clase, ya que Python cambia internamente el nombre del atributo al agregar el prefijo del nombre de la clase. Aunque esto no bloquea completamente el acceso, hace que el atributo sea más difícil de acceder accidentalmente.
 
-Kotlin es un lenguaje de tipado estático, lo que permite detectar errores en tiempo de compilación y facilita la autocompletación de código y el análisis estático. Python, siendo dinámicamente tipado, no proporciona las mismas garantías en tiempo de compilación, aunque con `type hints` se pueden mejorar las herramientas de autocompletado y verificación de tipos.
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers
+        class MyClass:
+            public_attr: str
+            _private_attr: str
+            __very_private_attr: str
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="src/intro/oop/encapsulation.py"
+        class MyClass:
+            public_attr: str
+            _private_attr: str
+            __very_private_attr: str
 
-**Diferencia clave**: Kotlin proporciona mayor seguridad en tiempo de compilación gracias a su tipado estático, mientras que Python, aunque flexible, requiere de herramientas externas y `type hints` para acercarse a este nivel de seguridad.
+            def __init__(self):
+                self.public_attr = "Este es un atributo público"
+                self._private_attr = "Este es un atributo 'privado'"
+                self.__very_private_attr = "Este es un atributo más 'oculto'"
+
+            def get_private_attr(self):
+                return self._private_attr
+
+            def get_very_private_attr(self):
+                return self.__very_private_attr
+
+        if __name__ == '__main__':
+            obj = MyClass()
+            print(obj.public_attr)
+            print(obj.get_private_attr())
+            print(obj._private_attr)
+            # Intento de acceso a un atributo con doble guion bajo
+            print(obj._MyClass__very_private_attr)  # Acceso indirecto, pero posible
+            print(obj.__very_private_attr)
+            # Output:
+            # Este es un atributo público
+            # Este es un atributo 'privado'
+            # Este es un atributo 'privado'
+            # Este es un atributo más 'oculto'
+            # AttributeError: 'MyClass' object has no attribute '__very_private_attr'
+        ```
+    </TabItem>
+</BoxedTabs>
+
+## Constructores en Python
+
+Python y Kotlin manejan los constructores de manera diferente, ofreciendo cada uno un enfoque distinto para la inicialización de objetos.
+
+En **Python**, la creación de instancias de una clase involucra dos métodos clave:
+
+1. **`__new__`**: Este método es responsable de la creación de una nueva instancia. Se invoca antes de `__init__` y es menos comúnmente modificado, pero es esencial cuando se necesita controlar el proceso de creación de instancias, como en patrones de diseño que requieren instancias únicas (por ejemplo, el **Singleton**). En la mayoría de los casos, es suficiente con heredar el comportamiento predeterminado de `__new__`.  
+2. **`__init__`**: Este es el método más comúnmente utilizado para inicializar los atributos de una instancia después de su creación. Funciona como el constructor en Python y permite la configuración inicial del objeto.
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers
+        class Movie:
+            def __new__(cls, *args, **kwargs):
+                print(f"Creating instance of {cls.__name__}")
+                return super(Movie, cls).__new__(cls)
+
+            def __init__(self, title: str):
+                print(f"Initializing instance with title = {title}")
+                self.title = title
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="src/intro/oop/constructors.py"
+        class Movie:
+            title: str
+
+            def __new__(cls, *args, **kwargs):
+                print(f"Creating instance of {cls.__name__}")
+                return super(Movie, cls).__new__(cls)
+
+            def __init__(self, title: str):
+                print(f"Initializing instance with title = {title}")
+                self.title = title
+
+        if __name__ == '__main__':
+            MOVIE = Movie("Se7en")
+            # Output:
+            # Creating instance of Movie
+            # Initializing instance with title = Se7en
+        ```
+    </TabItem>
+</BoxedTabs>
+
+### Simulación de Constructores Secundarios
+
+En **Python**, aunque no existe el concepto de **constructores secundarios** como en otros lenguajes (por ejemplo, Kotlin), podemos simularlos utilizando **argumentos opcionales**, junto con `*args` y `**kwargs`. Esto nos permite definir múltiples formas de inicializar una clase, adaptando el constructor a diferentes escenarios.
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers
+        class Person:
+            def __init__(self, name: str, age: int = None, *args, **kwargs):
+                self.name = name
+                self.age = age or -1
+                self.extra_info = kwargs.get('info', None)
+                self.hobbies = list(args) if args else None
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers
+        from typing import Optional
+
+        class Person:
+            name: str
+            age: int
+            extra_info: Optional[str]
+            hobbies: Optional[list]
+
+            def __init__(self, name: str, age: int = None, *args, **kwargs):
+                self.name = name
+                self.age = age or -1
+                self.extra_info = kwargs.get('info', None)
+                self.hobbies = list(args) if args else None
+
+            def introduce(self):
+                hobbies_str = f"My hobbies are: {', '.join(self.hobbies)}" \
+                    if self.hobbies else "I don't have any hobbies"
+                return (f"My name's {self.name}" 
+                        + (f", I'm {self.age} years old. " if self.age > 0 else ". ") 
+                        + (f"{self.extra_info}. " if self.extra_info else "") 
+                        + hobbies_str)
+
+        if __name__ == '__main__':
+            person1 = Person("Alice", 30, "Reading", "Traveling")
+            person2 = Person("Bob", info="I'm a software developer")
+            print(person1.introduce())
+            print(person2.introduce())
+            # Output:
+            # My name's Alice, I'm 30 years old. My hobbies are: Reading, Traveling
+            # My name's Bob. I'm a software developer. I don't have any hobbies
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    En este ejemplo, utilizamos:
+    - `*args` para capturar una lista de hobbies opcionalmente.
+    - `**kwargs` para aceptar argumentos con nombre adicionales como `info`.
+    - Argumentos opcionales como `age` para definir diferentes formas de inicialización.
+
+    De esta manera, podemos **simular constructores secundarios**, permitiendo múltiples formas de instanciar la clase `Person`. Dependiendo de los argumentos pasados, los objetos `Person` se pueden crear con o sin hobbies, con información adicional o sin ella.
+</Explanation>
+
+## Resumen comparativo
+
+| **Característica**               | **Python**                                                                                                                         | **Kotlin**                                                                                                 |
+|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| **Singleton**                    | Implementado a través de **metaclases** o **decoradores** para controlar la creación de instancias.                                 | Soporte nativo mediante el uso de la palabra clave `object` para crear una única instancia de una clase.   |
+| **Encapsulación**                | La encapsulación se basa en convenciones (`_` para privado, `__` para mayor protección mediante *name mangling*).                  | Control estricto de acceso a través de modificadores `public`, `private`, `protected` e `internal`.         |
+| **Constructores**                | Solo admite un método de inicialización por clase (`__init__`), aunque se pueden simular constructores secundarios con `*args`/`**kwargs`. | Soporte directo para **constructores primarios** y **secundarios**.                                        |
+| **Interfaces**                   | No existen interfaces estrictas; se usan **protocolos** para definir contratos de comportamiento (disponible a partir de Python 3.8). | Las interfaces están integradas de forma nativa con soporte para múltiples implementaciones.               |
+
+### Beneficios y limitaciones de Python
+
+<ProCons>
+    <Pros>
+        - **Flexibilidad dinámica**: Python permite gran flexibilidad en la creación e inicialización de objetos, especialmente con el uso de `*args` y `**kwargs`, lo que facilita la simulación de múltiples constructores y la personalización de objetos de forma dinámica.
+        - **Protocolos para contratos de comportamiento**: Los **protocolos** en Python proporcionan un enfoque sencillo para garantizar que los objetos cumplen con ciertos comportamientos, sin la rigidez de las interfaces tradicionales sin imponer herencia.
+    </Pros>
+    <Cons>
+        - **Falta de control estricto de acceso**: Al no tener modificadores como `private` o `protected`, Python no puede imponer la verdadera privacidad en sus atributos o métodos, lo que puede aumentar el riesgo de modificaciones accidentales en grandes equipos o proyectos.
+        - **Ausencia de constructores primarios/ secundarios**: Python carece del concepto formal de **constructores secundarios**. Aunque se pueden simular con `*args` y `**kwargs`, esto no es tan intuitivo o directo como los **constructores primarios y secundarios** en Kotlin.
+        - **Menor seguridad de tipos**: Aunque Python admite **type hints**, no tiene un sistema de tipos tan estricto y completo como Kotlin, lo que puede llevar a errores de tipo en tiempo de ejecución si no se usa adecuadamente el tipado opcional.
+        - **Patrón Singleton explícito**: Mientras que en Kotlin es fácil definir un singleton utilizando `object`, en Python se requieren implementaciones explícitas a través de **metaclases** o **decoradores**, lo que añade complejidad.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos cómo la Programación Orientada a Objetos en **Python** se compara con **Kotlin**, resaltando sus similitudes y diferencias clave. Aunque ambos lenguajes permiten crear y manejar objetos de manera efectiva, sus enfoques varían en cuanto a flexibilidad, tipado y control de acceso.
+
+### Puntos clave
+
+1. **Singleton**: Python no tiene un equivalente directo a la palabra clave `object` de Kotlin, pero podemos usar patrones como metaclases o decoradores para implementar singletons. En Kotlin, `object` hace que este proceso sea mucho más directo.
+2. **Encapsulación**: Python se basa en convenciones (usando `_` y `__`) para la encapsulación, sin un sistema estricto de control de acceso. En contraste, Kotlin ofrece modificadores claros como `private`, `protected` y `internal` que restringen el acceso de manera explícita.
+3. **Constructores**: Python no admite formalmente múltiples constructores, pero se pueden simular utilizando `*args` y `**kwargs`. Kotlin, por otro lado, tiene soporte directo para **constructores primarios** y **secundarios**.
+4. **Protocolos vs Interfaces**: Python utiliza **protocolos** para definir contratos de comportamiento, lo que es más flexible y dinámico, mientras que Kotlin tiene **interfaces** integradas de manera estricta, lo que proporciona un sistema de tipos más robusto.
+
+---
+
+Python es flexible y dinámico, pero carece de algunos controles estrictos y formalismos que ofrece Kotlin. Si bien los dos lenguajes permiten implementar patrones de diseño y manejar objetos de manera efectiva, cada uno tiene fortalezas y limitaciones que los hacen adecuados para diferentes tipos de proyectos y equipos.

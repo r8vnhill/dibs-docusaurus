@@ -1,5 +1,5 @@
 ---
-title: "Ejemplo: Encontrar el mayor de una lista con QuickCheck"
+title: "Caso de estudio: Máximo de una lista en Haskell con QuickCheck"
 ---
 import ReadingTime from '@site/src/components/ReadingTime'
 import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
@@ -15,29 +15,51 @@ import GithubRepoLink from '@site/src/components/GithubRepoLink'
 import { LanguageCard } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
-<GithubRepoLink user="r8vnhill" repo="" />
+<GithubRepoLink user="r8vnhill" repo="haskell-dibs" />
 
-Vamos a construir una propiedad para encontrar el mayor valor en una lista de enteros. Al igual que en Kotest, primero definimos la propiedad que se desea probar.
+Vamos a construir una propiedad para encontrar el mayor valor en una lista de enteros. Al igual que en **Kotest**, primero definimos la propiedad que se desea probar, asegurándonos de que la función a testear cumpla con los criterios establecidos.
 
-En **Haskell**, el siguiente código utiliza QuickCheck para probar la propiedad de que el máximo de una lista es igual al último elemento de la lista cuando esta está ordenada:
+En **Haskell**, utilizamos **QuickCheck** para generar automáticamente casos de prueba y verificar una propiedad. En este ejemplo, probamos que el mayor valor en una lista de enteros corresponde al último elemento de la lista cuando está ordenada.
 
-```haskell showLineNumbers
-import Test.QuickCheck
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```haskell showLineNumbers
+        prop_biggest :: [Int] -> Property
+        prop_biggest xs = not (null xs) ==> biggest xs == last (sort xs)
 
--- Definición de la función maxElement
-maxElement :: [Int] -> Int
-maxElement = foldl1 max
+        prop_emptyList :: Property
+        prop_emptyList = maxElement [] === minBound
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```haskell showLineNumbers title="testing\pbt\biggest\Main.hs"
+        module Main where
 
--- Propiedad a probar: el máximo de una lista coincide con el último
--- elemento de la lista ordenada
-prop_maxElement :: [Int] -> Property
-prop_maxElement xs = not (null xs) ==> maxElement xs == last (sort xs)
+            import Test.QuickCheck
+            import Data.List (sort)
+            import Biggest (biggest)
 
-main :: IO ()
-main = quickCheck prop_maxElement
-```
+            prop_biggest :: [Int] -> Property
+            prop_biggest xs = not (null xs) ==> biggest xs == last (sort xs)
+
+            prop_emptyList :: Property
+            prop_emptyList = maxElement [] === minBound
+
+            main :: IO ()
+            main = do
+                quickCheck prop_biggest
+                quickCheck prop_emptyList
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    La propiedad `prop_biggest` verifica que el valor más grande de una lista no vacía sea el mismo que el último elemento de la lista cuando está ordenada. La función `biggest`, que se está probando, debe devolver el mayor valor de la lista. La función `sort` ordena la lista y `last` devuelve el último elemento, que corresponde al mayor cuando la lista está ordenada. La condición `not (null xs)` evita que se pruebe la propiedad con listas vacías, ya que no tiene sentido comparar listas vacías en este caso.
+</Explanation>
 
 ### Diferencias y Similitudes con Kotest
 
@@ -47,27 +69,14 @@ main = quickCheck prop_maxElement
 
 3. **Pruebas deterministas**: Mientras que Kotest utiliza una semilla específica para repetir pruebas fallidas, QuickCheck también puede recibir una semilla para replicar las pruebas, pero el control sobre los generadores de casos puede ser más avanzado en Haskell, gracias a la posibilidad de componer generadores personalizados de manera más fluida.
 
-### Implementación alternativa
+## Implementación de la función `biggest`
 
-Al igual que en Kotest, podemos definir una implementación alternativa que también valide el comportamiento de la función. Por ejemplo, una implementación usando `sort`:
+```haskell showLineNumbers title="testing\pbt\biggest\Biggest.hs"
+module Biggest (biggest) where
 
-```haskell showLineNumbers
--- Otra implementación usando sort para verificar maxElement
-altMaxElement :: [Int] -> Int
-altMaxElement = last . sort
-
--- Propiedad que compara maxElement con altMaxElement
-prop_maxElementEquiv :: [Int] -> Property
-prop_maxElementEquiv xs = not (null xs) ==> maxElement xs == altMaxElement xs
-```
-
-### Manejo de listas vacías
-
-En ambos frameworks, uno de los principales casos a considerar es cómo manejar las listas vacías. En Haskell, podemos manejar esto declarando una propiedad explícita para las listas vacías, lo cual no sería muy diferente al manejo en Kotest:
-
-```haskell showLineNumbers
-prop_emptyList :: Property
-prop_emptyList = maxElement [] === minBound
+    biggest :: [Int] -> Int
+    biggest [] = minBound
+    biggest (x:xs) = foldl max x xs
 ```
 
 ### Beneficios y limitaciones

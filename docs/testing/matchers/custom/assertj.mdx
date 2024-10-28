@@ -18,15 +18,11 @@ import RepoClone from '@site/src/components/admonitions/RepoClone'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
-<GithubRepoLink user="r8vnhill" repo="" />
-
-En **AssertJ**, los matchers personalizados se definen creando una clase que extiende de `AbstractAssert`. Esta clase contiene métodos para realizar las validaciones necesarias y devolver un mensaje de error si la aserción falla.
-
-## Ejemplo de matcher personalizado: Número par
+<GithubRepoLink user="r8vnhill" repo="java-dibs" />
 
 Existen dos formas de crear matchers personalizados en **AssertJ**. La primera es crear un objeto de tipo `Condition` y la segunda es extender la clase `AbstractAssert`.
 
-### Creación de un matcher con `Condition`
+## Creación de un matcher con `Condition`
 
 Para crear un matcher que verifique si un número es par, utilizamos la clase `Condition` de AssertJ:
 
@@ -38,12 +34,12 @@ Para crear un matcher que verifique si un número es par, utilizamos la clase `C
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="cl/ravenhill/assertj/Matchers.java"
-        package cl.ravenhill.assertj;
+        ```kotlin showLineNumbers title="testing/matchers/custom/src/test/java/cl/ravenhill/matchers/assertj/EvenConditionMatcher.java"
+        package cl.ravenhill.matchers.assertj;
 
         import org.assertj.core.api.Condition;
 
-        public class Matchers {
+        public class EvenConditionMatcher {
             public static Condition<Integer> even =
                     new Condition<>(value -> value % 2 == 0, "even");
         }
@@ -55,46 +51,73 @@ Para crear un matcher que verifique si un número es par, utilizamos la clase `C
     Creamos un objeto `Condition` que verifica si un número es par. El constructor de `Condition` recibe una expresión lambda que evalúa la condición y un mensaje de error en caso de fallo.
 </Explanation>
 
-#### Uso del matcher en pruebas
+### Uso del matcher en pruebas
 
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```java showLineNumbers
         assertThat(2).is(even);
+        ```
+
+        ```java showLineNumbers
+        assertThrows(AssertionError.class, () -> assertThat(2).isNot(even));
+        ```
+
+        ```java showLineNumbers
         assertThat(3).isNot(even);
+        ```
+
+        ```java showLineNumbers
+        assertThrows(AssertionError.class, () -> assertThat(3).is(even));
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```java showLineNumbers title="cl/ravenhill/assertj/EvenNumberTest.java"
-        package cl.ravenhill.assertj;
+        ```java showLineNumbers title="testing/matchers/custom/src/test/java/cl/ravenhill/matchers/assertj/EvenConditionMatcherTest.java"
+        package cl.ravenhill.matchers.assertj;
 
         import org.junit.jupiter.api.DisplayName;
         import org.junit.jupiter.api.Test;
 
-        import static cl.ravenhill.assertj.Matchers.even;
-        import static org.assertj.core.api.Assertions.assertThat;
+        import static cl.ravenhill.matchers.assertj.EvenConditionMatcher.even;
+        import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
         import static org.junit.jupiter.api.Assertions.assertThrows;
 
-        class EvenNumberTest {
-            @DisplayName("Given an even number, when checking if it is even, then it should pass")
+        public class EvenConditionMatcherTest {
+            @DisplayName(
+                    "Given an even number, " +
+                            "when checking if it is even, " +
+                            "then it should pass"
+            )
             @Test
             void testEvenNumberIsEven() {
                 assertThat(2).is(even);
             }
 
-            @DisplayName("Given an even number, when checking if it is not even, then it should fail")
+            @DisplayName(
+                    "Given an even number, " +
+                            "when checking if it is not even, " +
+                            "then it should fail"
+            )
             @Test
             void testEvenNumberIsNotEven() {
                 assertThrows(AssertionError.class, () -> assertThat(2).isNot(even));
             }
 
-            @DisplayName("Given an odd number, when checking if it is not even, then it should pass")
+            @DisplayName(
+                    "Given an odd number, " +
+                            "when checking if it is not even, " +
+                            "then it should pass"
+            )
             @Test
             void testOddNumberIsNotEven() {
                 assertThat(3).isNot(even);
             }
 
-            @DisplayName("Given an odd number, when checking if it is even, then it should fail")
+            @DisplayName(
+                    "Given an odd number, " +
+                            "when checking if it is even, " +
+                            "then it should fail"
+            )
             @Test
             void testOddNumberIsEven() {
                 assertThrows(AssertionError.class, () -> assertThat(3).is(even));
@@ -109,27 +132,31 @@ Para crear un matcher que verifique si un número es par, utilizamos la clase `C
     - La aserción `assertThat(2).is(even)` verifica si el número 2 es par, mientras que `assertThat(3).isNot(even)` verifica si el número 3 no es par.
 </Explanation>
 
-### Creación de un matcher con `AbstractAssert`
+## Creación de un Matcher con `AbstractAssert`
 
-Para crear un matcher que verifique si un número es par en **AssertJ**, lo hacemos de la siguiente manera:
+Para crear un matcher personalizado en AssertJ, podemos extender la clase `AbstractAssert`. Este enfoque permite crear verificaciones específicas con una sintaxis fluida y fácilmente integrable en las pruebas. En este ejemplo, crearemos un matcher para verificar si un número es par.
 
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```java showLineNumbers
-        public class EvenNumberAssert extends AbstractAssert<EvenNumberAssert, Integer> {
+        public final class EvenNumberAssert
+                extends AbstractAssert<EvenNumberAssert, Integer> {
 
             public EvenNumberAssert(Integer actual) {
                 super(actual, EvenNumberAssert.class);
             }
 
-            public static EvenNumberAssert assertThat(Integer actual) {
+            public static @NotNull EvenNumberAssert assertThat(Integer actual) {
                 return new EvenNumberAssert(actual);
             }
 
             public EvenNumberAssert isEven() {
                 isNotNull();
                 if (actual % 2 != 0) {
-                    failWithMessage("Expected <%s> to be even, but it was not.", actual);
+                    failWithMessage(
+                            "Expected <%s> to be even, but it was not.",
+                            actual
+                    );
                 }
                 return this;
             }
@@ -138,13 +165,14 @@ Para crear un matcher que verifique si un número es par en **AssertJ**, lo hace
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
         ```java showLineNumbers title="cl/ravenhill/assertj/EvenNumberAssert.java"
-        package cl.ravenhill.assertj;
+        package cl.ravenhill.matchers.assertj;
 
         import org.assertj.core.api.AbstractAssert;
         import org.jetbrains.annotations.Contract;
         import org.jetbrains.annotations.NotNull;
 
-        public class EvenNumberAssert extends AbstractAssert<EvenNumberAssert, Integer> {
+        public final class EvenNumberAssert
+                extends AbstractAssert<EvenNumberAssert, Integer> {
 
             public EvenNumberAssert(Integer actual) {
                 super(actual, EvenNumberAssert.class);
@@ -158,7 +186,10 @@ Para crear un matcher que verifique si un número es par en **AssertJ**, lo hace
             public EvenNumberAssert isEven() {
                 isNotNull();
                 if (actual % 2 != 0) {
-                    failWithMessage("Expected <%s> to be even, but it was not.", actual);
+                    failWithMessage(
+                            "Expected <%s> to be even, but it was not.",
+                            actual
+                    );
                 }
                 return this;
             }
@@ -168,39 +199,51 @@ Para crear un matcher que verifique si un número es par en **AssertJ**, lo hace
 </BoxedTabs>
 
 <Explanation>
-    - La clase `EvenNumberAssert` extiende de `AbstractAssert` y proporciona el método `isEven()` que realiza la comprobación.
-    - El método `assertThat()` crea una instancia de `EvenNumberAssert`, facilitando el uso de este matcher en pruebas.
-    - El método `isEven()` verifica si el número actual es par y lanza un error si no lo es.
+    - La clase `EvenNumberAssert` hereda de `AbstractAssert`, lo que permite definir métodos de aserción personalizados.
+    - El método `assertThat()` actúa como un punto de entrada estático, creando una instancia de `EvenNumberAssert` que facilita su uso en pruebas.
+    - El método `isEven()` comprueba si el número actual (`actual`) es par; si no lo es, lanza un mensaje de error personalizado para hacer la falla de la prueba más comprensible.
 </Explanation>
 
-#### Uso del matcher en pruebas
+### Uso del Matcher en Pruebas
 
-Para utilizar este matcher personalizado en una prueba, el código sería algo como:
+Para probar el matcher personalizado `isEven`, podemos crear dos casos de prueba: uno donde la verificación de paridad pase y otro donde falle. 
 
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers
+        ```java showLineNumbers
         assertThat(2).isEven();
+        ```
+
+        ```java showLineNumbers
+        assertThrows(AssertionError.class, () -> assertThat(3).isEven());
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers 
-        package cl.ravenhill.assertj;
+        ```java showLineNumbers title="cl/ravenhill/matchers/assertj/EvenNumberAssertTest.java"
+        package cl.ravenhill.matchers.assertj;
 
         import org.junit.jupiter.api.DisplayName;
         import org.junit.jupiter.api.Test;
 
-        import static cl.ravenhill.assertj.EvenNumberAssert.assertThat;
+        import static cl.ravenhill.matchers.assertj.EvenNumberAssert.assertThat;
         import static org.junit.jupiter.api.Assertions.assertThrows;
 
         public class EvenNumberAssertTest {
-            @DisplayName("Given an even number, when checking if it is even, then it should pass")
+            @DisplayName(
+                    "Given an even number, " +
+                    "when checking if it is even, " +
+                    "then it should pass"
+            )
             @Test
             void testEvenNumber() {
                 assertThat(2).isEven();
             }
 
-            @DisplayName("Given an odd number, when checking if it is even, then it should fail")
+            @DisplayName(
+                    "Given an odd number, " +
+                    "when checking if it is even, " +
+                    "then it should fail with a custom error message"
+            )
             @Test
             void testOddNumber() {
                 assertThrows(AssertionError.class, () -> assertThat(3).isEven());
@@ -210,9 +253,7 @@ Para utilizar este matcher personalizado en una prueba, el código sería algo c
     </TabItem>
 </BoxedTabs>
 
-Este código verifica si los números proporcionados son pares. Si el número no es par, se lanza un error con un mensaje personalizado.
-
-## Comparación final
+## Resumen comparativo
 
 | **Característica**                    | **AssertJ**                                                                                                                                                  | **Kotest**                                                                                                                                                    |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -223,7 +264,7 @@ Este código verifica si los números proporcionados son pares. Si el número no
 | **Soporte para asincronía**           | AssertJ no tiene soporte nativo para asincronía, lo que puede ser una limitación en proyectos que dependen de operaciones concurrentes o asíncronas.            | Kotest soporta asincronía nativamente, integrando **coroutines** y facilitando las pruebas de código que utiliza operaciones asíncronas.                       |
 | **Uso en JVM y Kotlin**               | Aunque AssertJ se puede utilizar en proyectos Kotlin, no está diseñado específicamente para este lenguaje, lo que puede limitar la integración perfecta con características avanzadas de Kotlin. | Kotest está diseñado específicamente para **Kotlin** y la JVM, lo que garantiza una integración más fluida y un mejor uso de las características del lenguaje. |
 
-### Beneficios y limitaciones
+## Beneficios y limitaciones
 
 <ProCons>
    <Pros>
@@ -244,7 +285,7 @@ Este código verifica si los números proporcionados son pares. Si el número no
 
 En esta lección, hemos comparado la creación de **matchers personalizados** entre AssertJ y Kotest, observando las diferencias clave en cómo se definen y utilizan estos matchers en cada marco de pruebas.
 
-### Puntos clave
+## Puntos clave
 
 1. **Matchers Personalizados en AssertJ**: 
    - AssertJ permite crear matchers personalizados de dos formas: mediante `Condition` o extendiendo la clase `AbstractAssert`. Esto ofrece flexibilidad para validar condiciones complejas.

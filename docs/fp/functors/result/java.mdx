@@ -1,0 +1,177 @@
+---
+title: El functor Result en Java
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="java-dibs" />
+
+En **Java**, podemos implementar el `Result` utilizando **clases selladas**. Estas clases permiten definir un tipo con un conjunto finito de subclases, similar a las **sealed classes** en Kotlin. Implementaremos dos subclases: `Success`, que representa un resultado exitoso, y `Failure`, que representa un fallo.
+
+## Leyes del functor `Result`
+
+Comencemos por escribir tests para verificar que nuestro functor `Result` cumple con las leyes de identidad y composición. Estas leyes aseguran que el functor se comporta de manera predecible y coherente al aplicar transformaciones a los valores encapsulados.
+
+
+## Definición de las clases selladas
+
+<BoxedTabs>
+  <TabItem label={"Código esencial"} value={"Código esencial"}>
+    ```java showLineNumbers
+    public sealed interface Result<T> permits Success, Failure {}
+
+    public final class Success<T> implements Result<T> {
+        private final T value;
+        public Success(T value) {
+            this.value = value;
+        }
+        public T getValue() {
+            return value;
+        }
+    }
+
+    public final class Failure implements Result<Object> {
+        private final Throwable exception;
+        public Failure(Throwable exception) {
+            this.exception = exception;
+        }
+        public Throwable getException() {
+            return exception;
+        }
+    }
+    ```
+  </TabItem>
+
+  <TabItem label={"Código completo"} value={"Código completo"}>
+    ```java showLineNumbers title="result/Result.java"
+    public sealed interface Result<T> permits Success, Failure {}
+
+    public final class Success<T> implements Result<T> {
+        private final T value;
+        public Success(T value) {
+            this.value = value;
+        }
+        public T getValue() {
+            return value;
+        }
+    }
+
+    public final class Failure implements Result<Object> {
+        private final Throwable exception;
+        public Failure(Throwable exception) {
+            this.exception = exception;
+        }
+        public Throwable getException() {
+            return exception;
+        }
+    }
+    ```
+  </TabItem>
+</BoxedTabs>
+
+## Implementación del Functor para `Result`
+
+Una vez que tenemos las clases selladas, podemos implementar el **functor** para `Result`, permitiendo transformar los valores encapsulados en un `Success` y dejando intacto el `Failure`.
+
+<BoxedTabs>
+  <TabItem label={"Código esencial"} value={"Código esencial"}>
+    ```java showLineNumbers
+    public class ResultFunctor<T> {
+        public <R> Result<R> map(Result<T> result, Function<T, R> f) {
+            if (result instanceof Success<T> success) {
+                return new Success<>(f.apply(success.getValue()));
+            } else {
+                return (Failure) result;
+            }
+        }
+    }
+    ```
+  </TabItem>
+</BoxedTabs>
+
+## Diferencias clave entre Java y Kotlin
+
+Una diferencia importante es que, en Java, las **clases selladas** se introdujeron en Java 17, lo que significa que para versiones anteriores de Java, este tipo de modelado no está disponible de forma nativa. Además, Java no tiene una implementación estándar del tipo `Result` en su biblioteca, a diferencia de Kotlin, que proporciona `Result` como parte de su API estándar.
+
+Otra diferencia importante es la forma en que Java y Kotlin manejan las funciones de alto orden. En Java, la clase `Function` de `java.util.function` debe ser utilizada para aplicar transformaciones, mientras que en Kotlin se pueden utilizar lambdas de manera más directa y funcional. Esto puede hacer que el código en Java sea más verboso en comparación con Kotlin.
+
+## Ejemplo de uso: División segura
+
+Veamos un ejemplo de cómo usar el `Result` en Java para realizar una operación que puede fallar, como dividir dos números enteros.
+
+<BoxedTabs>
+  <TabItem label={"Código esencial"} value={"Código esencial"}>
+    ```java showLineNumbers
+    public static Result<Integer> divide(int a, int b) {
+        if (b == 0) {
+            return new Failure(new ArithmeticException("Cannot divide by zero"));
+        } else {
+            return new Success<>(a / b);
+        }
+    }
+    ```
+  </TabItem>
+</BoxedTabs>
+
+Este enfoque nos permite representar de forma clara y explícita los errores sin depender de excepciones tradicionales. La operación de división devuelve un `Result` que puede ser un `Success` o un `Failure`, dependiendo de si la operación fue exitosa o no.
+
+## Composición de operaciones
+
+Uno de los beneficios clave de utilizar un **functor `Result`** es la capacidad de **componer** operaciones sin tener que preocuparse por el manejo explícito de excepciones. Podemos encadenar operaciones de manera funcional utilizando la función `map`.
+
+<BoxedTabs>
+  <TabItem label={"Código esencial"} value={"Código esencial"}>
+    ```java showLineNumbers
+    Result<Integer> result = divide(10, 2);
+    Result<Integer> mappedResult = new ResultFunctor<Integer>()
+        .map(result, x -> x * 2);
+    ```
+  </TabItem>
+</BoxedTabs>
+
+Este ejemplo muestra cómo podemos transformar un `Success` aplicando una función a su valor. Si el `Result` es un `Failure`, la operación no tendrá ningún efecto, manteniendo el estado de error.
+
+## Beneficios y limitaciones del functor `Result` en Java
+
+<ProCons>
+  <Pros>
+    - **Manejo explícito de errores**: El `Result` hace que el manejo de errores sea explícito y funcional, sin depender de excepciones tradicionales.
+    - **Composición fluida**: Las funciones como `map` permiten encadenar operaciones de manera segura, manteniendo el flujo del programa sin interrupciones.
+    - **Seguridad en tiempo de compilación**: Java asegura que los casos de éxito y error se manejen correctamente en tiempo de compilación.
+  </Pros>
+
+  <Cons>
+    - **Verboso**: En comparación con Kotlin, el uso de `Result` en Java puede ser más verboso, especialmente cuando se utilizan funciones de alto orden.
+    - **Disponibilidad de clases selladas**: Solo está disponible a partir de Java 17, lo que limita su uso en proyectos que utilizan versiones anteriores de Java.
+    - **Menor fluidez funcional**: Aunque Java ha mejorado con las lambdas y las funciones de alto orden, aún es menos fluido que Kotlin para manejar estructuras funcionales como `Result`.
+  </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, aprendimos cómo implementar y utilizar el functor `Result` en **Java**, una estructura útil para manejar computaciones que pueden fallar. Vimos cómo utilizar **clases selladas** para modelar el éxito y el fallo de una operación, y cómo componer operaciones utilizando el functor `Result`. También discutimos las diferencias entre Java y Kotlin en cuanto al manejo de errores y la composición funcional.
+
+## Puntos clave
+
+- **Clases selladas**: Java 17 introduce las clases selladas, que permiten modelar estados finitos, como `Success` y `Failure`, de forma similar a Kotlin.
+- **Composición funcional**: El functor `Result` permite componer operaciones de manera segura, transformando los valores solo en caso de éxito.
+- **Manejo explícito de errores**: El uso de `Result` promueve un manejo de errores más explícito y controlado, evitando las excepciones tradicionales.
+
+---
+
+El uso del functor `Result` en Java es una herramienta poderosa para escribir código más robusto y manejable. Aunque Java no ofrece soporte nativo para `Result` como Kotlin, su implementación mediante clases selladas y funciones de alto orden proporciona un enfoque funcional para el manejo de errores.
