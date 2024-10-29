@@ -1,0 +1,139 @@
+---
+title: Functores en Haskell
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+Esta lección explora el concepto de **functores** y cómo se implementan en **Haskell**. En comparación con Kotlin, Haskell aprovecha el poder de los **Higher-Kinded Types (HKT)**, lo que permite crear functores que funcionan de manera genérica en una gran variedad de estructuras de datos. Además, Haskell ofrece soporte nativo para realizar pruebas de propiedades, lo cual es útil para verificar que los functores cumplan con las **leyes de identidad y composición**.
+
+## Implementación de Functores en Haskell
+
+En Haskell, los functores se implementan definiendo instancias de la clase `Functor`. Esto permite aplicar funciones a valores encapsulados en estructuras de datos sin necesidad de extraerlos.
+
+### Ejemplo de Functor en Haskell
+
+En este ejemplo, `Box` es una estructura que encapsula un valor de tipo `a`. Implementaremos una instancia de `Functor` para `Box` para que pueda aplicar una función `f` al valor encapsulado.
+
+```haskell title="fp/functors/Box.hs"
+module Functors (Box(..)) where
+    data Box a = Box a deriving (Show, Eq)
+
+    instance Functor Box where
+        fmap f (Box x) = Box (f x)
+```
+
+Con esta instancia, podemos usar `fmap` para aplicar una función a cualquier valor encapsulado dentro de `Box`, devolviendo una nueva `Box` con el valor transformado.
+
+## Leyes de Functores en Haskell
+
+Para garantizar que la estructura `Box` cumple con las **leyes de los functores** (identidad y composición), aplicaremos **pruebas basadas en propiedades** (PBT) utilizando la biblioteca `QuickCheck`. Con `QuickCheck`, generamos casos de prueba de manera automática para validar que las propiedades deseadas se cumplen en múltiples escenarios, evaluando así la robustez del functor.
+
+### Pruebas de la Ley de Identidad y Composición en Haskell
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+
+        #### Ley de Identidad
+
+        ```haskell showLineNumbers
+        prop_identity :: (Eq a) => Box a -> Bool
+        prop_identity box = fmap id box == box
+        ```
+
+        #### Ley de Composición
+
+        ```haskell showLineNumbers
+        prop_composition :: (Eq c) => Fun b c -> Fun a b -> Box a -> Bool
+        prop_composition (Fun _ f) (Fun _ g) box = fmap (f . g) box 
+            == (fmap f . fmap g) box
+        ```
+
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+
+        ```haskell showLineNumbers title="fp/functors/Main.hs"
+        module Main where
+
+            import Test.QuickCheck
+            import Functors (Box(..))
+
+            instance Arbitrary a => Arbitrary (Box a) where
+                arbitrary = Box <$> arbitrary
+
+            prop_identity :: (Eq a) => Box a -> Bool
+            prop_identity box = fmap id box == box
+
+            prop_composition :: (Eq c) => Fun b c -> Fun a b -> Box a -> Bool
+            prop_composition (Fun _ f) (Fun _ g) box = fmap (f . g) box 
+                == (fmap f . fmap g) box
+
+            main :: IO ()
+            main = do
+                quickCheck (prop_identity :: Box Int -> Bool)
+                quickCheck (prop_composition :: 
+                    Fun Int Int -> Fun Int Int -> Box Int -> Bool)
+        ```
+
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    En el código, se definen dos pruebas para validar que `Box` cumple con las leyes de los functores:
+
+    - **Ley de Identidad**: `fmap id` sobre un functor debe devolver el mismo functor, sin cambios en su contenido.
+    - **Ley de Composición**: `fmap` sobre la composición de funciones debe ser equivalente a aplicar cada función de forma independiente y luego componer los resultados.
+        
+    Estas pruebas permiten confirmar la coherencia del comportamiento de `fmap`, ayudando a garantizar que `Box` se ajusta a las propiedades de un functor.
+</Explanation>
+
+## Resumen comparativo
+
+| **Característica**              | **Haskell**                                                                                                                  | **Kotlin**                                                                                                      |
+|---------------------------------|-------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| **Higher-Kinded Types (HKT)**   | Soporta HKT nativamente, permitiendo una definición genérica de `fmap` para cualquier tipo `f`.                              | No tiene HKT nativo, por lo que `map` debe definirse individualmente en cada estructura que actúe como functor. |
+| **Instancia de Functor**        | Define instancias de `Functor` mediante la clase de tipo `Functor`, simplificando el uso de `fmap` en diversas estructuras.   | No permite una implementación genérica de functor; cada estructura requiere su propia función `map`.            |
+| **Verificación de Leyes**       | Las leyes de los functores (identidad y composición) se prueban fácilmente mediante PBT con `QuickCheck`.                     | Aunque se pueden escribir pruebas de propiedades en Kotlin, la verificación de leyes de functor es menos directa.|
+| **Aplicación Funcional**        | `fmap` se usa para aplicar funciones a valores en estructuras de datos sin extraerlos, manteniendo la estructura intacta.    | Similar con `map`, pero debe implementarse en cada tipo concreto que quiera comportarse como un functor.       |
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos la implementación de functores en Haskell y su comparación con Kotlin. Aprendimos que Haskell, al soportar Higher-Kinded Types (HKT), permite una implementación de functores más flexible y reutilizable mediante la clase de tipo `Functor`. Esto facilita la aplicación de funciones a valores dentro de estructuras de datos sin extraerlos, todo mientras se garantiza el cumplimiento de las leyes de identidad y composición mediante pruebas basadas en propiedades (PBT) con `QuickCheck`.
+
+### Puntos clave
+
+- **Higher-Kinded Types**: Haskell soporta HKT, lo que permite implementar `fmap` de forma genérica en cualquier estructura de datos, mientras que Kotlin, al no tener HKT nativo, necesita definir `map` individualmente para cada tipo de functor.
+- **Verificación de leyes de functor**: Con `QuickCheck`, Haskell permite validar automáticamente las leyes de identidad y composición en sus implementaciones de `Functor`, mientras que en Kotlin, esta verificación debe implementarse manualmente en cada caso.
+- **Consistencia en la aplicación funcional**: La clase de tipo `Functor` en Haskell ofrece una forma uniforme y reutilizable de aplicar funciones a estructuras de datos encapsuladas, manteniendo la estructura sin modificaciones.
+
+### Conclusión
+
+La implementación de functores en Haskell permite una mayor flexibilidad y rigor en la programación funcional. Su soporte para HKT y la verificación automática de leyes con `QuickCheck` hacen que los functores sean más fáciles de implementar y mantener, asegurando un comportamiento consistente y predecible. En comparación, Kotlin ofrece una alternativa sólida, aunque menos flexible, que requiere implementar `map` en cada tipo de functor. Cada enfoque presenta sus ventajas, y comprender estas diferencias nos permite seleccionar la herramienta y el lenguaje más adecuados para nuestras necesidades en programación funcional.
+
+<References references={[
+    {
+        title: "Introducing Monads",
+        bookTitle: "Effective Haskell: Solving real-world problems with strongly typed functional programming",
+        publisher: "The Pragmatic Bookshelf",
+        pages: "333–363",
+        year: "2022",
+        author: "R. Skinner",
+        type: "book",
+    },
+]}/>
