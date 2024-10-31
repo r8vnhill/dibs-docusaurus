@@ -12,65 +12,35 @@ import Hint from '@site/src/components/exercise/Hint'
 import Definition from '@site/src/components/Definition'
 import Corollary from '@site/src/components/Corollary'
 import GithubRepoLink from '@site/src/components/GithubRepoLink'
-import { LanguageCard, ScalaCard } from '@site/src/components/cards/LanguageCard'
+import { LanguageCard, ScalaCard, CppCard, PythonCard, SwiftCard } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="object-oriented-programming-kt" />
+<ModuleSetup module='operator-overload' task='setupOperatorOverloadModule'>
+    ```kotlin showLineNumbers
+    import tasks.ModuleSetupTask
 
-<details>
-    <summary>
-        Comencemos por crear un módulo para la lección...
-    </summary>
-
-    ```kotlin showLineNumbers title="convention-plugins/src/main/kotlin/operator-overload.gradle.kts"
-    tasks.register("setupOperatorOverloadModule") {
-        val baseDir = "operator-overload"
+    tasks.register<ModuleSetupTask>("setupOperatorOverloadModule") {
+        description = "Creates the base module and files for the operator overloading lesson"
+        module.set("operator-overload")
         doLast {
-            // Crear el directorio base del módulo y build.gradle.kts si no existe
-            val operatorOverloadDir = rootProject.file(baseDir).apply { mkdirs() }
-            operatorOverloadDir.resolve("build.gradle.kts").apply {
-                if (!exists()) {
-                    writeText("// Intentionally left blank")
-                    println("File created: $this")
-                } else {
-                    println("File already exists: $this")
-                }
-            }
-
-            // Crear directorios y archivos para Complex.kt y ComplexTest.kt si no existen
-            val groupPath = rootProject.group.toString().replace(".", "/")
-            listOf("main" to "Complex.kt", "test" to "ComplexTest.kt")
-                .forEach { (type, fileName) ->
-                    val dir = rootProject.file("$baseDir/src/$type/kotlin/$groupPath/complex")
-                        .apply { mkdirs() }
-                    dir.resolve(fileName).apply {
-                        if (!exists()) {
-                            writeText("package ${rootProject.group}.complex\n\n")
-                            println("File created: $this")
-                        } else {
-                            println("File already exists: $this")
-                        }
-                    }
-                }
+            createFiles(
+                packageName = "math",
+                test to "ComplexTest.kt",
+                main to "Complex.kt",
+            )
         }
     }
     ```
+</ModuleSetup>
 
-    Preocupate de que el plugin `operator-overload` esté aplicado en el archivo `build.gradle.kts` del módulo principal.
+A estas alturas, ya deberías conocer el concepto de **sobrecarga de funciones** (overloading). Como repaso rápido, la sobrecarga permite definir varias funciones con el mismo nombre, pero diferentes firmas (es decir, con distintos números o tipos de parámetros). Esto le permite a quien desarrolla reutilizar un mismo nombre para funciones que realizan tareas similares con diferentes tipos de datos.
 
-    ```bash
-    ./gradlew setupOperatorOverloadModule
-    ```
-
-    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
-</details>
-
-A estas alturas, ya deberías estar familiarizadx con el concepto de **sobrecarga de funciones** (overloading). Como repaso rápido, la sobrecarga permite definir varias funciones con el mismo nombre, pero diferentes firmas (es decir, con distintos números o tipos de parámetros). Esto le permite a quien desarrolla reutilizar un mismo nombre para funciones que realizan tareas similares con diferentes tipos de datos.
-
-De manera similar, la **sobrecarga de operadores** es una característica presente en lenguajes como Kotlin que permite definir comportamientos personalizados para operadores estándar como `+`, `-`, `*`, `/`, entre otros. Esto resulta especialmente útil cuando trabajamos con tipos de datos definidos por lx usuarix, ya que nos permite hacer que interactúen de forma más natural e intuitiva con los operadores existentes del lenguaje, facilitando su uso y mejorando la legibilidad del código.
+De manera similar, la **sobrecarga de operadores** es una característica presente en lenguajes como Kotlin que permite definir comportamientos personalizados para operadores estándar como `+`, `-`, `*`, `/`, entre otros. Esto resulta especialmente útil cuando trabajamos con tipos de datos definidos por quien usa la biblioteca, ya que nos permite hacer que interactúen de forma más natural e intuitiva con los operadores existentes del lenguaje, facilitando su uso y mejorando la legibilidad del código.
 
 ## Cómo Funciona la Sobrecarga de Operadores
 
@@ -78,15 +48,13 @@ En Kotlin, para sobrecargar un operador, se declara una función utilizando la p
 
 Por ejemplo, la función `plus` se utiliza para sobrecargar el operador `+`. Esto permite que, cuando utilices el operador `+` con objetos de esa clase, Kotlin sepa qué operación ejecutar.
 
-Aquí te dejo una versión mejorada del ejemplo, con mayor claridad y consistencia:
-
 ## Ejemplo Práctico: Sobrecarga del Operador `+` para Números Complejos
 
 En este ejemplo, implementamos la sobrecarga del operador `+` en una clase `Complex` para sumar dos números complejos, así como sumar un número complejo con un valor `Double`.
 
 ### Especificación BDD
 
-El siguiente esquema BDD (Behavior-Driven Development) describe el comportamiento esperado al sumar números complejos:
+El siguiente esquema BDD describe el comportamiento esperado al sumar números complejos:
 
 ```kotlin showLineNumbers
 "Given a complex number" - {
@@ -113,7 +81,9 @@ Aquí tenemos las pruebas que verifican que la suma de números complejos y la s
             val result = a + b
             result.real shouldBe (a.real + b.real)
         }
-
+        ```
+        
+        ```kotlin showLineNumbers
         checkAll(arbComplex(), Arb.double()) { a, b ->
             val result = a + b
             result.real shouldBe (a.real + b)
@@ -218,11 +188,11 @@ fun main() {
 }
 ```
 
-En este caso, la sobrecarga del operador `+` combina nombres y suma salarios. Aunque técnicamente funciona, puede ser confuso para otrxs desarrolladorxs, ya que el operador `+` generalmente se asocia con una suma o concatenación simple, y no con la combinación de objetos de esta manera. Es mejor proporcionar métodos con nombres claros como `combineWith` para evitar ambigüedades.
+En este caso, la sobrecarga del operador `+` combina nombres y suma salarios. Aunque técnicamente funciona, puede ser confuso para otras personas, ya que el operador `+` generalmente se asocia con una suma o concatenación simple, y no con la combinación de objetos de esta manera. Es mejor proporcionar métodos con nombres claros como `combineWith` para evitar ambigüedades.
 
 :::
 
-## Ejemplo Práctico: Sobrecarga del Operador `invoke` para Invocación de Funciones
+## Ejemplo práctico: Sobrecarga del operador `invoke` para invocación de funciones
 
 Además de los operadores aritméticos, Kotlin permite sobrecargar el operador `invoke`, lo que permite que los objetos se llamen como si fueran funciones. Esto es útil cuando queremos que un objeto se comporte como una función.
 
@@ -260,8 +230,8 @@ Este enfoque hace que el código sea más conciso y natural, especialmente cuand
         - **Implementación de patrones funcionales**: El operador `invoke` permite tratar objetos como funciones, lo que es especialmente útil en programación funcional o cuando se busca crear DSLs (Domain-Specific Languages) en Kotlin.
     </Pros>
     <Cons>
-        - **Ambigüedad y confusión**: El uso indebido o excesivo de la sobrecarga de operadores puede hacer que el código sea confuso o difícil de entender para otrxs desarrolladorxs, especialmente si los operadores se utilizan para acciones no intuitivas.
-        - **Dificultad para mantener el código**: Al personalizar operadores, es posible que lxs desarrolladorxs futuros no comprendan rápidamente qué está haciendo el código, lo que puede dificultar el mantenimiento y la extensión de las funcionalidades.
+        - **Ambigüedad y confusión**: El uso indebido o excesivo de la sobrecarga de operadores puede hacer que el código sea confuso o difícil de entender para otras personas, especialmente si los operadores se utilizan para acciones no intuitivas.
+        - **Dificultad para mantener el código**: Al personalizar operadores, es posible que personas que trabajen con nuestro código en el futuro no comprendan rápidamente qué está haciendo el código, lo que puede dificultar el mantenimiento y la extensión de las funcionalidades.
         - **Inconsistencias con el comportamiento esperado**: Cuando un operador se sobrecarga de una manera que se desvía de su uso habitual (como `+` para fusionar objetos en lugar de sumarlos), puede generar confusión y errores, ya que las expectativas sobre su funcionamiento no se cumplen.
         - **Complejidad adicional**: La implementación de sobrecargas de operadores introduce una capa adicional de abstracción, lo que puede aumentar la complejidad del código y hacer que el flujo de ejecución sea más difícil de rastrear, especialmente en proyectos grandes o colaborativos.
     </Cons>
@@ -282,22 +252,10 @@ En esta lección, exploramos la **sobrecarga de operadores** en Kotlin y cómo p
 Al finalizar esta lección, es importante recordar que, si bien la sobrecarga de operadores puede enriquecer el diseño de un programa, debe usarse de manera consistente con las convenciones del lenguaje y las expectativas comunes para garantizar que el código sea claro, predecible y fácil de mantener.
 
 <div className="language-card-container">
-    <LanguageCard
-        logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/ISO_C%2B%2B_Logo.svg/1822px-ISO_C%2B%2B_Logo.svg.png"
-        language="C++"
-        link="/docs/oop/operator-overload/cpp"
-    />
-    <LanguageCard
-        logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/800px-Python-logo-notext.svg.png"
-        language="Python"
-        link="/docs/oop/operator-overload/python"
-    />
+    <CppCard link="/docs/oop/operator-overload/cpp" />
+    <PythonCard link="/docs/oop/operator-overload/python" />
     <ScalaCard link="/docs/oop/operator-overload/scala" />
-    <LanguageCard
-        logoSrc="https://cdn-icons-png.flaticon.com/512/3984/3984314.png"
-        language="Swift"
-        link="/docs/oop/operator-overload/swift"
-    />
+    <SwiftCard link="/docs/oop/operator-overload/swift" />
 </div>
 
 <References references={[
@@ -310,7 +268,8 @@ Al finalizar esta lección, es importante recordar que, si bien la sobrecarga de
         year: "2017",
         type: "book",
         author: 'Dmitry Jemerov, Svetlana Isakova',
-    },
+    }]}
+    additionalReferences={[
     {
         accessedDate: '22 de septiembre de 2024',
         siteOrAuthor: 'Kotlin Help',
@@ -324,5 +283,14 @@ Al finalizar esta lección, es importante recordar que, si bien la sobrecarga de
         title: 'Operator overloading - Kotlin language specification',
         type: 'web',
         url: 'https://kotlinlang.org/spec/operator-overloading.html',
+    },
+    {
+        title: "Objects, Data Classes, and Enums",
+        bookTitle: "Kotlin programming: The Big Nerd Ranch guide",
+        publisher: "Big Nerd Ranch",
+        pages: "257–280",
+        year: "2018",
+        author: "Josh Skeen & David Greenhalgh",
+        type: "book",
     },
 ]}/>

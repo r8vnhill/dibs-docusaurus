@@ -1,0 +1,94 @@
+---
+title: "Caso de estudio: Máximo de una lista en Python con Hypothesis"
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="python-dibs" />
+
+En este ejemplo, queremos probar una función `biggest` que toma una lista de enteros y devuelve el valor máximo. Para este caso, definiremos una propiedad que verifique que el valor máximo de una lista es igual al último elemento de la lista una vez ordenada.
+
+## Propiedades y Generación de Datos
+
+Con **Hypothesis**, podemos definir estrategias que generen listas de enteros y escribir tests que verifiquen las propiedades esperadas de nuestra función `biggest`. Comenzamos creando un test para asegurar que, en una lista no vacía, el valor máximo devuelto por `biggest` coincida con el último elemento de la lista cuando esta se encuentra ordenada.
+
+```python showLineNumbers title="src/testing/pbt/biggest/test/biggest_test.py"
+from hypothesis import given
+from hypothesis.strategies import integers, lists
+
+from testing.pbt.biggest.src.biggest import biggest
+
+
+@given(lists(integers(), min_size=1))
+def test_biggest_with_sorted_list(lst: list[int]) -> None:
+    assert biggest(lst) == sorted(lst)[-1]
+
+def test_biggest_with_empty_list() -> None:
+    assert biggest([]) == float('-inf')
+```
+
+<Explanation>
+    En este código, **Hypothesis** genera listas de enteros para probar que, en una lista no vacía, `biggest` devuelve el mismo valor que el último elemento de la lista ordenada. También añadimos un caso para listas vacías, verificando que `biggest` devuelve `-inf`.
+</Explanation>
+
+## Implementación de la Función `biggest`
+
+La función `biggest` toma una lista de enteros y devuelve el valor máximo. En este ejemplo, `biggest` retorna `-inf` cuando recibe una lista vacía, usando `reduce` para encontrar el valor máximo en otros casos.
+
+```python showLineNumbers title="src/testing/pbt/biggest/src/biggest.py"
+from functools import reduce
+
+def biggest(lst: list[int]) -> int | float:
+    return reduce(lambda acc, number: number if number > acc else acc, lst, float('-inf'))
+```
+
+## Resumen comparativo
+
+| **Característica**                          | **Hypothesis**                                                                                           | **Kotest**                                                                                               |
+|---------------------------------------------|----------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
+| **Estrategias de generación de datos**      | Proporciona estrategias para generar múltiples tipos de datos, incluyendo listas, enteros, y cadenas.    | Similar a Hypothesis, permite generar datos de distintos tipos para pruebas, aunque con mayor personalización.|
+| **Integración de propiedades en tests**     | Tests basados en propiedades se integran de forma fluida con decoradores, como `@given`, y estrategias.  | También permite tests basados en propiedades usando `checkAll`, con un diseño cohesivo para BDD.          |
+| **Manejo de casos especiales**              | Proporciona mecanismos automáticos para listas vacías o valores extremos en datos generados.             | Kotest permite configuración en generadores, pero requiere especificaciones más detalladas en algunos casos.|
+| **Personalización de estrategias**          | Permite definir estrategias avanzadas mediante combinaciones y composición de estrategias.               | Ofrece una flexibilidad comparable, pero requiere más configuraciones manuales para generar ciertos datos complejos.|
+
+### Beneficios y limitaciones de Hypothesis
+
+<ProCons>
+    <Pros>
+        - **Automatización en generación de datos**: Hypothesis genera automáticamente una amplia gama de valores de entrada, cubriendo casos normales y extremos sin requerir definiciones manuales para cada uno.
+        - **Reproducción de errores**: Cuando una prueba falla, Hypothesis guarda el caso de prueba que generó el error, facilitando la depuración mediante la reutilización del caso exacto.
+        - **Amplia compatibilidad en estrategias**: Hypothesis tiene estrategias listas para una variedad de tipos de datos, lo que permite probar funciones que usan listas, enteros, strings, etc., de manera rápida y sencilla.
+    </Pros>
+    <Cons>
+        - **Control limitado sobre datos complejos**: Aunque Hypothesis es potente para casos simples, la configuración de estrategias avanzadas o específicas puede volverse tediosa, en particular para objetos personalizados complejos.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos cómo utilizar **Hypothesis** para realizar pruebas basadas en propiedades de una función en Python, en este caso, la función `biggest` que devuelve el máximo de una lista. Analizamos cómo generar datos de prueba con **estrategias** y cómo validar propiedades de funciones para asegurar un comportamiento correcto en diferentes escenarios. Además, revisamos cómo manejar casos límite, como listas vacías, mediante pruebas adicionales que cubren situaciones especiales.
+
+### Puntos clave
+
+- **Pruebas basadas en propiedades**: Aprendimos a verificar el comportamiento de funciones usando propiedades generales en lugar de ejemplos específicos.
+- **Generación automática de datos**: Hypothesis permite automatizar la creación de datos, asegurando una amplia cobertura en las pruebas sin necesidad de definir casos manualmente.
+- **Manejo de casos límite**: A través de tests específicos, verificamos que nuestra función `biggest` maneja correctamente situaciones como listas vacías, devolviendo el valor adecuado (`-inf`).
+
+---
+
+El uso de **Property-Based Testing** con Hypothesis ofrece una herramienta poderosa para validar el comportamiento de funciones de manera escalable, mejorando la confiabilidad y la robustez del código frente a diferentes conjuntos de datos y casos límite.

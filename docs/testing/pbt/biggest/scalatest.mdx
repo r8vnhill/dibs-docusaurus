@@ -27,25 +27,45 @@ Comencemos con un ejemplo similar al que vimos con Kotest: encontrar el máximo 
 
 El siguiente ejemplo muestra cómo usar **ScalaCheck** en combinación con ScalaTest para escribir una prueba basada en propiedades que verifique que la función `max` devuelve el último elemento de la lista ordenada.
 
-```scala
-import org.scalatest.propspec.AnyPropSpec
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import org.scalacheck.Gen
-import org.scalatest.matchers.should.Matchers
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```scala showLineNumbers
+        forAll(Gen.listOf(Gen.choose(0, 100))) { list =>
+            whenever(list.nonEmpty) {
+                biggest(list) shouldBe list.sorted.last
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```scala showLineNumbers title="scala-3/testing/pbt/biggest/src/test/scala/iterables/IntListTest.scala"
+        package cl.ravenhill
+        package iterables
 
-class MaxTest extends AnyPropSpec with ScalaCheckPropertyChecks with Matchers {
+        import iterables.IntListUtils.biggest
 
-  property("max should return the last element of the sorted list") {
-    forAll(Gen.listOf(Gen.choose(Int.MinValue, Int.MaxValue))) { list =>
-      whenever(list.nonEmpty) {
-        max(list) shouldEqual list.sorted.last
-      }
-    }
-  }
+        import org.scalacheck.Gen
+        import org.scalatest.freespec.AnyFreeSpec
+        import org.scalatest.matchers.should
+        import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-  def max(list: List[Int]): Int = list.max
-}
-```
+        class IntListTest extends AnyFreeSpec with ScalaCheckPropertyChecks
+          with should.Matchers:
+            "An integer list" - {
+                "when getting the biggest element" - {
+                    "should return the last element of a sorted list" in {
+                        forAll(Gen.listOf(Gen.choose(0, 100))) { list =>
+                            whenever(list.nonEmpty) {
+                                //noinspection SortedHeadLast
+                                biggest(list) shouldBe list.sorted.last
+                            }
+                        }
+                    }
+                }
+            }
+        ```
+    </TabItem>
+</BoxedTabs>
 
 <Explanation>
     - **`Gen.listOf(Gen.choose(Int.MinValue, Int.MaxValue))`**: Genera listas de enteros aleatorios entre los valores mínimos y máximos posibles en Scala.

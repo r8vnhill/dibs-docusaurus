@@ -13,53 +13,29 @@ import { LanguageCard } from "@site/src/components/cards/LanguageCard"
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime/>
-<GithubRepoLink user={"r8vnhill"} repo={"echo-app-kt"} addLineBreak={false}/>
-<GithubRepoLink user={"r8vnhill"} repo={"echo-app-groovy"}/>
+<GithubRepoLink user={"r8vnhill"} repo={"echo-app-kt"}/>
 
 Gradle no solo ofrece tareas predefinidas, sino que también permite definir **tareas personalizadas** para realizar acciones específicas dentro de tu proyecto. Estas tareas pueden variar en complejidad y se definen en los archivos `build.gradle.kts` o en otros archivos `*.gradle.kts`.
 
 Para definir tareas personalizadas, podemos hacerlo en el módulo `convention-plugins`, dentro de un archivo como `playground.gradle.kts`. Utilizamos la función `tasks.register` para especificar el nombre y las acciones a ejecutar. Aquí tienes un ejemplo básico:
 
-<BoxedTabs groupId={"gradle"}>
-    <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
-        tasks.register("greet") {
-            group = "Playground"
-            description = "Prints a greeting message"
-            println("Hello, Gradle!")
-        }
-        ```
-    </TabItem>
-    <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy title="convention-plugins/playground.gradle"
-        tasks.register('greet') {
-            group = 'Playground'
-            description = 'Prints a greeting message'
-            println 'Hello, Gradle!'
-        }
-        ```
-    </TabItem>
-</BoxedTabs>
+```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+tasks.register("greet") {
+    group = "Playground"
+    description = "Prints a greeting message"
+    println("Hello, Gradle!")
+}
+```
 
 Para que esta tarea se ejecute en el proyecto principal, debes aplicar el plugin correspondiente en el archivo `build.gradle.kts` del módulo principal:
 
-<BoxedTabs groupId={"gradle"}>
-    <TabItem value="Kotlin DSL" label="Kotlin DSL">
-    ```kotlin title="build.gradle.kts"
-        plugins {
-            id("jvm.conventions")
-            id("playground")
-        }
-        // ...
-        ```
-    </TabItem>
-    <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy title="build.gradle"
-        apply from: "${conventionPluginsDir}/playground.gradle"
-        // ...
-        ```
-    </TabItem>
-</BoxedTabs>
+```kotlin title="build.gradle.kts"
+plugins {
+    id("jvm.conventions")
+    id("playground")
+}
+// ...
+```
 
 Ahora puedes ejecutar la tarea con `./gradlew greet` y verás el mensaje impreso en la consola.
 
@@ -90,54 +66,27 @@ Las **acciones** son bloques de código que puedes agregar a una tarea para defi
 
 Supongamos que queremos crear una tarea que calcule la secuencia de Fibonacci. Usaremos las acciones `doFirst` y `doLast` para estructurar las operaciones:
 
-<BoxedTabs groupId={"gradle"}>
-    <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
-        tasks.register("fib") {
-            group = "Playground"
-            description = "Calculates the Fibonacci sequence up to the 10th number"
+```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+tasks.register("fib") {
+    group = "Playground"
+    description = "Calculates the Fibonacci sequence up to the 10th number"
 
-            var first = 0
-            var second = 1
+    var first = 0
+    var second = 1
 
-            doFirst {
-                repeat(10) {
-                    print("$first ")
-                    second += first
-                    first = second - first
-                }
-            }
-
-            doLast {
-                println("\nThe 10th Fibonacci number is: $first")
-            }
+    doFirst {
+        repeat(10) {
+            println(first)
+            second += first
+            first = second - first
         }
-        ```
-    </TabItem>
-    <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy title="convention-plugins/playground.gradle"
-        tasks.register('fib') {
-            group = 'Playground'
-            description = 'Prints the Fibonacci sequence up to a given number'
+    }
 
-            def first = 0
-            def second = 1
-
-            doFirst {
-                10.times {
-                    println("${first}")
-                    second += first
-                    first = second - first
-                }
-            }
-
-            doLast {
-                println("\nThe 10th Fibonacci number is: ${first}")
-            }
-        }
-        ```
-    </TabItem>
-</BoxedTabs>
+    doLast {
+        println("\nThe 10th Fibonacci number is: $first")
+    }
+}
+```
 
 ### ¿Qué está sucediendo aquí?
 
@@ -167,41 +116,21 @@ The 10th Fibonacci number is: 55
 
 En Gradle, es común que ciertas tareas dependan de otras. Para esto, puedes usar el método `dependsOn`. Por ejemplo, si queremos que la tarea `fib` dependa de una tarea `message`, podemos hacerlo así:
 
-<BoxedTabs groupId={"gradle"}>
-    <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
-        // ...
-        tasks.register("message") {
-            group = "Playground"
-            description = "Prints a message before calculating the Fibonacci sequence"
-            doFirst {
-                println("Calculating the Fibonacci sequence...")
-            }
-        }
+```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+// ...
+tasks.register("message") {
+    group = "Playground"
+    description = "Prints a message before calculating the Fibonacci sequence"
+    doFirst {
+        println("Calculating the Fibonacci sequence...")
+    }
+}
 
-        // highlight-next-line
-        tasks.named("fib") {
-            dependsOn("message")
-        }
-        ```
-    </TabItem>
-    <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy title="convention-plugins/src/main/groovy/playground.gradle"
-        // ...
-        tasks.register('message') {
-            group = 'Playground'
-            description = 'Prints a message before calculating the Fibonacci sequence'
-            doFirst {
-                println("Calculating the Fibonacci sequence...")
-            }
-        }
-
-        tasks.fib {
-            dependsOn("message")
-        }
-        ```
-    </TabItem>
-</BoxedTabs>
+// highlight-next-line
+tasks.named("fib") {
+    dependsOn("message")
+}
+```
 
 Aquí noten que hemos usado `tasks.named("fib")` en lugar de `tasks.register("fib")` para obtener la tarea `fib` ya definida y agregarle la dependencia, eso nos permite extender las funcionalidades de la tarea sin modificar su definición original, lo que se alinea con el principio **open-closed** del diseño de software.
 
@@ -245,46 +174,23 @@ The 10th Fibonacci number is: 55
     ]} />
 
     <Solution>
-        <BoxedTabs groupId={"gradle"}>
-            <TabItem value="Kotlin DSL" label="Kotlin DSL">
-                ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
-                tasks.register("countCompiledSize") {
-                    group = "build"
-                    description = "Counts the size of the compiled classes"
-                    dependsOn("compileKotlin")
+        ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+        tasks.register("countCompiledSize") {
+            group = "build"
+            description = "Counts the size of the compiled classes"
+            dependsOn("compileKotlin")
 
-                    doLast {
-                        val files = fileTree("app/build/classes/kotlin/main").files +
-                            fileTree("lib/build/classes/kotlin/main").files
-                        var size = 0L
-                        for (file in files) {
-                            size += file.length()
-                        }
-                        println("The total size of the compiled classes is $size bytes")
-                    }
+            doLast {
+                val files = fileTree("app/build/classes/kotlin/main").files +
+                    fileTree("lib/build/classes/kotlin/main").files
+                var size = 0L
+                for (file in files) {
+                    size += file.length()
                 }
-                ```
-            </TabItem>
-            <TabItem value="Groovy DSL" label="Groovy DSL">
-                ```groovy title="convention-plugins/playground.gradle"
-                tasks.register('countCompiledSize') {
-                    group = 'build'
-                    description = 'Counts the size of the compiled classes'
-                    dependsOn 'compileKotlin'
-
-                    doLast {
-                        def files = fileTree('app/build/classes/kotlin/main').files +
-                                fileTree('lib/build/classes/kotlin/main').files
-                        def size = 0L
-                        files.each { file ->
-                            size += file.length()
-                        }
-                        println "The total size of the compiled classes is ${size} bytes"
-                    }
-                }
-                ```
-            </TabItem>
-        </BoxedTabs>
+                println("The total size of the compiled classes is $size bytes")
+            }
+        }
+        ```
     </Solution>
 
     <Solution title={"mejorada"}>
@@ -332,31 +238,15 @@ extender o agregar funcionalidades a una tarea predefinida. Por ejemplo, si quer
 archivos compilados a un directorio específico después de la compilación, podemos usar la tarea `Copy` y configurarla
 para que dependa de `compileKotlin`.
 
-<BoxedTabs groupId={"gradle"}>
-    <TabItem value="Kotlin DSL" label="Kotlin DSL">
-        ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
-        tasks.register<Copy>("copyCompiledClasses") {
-            group = "build"
-            description = "Copy the compiled classes to a specific directory"
-            dependsOn("compileKotlin")
-            from("app/build/classes/kotlin/main")
-            into("compiled-classes")
-        }
-        ```
-    </TabItem>
-    <TabItem value="Groovy DSL" label="Groovy DSL">
-        ```groovy title="convention-plugins/playground.gradle"
-        tasks.register('copyCompiledClasses', Copy) {
-            group = 'build'
-            description = 'Copies the compiled classes to a directory'
-            dependsOn 'compileKotlin'
-
-            from 'app/build/classes/kotlin/main'
-            into 'build/classes'
-        }
-        ```
-    </TabItem>
-</BoxedTabs>
+```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+tasks.register<Copy>("copyCompiledClasses") {
+    group = "build"
+    description = "Copy the compiled classes to a specific directory"
+    dependsOn("compileKotlin")
+    from("app/build/classes/kotlin/main")
+    into("compiled-classes")
+}
+```
 
 Esta tarea copiará los archivos compilados al directorio `compiled-classes` después de que se haya completado la compilación.
 

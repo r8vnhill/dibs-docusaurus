@@ -101,7 +101,7 @@ const sidebars: SidebarsConfig = {
                 id: 'testing/kotest',
             },
             items: [
-                'testing/bdd',
+                'testing/bdd/bdd',
                 "testing/assertions/assertions-kt",
                 {
                     label: 'Matchers',

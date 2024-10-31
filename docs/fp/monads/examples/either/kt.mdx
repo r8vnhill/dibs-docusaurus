@@ -1,24 +1,53 @@
 ---
-title: Mónada Either
+title: La mónada Either
 ---
-import TabItem from "@theme/TabItem";
-import Tabs from "@theme/Tabs";
-import { LanguageCard } from "/src/components/cards/LanguageCard";
-import Exercise from "/src/components/exercise/Exercise";
-import GitHubRepoLink from "/src/components/GithubRepoLink";
-import ReadingTime from "/src/components/ReadingTime";
-import References from "/src/components/ReferencesComponent";
-import Solution from "/src/components/exercise/Solution";
-import Tooltip from "/src/components/Tooltip";
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import Tooltip from '@site/src/components/Tooltip'
 
-<ReadingTime/>
-<GitHubRepoLink repo={"functional-programming-kt"} user={"r8vnhill"}/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="functional-programming-kt" />
+<ModuleSetup module='either' task='setupEitherModule'>
+    ```Kotlin showLineNumbers
+    import tasks.ModuleSetupTask
+
+    tasks.register<ModuleSetupTask>("setupEitherModule") {
+        description = "Creates the base module and files for the either lesson"
+        module.set("monads:either")
+
+        doLast {
+            createFiles(
+                "either",
+                main to "Either.kt",
+                main to "EitherMonad.kt",
+                main to "validatePassword.kt",
+                test to "EitherMonadTest.kt"
+            )
+        }
+    }
+    ```
+</ModuleSetup>
 
 Como vimos en la lección sobre [tipos suma](docs/fp/adt/sum/index.mdx), **Either** es un tipo de dato que se utiliza para representar uno de dos posibles valores: `Left` o `Right`. Es comúnmente empleado para manejar operaciones que pueden tener dos resultados: un valor esperado (`Right`) o un error o situación inesperada (`Left`).
 
 :::tip Nemotécnica
+
 "``Right`` is right, ``Left`` is what's left."
+
 :::
 
 ## El problema con las excepciones
@@ -89,119 +118,151 @@ En este caso, `y` no es referencialmente transparente, porque no podemos sustitu
     En **Kotlin**, no existen **checked exceptions**, lo que permite un enfoque más flexible y funcional. Sin embargo, esto significa que se deben manejar las excepciones de manera explícita, por ejemplo, usando patrones de error como `Either`.
 </details>
 
-## Implementación
+## Leyes de las Mónadas
 
-### Implementando Either
-
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $Group = 'com\github\username'
-            $EitherDir = "monads\src\main\kotlin\$Group\either"
-            New-Item -Path "$EitherDir\Either.kt" -ItemType File -Force
-            New-Item -Path "$EitherDir\Left.kt" -ItemType File
-            New-Item -Path "$EitherDir\Right.kt" -ItemType File
-            ```
-        </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-            ```powershell
-            $Group = 'com\github\username'
-            $EitherDir = "monads\src\main\kotlin\$Group\either"
-            ni "$EitherDir\Either.kt" -i f -f
-            ni "$EitherDir\Left.kt" -i f
-            ni "$EitherDir\Right.kt" -i f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            GROUP='com/github/username'
-            EITHER_DIR="monads/src/main/kotlin/$GROUP/either"
-            mkdir -p "$EITHER_DIR"
-            touch "$EITHER_DIR/Either.kt"
-            touch "$EITHER_DIR/Left.kt"
-            touch "$EITHER_DIR/Right.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
-
-Para implementar **Either** en Kotlin podemos utilizar una clase sellada para representar los dos posibles casos (`Left` y `Right`):
+Para validar que nuestra implementación cumple con las **leyes de las mónadas**, definimos pruebas para las tres leyes: **identidad izquierda**, **identidad derecha**, y **asociatividad**. Estas pruebas nos aseguran que la estructura monádica se comporta como se espera en cualquier caso.
 
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
+
+        #### Ley de Asociatividad
+
         ```kotlin showLineNumbers
-        sealed class Either<out L, out R>
+        checkAll(Arb.int(), Arb.int()) { a, b ->
+            EitherMonad.run {
+                val f: (Int) -> Either<Throwable, Int> = { pure(it * b) }
+                val g: (Int) -> Either<Throwable, Int> = { pure(it + a) }
+                pure<Throwable, Int>(a).flatMap(f).flatMap(g) shouldBe
+                    pure<Throwable, Int>(a).flatMap { f(it).flatMap(g) }
+            }
+        }
+        ```
 
-        data class Left<L>(val value: L) : Either<L, Nothing>()
+        #### Ley de Identidad Derecha
 
-        data class Right<R>(val value: R) : Either<Nothing, R>()
+        ```kotlin showLineNumbers
+        checkAll(Arb.int()) { a ->
+            EitherMonad.run {
+                pure<Throwable, Int>(a).flatMap { pure(it) } shouldBe pure(a)
+            }
+        }
+        ```
+
+        #### Ley de Identidad Izquierda
+
+        ```kotlin showLineNumbers
+        checkAll(Arb.int(), Arb.int()) { a, b ->
+            EitherMonad.run {
+                val f: (Int) -> Either<Throwable, Int> = { pure(it * b) }
+                pure<Throwable, Int>(a).flatMap(f) shouldBe f(a)
+            }
+        }
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="monads/src/main/kotlin/com/github/username/either/Either.kt"
+        ```kotlin showLineNumbers title="monads/either/src/test/kotlin/com/github/username/either/EitherMonadTest.kt"
         package com.github.username.either
 
-        sealed class Either<out L, out R>
-        ```
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.int
+        import io.kotest.property.checkAll
 
-        ```kotlin showLineNumbers title="monads/src/main/kotlin/com/github/username/either/Left.kt"
-        package com.github.username.either
+        class EitherMonadTest : FreeSpec({
 
-        data class Left<L>(val value: L) : Either<L, Nothing>()
-        ```
+            "Given a right" - {
+                // Left identity
+                "when a value is wrapped in the monadic context" - {
+                    ("then chaining a function should yield the same result as " +
+                            "directly applying the function") {
+                        checkAll(Arb.int(), Arb.int()) { a, b ->
+                            EitherMonad.run {
+                                val f: (Int) -> Either<Throwable, Int> = { pure(it * b) }
+                                pure<Throwable, Int>(a).flatMap(f) shouldBe f(a)
+                            }
+                        }
+                    }
+                }
 
-        ```kotlin showLineNumbers title="monads/src/main/kotlin/com/github/username/either/Right.kt"
-        package com.github.username.either
+                // Right identity
+                "when chaining with a function that returns the original context" - {
+                    "then the result should remain unchanged in the monadic context" {
+                        checkAll(Arb.int()) { a ->
+                            EitherMonad.run {
+                                pure<Throwable, Int>(a).flatMap { pure(it) } shouldBe pure(a)
+                            }
+                        }
+                    }
+                }
 
-        data class Right<R>(val value: R) : Either<Nothing, R>()
+                // Associativity
+                "when chaining two functions sequentially" - {
+                    ("then the result should be consistent with first chaining one " +
+                            "function and then the next") {
+                        checkAll(
+                            Arb.int(),
+                            Arb.int(),
+                            Arb.int()
+                        ) { a, b, c ->
+                            EitherMonad.run {
+                                val f: (Int) -> Either<Throwable, Int> = { pure(it * b) }
+                                val g: (Int) -> Either<Throwable, Int> = { pure(it + c) }
+                                pure<Throwable, Int>(a).flatMap(f).flatMap(g) shouldBe
+                                        pure<Throwable, Int>(a).flatMap { f(it).flatMap(g) }
+                            }
+                        }
+                    }
+                }
+            }
+
+            "Given a left" - {
+                "when mapping a function" - {
+                    "then the result should be the same left" {
+                        checkAll(Arb.int()) { a ->
+                            EitherMonad.run {
+                                val f: (Int) -> Int = { it * 2 }
+                                Left(a).flatMap { Right(f(it)) } shouldBe Left(a)
+                            }
+                        }
+                    }
+                }
+            }
+        })
         ```
     </TabItem>
 </BoxedTabs>
 
-<Exercise title={`Uso de Nothing`}>
-    ¿Por qué el primero y segundo parámetro de de ``Right`` y ``Left`` respectivamente son de tipo `Nothing`?
+<Explanation>
+    - **Ley de identidad izquierda**: Asegura que envolver un valor y luego aplicarle una función es lo mismo que aplicar la función directamente al valor.
+    - **Ley de identidad derecha**: Garantiza que aplicar una función que simplemente envuelve el valor no cambia el contexto original.
+    - **Ley de asociatividad**: Verifica que la secuencia de aplicación de funciones encadenadas produce el mismo resultado, independientemente del orden de agrupación de las funciones.
+</Explanation>
 
-    <Solution>
-        Es una forma de decir que el tipo de dato no se usa en ese caso. En el caso de `Left`, el valor de tipo `R` no se usa, por lo que se usa `Nothing` en su lugar. De manera similar, en el caso de `Right`, el valor de tipo `L` no se usa, por lo que se usa `Nothing`.
-    </Solution>
-</Exercise>
+## Implementación
 
-### Implementando la Monada Either
+### Implementando Either
 
-<details>
-    <summary>
-        Si quieres crear el archivo desde la terminal...
-    </summary>
+Para implementar **Either** en Kotlin podemos utilizar una clase sellada para representar los dos posibles casos (`Left` y `Right`):
 
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path "$EitherDir\EitherMonad.kt" -ItemType File
-            ```
-        </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-            ```powershell
-            ni "$EitherDir\EitherMonad.kt" -i f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            touch "$EITHER_DIR/EitherMonad.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
+```kotlin showLineNumbers title="monads/src/main/kotlin/com/github/username/either/Either.kt"
+package com.github.username.either
+
+sealed class Either<out L, out R>
+
+data class Left<L>(val value: L) : Either<L, Nothing>()
+
+data class Right<R>(val value: R) : Either<Nothing, R>()
+```
+
+### Implementando la mónada Either
 
 ```kotlin showLineNumbers title="monads/src/main/kotlin/com/github/username/either/EitherMonad.kt"
 package com.github.username.either
 
 object EitherMonad {
-    fun <L, R> unit(r: R): Either<L, R> = Right(r)
+    fun <L, R> pure(r: R): Either<L, R> = Right(r)
+
     fun <L, R, T> Either<L, R>.flatMap(f: (R) -> Either<L, T>): Either<L, T> = when (this) {
         is Left -> this
         is Right -> f(value)
@@ -209,101 +270,40 @@ object EitherMonad {
 }
 ```
 
-## Ejemplo de Uso
+## Ejemplo de uso
 
-<details>
-    <summary>
-        Si quieres crear el archivo desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $PasswordDir = "monads\src\main\kotlin\$Group\password"
-            New-Item -Path "$PasswordDir\PasswordValidator.kt" -ItemType File -Force
-            ```
-        </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-            ```powershell
-            $PasswordDir = "monads\src\main\kotlin\$Group\password"
-            ni "$PasswordDir\PasswordValidator.kt" -i f -f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            PASSWORD_DIR="monads/src/main/kotlin/$GROUP/password"
-            mkdir -p "$PASSWORD_DIR"
-            touch "$PASSWORD_DIR/PasswordValidator.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
-
-En este ejemplo, vamos a implementar un caso sencillo de **`Either`** para manejar operaciones que pueden fallar, utilizando las funciones **`unit`** y **`flatMap`** para trabajar con la mónada **`Either`**.
+En este ejemplo, vamos a implementar un caso sencillo de **`Either`** para manejar operaciones que pueden fallar, utilizando las funciones **`pure`** y **`flatMap`** para trabajar con la mónada **`Either`**.
 
 Imaginemos que tenemos dos funciones de validación: una que verifica la longitud de una contraseña y otra que valida si la contraseña contiene al menos un número. Nuestro objetivo es encadenar estas validaciones de manera que, si una falla, la otra no se ejecute. En este caso, devolveremos un `Left` con el mensaje de error apropiado. Si todas las validaciones se superan, obtendremos un `Right` con la contraseña válida.
 
-<BoxedTabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers
-        private fun validateLength(password: String) =
-            if (password.length >= 8) Right(password)
-            else Left("Password is too short")
+```kotlin showLineNumbers
+package com.github.username.either
 
-        private fun validateContainsNumber(password: String) =
-            if (password.any { it.isDigit() }) Right(password)
-            else Left("Password must contain a number")
+private fun validateLength(password: String) =
+    if (password.length >= 8) Right(password)
+    else Left("Password is too short")
 
-        fun validatePassword(password: String) = with(EitherMonad) {
-            unit<String, _>(password)
-                .flatMap(::validateLength)
-                .flatMap(::validateContainsNumber)
-        }
-        ```
-    </TabItem>
+private fun validateContainsNumber(password: String) =
+    if (password.any { it.isDigit() }) Right(password)
+    else Left("Password must contain a number")
 
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers
-        package com.github.username.password
+fun validatePassword(password: String) = EitherMonad.run {
+    pure<String, _>(password)
+        .flatMap(::validateLength)
+        .flatMap(::validateContainsNumber)
+}
 
-        import cl.ravenhill.either.EitherMonad
-        import cl.ravenhill.either.Left
-        import cl.ravenhill.either.Right
-
-        private fun validateLength(password: String) =
-            if (password.length >= 8) Right(password)
-            else Left("Password is too short")
-
-        private fun validateContainsNumber(password: String) =
-            if (password.any { it.isDigit() }) Right(password)
-            else Left("Password must contain a number")
-
-        fun validatePassword(password: String) = with(EitherMonad) {
-            unit<String, _>(password)
-                .flatMap(::validateLength)
-                .flatMap(::validateContainsNumber)
-        }
-
-        fun main() {
-            println(validatePassword("1234567"))  // Left(value=Password is too short)
-            println(validatePassword("12345678")) // Right(value=12345678)
-        }
-        ```
-    </TabItem>
-</BoxedTabs>
-
-:::info Explicación del código
-
-- **[1-7]**: Definimos dos funciones de validación:
-    - `validateLength` verifica si la contraseña tiene al menos 8 caracteres. Si es válida, retorna un `Right` con la contraseña; si no, devuelve un `Left` con un mensaje de error.
-    - `validateContainsNumber` comprueba si la contraseña contiene al menos un número. Si lo contiene, retorna un `Right`; si no, un `Left` con el error correspondiente.
-- **[9]** `with(EitherMonad)`: Utilizamos el contexto de la mónada `Either` para acceder a sus funciones, como `unit` y `flatMap`, sin necesidad de referenciar el objeto cada vez.
-- **[10]** `unit<String, _>(password)`: Esta función convierte el valor inicial (la contraseña) en un `Right`, permitiéndonos iniciar la secuencia de validaciones. El parámetro `_` infiere automáticamente el tipo de `Right`.
-- **[11-12]** `flatMap`: Encadenamos las validaciones con `flatMap`, de forma que si alguna falla, devolvemos inmediatamente el `Left` con el error y no ejecutamos el resto de validaciones.
-
-:::
+fun main() {
+    println(validatePassword("1234567"))  // Left(value=Password is too short)
+    println(validatePassword("12345678")) // Right(value=12345678)
+}
+```
 
 Este patrón es particularmente útil cuando queremos manejar flujos de operaciones secuenciales que pueden fallar, como validaciones, operaciones de entrada/salida, o cualquier proceso en el que preferimos evitar el uso de excepciones. Con **`Either`**, podemos modelar el éxito o el fracaso de cada paso de forma segura y estructurada.
+
+<Explanation>
+    En este ejemplo, utilizamos la mónada **`Either`** para validar una contraseña, aplicando dos funciones de validación secuenciales. Si alguna de las validaciones falla, se devuelve un `Left` con un mensaje de error. Si todas las validaciones son exitosas, se devuelve un `Right` con la contraseña válida.    
+</Explanation>
 
 ## Comparación con `Option`
 
@@ -327,7 +327,7 @@ Al comparar **Either** y **Result**, encontramos que ambos tipos son útiles par
 
 ### Either
 - **Generalidad**: `Either` es un tipo genérico que puede representar cualquier tipo de resultado, no solo éxito o fallo. En el contexto de fallos, `Left` puede contener un error o una situación inesperada, mientras que `Right` contiene el resultado exitoso.
-- **Similitud con excepciones verificadas**: `Either` se puede comparar con las **excepciones verificadas** en lenguajes como Java, donde se requiere que los errores sean manejados explícitamente. Al usar `Either`, debes manejar tanto el caso de `Left` como el de `Right`, obligando al desarrollador a tratar los errores de manera explícita.
+- **Similitud con excepciones verificadas**: `Either` se puede comparar con las **excepciones verificadas** en lenguajes como Java, donde se requiere que los errores sean manejados explícitamente. Al usar `Either`, debes manejar tanto el caso de `Left` como el de `Right`, obligando a quien desarrolla a tratar los errores de manera explícita.
 
 ### Result
 - **Especialización**: `Result` está diseñado específicamente para modelar operaciones que pueden tener éxito o fallo. Al usar `Result`, los errores se manejan mediante excepciones, lo que hace que sea más adecuado para capturar fallos inesperados, como errores de tiempo de ejecución o fallos no planeados.
@@ -336,34 +336,38 @@ Al comparar **Either** y **Result**, encontramos que ambos tipos son útiles par
 <Exercise title="Extendiendo Either">
     Implementa las funciones:
     - ``fold: (Either<A, B>, (A) -> C, (B) -> C): C``: Aplica una función a cada caso de `Either` y devuelve el resultado. Si es `Left`, aplica la primera función, si es `Right`, aplica la segunda.
-    - ``swap: (Either<L, R>) -> Either<R, L>``: Intercambia los valores de `Left` y `Right`.
+    - ``swap: (Either<L, R>) -> Either<R, L>``: Intercambia los valores de `Left` y `Right`. Utiliza la función `fold` para implementar `swap`.
 
     <Solution>
-        ```kotlin
-        fun <L, R> fold(
-            either: Either<L, R>,
-            ifLeft: (L) -> Unit,
-            ifRight: (R) -> Unit
-        ) = when (either) {
-            is Left -> ifLeft(either.value)
-            is Right -> ifRight(either.value)
+        ```kotlin title="monads/src/main/kotlin/com/github/username/either/EitherMonad.kt"
+        fun <A, B, C> Either<A, B>.fold(
+            ifLeft: (A) -> C,
+            ifRight: (B) -> C
+        ) = when (this) {
+            is Left -> ifLeft(value)
+            is Right -> ifRight(value)
         }
         ```
 
-        ```kotlin
-        fun <L, R> swap(either: Either<L, R>): Either<R, L> = when (either) {
-            is Left -> Right(either.value)
-            is Right -> Left(either.value)
-        }
+        ```kotlin title="monads/src/main/kotlin/com/github/username/either/EitherMonad.kt"
+        fun <A, B> Either<A, B>.swap() = fold(
+            ifLeft = ::Right,
+            ifRight = ::Left
+        )
         ```
     </Solution>
 </Exercise>
 
-## Beneficios de `Either`
+## Beneficios y limitaciones de Either
 
-- **Manejo explícito de errores**: `Either` proporciona un enfoque más seguro y estructurado para el manejo de errores que las excepciones tipadas. Al incluir explícitamente el caso de éxito o error en el tipo, se fuerza a lxs desarrolladorxs a manejar ambos casos, evitando que los errores se "pierdan" o sean ignorados accidentalmente.
-- **Facilidad de composición**: `Either` permite componer funciones que pueden fallar sin necesidad de capturar excepciones. En lugar de lanzar una excepción, las funciones pueden devolver un valor de tipo `Either`, lo que facilita el encadenamiento de operaciones sin necesidad de un manejo de errores explícito en cada paso.
-- **Código más claro**: Utilizar `Either` hace que el flujo de datos sea más legible y el manejo de errores más evidente, en comparación con las excepciones, donde el flujo de errores puede ser implícito y difícil de seguir.
+<ProCons>
+    <Pros>
+        
+    </Pros>
+    <Cons>
+        
+    </Cons>
+</ProCons>
 
 ## ¿Qué hemos aprendido?
 

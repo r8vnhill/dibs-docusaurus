@@ -1,0 +1,61 @@
+---
+title: Cotas en Swift
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="swift-dibs" />
+
+En Swift, las cotas superiores se implementan de forma similar a Kotlin, restringiendo los tipos genéricos a un tipo específico o a un protocolo. Al igual que Kotlin, esta práctica asegura que solo se usen tipos compatibles dentro de una función o clase genérica.
+
+Swift usa la palabra clave `where` para establecer múltiples restricciones de una manera que es casi idéntica a Kotlin. Supongamos que tenemos una clase `Repository` que almacena elementos de tipo `Entity`, asegurándonos de que estos implementen el protocolo `Serializable` para que puedan ser serializados. En Swift, podríamos implementar el repositorio de la siguiente forma:
+
+```swift showLineNumbers
+protocol Entity {
+    var id: Int { get }
+}
+
+protocol Serializable {
+    func serialize() -> String
+}
+
+class Repository<T> where T: Entity, T: Serializable {
+    private var entities: [T] = []
+
+    func save(_ entity: T) {
+        entities.append(entity)
+    }
+
+    func serializeAll() -> String {
+        return entities.map { $0.serialize() }.joined(separator: ", ")
+    }
+}
+```
+
+En este ejemplo:
+
+- **Restricción Directa**: El parámetro genérico `T` debe ser un subtipo de `Entity` y de `Serializable`.
+- **Uso de `where`**: Como en Kotlin, `where` permite una sintaxis clara para manejar múltiples restricciones.
+
+### Comparación: ¿Por qué usar `where` en Swift?
+
+Swift y Kotlin permiten usar `where` para restricciones múltiples, pero Swift requiere que la cláusula `where` aparezca en los protocolos y las extensiones, mientras que en Kotlin puede aparecer también en clases y funciones. En Swift, **no se puede usar `where` en las definiciones de parámetros genéricos en las clases directamente**, sino que se usa para las extensiones y funciones que cumplen con varias condiciones.
+
+## Cotas Inferiores
+
+A diferencia de Kotlin, Swift **no permite la contravarianza** de forma nativa, por lo que no tiene una forma directa de emular cotas inferiores. Esto significa que en Swift no es posible indicar que un tipo genérico debe ser un supertipo de otro. En Kotlin, este comportamiento se emula mediante **varianza en sitio de uso** (con `in` para contravarianza).

@@ -12,52 +12,41 @@ import Hint from '@site/src/components/exercise/Hint'
 import Definition from '@site/src/components/Definition'
 import Corollary from '@site/src/components/Corollary'
 import GithubRepoLink from '@site/src/components/GithubRepoLink'
-import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import { LanguageCard, JestCard } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
-<GithubRepoLink user="r8vnhill" repo="kotest-intro" />
+<GithubRepoLink user="r8vnhill" repo="" />
+<ModuleSetup module='bdd' task='setupBddModule'>
+    ```kotlin showLineNumbers
+    import tasks.ModuleSetupTask
 
-<details>
-    <summary>
-        Comencemos por crear un módulo para la lección...
-    </summary>
+    tasks.register<ModuleSetupTask>("setupdBddModule") {
+        description = "Creates the base module and files for the BDD introductory lesson"
+        module.set("bdd")
+        doLast {
+            createFiles(
+                "users",
+                main to "UserService.kt",
+                test to "UserServiceTest.kt",
+            )
+        }
+    }
+    ```
+</ModuleSetup>
 
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path 'bdd' -ItemType 'directory'
-            '// Intentionally left blank' |
-                Out-File -FilePath 'bdd/build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            md bdd
-            '// Intentionally left blank' > bdd/build.gradle.kts
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            mkdir bdd
-            echo '// Intentionally left blank' > bdd/build.gradle.kts
-            ```
-        </TabItem>
-    </BoxedTabs>
+El **Desarrollo Dirigido por Comportamiento** (*Behavior-Driven Development*, BDD) es una metodología ágil que extiende el **Desarrollo Dirigido por Pruebas** (*Test-Driven Development*, TDD) al enfatizar la colaboración entre personas que desarrollan, QA y partes interesadas no técnicas. BDD se centra en el comportamiento esperado del software desde la perspectiva de quienes lo utilizan
 
-    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
-</details>
-
-El **Desarrollo Dirigido por Comportamiento** (*Behavior-Driven Development*, BDD) es una metodología ágil que extiende el **Desarrollo Dirigido por Pruebas** (*Test-Driven Development*, TDD) al enfatizar la colaboración entre desarrolladorxs, QA y partes interesadas no técnicas. BDD se centra en el comportamiento esperado del software desde la perspectiva de lx usuarix final.
-
-En esta lección, exploraremos cómo implementar BDD utilizando **Kotest**. Suponemos que ya estás familiarizadx con TDD y ahora quieres integrar BDD en tu flujo de trabajo.
+En esta lección, exploraremos cómo implementar BDD utilizando **Kotest**. Suponemos que ya te manejas con TDD y ahora quieres integrar BDD en tu flujo de trabajo.
 
 ## Introducción al BDD (Behavior-Driven Development)
 
-El **Behavior-Driven Development (BDD)** es una metodología que busca:
+El **Behavior-Driven Development** es una metodología que busca:
 
-- **Fomentar la colaboración** entre todas las partes involucradas en el desarrollo, como desarrolladorxs, testers, y stakeholders.
+- **Fomentar la colaboración** entre todas las partes involucradas en el desarrollo, como equipos de desarrollo, testers, y stakeholders.
 - **Definir el comportamiento** esperado del sistema utilizando un lenguaje claro y accesible, cercano al lenguaje natural.
 - **Guiar el desarrollo** mediante ejemplos y escenarios específicos que ilustran cómo debería comportarse el sistema bajo diferentes circunstancias.
 
@@ -73,10 +62,10 @@ Un test BDD típico sigue la siguiente estructura:
 
 ## Caso de Estudio: Biblioteca de Gestión de Usuarios
 
-Supongamos que estamos desarrollando una biblioteca de software para la gestión de usuarios. Queremos implementar funcionalidades clave, como:
+Supongamos que estamos desarrollando una biblioteca de software para la gestión de usuarixs. Queremos implementar funcionalidades clave, como:
 
-- Registrar nuevos usuarios en el sistema.
-- Manejar situaciones excepcionales, como el intento de registro de un usuario que ya existe (duplicado).
+- Registrar nuevxs usuarixs en el sistema.
+- Manejar situaciones excepcionales, como el intento de registro de unx usuarix que ya existe (duplicado).
 
 Utilizaremos BDD para guiar el desarrollo de estas funcionalidades, escribiendo especificaciones que detallen el comportamiento esperado del sistema en diferentes escenarios.
 
@@ -88,52 +77,7 @@ Kotest proporciona varios estilos para escribir pruebas en un formato BDD. En es
 
 ### Especificación
 
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-
-            ```powershell
-            $UsersTestPath = "bdd\src\test\kotlin\$Group\users"
-            New-Item -Path $UsersMainPath -ItemType Directory -Force
-            "package $Group.users" -replace '\\', '.' | 
-                Out-File -FilePath "$UsersTestPath\UserServiceTest.kt"
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-
-            ```powershell
-            $UsersTestPath = "bdd\src\test\kotlin\$Group\users"
-            md $UsersTestPath
-            "package $Group.users" -replace '\\', '.' > `
-                "$UsersTestPath\UserServiceTest.kt"
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            GROUP="com/github/username"
-            ```
-
-            ```bash
-            USERS_TEST_PATH="bdd/src/test/kotlin/$GROUP/users"
-            mkdir -p $USERS_TEST_PATH
-            echo "package ${GROUP//\//.}.users" > \
-                "$USERS_TEST_PATH/UserServiceTest.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
-
-Comenzamos escribiendo una especificación para un caso común en el que un usuario se registra correctamente. La estructura de BDD con Kotest nos permite expresar el comportamiento de forma natural:
+Comenzamos escribiendo una especificación para un caso común en el que una persona se registra correctamente. La estructura de BDD con Kotest nos permite expresar el comportamiento de forma natural:
 
 ```kotlin
 "A user service" - {
@@ -202,43 +146,9 @@ Esta es la estructura básica de nuestra especificación BDD. Ahora, agregaremos
     - **Prueba esencial**: La prueba verifica que, al registrar un nuevo usuario, este se guarda correctamente en la "base de datos" (representada por una colección `users`).
 </Explanation>
 
-Este enfoque BDD ayuda a que las pruebas reflejen el comportamiento esperado de la biblioteca de software desde una perspectiva clara y centrada en lx usuarix.
+Este enfoque BDD ayuda a que las pruebas reflejen el comportamiento esperado de la biblioteca de software desde una perspectiva clara y centrada en quien la utiliza.
 
 ### Implementación Mínima
-
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $UsersMainPath = "bdd\src\main\kotlin\$Group\users"
-            New-Item -Path "$UsersMainPath\UserService.kt" `
-                -ItemType 'File' -Force
-            "package $Group.users" -replace '\\', '.' | 
-                Out-File -FilePath "$UsersMainPath\UserService.kt"
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            $UsersMainPath = "bdd\src\main\kotlin\$Group\users"
-            md $UsersMainPath
-            "package $Group.users" -replace '\\', '.' > `
-                "$UsersMainPath\UserService.kt"
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            USERS_MAIN_PATH="bdd/src/main/kotlin/$GROUP/users"
-            mkdir -p $USERS_MAIN_PATH
-            echo "package ${GROUP//\//.}.users" > \
-                "$USERS_MAIN_PATH/UserService.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
 
 Ahora, implementamos el código mínimo para que la prueba pase.
 
@@ -256,10 +166,10 @@ class UserService {
 }
 ```
 
-La prueba debe pasar ahora, confirmando que un usuario puede registrarse exitosamente.
+La prueba debe pasar ahora, confirmando que unx usuarix puede registrarse exitosamente.
 
 <Exercise>
-    Extiene la clase `UserService` para manejar la autenticación exitosa de un usuario. Escribe una especificación BDD y una prueba que verifique que un usuario registrado pueda autenticarse correctamente con su nombre de usuario y contraseña.
+    Extiene la clase `UserService` para manejar la autenticación exitosa de unx usuarix. Escribe una especificación BDD y una prueba que verifique que unx usuarix registrado pueda autenticarse correctamente con su nombre de usuario y contraseña.
     
     <Solution>
         ```kotlin showLineNumbers
@@ -282,7 +192,7 @@ La prueba debe pasar ahora, confirmando que un usuario puede registrarse exitosa
 
 ### Especificación
 
-Escribimos una especificación para manejar el caso excepcional donde un usuario intenta registrarse con un nombre de usuario ya existente.
+Escribimos una especificación para manejar el caso excepcional donde unx usuarix intenta registrarse con un nombre de usuario ya existente.
 
 ```kotlin
 class UserServiceTest : FreeSpec({
@@ -314,7 +224,7 @@ Con el escenario definido, podemos llenar los detalles específicos.
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers
+        ```kotlin showLineNumbers title="bdd/src/test/kotlin/com/github/username/users/UserServiceTest.kt"
         package cl.ravenhill.users
 
         import io.kotest.assertions.throwables.shouldThrow
@@ -354,7 +264,7 @@ Con el escenario definido, podemos llenar los detalles específicos.
 </BoxedTabs>
 
 <Explanation>
-    - **Prueba de excepción**: Utilizamos `shouldThrow` para verificar que se arroje una excepción `IllegalArgumentException` cuando se intenta registrar un usuario duplicado.
+    - **Prueba de excepción**: Utilizamos `shouldThrow` para verificar que se arroje una excepción `IllegalArgumentException` cuando se intenta registrar unx usuarix duplicado.
     - **Mensaje de error**: Verificamos que el mensaje de la excepción sea `"User already exists"`, lo que indica que el usuario ya está registrado en el sistema.
 </Explanation>
 
@@ -390,7 +300,7 @@ Lo siguiente es implementar el código mínimo para que la prueba pase.
 </BoxedTabs>
 
 <Exercise>
-    Extiende la clase `UserService` para manejar la autenticación fallida de un usuario. Escribe una especificación BDD y una prueba que verifique que un usuario no registrado no pueda autenticarse.
+    Extiende la clase `UserService` para manejar la autenticación fallida de unx usuarix. Escribe una especificación BDD y una prueba que verifique que unx usuarix no registrado no pueda autenticarse.
 
     La autenticación puede fallar si el usuario no existe en la base de datos o si la contraseña no coincide. Arroja una excepción `IllegalArgumentException` con un mensaje adecuado en caso de autenticación fallida.
 
@@ -454,3 +364,7 @@ En esta lección, exploramos cómo el **Behavior-Driven Development (BDD)**, en 
 ---
 
 Al final, BDD nos ayuda a mejorar la calidad del software, asegurando que cada característica se implemente con un claro entendimiento de su propósito y comportamiento esperado. Es una metodología que, aunque puede implicar una mayor inversión inicial en tiempo y esfuerzo, proporciona un **valor significativo** en términos de colaboración, claridad y reducción de errores a lo largo del ciclo de vida del desarrollo de software.
+
+<div className="language-card-container">
+    <JestCard link="/docs/testing/bdd/jest" />
+</div>
