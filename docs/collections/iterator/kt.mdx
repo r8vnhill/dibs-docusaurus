@@ -22,9 +22,34 @@ import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
 import CodeBlock from '@theme/CodeBlock'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="collections-kt" />
+<ModuleSetup module='static' task='setupStaticModule'>
+    ```kotlin showLineNumbers
+    import tasks.ModuleSetupTask
+
+    tasks.register<ModuleSetupTask>("setupIteratorModule") {
+        description = "Creates the base module and files for the iterator pattern lesson"
+        module.set("iterator")
+
+        doLast {
+            createFiles(
+                "iterator",
+                main to "Iterator.kt",
+                main to "Iterable.kt",
+            )
+            createFiles(
+                "library",
+                main to "Library.kt",
+                main to "Book.kt",
+                main to "BookIterator.kt",
+            )
+        }
+    }
+    ```
+</ModuleSetup>
 
 El **Iterator pattern** es un patrón de diseño de comportamiento que permite recorrer los elementos de una colección de manera secuencial, sin exponer su representación interna (por ejemplo, si es una lista, conjunto o árbol). Este patrón proporciona una interfaz común para acceder a los elementos, lo que facilita recorrer estructuras de datos de manera consistente y uniforme.
 
@@ -74,80 +99,10 @@ El **Patrón Iterador** involucra los siguientes componentes principales:
 
 Supongamos que tenemos una clase `Book` y queremos crear una biblioteca que pueda almacenar varios libros y recorrerlos utilizando el patrón iterador.
 
-<details>
-    <summary>
-        Comencemos por crear un módulo para la lección...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell showLineNumbers
-            New-Item -Path 'iterator' -ItemType 'Directory' -Force
-            '// Intentionally left blank' |
-                Out-File -FilePath 'iterator\build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell showLineNumbers
-            mkdir -p 'iterator'
-            '// Intentionally left blank' > 'iterator\build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash showLineNumbers
-            mkdir -p iterator
-            echo "// Intentionally left blank" > iterator/build.gradle.kts
-            ```
-        </TabItem>
-    </BoxedTabs>
-
-    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
-</details>
 
 #### 1. Definir el iterador
 
 Luego, definimos la interfaz `Iterator` con los métodos `hasNext()` y `next()`.
-
-<details>
-    <summary>
-        Si quieres crear el archivo desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-
-            ```powershell
-            $IteratorMainDir = "iterator\src\main\kotlin\$Group\iterator"
-            New-Item -Path "$IteratorMainDir\Iterator.kt"
-                -ItemType 'File' -Force
-            ```
-        </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-
-            ```powershell
-            $IteratorMainDir = "iterator\src\main\kotlin\$Group\iterator"
-            ni "$IteratorMainDir\Iterator.kt" -i 'f' -f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            GROUP="com/github/username"
-            ```
-
-            ```bash
-            ITERATOR_MAIN_DIR="iterator/src/main/kotlin/$GROUP/iterator"
-            mkdir -p "$ITERATOR_MAIN_DIR"
-            touch "$ITERATOR_MAIN_DIR/Iterator.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
 
 ```kotlin showLineNumbers title="src/main/kotlin/com/github/username/iterator/Iterator.kt"
 package com.github.username.iterator
@@ -162,31 +117,6 @@ interface Iterator<T> {
 
 Ahora definimos la interfaz `Iterable`, que tiene un método para obtener un iterador.
 
-<details>
-    <summary>
-        Si quieres crear el archivo desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path "$IteratorMainDir\Iterable.kt" `
-                -ItemType 'File' -Force
-            ```
-        </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-            ```powershell
-            ni "$IteratorMainDir\Iterable.kt" -i 'f' -f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            touch "$ITERATOR_MAIN_DIR/Iterable.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
-
 ```kotlin showLineNumbers title="src/main/kotlin/com/github/username/iterator/Iterable.kt"
 package com.github.username.iterator
 
@@ -198,38 +128,6 @@ interface Iterable<T> {
 #### 3. Clase `Book` y la colección `Library`
 
 Definimos una clase `Book` y una colección `Library` que implementa la interfaz `Iterable`.
-
-<details>
-    <summary>
-        Si prefieres crear los archivos desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $LibraryMainDir = "iterator\src\main\kotlin\$Group\library"
-            New-Item -Path "$LibraryMainDir\Book.kt" `
-                -ItemType 'File' -Force
-            New-Item -Path "$LibraryMainDir\Library.kt" `
-                -ItemType 'File' -Force
-            ```
-        </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-            ```powershell
-            ni "$LibraryMainDir\Book.kt" -i 'f' -f
-            ni "$LibraryMainDir\Library.kt" -i 'f' -f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            LIBRARY_MAIN_DIR="iterator/src/main/kotlin/$GROUP/library"
-            mkdir -p "$LIBRARY_MAIN_DIR"
-            touch "$LIBRARY_MAIN_DIR/Book.kt"
-            touch "$LIBRARY_MAIN_DIR/Library.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
 
 ```kotlin showLineNumbers title="src/main/kotlin/com/github/username/library/Book.kt"
 package com.github.username.library
@@ -249,31 +147,6 @@ class Library(vararg books: Book) : Iterable<Book> {
 #### 4. Implementar el iterador de `Library`
 
 Ahora implementamos la clase `BookIterator` que recorre los libros dentro de la biblioteca.
-
-<details>
-    <summary>
-        Si prefieres crear el archivo desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path "iterator\src\main\kotlin\$Group\library\BookIterator.kt" `
-                -ItemType 'File' -Force
-            ```
-        </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-            ```powershell
-            ni "iterator\src\main\kotlin\$Group\library\BookIterator.kt" -i 'File' -f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            touch "iterator/src/main/kotlin/$GROUP/library/BookIterator.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
 
 ```kotlin showLineNumbers title="src/main/kotlin/com/github/username/library/BookIterator.kt"
 package com.github.username.library
