@@ -1,5 +1,6 @@
 ---
-title: Data-Driven Testing en PyTest
+
+title: Data-Driven Testing en Python con Pytest
 ---
 import ReadingTime from '@site/src/components/ReadingTime'
 import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
@@ -12,63 +13,149 @@ import Hint from '@site/src/components/exercise/Hint'
 import Definition from '@site/src/components/Definition'
 import Corollary from '@site/src/components/Corollary'
 import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
-<GithubRepoLink user="r8vnhill" repo="" />
+<GithubRepoLink user="r8vnhill" repo="data-driven-testing-python" />
 
+**Data-Driven Testing (DDT)** permite ejecutar un conjunto de pruebas múltiples veces, cada vez con diferentes datos de entrada. Esto es especialmente útil en el desarrollo de **bibliotecas de software** para validar el comportamiento de funciones en escenarios variados. Aquí, comparamos la implementación de DDT en Python con **pytest** con su equivalente en Kotest, destacando similitudes y diferencias, y abordando cómo simular la anidación de casos de prueba en pytest.
 
-En **PyTest**, el **Data-Driven Testing (DDT)** se implementa utilizando la función `@pytest.mark.parametrize`, que permite definir un conjunto de valores de entrada para ejecutar un test repetidamente. Al igual que en **Kotest**, esta técnica permite evitar la duplicación de código al probar múltiples entradas con la misma lógica de prueba.
+### Ejemplo de Validación de Contraseñas
 
-### Ejemplo en PyTest con `@pytest.mark.parametrize`
+Nuestra función `is_valid_password` en Python verifica que una contraseña cumpla con las siguientes políticas:
 
-En este ejemplo, utilizamos `@pytest.mark.parametrize` para probar diferentes valores de entrada:
+- **Longitud mínima**: Al menos 8 caracteres.
+- **Contiene números**: Al menos un dígito.
+- **Contiene letras mayúsculas y minúsculas**: Debe incluir ambas.
+- **Contiene caracteres especiales**: Debe incluir al menos un carácter especial (e.g., `!@#$%^&*`).
 
-```python
+### Implementación de Pruebas en pytest
+
+Utilizamos `@pytest.mark.parametrize` para implementar las pruebas de DDT en pytest. Este decorador permite definir múltiples conjuntos de datos en una lista de tuplas, con cada tupla representando un caso de prueba. 
+
+```python showLineNumbers title="src/testing/src/ddt/test/is_valid_password_test.py"
 import pytest
+from hamcrest import assert_that, equal_to
 
-def test_invalid_health_points():
-    @pytest.mark.parametrize("invalid_hp", [-100, -1, 101, 1000])
-    def inner_test(invalid_hp):
-        bakemon = Bakemon("Bigachu", 100)
-        with pytest.raises(ValueError):
-            bakemon.set_current_health_points(invalid_hp)
-```
+from is_valid_password import is_valid_password
 
-### Similitudes entre Kotest y PyTest
 
-1. **Data-Driven Testing**: Ambos frameworks permiten pasar diferentes valores de entrada y ejecutar el mismo test con cada valor.
-2. **Reutilización del código**: En ambos frameworks, la lógica de prueba permanece constante, mientras que los datos de entrada cambian.
-3. **Manejo de múltiples casos**: Tanto Kotest como PyTest permiten probar múltiples escenarios de manera eficiente, mejorando el mantenimiento y la escalabilidad de las pruebas.
-
-### Diferencias entre Kotest y PyTest
-
-1. **Sintaxis**: Kotest utiliza la función `withData` para lograr una sintaxis fluida y declarativa, mientras que PyTest depende de la anotación `@pytest.mark.parametrize`, que sigue un enfoque más tradicional basado en decoradores.
-2. **Combinación de valores**: Kotest facilita la combinación de múltiples conjuntos de datos con `withData` anidado, mientras que en PyTest se pueden usar múltiples parámetros en `@pytest.mark.parametrize` para combinar entradas.
-
-### Ejemplo en PyTest con múltiples parámetros
-
-En PyTest, también podemos usar múltiples parámetros en `@pytest.mark.parametrize` para probar diferentes combinaciones de valores:
-
-```python
-import pytest
-
-@pytest.mark.parametrize("name, invalid_hp", [
-    ("Bigachu", -100),
-    ("Psygoose", -1),
-    ("Bigachu", 101),
-    ("Psygoose", 1000)
+@pytest.mark.parametrize("password, expected", [
+    ("P@ssw0rd", True),
+    ("P@ssw0r", False),
+    ("p@ssw0rd", False),
+    ("P@SSW0RD", False),
+    ("P@ssword", False),
+    ("Password1", False),
 ])
-def test_invalid_health_points(name, invalid_hp):
-    bakemon = Bakemon(name, 100)
-    with pytest.raises(ValueError):
-        bakemon.set_current_health_points(invalid_hp)
+def test_is_valid_password(password: str, expected: bool) -> None:
+    assert_that(is_valid_password(password), equal_to(expected))
 ```
 
-### Comparación final
+<Explanation>
+    En este ejemplo, `@pytest.mark.parametrize` define múltiples casos de prueba para `is_valid_password`, cada uno con una contraseña y un valor esperado. pytest ejecutará la prueba con cada conjunto de datos y verificará si la función `is_valid_password` devuelve el resultado esperado.
+</Explanation>
 
-| Aspecto                    | Kotest                                               | PyTest                                              |
-|----------------------------|------------------------------------------------------|-----------------------------------------------------|
-| **Data-Driven Testing**    | `withData`                                           | `@pytest.mark.parametrize`                          |
-| **Combinación de Valores** | Fácil con `withData`                                 | Soportado con múltiples parámetros en `parametrize` |
-| **Sintaxis**               | Declarativa y fluida                                 | Decoradores con anotaciones                         |
-| **Estilo de pruebas**      | Soporte para múltiples estilos (BDD, FreeSpec, etc.) | Enfoque tradicional de pruebas                      |
+### Implementación de la Función `is_valid_password`
+
+```python showLineNumbers title="src/testing/src/ddt/src/is_valid_password.py"
+def is_valid_password(password: str) -> bool:
+    special_characters = "!@#$%^&*()-+"
+    return (
+            len(password) >= 8
+            and any(char.isdigit() for char in password)
+            and any(char.islower() for char in password)
+            and any(char.isupper() for char in password)
+            and any(char in special_characters for char in password)
+    )
+```
+### Comparación con Kotest
+
+En Kotest (Kotlin), la función `withData` permite un enfoque similar, parametrizando los datos de prueba en una estructura que los ejecuta sobre la misma lógica de prueba. Aunque el proceso es similar, Kotest ofrece una característica adicional para manejar **casos de prueba anidados** con `withData` anidados, una capacidad que pytest no admite de forma nativa.
+
+### Simulación de casos anidados en pytest
+
+A diferencia de Kotest, que soporta anidación directa de `withData`, pytest requiere enfoques alternativos para crear combinaciones complejas de datos. Esto se puede lograr utilizando múltiples capas de `@pytest.mark.parametrize` y generando combinaciones de casos. A continuación, se muestra cómo podríamos manejar esta anidación simulada en pytest:
+
+```python showLineNumbers title="src/testing/src/ddt/test/is_valid_password_test.py"
+@pytest.mark.parametrize("special_char, has_special", [
+    ("@", True), ("", False), ("!", True), ("$", True)
+])
+@pytest.mark.parametrize("lower_case, has_lower", [
+    ("a", True), ("", False)
+])
+@pytest.mark.parametrize("upper_case, has_upper", [
+    ("A", True), ("", False)
+])
+@pytest.mark.parametrize("digit, has_digit", [
+    ("1", True), ("", False)
+])
+@pytest.mark.parametrize("min_length", [8, 10, 12])
+def test_password_combinations(special_char: str, has_special: bool, 
+                               lower_case: str, has_lower: bool, 
+                               upper_case: str, has_upper: bool,
+                               digit: str, has_digit: bool, 
+                               min_length: int) -> None:
+    password = f"{lower_case}{upper_case}{digit}{special_char}"
+    expected = len(password) >= min_length and has_lower and has_upper and has_digit and has_special
+    assert is_valid_password(password) == expected
+```
+
+<Explanation>
+    En este ejemplo, simulamos la anidación de casos de prueba en pytest utilizando múltiples capas de `@pytest.mark.parametrize`. Cada parámetro define un conjunto de datos para una característica específica de la contraseña, y combinamos estos conjuntos para generar casos de prueba complejos.
+</Explanation>
+
+| **Característica**                 | **pytest**                                                                                           | **Kotest**                                                                                           |
+|------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| **Parametrización de Pruebas**     | `@pytest.mark.parametrize`                                                                          | `withData`                                                                                           |
+| **Soporte de Anidación**           | Anidación simulada usando múltiples `@pytest.mark.parametrize`                                       | Anidación directa con `withData`                                                                     |
+| **Simplicidad y Flexibilidad**     | Flexible y fácil de usar, con una curva de aprendizaje baja                                          | DSL específico de pruebas, mayor expresividad y estructura clara                                     |
+| **Sistema de Fixtures**            | Avanzado, permite manejo eficiente de configuraciones y dependencias                                 | Menos robusto, depende de extensiones personalizadas                                                 |
+| **Ecosistema de Plugins**          | Extensivo, con soporte para múltiples plugins y configuraciones personalizadas                       | Menos extenso, aunque extensible mediante plugins                                                    |
+| **Flexibilidad en Casos Complejos**| Uso de múltiples `@pytest.mark.parametrize` para generar combinaciones de casos complejos            | `withData` anidados para combinar configuraciones complejas de manera más organizada                 |
+| **Informes de Pruebas**            | Personalizables y detallados, con soporte para múltiples formatos                                   | Informes detallados con opciones de personalización según el tipo de prueba y resultado              |
+| **Soporte Comunitario**            | Muy amplio, con una comunidad activa y numerosos recursos                                           | Comunidad activa, aunque menos extensa en comparación con pytest                                     |
+
+### Beneficios y limitaciones de pytest para DDT
+
+<ProCons>
+    <Pros>
+        - **Parametrización Eficiente**: El decorador `@pytest.mark.parametrize` permite definir múltiples casos de prueba de forma concisa, lo cual es útil para pruebas con datos variados.
+        - **Sistema de Fixtures Avanzado**: El sistema de fixtures de pytest facilita la configuración y reutilización de dependencias en pruebas complejas, lo que contribuye a una estructura de pruebas bien organizada.
+        - **Amplio Soporte Comunitario**: La comunidad activa de pytest ofrece recursos y soporte abundantes, desde documentación hasta plugins comunitarios.
+    </Pros>
+    <Cons>
+        - **Anidación Compleja de Pruebas**: Pytest no soporta la anidación de pruebas de manera nativa, lo que obliga a utilizar múltiples capas de `@pytest.mark.parametrize` para generar combinaciones complejas de datos, lo cual puede reducir la claridad del código.
+        - **Posible Complejidad con Múltiples `parametrize`**: En casos de pruebas con múltiples parámetros y combinaciones, el uso de muchos `@pytest.mark.parametrize` puede complicar la lectura y el mantenimiento de las pruebas.
+        - **Informes Limitados sin Plugins**: Aunque pytest ofrece informes básicos, para obtener un reporte altamente detallado y personalizable es necesario instalar plugins adicionales.
+    </Cons>
+</ProCons>
+
+## ¿Qué aprendimos?
+
+En esta lección, exploramos las ventajas de **Data-Driven Testing (DDT)** y cómo se implementa en **pytest** comparado con **Kotest**. Entendimos cómo DDT nos permite probar una función o método con una variedad de datos de entrada, asegurando que los casos de prueba sean completos y diversos sin duplicación de código. Vimos cómo **pytest** permite parametrizar pruebas con el decorador `@pytest.mark.parametrize`, y aunque no soporta anidación nativa como Kotest, es posible simularla usando múltiples capas de `parametrize` para casos más complejos.
+
+### Puntos clave
+
+1. **Data-Driven Testing**: Es un enfoque de prueba que permite ejecutar la misma prueba varias veces con diferentes datos de entrada, ideal para verificar funciones en escenarios variados sin duplicación de lógica de prueba.
+2. **Uso de `@pytest.mark.parametrize` en pytest**: Permite definir múltiples casos de prueba de forma concisa, facilitando la configuración de DDT.
+3. **Simulación de Anidación en pytest**: Aunque no soporta la anidación directa como Kotest, es posible simularla con múltiples decoradores `@pytest.mark.parametrize` para generar combinaciones de casos complejos.
+4. **Comparativa con Kotest**: Kotest ofrece una anidación de `withData` más estructurada y directa, mientras que pytest destaca por su flexibilidad, simplicidad y su amplio ecosistema de plugins y fixtures avanzados.
+5. **Beneficios y Limitaciones de pytest**: Pytest es altamente flexible y fácil de usar, con un soporte comunitario amplio y un sistema de fixtures avanzado. Sin embargo, su implementación de anidación puede volverse compleja y difícil de mantener en casos de prueba muy grandes.
+
+### Conclusión
+
+**Data-Driven Testing** es esencial en la validación de **bibliotecas de software**, permitiendo probar funciones con múltiples conjuntos de datos sin replicar lógica de prueba. Tanto **pytest** como **Kotest** proporcionan mecanismos efectivos para implementar DDT. Pytest destaca por su flexibilidad y soporte comunitario, siendo una excelente opción para proyectos en Python, mientras que Kotest, con su estructura declarativa y anidación de datos integrada, es ideal para proyectos en Kotlin. La elección entre ambos dependerá del lenguaje de programación y de las necesidades específicas del proyecto.
+
+<References references={[
+    {
+        title: "How to parametrize fixtures and test functions—Pytest documentation",
+        url: "https://docs.pytest.org/en/stable/how-to/parametrize.html",
+        accessedDate: "31 de octubre de 2024",
+        type: "web",
+    },
+]}/>

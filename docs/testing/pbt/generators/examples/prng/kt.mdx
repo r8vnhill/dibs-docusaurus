@@ -1,5 +1,5 @@
 ---
-title: Generadores a partir de un PRNG
+title: Generadores a partir de PRNG
 ---
 import ReadingTime from '@site/src/components/ReadingTime'
 import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
@@ -15,77 +15,32 @@ import GithubRepoLink from '@site/src/components/GithubRepoLink'
 import { LanguageCard } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
-<GithubRepoLink user="r8vnhill" repo="" />
+<GithubRepoLink user="r8vnhill" repo="testing-kt" />
+<ModuleSetup module='prng' task='setupPrngModule'>
+    ```kotlin showLineNumbers
+    import tasks.ModuleSetupTask
 
-Una de las formas más simples de crear un generador en Kotest es utilizando la función de alto orden `arbitrary`, que aprovecha un **Pseudo-Random Number Generator** manejado internamente por Kotest. Esta función permite generar datos de prueba controlados y reproducibles, útiles para la creación de tests basados en propiedades.
+    tasks.register<ModuleSetupTask>("setupPrngModule") {
+        description = "Creates the base module and files for the PRNG based generator lesson"
+        module.set("pbt:arbitrary:prng")
+        doLast {
+            createFiles(
+                "lists",
+                main to "average.kt",
+                test to "AverageTest.kt",
+            )
+        }
+    }
+    ```
+</ModuleSetup>
+
+Una de las formas más básicas de crear un generador en Kotest es utilizando la función de orden superior `arbitrary`, que aprovecha un **Pseudo-Random Number Generator** manejado internamente por Kotest. Esta función permite generar datos de prueba controlados y reproducibles, útiles para la creación de tests basados en propiedades.
 
 ## Ejemplo: Generador de listas de enteros
-
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-                
-            ```powershell
-            $GeneratorsTestDir = "generators\src\test\kotlin\$Group\generators"
-            $GeneratorsMainDir = "generators\src\main\kotlin\$Group\generators"
-            $AverageTestDir = "$GeneratorsTestDir\average"
-            $AverageMainDir = "$GeneratorsMainDir\average"
-            New-Item -Path $AverageTestDir -ItemType Directory -Force
-            New-Item -Path $AverageMainDir -ItemType Directory -Force
-            $AverageTestDir | Out-File -FilePath "$AverageTestDir\AverageTest.kt"
-            $AverageMainDir | Out-File -FilePath "$AverageMainDir\Average.kt"
-            "package $Group.generators.average" -replace '\\', '.' | 
-                Out-File -FilePath "$AverageTestDir\AverageTest.kt"
-            "package $Group.generators.average" -replace '\\', '.' |
-                Out-File -FilePath "$AverageMainDir\Average.kt"
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-            
-            ```powershell
-            $GeneratorsTestDir = "generators\src\test\kotlin\$Group\generators"
-            $GeneratorsMainDir = "generators\src\main\kotlin\$Group\generators"
-            $AverageTestDir = "$GeneratorsTestDir\average"
-            $AverageMainDir = "$GeneratorsMainDir\average"
-            $AverageTestDir, $AverageMainDir | % { md $_ }
-            "package $Group.generators.average" -replace '\\', '.' | 
-                Out-File -FilePath "$AverageTestDir\AverageTest.kt"
-            "package $Group.generators.average" -replace '\\', '.' |
-                Out-File -FilePath "$AverageMainDir\Average.kt"
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            GROUP="com/github/username"
-            ```
-
-            ```bash
-            GENERATORS_TEST_DIR="generators/src/test/kotlin/$GROUP/generators"
-            GENERATORS_MAIN_DIR="generators/src/main/kotlin/$GROUP/generators"
-            AVERAGE_TEST_DIR="$GENERATORS_TEST_DIR/average"
-            AVERAGE_MAIN_DIR="$GENERATORS_MAIN_DIR/average"
-            mkdir -p "$AVERAGE_TEST_DIR" "$AVERAGE_MAIN_DIR"
-            echo "package ${GROUP//\//.}.generators.average" > \
-                "$AVERAGE_TEST_DIR/AverageTest.kt"
-            echo "package ${GROUP//\//.}.generators.average" > \
-                "$AVERAGE_MAIN_DIR/Average.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
 
 ### Definiendo la especificación
 
@@ -96,7 +51,10 @@ Comencemos por definir una especificación BDD (Behavior-Driven Development) par
 ```kotlin showLineNumbers
 "Given a list of integers" - {
     "when calculating the average of a non-empty list" - {
-        "should return the sum of the elements divided by the number of elements" {}
+        ("should return the sum of the elements divided by the number of " +
+                "elements") {
+            
+        }
     }
 }
 ```
@@ -131,13 +89,13 @@ Para crear un generador personalizado en **Kotest**, utilizaremos la función `a
             arbitrary { (random, seed) ->
                 val list = mutableListOf<Int>()
                 val size = random.nextInt(1, 100)
-                var sum = 0
+                var average = 0
                 repeat(size) {
                     val number = random.nextInt(1, 100)
                     list += number
-                    sum += number
+                    average += number / size
                 }
-                list to sum / size
+                list to average
             }
         ```
 
@@ -150,14 +108,12 @@ Para crear un generador personalizado en **Kotest**, utilizaremos la función `a
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="generators/src/test/kotlin/com/github/username/generators/average/AverageTest.kt"
-        package com.github.username.generators.average
+        ```kotlin showLineNumbers title="generators/src/test/kotlin/com/github/username/lists/AverageTest.kt"
+        package com.github.username.lists
 
         import io.kotest.core.spec.style.FreeSpec
-        import io.kotest.matchers.collections.shouldBeIn
         import io.kotest.matchers.doubles.shouldBeGreaterThanOrEqual
         import io.kotest.matchers.doubles.shouldBeLessThan
-        import io.kotest.matchers.shouldBe
         import io.kotest.property.Arb
         import io.kotest.property.arbitrary.arbitrary
         import io.kotest.property.checkAll
@@ -167,7 +123,8 @@ Para crear un generador personalizado en **Kotest**, utilizaremos la función `a
         class AverageTest : FreeSpec({
             "Given a list of integers" - {
                 "when calculating the average of a non-empty list" - {
-                    "should return the sum of the elements divided by the number of elements" {
+                    ("should return the sum of the elements divided by the number of " +
+                            "elements") {
                         checkAll(arbIntListAndAverage()) { (list, average) ->
                             average(list)
                                 .shouldBeGreaterThanOrEqual(average - 0.0001)
@@ -255,8 +212,8 @@ Finalmente, implementamos la función `average` que calcula el promedio de una l
     #### Detalles del ejercicio:
 
     1. El tamaño del diccionario debe generarse de manera aleatoria.
-    2. Para generar los caracteres aleatorios que componen los valores del diccionario, puedes utilizar la función `nextInt` para obtener números aleatorios dentro del rango de valores Unicode (entre `0x0000` y `0xFFFF`).
-    3. Una vez generado el número, conviértelo en un carácter usando la función de extensión `toChar()`.
+    2. Para generar los caracteres aleatorios que componen los valores del diccionario, puedes utilizar la función `nextInt: Random.() -> Int` para obtener números aleatorios dentro del rango de valores Unicode (entre `0x0000` y `0xFFFF`).
+    3. Una vez generado el número, conviértelo en un carácter usando la función `toChar: Int.() -> Char`.
 
     #### Ejemplo de generación de un carácter aleatorio:
 

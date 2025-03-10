@@ -250,3 +250,11 @@ export const JestCard = ({ link }) => {
     link={link}
   />
 }
+
+export const PytestCard = ({ link }) => {
+  return <LanguageCard
+    logoSrc="https://docs.pytest.org/en/stable/_static/pytest1.png"
+    language="Python: Pytest"
+    link={link}
+  />
+}

@@ -194,114 +194,34 @@ class HaveMinimumLengthTest : FreeSpec({
     - **Manejo de excepciones**: Cuando un nombre de usuario no cumple con la longitud mínima, el test lanza una excepción como se espera.
 </Explanation>
 
-## Ejemplo de Uso en Bibliotecas de Software
+### Beneficios y limitaciones de las expresiones infijas
 
-Consideremos una biblioteca que maneja **validaciones** para un sistema de registro de usuarios. En lugar de usar validaciones con una sintaxis extensa, podemos utilizar **funciones infijas** para que el código sea más legible.
+<ProCons>
+    <Pros>
+        - **Mayor legibilidad**: Las expresiones infijas hacen que el código sea más intuitivo y fácil de leer, especialmente en casos como pruebas o DSLs, donde se busca un lenguaje natural y expresivo.
+        - **Ideal para operadores personalizados**: Facilitan la creación de operadores personalizados que se comporten de manera similar a los operadores incorporados, sin necesidad de sobrecargar operadores preexistentes.
+        - **Compatibilidad con librerías de pruebas**: En bibliotecas de pruebas como Kotest, las expresiones infijas mejoran la claridad y comprensión de los casos de prueba al representar directamente el comportamiento esperado.
+        - **Simplicidad en la implementación**: Implementar una función infija solo requiere cumplir algunas reglas simples, permitiendo a quien desarrolla a personalizar operaciones sin complicaciones adicionales.
+    </Pros>
+    <Cons>
+        - **Limitaciones en parámetros**: Las funciones infijas solo aceptan un parámetro, lo que limita su aplicabilidad a casos específicos y podría no ser suficiente en operaciones que requieren varios argumentos.
+        - **Ambigüedad potencial**: En situaciones complejas, las expresiones infijas pueden introducir ambigüedad en la precedencia de operaciones, especialmente cuando se combinan múltiples expresiones infijas en una sola línea.
+        - **Menor reusabilidad en ciertos contextos**: Dado que están pensadas para operaciones simplificadas y expresivas, las funciones infijas pueden no ser ideales para lógica compleja o de múltiples pasos.
+    </Cons>
+</ProCons>
 
-### Ejemplo 1: Validación con Expresión Infija
+## ¿Qué aprendimos?
 
-Supongamos que tenemos una biblioteca que valida si un nombre de usuario cumple ciertos requisitos. Una validación común podría ser verificar si el nombre de usuario es suficientemente largo.
+En esta lección, exploramos cómo las **expresiones infijas** en Kotlin pueden mejorar la claridad y legibilidad del código, especialmente en el desarrollo de **bibliotecas de software** y pruebas. Estas expresiones ofrecen una manera de definir funciones más intuitivas y cercanas al lenguaje natural, permitiendo a quienes desarrollan aprovechar una sintaxis concisa y expresiva.
 
-Primero, definimos una clase `UserName` y creamos una función infija para validar su longitud mínima.
+### Puntos clave:
 
-```kotlin
-class UserName(val value: String)
-
-infix fun UserName.hasMinimumLength(length: Int): Boolean {
-    return value.length >= length
-}
-```
-
-Luego, en el código de tu biblioteca, se puede usar la validación con una sintaxis más limpia:
-
-```kotlin
-val userName = UserName("ravenhill")
-val isValid = userName hasMinimumLength 5
-println(isValid) // true
-```
-
-Este enfoque mejora la **expresividad** de la biblioteca al hacer que la validación parezca más una declaración que una función compleja.
-
-### Caso de Uso en Bibliotecas: Operaciones en Colecciones
-
-En muchas bibliotecas de software, el manejo de colecciones es un elemento central. Usar expresiones infijas puede hacer que las operaciones sobre colecciones sean más fluidas y naturales.
-
-#### Ejemplo 2: Combinar Listas con Función Infija
-
-Imagina que tu biblioteca necesita combinar varias listas de una manera intuitiva. Puedes definir una función infija para esto.
-
-```kotlin
-infix fun <T> List<T>.combineWith(other: List<T>): List<T> {
-    return this + other
-}
-```
-
-Ahora, el código de la biblioteca para combinar listas se vuelve más expresivo:
-
-```kotlin
-val listA = listOf(1, 2, 3)
-val listB = listOf(4, 5, 6)
-
-val combinedList = listA combineWith listB
-println(combinedList) // [1, 2, 3, 4, 5, 6]
-```
-
-Esta función `combineWith` es mucho más fácil de leer y entender que una llamada de función tradicional, lo cual es una gran ventaja al diseñar APIs en bibliotecas de software.
-
-### Ejemplo de Caso Complejo: Construcción de Consultas DSL
-
-Uno de los usos más poderosos de las expresiones infijas en bibliotecas de software es cuando se construyen **DSLs (Domain-Specific Languages)**. Estas se utilizan comúnmente para hacer que el código sea más declarativo.
-
-#### Ejemplo 3: Consultas con Expresiones Infijas
-
-Supongamos que estamos creando una biblioteca de consultas para una base de datos. Podemos usar funciones infijas para construir las consultas de manera más legible.
-
-```kotlin
-class Query(val field: String)
-
-infix fun Query.equalsTo(value: String): String {
-    return "$field = '$value'"
-}
-
-infix fun Query.and(other: Query): String {
-    return "$field AND ${other.field}"
-}
-```
-
-Ahora, construir una consulta es más limpio:
-
-```kotlin
-val query = Query("name") equalsTo "Alice" and Query("age") equalsTo "30"
-println(query) // "name = 'Alice' AND age = '30'"
-```
-
-Al usar expresiones infijas, los usuarios de la biblioteca pueden construir sus consultas de manera más natural, como si estuvieran leyendo una oración en lugar de interactuar con una API detallada.
-
-### Ventajas de Usar Expresiones Infijas en Bibliotecas de Software
-
-1. **Mejor legibilidad**: Al eliminar paréntesis y puntos, las expresiones infijas permiten un código más limpio y cercano al lenguaje natural.
-2. **Sintaxis declarativa**: Las funciones infijas son ideales para construir DSLs, donde el objetivo es que el código sea lo más declarativo posible.
-3. **Facilidad de uso**: Los desarrolladores que usan la biblioteca pueden aprovechar la sintaxis infija para escribir código de manera más fluida.
-
-### Ejercicio: Implementa Funciones Infijas en una Biblioteca de Validación
-
-Supongamos que estás desarrollando una biblioteca de validación para formularios. Implementa una función infija `isValidEmail` que verifique si un campo de correo electrónico es válido, y luego úsala para validar direcciones de correo.
-
-#### Solución:
-
-```kotlin
-class Email(val value: String)
-
-infix fun Email.isValidEmail(pattern: String): Boolean {
-    return Regex(pattern).matches(value)
-}
-
-val email = Email("test@example.com")
-val isValid = email isValidEmail "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"
-println(isValid) // true
-```
+- Las **expresiones infijas** son funciones que se pueden invocar sin paréntesis ni puntos, mejorando la fluidez y claridad del código.
+- Estas funciones requieren ser miembros o extensiones de una clase, aceptar solo un parámetro y no tener valores predeterminados, lo que limita su uso a casos específicos.
+- En **Kotest**, las expresiones infijas permiten escribir pruebas que son más legibles, como en el ejemplo del matcher `shouldHaveMinimumLength`, que verifica si un nombre de usuario cumple con una longitud mínima.
+- Las **expresiones infijas** son ideales para operadores personalizados y estructuras de código donde la claridad y el flujo de lectura son esenciales.
+- Aunque son útiles y mejoran la legibilidad, también presentan limitaciones, como la restricción de parámetros y posibles ambigüedades en casos complejos.
 
 ### Conclusión
 
-Las expresiones infijas en Kotlin son una poderosa herramienta para diseñar bibliotecas de software más legibles, fáciles de usar y expresivas. Al definir funciones clave como infijas, puedes hacer que la interacción con tu biblioteca sea más natural y cercana al lenguaje humano. Esto no solo mejora la **usabilidad**, sino también la **mantenibilidad** del código que se construye sobre esa biblioteca.
-
+En conclusión, las expresiones infijas son una herramienta poderosa para hacer que el código sea más expresivo y fácil de entender, especialmente en contextos como las pruebas o los DSLs. Sin embargo, se debe considerar su uso con precaución, ya que en aplicaciones más complejas pueden introducir desafíos de legibilidad y reutilización.

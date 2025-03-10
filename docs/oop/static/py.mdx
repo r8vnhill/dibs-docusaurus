@@ -1,0 +1,273 @@
+---
+title: Variables y funciones estáticas en Python
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard, PythonCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="object-oriented-programming-kt" />
+
+En Python, las funciones estáticas se definen con el decorador `@staticmethod` dentro de una clase. A diferencia de Kotlin, donde se pueden declarar **funciones de nivel superior** que son accesibles sin ninguna clase, en Python es necesario utilizar un contenedor, ya sea una clase o un módulo.
+
+## Funciones Estáticas en Python con `@staticmethod`
+
+Para probar la función que calcula el área de un rectángulo, comenzaremos por definir los tests. Utilizaremos **Hypothesis** para realizar **property-based testing**, generando valores aleatorios para `width` y `height`, y compararemos los resultados con una función de referencia `count_area_on_grid` que simula un conteo iterativo.
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers
+        def count_area_on_grid(width: int, height: int) -> str:
+            count = sum(1 for _ in range(width) for _ in range(height))
+            return f"{count} cm²"
+
+        @given(
+            width=integers(min_value=1, max_value=100),
+            height=integers(min_value=1, max_value=100)
+        )
+        def test_calculate_rectangle_area(width: int, height: int) -> None:
+            assert_that(RectangleUtils.calculate_area(width, height),
+                        equal_to(count_area_on_grid(width, height)))
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="src/oop/src/static/test/geometry_test.py"
+        from hamcrest import assert_that, equal_to
+        from hypothesis import given
+        from hypothesis.strategies import integers
+
+        from oop.src.static.src.geometry import RectangleUtils
+
+
+        def count_area_on_grid(width: int, height: int) -> str:
+            count = sum(1 for _ in range(width) for _ in range(height))
+            return f"{count} cm²"
+
+
+        @given(
+            width=integers(min_value=1, max_value=100),
+            height=integers(min_value=1, max_value=100)
+        )
+        def test_calculate_rectangle_area(width: int, height: int) -> None:
+            assert_that(RectangleUtils.calculate_area(width, height),
+                        equal_to(count_area_on_grid(width, height)))
+        ```
+    </TabItem>
+</BoxedTabs>
+
+### Implementación de `calculate_area`
+
+Ahora, vamos a definir `calculate_area` en la clase `RectangleUtils` usando `@staticmethod` para que pueda ser llamada directamente desde la clase sin instancias:
+
+```python showLineNumbers
+class RectangleUtils:
+    @staticmethod
+    def calculate_area(width: int, height: int) -> str:
+        return f"{width * height} cm²"
+```
+
+<Explanation>
+    - **Pruebas con Hypothesis**: Generamos valores aleatorios para `width` y `height` usando Hypothesis, asegurándonos de probar un amplio rango de valores para verificar que `calculate_area` produce el resultado esperado.
+    - **Comparación con Hamcrest**: Utilizamos Hamcrest para comparar la salida de `calculate_area` con la de `count_area_on_grid`, una función auxiliar que calcula el área de forma iterativa.
+    - **Método estático en `RectangleUtils`**: La función `calculate_area` se define como estática con `@staticmethod`, permitiendo su acceso sin instanciar `RectangleUtils`.
+</Explanation>
+
+## Uso de Métodos de Fábrica con `@classmethod`
+
+El decorador `@classmethod` en Python permite implementar métodos de fábrica que validan o controlan la creación de instancias. Este enfoque es útil cuando necesitamos aplicar lógica específica antes de permitir la creación de un objeto. En este ejemplo, definimos una clase `User` que valida la edad antes de crear un usuario, lanzando una excepción si la edad es menor de 18.
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers
+        @given(
+            name=text(min_size=1),
+            age=integers(max_value=17)
+        )
+        def test_user_is_minor(name: str, age: int) -> None:
+            assert_that(calling(User.create).with_args(name, age),
+                        raises(ValueError))
+        
+        @given(
+            name=text(min_size=1),
+            age=integers(min_value=18)
+        )
+        def test_user_is_adult(name: str, age: int) -> None:
+            assert_that(User.create(name, age), equal_to(User(name, age)))
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="src/oop/src/static/test/user_test.py"
+        from hamcrest import assert_that, raises, equal_to, calling
+        from hypothesis import given
+        from hypothesis.strategies import text, integers
+
+        from oop.src.static.src.user import User
+
+        @given(
+            name=text(min_size=1),
+            age=integers(max_value=17)
+        )
+        def test_user_is_minor(name: str, age: int) -> None:
+            assert_that(calling(User.create).with_args(name, age),
+                        raises(ValueError))
+
+        @given(
+            name=text(min_size=1),
+            age=integers(min_value=18)
+        )
+        def test_user_is_adult(name: str, age: int) -> None:
+            assert_that(User.create(name, age), equal_to(User(name, age)))
+        ```
+    </TabItem>
+</BoxedTabs>
+
+
+<Explanation>
+    - **Test `test_user_is_minor`**: Verifica que `User.create` lanza una excepción `ValueError` cuando la edad es menor de 18. Hypothesis genera valores de edad en un rango de 0 a 17, y `calling(User.create).with_args(...)` permite probar si se lanza la excepción correcta.
+    - **Test `test_user_is_adult`**: Valida que `User.create` crea un objeto `User` correctamente cuando la edad es 18 o mayor. Utilizamos `equal_to` de Hamcrest para comparar el usuario creado con un objeto `User` de referencia.
+</Explanation>
+
+### Implementación de la Clase `User`
+
+Definimos la clase `User` con un método de fábrica `create` que valida la edad. Si la edad es menor de 18, `create` lanza una excepción `ValueError`. Además, incluimos métodos de acceso y la implementación de `__eq__` y `__hash__` para facilitar la comparación de instancias en las pruebas.
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers
+        class User:
+            def __init__(self, name: str, age: int) -> None:
+                self.__name = name
+                self.__age = age
+
+            @classmethod
+            def create(cls, name: str, age: int) -> 'User':
+                if age < 18:
+                    raise ValueError('User is a minor')
+                return cls(name, age)
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers
+        class User:
+            __name: str
+            __age: int
+
+            def __init__(self, name: str, age: int) -> None:
+                self.__name = name
+                self.__age = age
+
+            @property
+            def name(self) -> str:
+                return self.__name
+
+            @property
+            def age(self) -> int:
+                return self.__age
+
+            @classmethod
+            def create(cls, name: str, age: int) -> 'User':
+                if age < 18:
+                    raise ValueError('User is a minor')
+                return cls(name, age)
+
+            def __eq__(self, other: 'User') -> bool:
+                return (isinstance(other, User) and self.__name == other.__name
+                        and self.__age == other.__age)
+
+            def __hash__(self):
+                return hash((self.__class__, self.__name, self.__age))
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    - **Método de Fábrica `create`**: Este método de clase verifica que la edad sea válida antes de crear el objeto. Si la edad es menor a 18, lanza una excepción `ValueError` con el mensaje `"User is a minor"`.
+    - **Métodos de Acceso**: `name` y `age` se exponen a través de propiedades para un control de acceso seguro.
+    - **Sobrecarga de `__eq__` y `__hash__`**: Esto permite comparar instancias de `User` y utilizarlas en estructuras de datos que requieren hashing (como conjuntos o claves de diccionarios).
+</Explanation>
+
+## Diferencia entre `@staticmethod` y `@classmethod`
+
+Tanto `@staticmethod` como `@classmethod` son decoradores en Python que permiten definir métodos que no dependen de una instancia específica de una clase. Sin embargo, tienen diferencias importantes en cuanto a su propósito y uso:
+
+| **Característica**          | **@staticmethod**                                                                                 | **@classmethod**                                                                                          |
+|-----------------------------|---------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| **Asociación**              | Pertenece a la clase, pero no tiene acceso a la propia clase ni a sus instancias                 | Pertenece a la clase y recibe la propia clase como primer argumento                                       |
+| **Argumentos**              | Solo recibe los argumentos definidos en su propia firma                                          | Recibe la clase (`cls`) como primer argumento, seguido de los argumentos definidos                        |
+| **Uso común**               | Funciones auxiliares que no dependen del estado de la clase ni de sus instancias                  | Métodos de fábrica y lógica de construcción que requieren acceso a la clase                               |
+| **Instancia requerida**     | No necesita instancias para acceder ni tiene acceso a atributos de la clase o instancia          | No necesita instancias para acceder y puede acceder a atributos y métodos de clase                        |
+| **Acceso a la clase**       | No tiene acceso a los atributos o métodos de clase                                               | Puede acceder y modificar la clase en sí, útil para manejar variantes de objetos                          |
+
+## Resumen Comparativo
+
+| **Característica**                | **Python**                                                                                           | **Kotlin**                                                                                               |
+|-----------------------------------|------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
+| **Definición de funciones estáticas** | Se utiliza `@staticmethod` dentro de una clase para funciones que no requieren acceso a instancias o atributos de clase. | Se pueden definir funciones estáticas como **funciones de nivel superior** fuera de clases, además de `object` y `companion object`. |
+| **Acceso sin instancias**         | Los métodos estáticos se pueden llamar directamente desde la clase, pero requieren estar definidos dentro de una clase. | Las **funciones de nivel superior** no requieren estar dentro de una clase, por lo que pueden llamarse directamente tras ser importadas. |
+| **Métodos de fábrica**            | Se implementan con `@classmethod`, permitiendo validar condiciones o ajustar la creación de instancias. | Se utilizan **companion objects** para definir métodos de fábrica que pueden acceder a los atributos y métodos de la clase. |
+| **Acceso a la clase**             | `@classmethod` permite acceder y modificar atributos de clase, mientras que `@staticmethod` no tiene acceso a la clase. | Los métodos en **companion objects** pueden acceder a la clase y a sus atributos privados, ofreciendo flexibilidad en la creación y configuración. |
+| **Uso de variables globales**     | Las variables estáticas pueden declararse en el espacio de un módulo o dentro de clases con `@staticmethod`. | Las variables globales pueden definirse a nivel de archivo como **propiedades de nivel superior**, accesibles sin contenedor. |
+| **Agrupación de funciones estáticas** | Funciones estáticas adicionales suelen agruparse en módulos o clases específicas. | El uso de **object** permite agrupar funciones estáticas y compartir estado común sin requerir instancias. |
+
+### Beneficios y Limitaciones de Python
+
+<ProCons>
+    <Pros>
+        - **Claridad en la organización**: Python permite definir métodos y variables estáticas directamente dentro de clases o módulos, manteniendo la estructura organizada y con un uso específico de `@staticmethod` y `@classmethod`.
+        - **Flexibilidad en métodos de fábrica**: Usando `@classmethod`, se pueden implementar patrones de creación controlada, aplicando lógica de validación o ajuste antes de instanciar un objeto, lo que es útil en sistemas complejos.
+        - **Compatibilidad con módulos**: En Python, se pueden definir funciones de utilidad y variables globales en módulos sin necesidad de una clase, facilitando el acceso y reutilización en diferentes partes de la aplicación.
+        - **Compatibilidad con patrones de diseño**: Los métodos estáticos y de clase en Python permiten implementar patrones de diseño como el Singleton y Factory Method de forma directa y controlada.
+    </Pros>
+    <Cons>
+        - **Dependencia de clases para métodos estáticos**: A diferencia de Kotlin, donde las funciones de nivel superior están completamente fuera de clases, en Python, los métodos estáticos siempre necesitan estar contenidos en una clase, lo que puede ser innecesario en algunas implementaciones.
+        - **Limitaciones en agrupación de lógica común**: Python no tiene una estructura como `object` en Kotlin para agrupar funciones estáticas y estado compartido en un solo contenedor global sin instanciación, lo que a veces lleva a soluciones menos elegantes.
+        - **Limitaciones de encapsulación para métodos globales**: Al declarar funciones en un módulo, pueden perder el contexto o agrupación de clase que podría ser deseable en ciertas aplicaciones de gran tamaño, donde la organización interna puede volverse más difícil de seguir.
+        - **Menor flexibilidad en el acceso a métodos de clase**: En Python, `@staticmethod` no puede acceder a atributos o métodos de clase, lo que puede limitar su uso comparado con companion objects en Kotlin, que permiten más interacción dentro de la clase.
+    </Cons>
+</ProCons>
+
+## ¿Qué Aprendimos?
+
+En esta lección, exploramos cómo manejar funciones y variables estáticas en Python y las comparamos con las alternativas en Kotlin. Vimos las diferencias clave en cómo cada lenguaje implementa y organiza funciones y métodos estáticos, así como los patrones de diseño que facilitan su uso.
+
+### Puntos Clave
+
+- **Funciones Estáticas en Python**: Utilizamos `@staticmethod` para definir funciones que pertenecen a la clase y no dependen de instancias. Sin embargo, estas funciones deben definirse dentro de una clase, lo cual contrasta con Kotlin, donde se pueden definir como funciones de nivel superior accesibles sin necesidad de una clase.
+- **Métodos de Fábrica con `@classmethod`**: En Python, `@classmethod` permite crear métodos de fábrica, que son útiles para manejar la creación de instancias bajo ciertas condiciones. Esta funcionalidad es similar a los `companion objects` de Kotlin, los cuales permiten definir métodos asociados a la clase que pueden acceder a sus atributos y métodos privados.
+- **Comparación con Kotlin**: En Kotlin, las **funciones de nivel superior** y los **companion objects** ofrecen una mayor flexibilidad al permitir la definición de funciones y variables globales sin depender de una clase contenedora. Los `object` en Kotlin también facilitan la agrupación de lógica común y estado compartido en un único contenedor.
+
+### Conclusión
+
+Esta comparación entre Python y Kotlin subraya las ventajas de cada enfoque y los diferentes grados de flexibilidad que ofrecen ambos lenguajes al definir métodos y variables estáticas, así como en la organización y acceso a sus funcionalidades.
+
+<References references={[
+    {
+        title: "A Pythonic Object",
+        bookTitle: "Fluent Python: Clear, concise, and effective programming",
+        publisher: "O’Reilly",
+        pages: "363–396",
+        year: "2022",
+        author: "L. Ramalho",
+        type: "book",
+    },
+]} additionalReferences={[
+    {
+        title: "Built-in Functions",
+        url: "https://docs.python.org/3/library/functions.html",
+        accessedDate: "31 de octubre de 2024",
+        type: "web",
+    },
+]}/>
