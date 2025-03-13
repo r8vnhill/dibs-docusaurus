@@ -17,99 +17,38 @@ import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
 import CodeBlock from '@theme/CodeBlock'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 
 <ReadingTime />
 <GithubRepoLink repo={"assertions-kt"} user={"r8vnhill"}/>
 <RepoClone repoName={"assertions-kt"} />
+<ModuleSetup module='assertions' task='setupAssertionsModule'>
+    ```kotlin showLineNumbers
+    import tasks.ModuleSetupTask
 
-<details>
-    <summary>
-        Comencemos por crear un módulo para la lección...
-    </summary>
+    tasks.register<ModuleSetupTask>("setupAssertionsModule") {
+        description = "Creates the base module and files for the assertions lesson"
+        module.set("assertions")
 
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path 'assert' -ItemType Directory
-            '// Intentionally left blank' |
-                Out-File -FilePath 'assert/build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            md 'assert'
-            '// Intentionally left blank' > 'assert/build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            mkdir -p 'assert'
-            echo '// Intentionally left blank' > 'assert/build.gradle.kts'
-            ```
-        </TabItem>
-    </BoxedTabs>
-
-    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
-</details>
+        doLast {
+            createFiles(
+                "calculator",
+                test to "CalculatorTest.kt",
+                main to "Calculator.kt",
+            )
+            createFiles(
+                "assertions",
+                test to "assertTrue.kt",
+                test to "assertIsOrdered.kt",
+            )
+        }
+    }
+    ```
+</ModuleSetup>
 
 Las **aserciones** son instrucciones que verifican si una condición específica es verdadera en un punto particular del código. Si la condición es falsa, la aserción falla y se lanza una excepción, interrumpiendo la ejecución del programa o prueba. Los frameworks de testing capturan estas excepciones para generar reportes detallados de los resultados.
 
 ## Implementación manual
-
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-
-            ```powershell
-            $CalculatorTestDir = "assert\src\test\kotlin\$Group\calculator"
-            $CalculatorMainDir = "assert\src\main\kotlin\$Group\calculator"
-            $CalculatorTestDir | New-Item -ItemType Directory -Force
-            $CalculatorMainDir | New-Item -ItemType Directory -Force
-            "package $Group.calculator" -replace '\\', '.' | 
-                Out-File -FilePath "$CalculatorTestDir\CalculatorTest.kt"
-            "package $Group.calculator" -replace '\\', '.' |
-                Out-File -FilePath "$CalculatorMainDir\Calculator.kt"
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-
-            ```powershell
-            $CalculatorTestDir = "assert\src\test\kotlin\$Group\calculator"
-            $CalculatorMainDir = "assert\src\main\kotlin\$Group\calculator"
-            $CalculatorTestDir, $CalculatorMainDir | % { md $_ }
-            "package $Group.calculator" -replace '\\', '.' > `
-                "$CalculatorTestDir\CalculatorTest.kt"
-            "package $Group.calculator" -replace '\\', '.' > `
-                "$CalculatorMainDir\Calculator.kt"
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            GROUP="com/github/username"
-            ```
-
-            ```bash
-            CALCULATOR_TEST_DIR="assert/src/test/kotlin/$GROUP/calculator"
-            CALCULATOR_MAIN_DIR="assert/src/main/kotlin/$GROUP/calculator"
-            mkdir -p "$CALCULATOR_TEST_DIR" "$CALCULATOR_MAIN_DIR"
-            echo "package ${GROUP//\//.}.calculator" > \
-                "$CALCULATOR_TEST_DIR/CalculatorTest.kt"
-            echo "package ${GROUP//\//.}.calculator" > \
-                "$CALCULATOR_MAIN_DIR/Calculator.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
 
 Por ejemplo, consideremos una prueba escrita manualmente:
 
@@ -212,39 +151,6 @@ Sin embargo, podemos simplificar y mejorar este test utilizando las aserciones q
 </Explanation>
 
 ## Implementación de Aserciones Personalizadas
-
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $AssertionsDir = "assert\src\test\kotlin\$Group\assertions"
-            New-Item -Path $AssertionsDir -ItemType Directory -Force
-            "package $Group.assertions" -replace '\\', '.' | 
-                Out-File -FilePath "$AssertionsDir\AssertTrue.kt"
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            $AssertionsDir = "assert\src\test\kotlin\$Group\assertions"
-            md $AssertionsDir
-            "package $Group.assertions" -replace '\\', '.' > `
-                "$AssertionsDir\AssertTrue.kt"
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            ASSERTIONS_DIR="assert/src/test/kotlin/$GROUP/assertions"
-            mkdir -p "$ASSERTIONS_DIR"
-            echo "package ${GROUP//\//.}.assertions" > \
-                "$ASSERTIONS_DIR/AssertTrue.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
 
 Supongamos ahora que queremos implementar nuestras propias funciones de aserción personalizadas para simplificar la escritura de pruebas. Por ejemplo, podemos crear una función `assertTrue` que verifique si una condición es verdadera y lance una excepción si no lo es.
 
