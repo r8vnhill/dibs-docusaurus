@@ -222,12 +222,36 @@ fun Int.shouldNotBeNegative(): Int {
         <BoxedTabs>
             <TabItem label={"Código esencial"} value={"Código esencial"}>
                 ```kotlin showLineNumbers
-                
+                fun Int.shouldBeNegative(): Int {
+                    this should beNegative()
+                    return this
+                }
+
+                fun Int.shouldNotBeNegative(): Int {
+                    this shouldNot beNegative()
+                    return this
+                }                
                 ```
             </TabItem>
             <TabItem label={"Código completo"} value={"Código completo"}>
                 ```kotlin showLineNumbers
-                
+                fun beNegative() = Matcher<Int> { actual ->
+                    MatcherResult(
+                        actual < 0,
+                        { "Expected $actual to be negative" },
+                        { "Expected $actual to be non-negative" }
+                    )
+                }
+
+                fun Int.shouldBeNegative(): Int {
+                    this should beNegative()
+                    return this
+                }
+
+                fun Int.shouldNotBeNegative(): Int {
+                    this shouldNot beNegative()
+                    return this
+                }
                 ```
             </TabItem>
         </BoxedTabs>    
@@ -299,181 +323,85 @@ Supongamos que queremos añadir una función `second()` a las listas, que devuel
     </TabItem>
 </BoxedTabs>
 
-:::info Explicación del Código
+<Explanation>
+    - **[1]** Definimos una función de extensión `second()` para `List<T>`.
+    - **[2]** Verificamos si la lista tiene al menos dos elementos.
+    - **[3]** Devolvemos el segundo elemento usando `this[1]`.    
+</Explanation>
 
-- **[1]** Definimos una función de extensión `second()` para `List<T>`.
-- **[2]** Verificamos si la lista tiene al menos dos elementos.
-- **[3]** Devolvemos el segundo elemento usando `this[1]`.
+## Uso de `run` y Extensiones de Receptores
 
-:::
+En Kotlin, la función `run` te permite ejecutar un bloque de código en el contexto de un objeto. Esto es especialmente útil cuando deseas ejecutar métodos de extensión definidos dentro de una clase de manera concisa y legible.
 
-## Extender una Clase Genérica
+### Ejemplo completo usando `run` con funciones de extensión internas
 
-Los métodos de extensión pueden ser genéricos, lo que te permite trabajar con clases genéricas.
-
-### Ejemplo: Transponer una Lista de Listas
-
-Queremos crear una función de extensión que transponga una lista de listas (matriz), es decir, intercambiar filas por columnas.
+A continuación veremos cómo definir una función de extensión dentro de una clase y luego utilizar `run` desde fuera para ejecutarla.
 
 <BoxedTabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
+    <TabItem label="Código esencial" value="Código esencial">
+
         ```kotlin showLineNumbers
-        fun <T> List<List<T>>.transpose(): List<List<T>> {
-            // ...
+        class Greeter(val greeting: String) {
+
+            // Función de extensión interna
+            fun String.withGreeting(): String = "$greeting, $this!"
         }
         ```
 
+        Para utilizar esta función desde fuera de la clase con `run`:
+
         ```kotlin showLineNumbers
-        val matrix = listOf(
-            listOf(1, 2, 3),
-            listOf(4, 5, 6)
-        )
-        matrix.transpose() shouldBe listOf(
-            listOf(1, 4),
-            listOf(2, 5),
-            listOf(3, 6)
-        )
+        val greeter = Greeter("Hello")
+
+        val message = greeter.run { "Alice".withGreeting() }
+
+        println(message) // Imprime: Hello, Alice!
         ```
+
     </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
+    <TabItem label="Código completo" value="Código completo">
+
         ```kotlin showLineNumbers
-        fun <T> List<List<T>>.transpose(): List<List<T>> {
-            if (isEmpty() || this[0].isEmpty()) return emptyList()
+        package greet
 
-            val rowCount = this.size
-            val columnCount = this[0].size
-            val result = MutableList(columnCount) { MutableList<T>(rowCount) { this[0][0] } }
+        class Greeter(val greeting: String) {
 
-            for (rowIndex in 0..<rowCount) {
-                for (columnIndex in 0..<columnCount) {
-                    result[columnIndex][rowIndex] = this[rowIndex][columnIndex]
-                }
-            }
-
-            return result
+            // Función de extensión interna para String
+            fun String.withGreeting(): String = "$greeting, $this!"
         }
         ```
 
+        Test asociado:
+
         ```kotlin showLineNumbers
-        class MatrixTest : FreeSpec({
-            "Transposing a matrix" - {
-                "returns a matrix with rows and columns swapped" {
-                    val matrix = listOf(
-                        listOf(1, 2, 3),
-                        listOf(4, 5, 6)
-                    )
-                    val transposed = matrix.transpose()
-                    transposed shouldBe listOf(
-                        listOf(1, 4),
-                        listOf(2, 5),
-                        listOf(3, 6)
-                    )
+        package greet
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+
+        class GreeterTest : FreeSpec({
+            "Greeter" - {
+                "should format greeting message correctly" {
+                    val greeter = Greeter("Hello")
+
+                    val message = greeter.run {
+                        "Alice".withGreeting()
+                    }
+
+                    message shouldBe "Hello, Alice!"
                 }
             }
         })
         ```
 
-        :::info Explicación del Código
-
-        - **[2]** Verificamos si la lista o sus sublistas están vacías.
-        - **[4-5]** Calculamos el número de filas y columnas.
-        - **[6]** Creamos una matriz mutable con las dimensiones intercambiadas.
-        - **[8-12]** Iteramos sobre la matriz original y transponemos los elementos.
-
-        :::
     </TabItem>
 </BoxedTabs>
 
-## Funciones de Extensión Dentro de una Clase
-
-Puedes definir funciones de extensión dentro de una clase. Estas funciones de extensión pueden acceder a los miembros de la clase externa, incluso si son privados.
-
-### Ejemplo: Función de Extensión en una Clase
-
-<BoxedTabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers
-        class Host(val hostname: String) {
-            fun formatConnectionString(port: Int) {
-                fun Int.formatPort() = "Port: $this"
-                return "$hostname connects to ${port.formatPort()}"
-            }
-        }
-        ```
-
-        ```kotlin showLineNumbers
-        val host = Host("example.com")
-        host.formatConnectionString(8080) shouldBe
-            "example.com connects to Port: 8080"
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```Kotlin showLineNumbers
-        class Host(val hostname: String) {
-            fun formatConnectionString(port: Int) {
-                fun Int.formatPort() = "Port: $this"
-                return "$hostname connects to ${port.formatPort()}"
-            }
-        }
-        ```
-
-        ```kotlin showLineNumbers
-        class HostTest : FreeSpec({
-            "Creating a connection string" - {
-                "should format the port number" {
-                    val host = Host("example.com")
-                    host.formatConnectionString(8080) shouldBe
-                        "example.com connects to Port: 8080"
-                }
-            }
-        })
-        ```
-    </TabItem>
-</BoxedTabs>
-
-**Explicación**:
-
-- **[1]** Dentro de `printConnectionString`, definimos una función de extensión `formatPort()` para `Int`.
-- **[2]** `formatPort()` puede acceder a `this` (el `Int` al que se aplica) y a los miembros de `Host`.
-- **[3]** Llamamos a `formatPort()` en `port` para formatear el número.
-
-### Uso de `with` y Extensiones de Receptores
-
-En Kotlin, la función `with` cambia temporalmente el contexto de un objeto, permitiendo que las funciones y propiedades se apliquen directamente dentro de ese contexto. Esto es útil para agrupar varias operaciones que se realizan sobre un mismo objeto sin necesidad de referenciarlo repetidamente. Cuando usamos `with`, el objeto se convierte en el receptor de las funciones dentro del bloque.
-
-#### Sintaxis de `with`
-
-```kotlin
-with(receiver) {
-    // Código que se ejecuta en el contexto del receptor
-}
-```
-
-Donde `receiver` es el objeto cuyo contexto se usará dentro del bloque de código. Todo lo que esté dentro del bloque de `with` usará ese objeto como referencia para acceder a sus métodos y propiedades.
-
-#### Ejemplo con Métodos de Extensión de Receptores
-
-Kotlin permite definir **métodos de extensión** que actúan como si estuvieran definidos dentro de otra clase o tipo, llamados **receptores**. Puedes combinar `with` con funciones de extensión para ejecutar fácilmente funciones que usan un contexto de receptor específico.
-
-```kotlin showLineNumbers
-class Greeter {
-    fun String.greet() = println("Hello, $this!")
-}
-
-val greeter = Greeter()
-with(greeter) {
-    "Kotlin".greet()
-}
-// Output: Hello, Kotlin!
-```
-
-:::info Explicación del Ejemplo
-
-- **[2]** Se define una función de extensión `greet()` para `String` dentro de la clase `Greeter`. En este caso, `greet` imprime un saludo utilizando `this`, que dentro de la extensión se refiere al objeto `String` en el que la función se llama.
-- **[6]** El contexto de `with(greeter)` establece a `greeter` como el receptor del bloque de código.
-- **[7]** Dentro del bloque, `"Kotlin".greet()` se refiere a la función de extensión `greet` que fue definida dentro de `Greeter`. Aquí, `"Kotlin"` es el valor de `this` para la función de extensión.
-
-:::
+<Explanation>
+    - La función de extensión `withGreeting()` se define dentro de la clase `Greeter` y tiene acceso a sus propiedades, incluso aunque esté extendiendo la clase `String`.
+    - Al usar `greeter.run { ... }`, establecemos `greeter` como el receptor implícito, permitiendo invocar métodos y extensiones definidas en `Greeter` de forma directa y legible.
+    - Esto hace que la función `run` sea particularmente útil para ejecutar métodos de extensión que dependen del contexto interno de una clase.
+</Explanation>
 
 ## Propiedades de Extensión
 
@@ -513,6 +441,43 @@ val sentence = "Kotlin is fun"
 println(sentence.firstWord) // Output: Kotlin
 ```
 
+## Beneficios y limitaciones de los métodos de extensión
+
+<ProCons>
+    <Pros>
+        - **Mayor legibilidad**: Permiten invocar métodos como si fueran parte de la clase original, haciendo el código más expresivo y fácil de entender.
+        - **Extensibilidad**: Facilitan la extensión de clases provenientes de librerías externas o APIs, incluso si no tienes acceso a su código fuente.
+        - **Flexibilidad**: Evitan la necesidad de utilizar herencia excesiva para añadir funcionalidad, manteniendo jerarquías más simples y claras.
+        - **Separación de responsabilidades**: Ayudan a separar claramente nuevas funcionalidades de la implementación original, promoviendo un diseño modular.
+        - **Facilidad para pruebas unitarias**: Facilitan la creación de métodos específicos para pruebas, incrementando la legibilidad y la fluidez de los tests.
+    </Pros>
+    <Cons>
+        - **Acceso limitado**: Las funciones de extensión no pueden acceder a miembros privados o protegidos de la clase que extienden, salvo si están definidas dentro de la misma clase.
+        - **Riesgo de sobreuso**: Pueden incentivar la creación excesiva de métodos, generando dificultad para identificar claramente dónde está implementada una funcionalidad específica.
+        - **Conflictos potenciales**: Dos extensiones con la misma firma pueden causar conflictos, haciendo el código difícil de mantener si no se gestionan adecuadamente los espacios de nombres (imports).
+        - **No modifican realmente la clase original**: Aunque parecen métodos propios de la clase, son funciones externas que podrían causar confusión si no están claramente documentadas.
+    </Cons>
+</ProCons>
+
+Aquí tienes la última sección **completa** con su ejemplo y conclusiones claras para cerrar la lección sobre **métodos de extensión**:
+
+## Conclusiones
+
+Los métodos y propiedades de extensión son herramientas esenciales en Kotlin para añadir funcionalidad adicional a clases existentes de forma clara, concisa y segura. Permiten mantener un diseño modular, limpio y fácil de mantener, evitando el uso innecesario de herencia y promoviendo la separación de responsabilidades.
+
+Sin embargo, como toda herramienta poderosa, requieren un uso cuidadoso y equilibrado para evitar problemas como conflictos en los nombres o confusiones sobre el origen real del método o propiedad.
+
+### Puntos clave
+
+- **Extensiones simples y efectivas**: Permiten mejorar la usabilidad y expresividad del código sin modificar la implementación original de la clase.
+- **Modularidad y legibilidad**: Fomentan un diseño modular y un código fácil de mantener y leer.
+- **Facilitan la integración con bibliotecas externas**: Puedes extender fácilmente clases externas y adaptarlas a tus necesidades sin utilizar herencia.
+- **Precaución con conflictos y uso excesivo**: Es importante utilizar los métodos y propiedades de extensión con moderación, asegurando claridad y evitando conflictos en los espacios de nombres.
+
+---
+
+En definitiva, dominar los métodos y propiedades de extensión te permite aprovechar al máximo la flexibilidad y potencia del lenguaje Kotlin, facilitando la creación de código limpio, expresivo y fácil de mantener.
+
 <div className="language-card-container">
     <LanguageCard
         logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Logo_C_sharp.svg/1200px-Logo_C_sharp.svg.png"
@@ -530,3 +495,12 @@ println(sentence.firstWord) // Output: Kotlin
         link="/docs/oop/extension/swift"
     />
 </div>
+
+<References references={[
+    {
+        title: "Extensions | Kotlin",
+        url: "https://kotlinlang.org/docs/extensions.html",
+        accessedDate: "14 de marzo de 2025",
+        type: "web",
+    },
+]} />
