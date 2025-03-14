@@ -1,23 +1,27 @@
 ---
-title: java
+title: Clases selladas en Java
 ---
-import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime/>
-
-
-## Java
+<GithubRepoLink user="r8vnhill" repo="java-dibs" />
 
 En **Java**, las **clases selladas** (introducidas en **Java 15** como una característica preliminar y oficializadas en **Java 17**) se utilizan de manera similar a Kotlin, permitiendo controlar qué subclases pueden extender una clase o implementar una interfaz. Aunque existen similitudes con Kotlin, también hay diferencias importantes, particularmente en cómo Java maneja la exhaustividad en los patrones `switch`.
 
-### Características Clave de las Clases Selladas en Java
-
-- **Restricción de subclases**: Las subclases deben estar explícitamente permitidas usando la palabra clave `permits`.
-- **Exhaustividad opcional**: En Java, los `switch` pueden ser exhaustivos, pero no lo son por defecto en todas las versiones; algunas versiones pueden requerir un caso `default`.
-- **Modificadores de acceso**: Las subclases deben estar dentro del mismo módulo o paquete que la clase sellada, similar a Kotlin.
-
-### Ejemplo: Sistema de Pagos en Java
+## Ejemplo: Sistema de Pagos en Java
 
 ```java
 public sealed interface Payment permits CreditCard, Cash, Unpaid {}
@@ -35,7 +39,7 @@ En este ejemplo, la interfaz `Payment` es sellada y solo permite tres implementa
 Es importante resaltar que los **records** en _Java_ necesitan recibir parámetros en su constructor, lo que impide que existan equivalentes directos a los **data objects** de _Kotlin_, debido a esto, se utiliza una clase cerrada (``final``) con un constructor vacío (que se genera automáticamente) para simular el comportamiento de un **data object**.
 :::
 
-### Manejo con `switch` en Java
+## Manejo con `switch` en Java
 
 En versiones recientes de Java, se puede utilizar un `switch` exhaustivo, pero a menudo es necesario incluir un caso `default` para manejar la exhaustividad, esto introduce un riesgo de errores si se agregan nuevas subclases en el futuro así que debe manejarse con precaución.
 
@@ -50,7 +54,7 @@ public static void handlePayment(Payment payment) {
 }
 ```
 
-### Diferencias Clave con Kotlin
+## Diferencias Clave con Kotlin
 
 1. **Palabras clave**:
   - En Java, la restricción de subclases se especifica con `permits` en la declaración de la clase sellada. En Kotlin, las subclases deben estar en el mismo paquete y módulo sin una declaración explícita.
@@ -61,15 +65,15 @@ public static void handlePayment(Payment payment) {
 3. **Manejo de objetos sellados**:
   - Kotlin tiene una sintaxis más expresiva para el manejo de clases selladas con el uso de `data objects` y `data classes`, mientras que en Java, todas las subclases deben ser clases concretas que extienden o implementan la clase o interfaz sellada.
 
-### Reflexión en Java
+## Reflexión en Java
 
 En Java, listar todas las subclases de una clase sellada no es una tarea sencilla como en Kotlin con `sealedSubclasses`. No existe un equivalente directo, por lo que es necesario utilizar técnicas de **reflexión avanzada** o depender de bibliotecas externas que escanean el classpath para obtener las subclases de una clase.
 
-#### Uso de Reflections en Java
+### Uso de Reflections en Java
 
 Una manera de obtener todas las subclases de una clase sellada en Java es utilizar una biblioteca de reflexión como **Reflections**. Esta biblioteca permite buscar clases que implementan o extienden otras clases en el classpath.
 
-##### Paso 1: Agregar la dependencia de **Reflections**
+#### Paso 1: Agregar la dependencia de **Reflections**
 
 Agrega la dependencia de **Reflections** en tu archivo `build.gradle.kts`.
 
@@ -77,7 +81,7 @@ Agrega la dependencia de **Reflections** en tu archivo `build.gradle.kts`.
 implementation("org.reflections:reflections:0.10.2")
 ```
 
-##### Paso 2: Listar las subclases de una clase sellada
+#### Paso 2: Listar las subclases de una clase sellada
 
 Ahora, puedes usar **Reflections** para encontrar las subclases de una clase sellada. Aquí tienes un ejemplo que lista todas las subclases de `Payment`, una interfaz sellada:
 
@@ -89,12 +93,12 @@ subtypes.forEach(subtype -> System.out.println("Subclass: " + subtype.getName())
 
 En este ejemplo, la clase **Reflections** escanea el paquete `"cl.ravenhill"` en el classpath y encuentra todas las clases que extienden o implementan `Payment`.
 
-#### Limitaciones
+### Limitaciones
 
 - **Reflections** solo puede encontrar subclases que están **en el classpath** al momento de la ejecución. Si las subclases están distribuidas en otros módulos o paquetes no incluidos en el classpath, no serán detectadas.
 - Es necesario configurar el paquete correcto en la clase **Reflections**, lo que puede ser un inconveniente si tienes una jerarquía de paquetes compleja.
 
-#### Comparación con Kotlin
+### Comparación con Kotlin
 
 En Kotlin, el uso de la reflexión para obtener las subclases de una clase sellada es mucho más sencillo gracias a la función `sealedSubclasses`. No es necesario usar bibliotecas externas ni configurar el escaneo de paquetes manualmente. Solo necesitas invocar `sealedSubclasses` directamente:
 

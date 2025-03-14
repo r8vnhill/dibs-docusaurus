@@ -17,7 +17,9 @@ import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
 
 <ReadingTime />
-<GithubRepoLink user="r8vnhill" repo="" />
+<GithubRepoLink user="r8vnhill" repo="rust-dibs" />
+
+En esta lección aprenderemos cómo Rust garantiza la void-safety (seguridad ante referencias nulas) a través del tipo `Option`, y cómo su enfoque difiere de otros lenguajes como Kotlin.
 
 Rust es un lenguaje de programación moderno que aborda el problema de la **nulabilidad** de manera segura mediante el uso de tipos como **`Option`**. Al igual que Kotlin, Rust evita errores comunes como los `NullPointerException` mediante la verificación en tiempo de compilación, asegurando que las referencias nulas sean manejadas de manera explícita.
 
@@ -88,8 +90,7 @@ fn calculate() -> Option<i32> {
 
 ```rust showLineNumbers
 fn main() {
-    println!("{:?}", divide(10, 2));
-    println!("{:?}", divide(10, 0));
+    println!("{:?}", calculate());
 }
 ```
 
@@ -108,19 +109,20 @@ fn main() {
 | **Evita errores de referencia nula** | Rust no permite referencias nulas, eliminando por completo el riesgo de `NullPointerException`.          | Kotlin previene `NullPointerException` con su sistema de tipos seguro y operadores para anulables. |
 | **Propagación de valores nulos**     | Usa el operador `?` para propagar valores opcionales de forma concisa.                                   | Usa `?.` y el operador Elvis `?:` para manejar y propagar valores nulos.                           |
 | **Unwrapping Forzado**               | Se puede forzar el unwrapping de `Option` usando el método `.unwrap()`, que lanza un error si es `None`. | El operador `!!` se usa para forzar el unwrapping de un valor nulo, lanzando una excepción.        |
+| **Impacto en rendimiento** | Muy bajo impacto, la mayoría de las verificaciones son optimizadas por el compilador. | Ligero impacto al realizar chequeos en tiempo de ejecución (`?.`, `?:`), pero optimizados en JVM. |
 
 ### Beneficios y limitaciones
 
 <ProCons>
     <Pros>
         - **Seguridad en tiempo de compilación**: Rust garantiza la seguridad en cuanto a referencias nulas, evitando errores como `NullPointerException` en tiempo de ejecución mediante la verificación en tiempo de compilación. Esto mejora la robustez del código.
-        - **Manejo explícito de nulabilidad**: Al requerir que lxs desarrolladorxs utilicen el tipo `Option` para representar valores opcionales, Rust asegura que las posibilidades de valores nulos se manejen explícitamente. Esto fuerza un diseño más cuidadoso y evita el uso indebido de referencias nulas.
+        - **Manejo explícito de nulabilidad**: Al requerir que quienes desarrollan utilicen el tipo `Option` para representar valores opcionales, Rust asegura que las posibilidades de valores nulos se manejen explícitamente. Esto fuerza un diseño más cuidadoso y evita el uso indebido de referencias nulas.
         - **Propagación sencilla de errores**: El operador `?` en Rust simplifica la propagación de errores y valores opcionales, eliminando la necesidad de un manejo detallado de errores en cada punto, lo que hace que el código sea más limpio y legible.
         - **Eliminación total de `null`**: Al no tener `null` en su sistema de tipos, Rust previene cualquier riesgo de referencias nulas de manera intrínseca, lo que lo hace más seguro en este aspecto comparado con otros lenguajes que permiten referencias nulas.
     </Pros>
     <Cons>
         - **Curva de aprendizaje**: El manejo explícito de nulabilidad con `Option` y las mecánicas adicionales como `unwrap()` o el operador `?` puede ser complicado para principiantes o para quienes vienen de lenguajes que permiten `null` de forma más flexible.
-        - **Sobrecarga cognitiva**: Aunque el manejo explícito de valores opcionales es seguro, puede aumentar la complejidad del código y la carga cognitiva para lxs desarrolladorxs, especialmente en casos donde hay muchos valores opcionales involucrados.
+        - **Sobrecarga cognitiva**: Aunque el manejo explícito de valores opcionales es seguro, puede aumentar la complejidad del código y la carga cognitiva para quienes desarrollan, especialmente en casos donde hay muchos valores opcionales involucrados.
         - **Unwrapping inseguro**: Aunque Rust proporciona el método `unwrap()` para forzar el acceso a un valor dentro de un `Option`, este puede llevar a errores en tiempo de ejecución si se utiliza sin cuidado, similar a los riesgos del operador `!!` en Kotlin.
         - **Verboso en algunos casos**: Manejar `Option` y usar `match` o `if let` puede hacer que el código sea más detallado y largo, especialmente en comparación con otros lenguajes que tienen un manejo de nulabilidad más compacto.
     </Cons>
@@ -128,20 +130,16 @@ fn main() {
 
 ## ¿Qué aprendimos?
 
-En esta lección, exploramos cómo **Rust** maneja la **void-safety** de manera más estricta y segura en comparación con otros lenguajes como Kotlin, que también tienen mecanismos robustos para evitar errores de nulabilidad.
+En esta lección vimos cómo **Rust** maneja de forma estricta la nulabilidad mediante el tipo `Option`, proporcionando una seguridad aún más robusta que Kotlin al eliminar completamente el concepto de `null`.
 
 ### Puntos clave
 
-1. **Eliminación del `null`**: Rust elimina el concepto de `null` en su sistema de tipos, utilizando en su lugar el tipo `Option` para representar valores opcionales, lo que garantiza que los errores relacionados con referencias nulas sean imposibles si se sigue el modelo recomendado.   
-2. **Uso de `Option<T>`**: Rust obliga a lxs desarrolladorxs a manejar explícitamente la posibilidad de que un valor pueda no estar presente, promoviendo un diseño de código más cuidadoso y seguro. Esto se logra mediante el tipo `Option`, que tiene dos variantes: `Some(T)` y `None`.
-3. **Manejo con `match` e `if let`**: Para acceder a los valores dentro de un `Option`, se deben usar estructuras de control explícitas como `match` o `if let`, lo que hace que el código sea más claro en cuanto al manejo de casos opcionales.
-4. **Propagación de valores con `?`**: Rust incluye el operador `?` para facilitar la propagación de valores opcionales o errores, haciendo que el código sea más limpio al evitar el manejo manual de cada caso individualmente.
-5. **Comparación con Kotlin**: Aunque Kotlin ofrece un sistema de tipos seguro con su manejo de nulabilidad (`String?`), Rust lleva la seguridad al siguiente nivel al no permitir `null` de ninguna forma y obligar a que los valores opcionales se manejen de manera explícita a través de `Option`.
-6. **Manejo explícito vs. simplicidad**: Aunque el manejo explícito de valores nulos en Rust es muy seguro, puede resultar en código más verboso y en una curva de aprendizaje más empinada, especialmente para quienes provienen de lenguajes que permiten `null` de forma más flexible.
+- **No existe `null`**: Rust reemplaza la nulabilidad por el tipo `Option`.
+- **Explícito por diseño**: Obliga a manejar explícitamente valores opcionales usando `match` o `if let`.
+- **Operador `?`**: Facilita la propagación concisa y segura de valores opcionales.
+- **Seguridad rigurosa**: Rust previene por completo errores como `NullPointerException`, mejorando la fiabilidad del código a costa de un poco más de verbosidad.
 
----
-
-Rust es un lenguaje ideal para desarrolladorxs que buscan seguridad rigurosa en el manejo de nulabilidad, y aunque tiene algunas desventajas en términos de complejidad, las ventajas de evitar errores en tiempo de ejecución lo hacen una excelente opción para sistemas críticos y aplicaciones que demandan alta fiabilidad.
+Rust ofrece máxima seguridad ante referencias nulas, lo que lo hace especialmente adecuado para aplicaciones críticas donde la robustez es prioridad.
 
 <References references={[
     {
