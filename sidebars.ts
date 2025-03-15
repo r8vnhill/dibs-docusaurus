@@ -136,6 +136,7 @@ const sidebars: SidebarsConfig = {
                             },
                             items: [
                                 'testing/pbt/generators/examples/prng/kt',
+                                'testing/pbt/generators/stats/kt',
                             ],
                         },
                     ],

@@ -1,0 +1,583 @@
+---
+title: Recolección de estadísticas
+---
+
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="testing-kt" />
+<ModuleSetup module='stats' task='setupStatsModule'>
+    ```kotlin showLineNumbers
+    import tasks.ModuleSetupTask
+
+    tasks.register<ModuleSetupTask>("setupStatsModule") {
+        description = "Creates the base module and files for the statistics collection lesson"
+        module.set("pbt:arbitrary:stats")
+        doLast {
+            createFiles(
+                "zoo",
+                main to "Animal.kt",
+                test to "AnimalTest.kt",
+            )
+            createFiles(
+                "geometry",
+                main to "Triangle.kt",
+                test to "TriangleTest.kt",
+            )
+        }
+    }
+    ```
+</ModuleSetup>
+
+La **recolección de estadísticas** en pruebas basadas en propiedades es crucial para verificar si los datos generados por nuestros generadores personalizados cumplen las expectativas del test. En Kotest, la función `collect` permite obtener estadísticas sobre los valores generados, ayudándonos a detectar problemas como distribuciones sesgadas o errores en la implementación del generador.
+
+En esta lección aprenderemos cómo usar `collect` para verificar y corregir errores comunes en generadores personalizados mediante un ejemplo práctico.
+
+## ¿Qué es la función `collect`?
+
+La función `collect` permite contabilizar y mostrar la frecuencia con que ciertos valores o categorías son generados durante la ejecución de pruebas basadas en propiedades. Esto resulta especialmente útil cuando queremos asegurarnos de que un generador personalizado produce datos variados y equilibrados.
+
+### Sintaxis básica
+
+```kotlin showLineNumbers
+checkAll(arbGeneradorPersonalizado()) { valorGenerado ->
+    collect(valorGenerado)
+    // Aquí van las verificaciones adicionales del test
+}
+```
+    
+## Caso práctico: Detectando sesgos sutiles en un generador
+
+En este ejemplo, queremos generar animales de tres tipos: `Lion`, `Penguin` y `Turtle`, con la siguiente distribución:
+
+- **50%** de probabilidades de ser un `Lion`
+- **25%** de probabilidades de ser un `Penguin`
+- **25%** de probabilidades de ser una `Turtle`
+
+Suena simple, pero veremos que un error pequeño puede desviar por completo la distribución.
+
+### Paso 1: Definimos nuestro Generador
+
+A continuación, se muestra un generador que **aparentemente** produce los tres animales con la distribución deseada. Sin embargo, verás que hay un error en la última rama del `if-else`:
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        fun arbAnimalWrong(): Arb<Animal> = arbitrary { (random, _) ->
+            val x = random.nextDouble() // valor entre 0.0 y 1.0
+            when {
+                x < 0.50 -> Lion
+                x < 0.75 -> Penguin
+                // highlight-next-line
+                else -> Penguin
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="pbt/arbitrary/stats/src/main/kotlin/com/github/username/zoo/Animal.kt"
+        package com.github.username.zoo
+
+        interface Animal
+        object Lion : Animal
+        object Penguin : Animal
+        object Turtle : Animal
+        ```
+
+        ```kotlin showLineNumbers title="pbt/arbitrary/stats/src/test/kotlin/com/github/username/zoo/AnimalTest.kt"
+        package com.github.username.zoo
+
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.arbitrary
+
+        private fun arbAnimalWrong(): Arb<Animal> = arbitrary { (random, _) ->
+            val x = random.nextDouble() // valor entre 0.0 y 1.0
+            when {
+                x < 0.50 -> Lion
+                x < 0.75 -> Penguin
+                else -> Penguin
+            }
+        }
+        ```
+    </TabItem>
+</BoxedTabs>
+
+:::danger ¡Cuidado!
+
+Observa que la última rama de `else` **repite** `Penguin`, en lugar de devolver `Turtle`. A simple vista podría pasarse por alto.
+
+:::
+
+### Paso 2: Verificamos la Distribución con `collect`
+
+Para saber si nuestro generador está produciendo la distribución que esperamos, utilizamos la función `collect`. Cada vez que se genera un animal, lo registramos como una categoría:
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        checkAll(arbAnimalWrong()) { animal ->
+            collect(animal)
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="pbt/arbitrary/stats/src/test/kotlin/com/github/username/zoo/AnimalTest.kt"
+        package com.github.username.zoo
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.arbitrary
+        import io.kotest.property.checkAll
+
+        private fun arbAnimalWrong(): Arb<Animal> = arbitrary { (random, _) ->
+            val x = random.nextDouble() // valor entre 0.0 y 1.0
+            when {
+                x < 0.50 -> Cat
+                x < 0.75 -> Penguin
+                else -> Penguin
+            }
+        }
+
+        // highlight-start
+        class AnimalTest : FreeSpec({
+            "Given an arbitrary animal" - {
+                "when getting the animal with the incorrect implementation" - {
+                    "should return a lion, or a penguin, but never a turtle" {
+                        checkAll(arbAnimalWrong()) { animal ->
+                            collect(animal)
+
+                            // In this example, we don't perform any specific assertion,
+                            // we're only interested in seeing the statistics printed by Kotest at the end.
+                        }
+                    }
+                }
+            }
+        })
+        // highlight-end
+        ```
+    </TabItem>
+</BoxedTabs>
+
+Al ejecutar esta prueba, Kotest muestra al final algo parecido a lo siguiente (los valores son un ejemplo):
+
+```
+Statistics: [should return a lion, a penguin, or a turtle] (1000 iterations, 1 args) 
+
+com.github.username.zoo.Lion@684733d1      504 (50%)
+com.github.username.zoo.Penguin@1a411b8c   496 (50%)
+```
+
+De este mensaje podemos observar lo siguiente:
+
+- **Distribución incorrecta**: Esperábamos que se generaran tres tipos de animales (`Cat`, `Penguin` y otro más), pero en los resultados solo aparecen dos (`Cat` y `Penguin`), ambos con distribuciones del 50%. Esto indica que el generador no está distribuyendo correctamente los valores.
+- **Falta de `Turtle`**: Según la implementación, debería existir una probabilidad para generar `Turtle`, pero no aparece en las estadísticas. Esto sugiere que el bloque `else -> Penguin` está causando que `Penguin` se genere dos veces en lugar de asignar un tercer valor distinto.
+- **Iteraciones**: Se realizaron **1000 iteraciones** con un solo argumento (`1 args`), lo que confirma que la prueba se ejecutó un número suficiente de veces para revelar inconsistencias en la distribución.
+
+### Paso 3: Corregimos el Generador
+
+La solución consiste en arreglar la última rama del `else`, asegurando que devuelva `Turtle` en lugar de `Penguin`:
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        fun arbAnimalCorrect(): Arb<Animal> = arbitrary { (random, _) ->
+            val x = random.nextDouble()
+            when {
+                x < 0.50 -> Cat
+                x < 0.75 -> Dog
+                // highlight-next-line
+                else -> Turtle
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="pbt/arbitrary/stats/src/test/kotlin/com/github/username/zoo/AnimalTest.kt"
+        package com.github.username.zoo
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.arbitrary
+        import io.kotest.property.checkAll
+
+        private fun arbAnimalWrong(): Arb<Animal> = arbitrary { (random, _) ->
+            val x = random.nextDouble() // valor entre 0.0 y 1.0
+            when {
+                x < 0.50 -> Cat
+                x < 0.75 -> Dog
+                else -> Dog
+            }
+        }
+
+        // highlight-start
+        private fun arbAnimalCorrect(): Arb<Animal> = arbitrary { (random, _) ->
+            val x = random.nextDouble()
+            when {
+                x < 0.50 -> Cat
+                x < 0.75 -> Dog
+                else -> Turtle
+            }
+        }
+        // highlight-end
+
+        class AnimalTest : FreeSpec({
+            "Given an arbitrary animal" - {
+                "when getting the animal with the incorrect implementation" - {
+                    "should return a cat, a dog, or a turtle" {
+                        checkAll(arbAnimalWrong()) { animal ->
+                            collect(animal)
+
+                            // In this example, we don't perform any specific assertion,
+                            // we're only interested in seeing the statistics printed by Kotest at the end.
+                        }
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</BoxedTabs>
+
+### Paso 4: Recolectamos Estadísticas Nuevamente
+
+Actualizamos la prueba para usar el generador corregido:
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        checkAll(arbAnimalCorrect()) { animal ->
+            collect(animal)
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers
+        package com.github.username.zoo
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.arbitrary
+        import io.kotest.property.checkAll
+
+        private fun arbAnimalWrong(): Arb<Animal> = arbitrary { (random, _) ->
+            val x = random.nextDouble() // valor entre 0.0 y 1.0
+            when {
+                x < 0.50 -> Lion
+                x < 0.75 -> Penguin
+                else -> Penguin
+            }
+        }
+
+        private fun arbAnimalCorrect(): Arb<Animal> = arbitrary { (random, _) ->
+            val x = random.nextDouble()
+            when {
+                x < 0.50 -> Lion
+                x < 0.75 -> Penguin
+                else -> Turtle
+            }
+        }
+
+        class AnimalTest : FreeSpec({
+            "Given an arbitrary animal" - {
+                "when getting the animal with the incorrect implementation" - {
+                    "should return a lion, or a penguin, but never a turtle" {
+                        checkAll(arbAnimalWrong()) { animal ->
+                            collect(animal)
+
+                            // In this example, we don't perform any specific assertion,
+                            // we're only interested in seeing the statistics printed by Kotest at the end.
+                        }
+                    }
+                }
+
+                // highlight-start
+                "when getting the animal with the correct implementation" - {
+                    "should return a lion (~50%), a penguin (~25%), or a turtle (~25%)" {
+                        checkAll(arbAnimalCorrect()) { animal ->
+                            collect(animal)
+
+                            // In this example, we don't perform any specific assertion,
+                            // we're only interested in seeing the statistics printed by Kotest at the end.
+                        }
+                    }
+                }
+                // highlight-end
+            }
+        })
+        ```
+    </TabItem>
+</BoxedTabs>
+
+Esta vez, al ejecutar la prueba, Kotest mostrará algo así:
+
+```
+Statistics: [should return a lion (~50%), a penguin (~25%), or a turtle (~25%)] (1000 iterations, 1 args) 
+
+com.github.username.zoo.Lion@4e3abea1       516 (52%)
+com.github.username.zoo.Turtle@10f6634d     247 (25%)
+com.github.username.zoo.Penguin@3d05b70d    237 (24%)
+```
+
+Lo que se acerca mucho más a la distribución que pretendíamos. Ahora podemos estar razonablemente seguros de que nuestro generador cumple el requisito de producir un 50% de `Lion`, 25% de `Penguin` y 25% de `Turtle`.
+
+:::note Aproximación
+
+Es importante recordar que, debido a la naturaleza aleatoria de los generadores, las estadísticas pueden variar ligeramente en cada ejecución. Sin embargo, si la muestra es lo suficientemente grande, las diferencias deberían ser mínimas.
+
+:::
+
+## ¿Por qué `collect` es tan valioso?
+
+- **Visibilidad instantánea**: Con `collect` podemos ver rápidamente si la muestra generada se aproxima a la distribución planeada.
+- **Detección de errores sutiles**: Como viste, un generador puede lucir correcto, pero un signo mal puesto o una línea repetida puede romper por completo la distribución.
+- **Diagnóstico de sesgos**: Permite verificar no solo si se generan las categorías correctas, sino también si se respetan los porcentajes esperados.
+
+<Exercise title="Corrigiendo un generador de triángulos">
+
+    Implementa un generador arbitrario que genere triángulos según la clasificación de sus lados:
+
+    - **Equilátero (todos los lados iguales)**
+    - **Isósceles (exactamente dos lados iguales)**
+    - **Escaleno (todos los lados distintos)**
+
+    El generador proporcionado presenta errores en la distribución, generando casos incorrectos con frecuencia excesiva. Usa la función `collect` para revelar este problema y posteriormente corrige la implementación.
+
+    **No consideres la validez de los triángulos**, solo la distribución de los tipos.
+
+    #### Generador Erróneo
+
+    ```kotlin showLineNumbers
+    private fun arbTriangleWrong(): Arb<Triangle> = arbitrary { (random, _) ->
+        val type = random.nextDouble()
+        val a = random.nextInt(1, 10)
+        when {
+            type < 0.5 -> Triangle(a, a, a) // Equilátero
+            type < 0.8 -> Triangle(a, a, random.nextInt(1, 10)) // Isósceles
+            else -> Triangle(a, random.nextInt(1, 10), random.nextInt(1, 10)) // Escaleno
+        }
+    }
+    ```
+
+    1. Escribe un test que use `collect` para examinar la distribución generada por este generador incorrecto.
+    2. Corrige el generador para asegurar una distribución adecuada entre los tipos de triángulos (50% Equilátero, 30% Isósceles, 20% Escaleno).
+
+    <Solution title='1'>
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```kt showLineNumbers
+                checkAll(arbTriangleWrong()) { triangle ->
+                    val triangleType = when {
+                        triangle.a == triangle.b && triangle.b == triangle.c -> "Equilateral"
+                        triangle.a == triangle.b ||
+                                triangle.b == triangle.c ||
+                                triangle.a == triangle.c -> "Isosceles"
+                        else -> "Scalene"
+                    }
+                    collect(triangleType)
+                }
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```kt showLineNumbers title="pbt/arbitrary/stats/src/main/kotlin/com/github/username/geometry/Triangle.kt"
+                package com.github.username.geometry
+
+                class Triangle(val a: Int, val b: Int, val c: Int)
+
+                fun triangleType(triangle: Triangle): String = when {
+                    triangle.a == triangle.b && triangle.b == triangle.c -> "Equilateral"
+                    triangle.a == triangle.b ||
+                            triangle.b == triangle.c ||
+                            triangle.a == triangle.c -> "Isosceles"
+                    else -> "Scalene"
+                }
+                ```
+
+                ```kt showLineNumbers title="pbt/arbitrary/stats/src/test/kotlin/com/github/username/geometry/TriangleTest.kt"
+                package com.github.username.geometry
+
+                import io.kotest.core.spec.style.FreeSpec
+                import io.kotest.property.Arb
+                import io.kotest.property.arbitrary.arbitrary
+                import io.kotest.property.checkAll
+
+                private fun arbTriangleWrong(): Arb<Triangle> = arbitrary { (random, _) ->
+                    val type = random.nextDouble()
+                    val a = random.nextInt(1, 10)
+                    when {
+                        type < 0.5 -> Triangle(a, a, a) // Equilateral
+                        type < 0.8 -> Triangle(a, a, random.nextInt(1, 10)) // Isosceles
+                        else -> Triangle(a, random.nextInt(1, 10), random.nextInt(1, 10)) // Scalene
+                    }
+                }
+
+                class TriangleTest : FreeSpec({
+                    "Given an arbitrary triangle" - {
+                        "when getting the triangle" - {
+                            "should return an equilateral (~50%), an isosceles (~30%), or a scalene (~20%) triangle" {
+                                checkAll(arbTriangleWrong()) { triangle ->
+                                    val triangleType = when {
+                                        triangle.a == triangle.b && triangle.b == triangle.c -> "Equilateral"
+                                        triangle.a == triangle.b ||
+                                                triangle.b == triangle.c ||
+                                                triangle.a == triangle.c -> "Isosceles"
+                                        else -> "Scalene"
+                                    }
+                                    collect(triangleType)
+                                }
+                            }
+                        }
+                    }
+                })
+                ```
+            </TabItem>
+        </BoxedTabs>
+        
+        **Ejemplo de salida**:
+
+        ```
+        Statistics: [should return an equilateral (~50%), an isosceles (~30%), or a scalene (~20%) triangle] (1000 iterations, 1 args) 
+
+        Equilateral 540 (54%)
+        Isosceles   314 (31%)
+        Scalene     146 (15%)
+        ```
+    </Solution>
+    <Solution title='2'>
+        - En la rama de **isósceles**, el tercer lado `random.nextInt(1, 10)` **podría ser igual a los otros lados**, generando un triángulo equilátero en lugar de un isósceles.
+        - En la rama de **escaleno**, `random.nextInt(1, 10)` podría generar dos lados iguales, lo que haría que el triángulo no sea escaleno.
+
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```kotlin showLineNumbers
+                private fun arbTriangle(): Arb<Triangle> = arbitrary { (random, _) ->
+                    val type = random.nextDouble()
+                    val a = random.nextInt(1, 10)
+                    when {
+                        type < 0.5 -> Triangle(a, a, a) // 50% Equilateral - All sides must be equal
+                        type < 0.8 -> { // 30% Isosceles - The third side must be different
+                            var b = random.nextInt(1, 10)
+                            while (b == a) {
+                                b = random.nextInt(1, 10)
+                            }
+                            Triangle(a, a, b)
+                        }
+
+                        else -> { // 20% Scalene - All sides must be different
+                            var b = random.nextInt(1, 10)
+                            while (b == a) {
+                                b = random.nextInt(1, 10)
+                            }
+                            var c = random.nextInt(1, 10)
+                            while (c == a || c == b) {
+                                c = random.nextInt(1, 10)
+                            }
+                            Triangle(a, b, c)
+                        }
+                    }
+                }
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```kotlin showLineNumbers title="pbt/arbitrary/stats/src/test/kotlin/com/github/username/geometry/TriangleTest.kt"
+                package com.github.username.geometry
+
+                import io.kotest.core.spec.style.FreeSpec
+                import io.kotest.property.Arb
+                import io.kotest.property.arbitrary.arbitrary
+                import io.kotest.property.checkAll
+
+                private fun arbTriangle(): Arb<Triangle> = arbitrary { (random, _) ->
+                    val type = random.nextDouble()
+                    val a = random.nextInt(1, 10)
+                    when {
+                        type < 0.5 -> Triangle(a, a, a) // 50% Equilateral - All sides must be equal
+                        type < 0.8 -> { // 30% Isosceles - The third side must be different
+                            var b = random.nextInt(1, 10)
+                            while (b == a) {
+                                b = random.nextInt(1, 10)
+                            }
+                            Triangle(a, a, b)
+                        }
+
+                        else -> { // 20% Scalene - All sides must be different
+                            var b = random.nextInt(1, 10)
+                            while (b == a) {
+                                b = random.nextInt(1, 10)
+                            }
+                            var c = random.nextInt(1, 10)
+                            while (c == a || c == b) {
+                                c = random.nextInt(1, 10)
+                            }
+                            Triangle(a, b, c)
+                        }
+                    }
+                }
+
+                class TriangleTest : FreeSpec({
+                    "Given an arbitrary triangle" - {
+                        "when getting the triangle" - {
+                            "should return an equilateral (~50%), an isosceles (~30%), or a scalene (~20%) triangle" {
+                                checkAll(arbTriangle()) { triangle ->
+                                    val triangleType = when {
+                                        triangle.a == triangle.b && triangle.b == triangle.c -> "Equilateral"
+                                        triangle.a == triangle.b ||
+                                                triangle.b == triangle.c ||
+                                                triangle.a == triangle.c -> "Isosceles"
+
+                                        else -> "Scalene"
+                                    }
+                                    collect(triangleType)
+                                }
+                            }
+                        }
+                    }
+                })
+                ```
+            </TabItem>
+        </BoxedTabs>
+    </Solution>
+</Exercise>
+
+## Conclusiones
+
+La **recolección de estadísticas** con `collect` es una herramienta clave en pruebas basadas en propiedades, permitiendo detectar errores en la distribución de datos generados. Un pequeño fallo en la lógica de un generador puede alterar significativamente la distribución esperada, afectando la validez de las pruebas.
+
+Gracias a `collect`, logramos:
+- **Identificar sesgos en los generadores** y detectar distribuciones incorrectas.
+- **Corregir errores lógicos en la generación de datos**, asegurando su adecuada variedad y proporción.
+
+El ejercicio sobre triángulos mostró cómo errores sutiles en la selección de lados pueden generar tipos incorrectos. Mediante `collect`, pudimos visualizar la distribución real y ajustar el generador.
+
+### Puntos clave
+
+- **`collect` permite inspeccionar la distribución de valores generados**, verificando si cumplen con la proporción esperada.
+- **Los generadores deben diseñarse con cuidado**, ya que pequeños errores pueden alterar la distribución significativamente.
+- **`checkAll` junto con `collect` facilita la depuración**, proporcionando estadísticas sobre miles de iteraciones para detectar fallos en la generación de datos.
+
+---
+
+El uso de **pruebas basadas en propiedades** con Kotest y `collect` mejora la confiabilidad del código, permitiendo asegurar que los generadores producen datos representativos y bien distribuidos, optimizando la calidad de las **bibliotecas de software**.
+
+<References references={[
+    {
+        title: "Statistics | Kotest",
+        url: "https://kotest.io/docs/proptest/property-test-statistics.html",
+        accessedDate: "14 de marzo de 2025",
+        type: "web",
+    },
+]}  />
