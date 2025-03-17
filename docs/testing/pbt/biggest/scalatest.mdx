@@ -1,5 +1,5 @@
 ---
-title: "Ejemplo: Obtener el máximo de una lista en ScalaTest"
+title: "Prueba basada en propiedades con ScalaTest: Obtener el máximo de una lista"
 ---
 import ReadingTime from '@site/src/components/ReadingTime'
 import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
@@ -19,13 +19,15 @@ import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
-<GithubRepoLink user="r8vnhill" repo="" />
+<GithubRepoLink user="r8vnhill" repo="scala-dibs" />
 
-Comencemos con un ejemplo similar al que vimos con Kotest: encontrar el máximo de una lista de enteros. En ScalaTest, usaremos el módulo `ScalaCheck` para generar propiedades y verificar el comportamiento de la función bajo prueba.
+Cuando implementamos una función para obtener el máximo de una lista, es crucial asegurarnos de que su comportamiento sea correcto para una variedad de entradas. En lugar de escribir casos de prueba individuales, podemos utilizar **Property-Based Testing (PBT)** para verificar automáticamente propiedades generales de la función en múltiples escenarios generados aleatoriamente.  
 
-## Test en ScalaTest
+En este ejemplo, validaremos la función `biggest` con **ScalaTest** y **ScalaCheck**, asegurándonos de que siempre retorne el elemento correcto sin depender de casos de prueba manuales. Esto nos permite descubrir errores sutiles y asegurar la robustez del código.  
 
-El siguiente ejemplo muestra cómo usar **ScalaCheck** en combinación con ScalaTest para escribir una prueba basada en propiedades que verifique que la función `max` devuelve el último elemento de la lista ordenada.
+## 🧪 Test en ScalaTest
+
+Veamos un ejemplo similar al que vimos con Kotest: encontrar el máximo de una lista de enteros. En ScalaTest, usaremos el módulo `ScalaCheck` para generar propiedades y verificar el comportamiento de la función bajo prueba.
 
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
@@ -71,10 +73,10 @@ El siguiente ejemplo muestra cómo usar **ScalaCheck** en combinación con Scala
     - **`Gen.listOf(Gen.choose(Int.MinValue, Int.MaxValue))`**: Genera listas de enteros aleatorios entre los valores mínimos y máximos posibles en Scala.
     - **`whenever(list.nonEmpty)`**: Asegura que la propiedad solo se aplique a listas no vacías, evitando que el test falle por una lista vacía.
     - **`forAll`**: Itera sobre todos los valores generados por el generador de listas y aplica la propiedad a cada uno.
-    - **`max(list)`**: Es la función que estamos probando, la cual debe devolver el último elemento de la lista ordenada.
+    - **`biggest(list)`**: Es la función que estamos probando, la cual debe devolver el último elemento de la lista ordenada.
 </Explanation>
 
-## Resumen comparativo
+## 📊 Resumen comparativo
 
 | **Característica**              | **ScalaTest**                                                                                         | **Kotest**                                                                                         |
 |---------------------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
@@ -84,7 +86,7 @@ El siguiente ejemplo muestra cómo usar **ScalaCheck** en combinación con Scala
 | **Interfaz de uso**             | Requiere la integración de `ScalaCheckPropertyChecks` para escribir propiedades con `forAll`.            | Usa `checkAll` directamente, con una interfaz más simplificada y fluida para propiedades.            |
 | **Integración**                 | Depende de la integración con ScalaCheck para PBT.                                                      | Tiene una integración más directa y simplificada para PBT sin necesidad de módulos externos.         |
 
-### Beneficios y limitaciones
+### ⚖️ Beneficios y limitaciones
 
 <ProCons>
     <Pros>
@@ -99,16 +101,19 @@ El siguiente ejemplo muestra cómo usar **ScalaCheck** en combinación con Scala
     </Cons>
 </ProCons>
 
-## ¿Qué aprendimos?
+## 📌 Conclusiones
 
-En esta lección comparativa entre ScalaTest y Kotest, analizamos cómo se implementan pruebas basadas en propiedades en ambos frameworks y resaltamos sus diferencias clave. 
+En esta lección, exploramos cómo utilizar **ScalaTest** y **ScalaCheck** para implementar pruebas basadas en propiedades (**Property-Based Testing, PBT**) con el objetivo de validar la función `biggest`. A través de este enfoque, pudimos comprobar su correcto funcionamiento en un amplio rango de casos generados automáticamente, evitando depender únicamente de pruebas manuales o casos específicos.
 
-### Puntos clave
+### 🔑 Puntos clave
 
-1. **ScalaTest** se apoya en **ScalaCheck** para realizar Property-Based Testing, lo que introduce flexibilidad pero requiere módulos adicionales y verificaciones manuales como `whenever` para aplicar condiciones previas. 
-2. **Kotest**, por otro lado, tiene soporte nativo para PBT, ofreciendo una experiencia más integrada y simplificada, evitando la necesidad de configuraciones adicionales o verificaciones explícitas.
-3. **Interfaz de pruebas**: ScalaTest utiliza `forAll` y depende de la integración con ScalaCheck, mientras que Kotest ofrece una interfaz más fluida a través de `checkAll`, que integra las pruebas basadas en propiedades de manera directa.
+1. **PBT como herramienta de validación robusta:** En lugar de depender de pruebas manuales con casos limitados, el uso de generadores aleatorios permitió verificar el comportamiento de `biggest` en múltiples escenarios de forma automatizada.
+2. **Diferencias entre ScalaTest y Kotest:** Mientras que ScalaTest requiere la integración con **ScalaCheck** para PBT, Kotest ofrece soporte nativo, facilitando su uso sin dependencias externas.
+3. **Manejo de condiciones previas:** ScalaTest requiere el uso de `whenever` para evitar listas vacías en las pruebas, mientras que en Kotest se pueden definir restricciones directamente en los generadores.
+4. **Flexibilidad vs. Simplicidad:** ScalaCheck proporciona una gran personalización en la generación de datos, pero Kotest tiene una interfaz más simple e integrada para realizar pruebas basadas en propiedades.
 
----
+### ✅ Reflexión final
 
-En resumen, **ScalaTest** es potente y flexible, pero requiere más configuración y pasos adicionales para manejar propiedades complejas, mientras que **Kotest** se destaca por su integración nativa, simplificando el proceso de PBT y facilitando su uso en proyectos que no requieren tantas dependencias externas.
+El uso de **Property-Based Testing** nos permite escribir pruebas más generales y evitar errores sutiles en funciones críticas como `biggest`. Aunque ScalaTest con ScalaCheck ofrece flexibilidad, la necesidad de configuraciones adicionales puede hacer que la experiencia sea más compleja en comparación con Kotest. La elección entre estos frameworks dependerá de las necesidades del proyecto y la familiaridad con cada herramienta.
+
+Implementar **PBT** en proyectos de prueba ayuda a mejorar la calidad y confiabilidad del software, especialmente en funciones donde es difícil prever todos los casos posibles manualmente.
