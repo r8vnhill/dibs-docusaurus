@@ -32,7 +32,7 @@ En **Haskell**, utilizamos **QuickCheck** para generar automáticamente casos de
         prop_biggest xs = not (null xs) ==> biggest xs == last (sort xs)
 
         prop_emptyList :: Property
-        prop_emptyList = maxElement [] === minBound
+        prop_emptyList = biggest [] === minBound
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
@@ -47,7 +47,7 @@ En **Haskell**, utilizamos **QuickCheck** para generar automáticamente casos de
             prop_biggest xs = not (null xs) ==> biggest xs == last (sort xs)
 
             prop_emptyList :: Property
-            prop_emptyList = maxElement [] === minBound
+            prop_emptyList = biggest [] === minBound
 
             main :: IO ()
             main = do
@@ -61,7 +61,15 @@ En **Haskell**, utilizamos **QuickCheck** para generar automáticamente casos de
     La propiedad `prop_biggest` verifica que el valor más grande de una lista no vacía sea el mismo que el último elemento de la lista cuando está ordenada. La función `biggest`, que se está probando, debe devolver el mayor valor de la lista. La función `sort` ordena la lista y `last` devuelve el último elemento, que corresponde al mayor cuando la lista está ordenada. La condición `not (null xs)` evita que se pruebe la propiedad con listas vacías, ya que no tiene sentido comparar listas vacías en este caso.
 </Explanation>
 
-### Diferencias y Similitudes con Kotest
+<details>
+    <summary>¿Por qué `foldl` en lugar de `foldr`?</summary>
+
+    - `foldl max x xs` **es más eficiente en listas largas** porque `max` es una operación acumulativa que se aplica de izquierda a derecha.
+    - `foldr max x xs` haría que la evaluación ocurra de derecha a izquierda, lo que en listas largas puede llevar a problemas de rendimiento debido a la evaluación diferida (`lazy evaluation`).
+    - `foldl` en este caso es seguro porque `max` es estricta y no necesita la evaluación diferida de `foldr`.
+</details>
+
+## 📌 Comparación con Kotest: Generación de Datos y Propiedades
 
 1. **Generación de datos**: QuickCheck en Haskell, al igual que Kotest, utiliza generadores para probar múltiples casos. La función `Arb.list(Arb.int())` en Kotest se traduce en QuickCheck simplemente como `Arbitrary [Int]`, que genera listas de enteros. Sin embargo, en Haskell, los generadores son implícitos para tipos estándar como listas, lo que facilita la configuración inicial.
    
@@ -69,7 +77,7 @@ En **Haskell**, utilizamos **QuickCheck** para generar automáticamente casos de
 
 3. **Pruebas deterministas**: Mientras que Kotest utiliza una semilla específica para repetir pruebas fallidas, QuickCheck también puede recibir una semilla para replicar las pruebas, pero el control sobre los generadores de casos puede ser más avanzado en Haskell, gracias a la posibilidad de componer generadores personalizados de manera más fluida.
 
-## Implementación de la función `biggest`
+## 💻 Implementación de la función `biggest`
 
 ```haskell showLineNumbers title="testing\pbt\biggest\Biggest.hs"
 module Biggest (biggest) where
@@ -79,7 +87,7 @@ module Biggest (biggest) where
     biggest (x:xs) = foldl max x xs
 ```
 
-### Beneficios y limitaciones
+### ⚖️ Beneficios y limitaciones
 
 <ProCons>
   <Pros>
@@ -95,10 +103,19 @@ module Biggest (biggest) where
 </Cons>
 </ProCons>
 
-### ¿Qué aprendimos?
+## 🎯 Conclusiones
 
-En esta lección, hemos comparado el uso de **Property-Based Testing** entre **Kotest** y **QuickCheck**, observando cómo se implementan propiedades similares en ambos frameworks y las diferencias en cuanto a generación de datos, manejo de efectos secundarios y composicionalidad de generadores. Haskell, con su naturaleza puramente funcional, ofrece algunas ventajas en términos de claridad y predictibilidad, pero requiere una mayor comprensión del manejo de efectos secundarios y un enfoque más explícito en la gestión de pruebas complejas.
+### 📌 Puntos clave
 
---- 
+- **QuickCheck y Kotest comparten principios similares** → Ambos frameworks permiten definir propiedades en lugar de casos de prueba específicos, generando automáticamente datos para verificar el comportamiento del código.
+- **QuickCheck es más expresivo en la composición de generadores** → En Haskell, los generadores son implícitos para tipos estándar, mientras que en Kotest se deben definir manualmente.
+- **Uso de `foldl` en la implementación de `biggest`** → Se utiliza `foldl` en lugar de `foldr` porque es más eficiente en listas grandes, evitando problemas de evaluación diferida.
+- **Pureza funcional y seguridad en Haskell** → La ausencia de efectos secundarios facilita la validación de propiedades, asegurando que el código se comporte de manera predecible.
+- **Curva de aprendizaje de QuickCheck** → Aunque poderoso, su uso requiere familiaridad con Haskell y la manipulación de efectos secundarios mediante monads.
 
-Explorar estos enfoques en diferentes lenguajes nos permite comprender mejor las ventajas y limitaciones de cada uno, y cómo elegir la herramienta adecuada dependiendo del entorno de desarrollo y el tipo de proyecto.
+### 🚀 Lecciones aprendidas
+- **Las pruebas basadas en propiedades son una herramienta poderosa** → Permiten detectar errores en funciones matemáticas y algoritmos de manera más efectiva que las pruebas unitarias tradicionales.
+- **Haskell proporciona garantías adicionales debido a su tipado fuerte** → QuickCheck se integra perfectamente con la naturaleza funcional del lenguaje, asegurando que las pruebas sean más predecibles y reutilizables.
+- **Comparar herramientas en diferentes lenguajes ayuda a entender sus ventajas y limitaciones** → En entornos funcionales como Haskell, las pruebas pueden ser más concisas y expresivas, mientras que en lenguajes como Kotlin, la sintaxis es más familiar para quienes provienen de la programación orientada a objetos.
+
+Al explorar QuickCheck y Kotest, vemos cómo distintas estrategias de **Property-Based Testing** pueden mejorar la calidad del software, adaptándose a los paradigmas de cada lenguaje.
