@@ -19,10 +19,16 @@ import RepoClone from '@site/src/components/admonitions/RepoClone'
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="echo-app-kt" />
 
-## `settings.gradle.kts`
+Cuando trabajamos con **Gradle** en proyectos que contienen múltiples módulos, es fundamental configurar correctamente el archivo `settings.gradle.kts`. Este archivo define la estructura del proyecto, permitiendo organizar módulos de manera eficiente y facilitando la reutilización del código.
+
+En esta lección, exploraremos cómo configurar proyectos multi-módulo en Gradle, entenderemos el papel de las **dependencias**, y aprenderemos a gestionar versiones de manera centralizada utilizando un catálogo de versiones. Estas prácticas son clave para desarrollar bibliotecas de software modulares y mantenibles.
+
+## 🛠️ `settings.gradle.kts`
 
 El archivo `settings.gradle.kts` es esencial para configurar y gestionar los ajustes globales de un proyecto **Gradle**,
 permitiendo definir aspectos como el nombre del proyecto y su estructura de módulos. Este archivo se evalúa al comienzo de la ejecución de Gradle, estableciendo el entorno para el resto del proceso de construcción.
+
+Para proyectos simples, `settings.gradle.kts` solo define el nombre del proyecto, pero en aplicaciones más grandes, nos permite estructurar módulos que pueden compilarse y desarrollarse de manera independiente.
 
 ### Propósito principal
 
@@ -35,7 +41,7 @@ En el caso de nuestro proyecto comenzaríamos con un archivo `settings.gradle.kt
 rootProject.name = "echo-app"
 ```
 
-### Proyectos Multi-Módulo
+## 📂 Proyectos Multi-Módulo
 
 En proyectos grandes, gestionar todo en un único módulo puede volverse ineficiente y difícil de mantener. Esto es especialmente relevante cuando trabajamos en **bibliotecas de software**, donde lxs usuarixs podrían necesitar solo una parte específica de la funcionalidad ofrecida por nuestra biblioteca.
 
@@ -43,7 +49,31 @@ Para resolver este problema, la mayoría de los sistemas de construcción (build
 
 Aunque en este curso las tareas serán lo suficientemente sencillas como para no necesitar múltiples módulos, utilizaremos una estructura multi-módulo para **practicar** y familiarizarnos con este patrón común en la creación de bibliotecas.
 
-#### Definir un Proyecto Multi-Módulo
+### 📌 Estructura de un Proyecto Multi-Módulo
+
+Para comprender mejor la organización de un proyecto **multi-módulo** en Gradle, visualicemos su estructura en un **diagrama**:
+
+```mermaid
+graph TD;
+    root["📂 echo-app (root)"]
+    app["📂 app"]
+    lib["📂 lib"]
+
+    root --> app
+    root --> lib
+    app --> lib
+```
+
+:::info Estructura del Proyecto
+
+- **📂 `echo-app (root)`**: Es la **raíz del proyecto**, donde se encuentran los archivos de configuración de Gradle, como `settings.gradle.kts`.
+- **📂 `app` (módulo de aplicación)**: Contiene la lógica principal de la aplicación y **depende** del código definido en `lib` para reutilizar funcionalidades.
+- **📂 `lib` (módulo de biblioteca)**: Agrupa funcionalidades reutilizables que pueden ser usadas tanto por `app` como por otros proyectos que requieran esta lógica.
+- 🔗 **Conexión entre módulos**: En lecciones posteriores configuraremos `app` para **importar correctamente `lib`**, estableciendo su dependencia en `build.gradle.kts`.
+
+:::
+
+#### 📜 Definir un Proyecto Multi-Módulo
 
 A continuación, te mostramos cómo configurar un proyecto Gradle multi-módulo en el archivo `settings.gradle.kts`. Este archivo define el nombre del proyecto raíz y los módulos que lo componen:
 
@@ -67,7 +97,7 @@ El prefijo `:` antes del nombre del módulo indica que la ruta es "absoluta" y c
 
 :::
 
-#### ¿Por qué usar Proyectos Multi-Módulo?
+#### 🔍 ¿Por qué usar Proyectos Multi-Módulo?
 
 <ProCons>
     <Pros>
@@ -78,25 +108,33 @@ El prefijo `:` antes del nombre del módulo indica que la ruta es "absoluta" y c
     </Pros>
 </ProCons>
 
-#### Aplicación en el Curso
+#### 🚀 Aplicación en el Curso
 
 En este curso, aunque los ejemplos serán sencillos, nos enfocaremos principalmente en crear módulos como **`lib`**, ya que el objetivo principal es desarrollar **bibliotecas de software**. Aun así, la estructura multi-módulo te permitirá practicar cómo organizar un proyecto real en el que:
 - La biblioteca (módulo `lib`) encapsula las funcionalidades.
 - El módulo de aplicación (`app`) consume las bibliotecas desarrolladas.
 
-## Dependencias
+## 🏗️ Dependencias en un Proyecto Multi-Módulo
 
 Las **dependencias** son componentes externos o bibliotecas que tu proyecto necesita para compilarse y ejecutarse correctamente. Estas dependencias pueden incluir desde bibliotecas de terceros hasta herramientas internas que extienden la funcionalidad de tu código. En lugar de manejar manualmente las dependencias y sus versiones, los sistemas de construcción modernos automatizan este proceso.
 
-### Gestión de Dependencias en Sistemas de Construcción
+### 📦 Gestión de Dependencias en Gradle
 
-**Gradle**, como muchos otros sistemas de construcción, automatiza la descarga e integración de las dependencias, ya sea desde repositorios remotos como **Maven Central** o **JCenter**, o desde repositorios locales. Sin embargo, Gradle no es el único sistema que ofrece esta funcionalidad.
-Algunos ejemplos de sistemas de construcción que descargan y gestionan dependencias son: **Maven**, **npm**, **SBT** y **Cargo**.
+**Gradle**, como muchos otros sistemas de construcción, automatiza la descarga e integración de las dependencias, ya sea desde repositorios remotos como **Maven Central** o **JCenter**, o desde repositorios locales. Algunos ejemplos de sistemas de construcción que también gestionan dependencias incluyen **Maven**, **npm**, **SBT** y **Cargo**.
 
-En las próximas lecciones, profundizaremos en cómo agregar y manejar dependencias en Gradle, que es una habilidad
-esencial para desarrollar proyectos más complejos.
+En las próximas lecciones, profundizaremos en cómo agregar y manejar dependencias en Gradle, lo cual es esencial para desarrollar proyectos más complejos.
 
-## Catálogo de versiones
+### 🔥 Beneficios de la Gestión de Dependencias en Multi-Módulo
+
+<ProCons>
+    <Pros>
+        - **Separación de responsabilidades**: Cada módulo gestiona sus propias dependencias sin interferir con otros.
+        - **Reutilización**: Un módulo puede ser utilizado en diferentes aplicaciones sin modificar su código.
+        - **Optimización de compilación**: Gradle recompila solo los módulos modificados, reduciendo tiempos de build.
+    </Pros>
+</ProCons>
+
+## 📑 Catálogo de Versiones
 
 Aunque no es obligatorio, es una **buena práctica** centralizar las versiones de las dependencias de un proyecto utilizando un archivo `.toml`. Este enfoque garantiza consistencia en las versiones utilizadas en todo el proyecto, evitando problemas de incompatibilidad y facilitando el mantenimiento.
 
@@ -115,7 +153,7 @@ Definiremos un catálogo de versiones en un archivo `libs.versions.toml` para ce
 
 ```toml title="gradle/libs.versions.toml" showLines
 [versions]
-kotlin = "2.0.20"
+kotlin = "2.1.10"
 echo = "1.0.0" # Versión de nuestro proyecto
 
 [libraries]
@@ -138,16 +176,26 @@ común en la comunidad de Gradle.
 Al usar esta estructura, cualquier actualización futura de la versión de Kotlin solo requiere modificar el archivo
 `libs.versions.toml` en un único lugar, manteniendo la consistencia en todo el proyecto.
 
-## ¿Qué Aprendimos?
+## 🎯 Conclusiones
 
-En esta lección, exploramos la configuración básica de proyectos en Gradle, con énfasis en:
+En esta lección, exploramos la configuración de **proyectos multi-módulo** en **Gradle**, abordando su estructura, gestión de dependencias y organización de versiones. Esta configuración es fundamental para desarrollar **bibliotecas de software** de manera modular y mantenible.
 
-1. **El archivo `settings.gradle.kts`**: Su rol es definir el nombre del proyecto y estructurar los módulos, lo que resulta esencial para la configuración global del proyecto.
-2. **Proyectos multi-módulo**: Vimos cómo dividir un proyecto en varios módulos, lo que permite un desarrollo más organizado, mejor mantenimiento y reutilización del código.
-3. **Dependencias**: Aprendimos sobre la gestión de dependencias en Gradle, automatizando la descarga y el manejo de bibliotecas externas necesarias para nuestro proyecto.
-4. **Catálogo de versiones**: Introdujimos la idea de centralizar versiones de dependencias en un archivo `.toml`, lo que mejora la consistencia y facilita el mantenimiento.
+### 🔑 Puntos clave
 
-Estas configuraciones nos preparan para gestionar proyectos más complejos de manera eficiente, mejorando la modularidad y la reutilización de código en bibliotecas de software.
+1. **`settings.gradle.kts` define la estructura del proyecto**  
+   - Es el punto de entrada donde establecemos el nombre del proyecto y los módulos que lo conforman.
+2. **Los proyectos multi-módulo mejoran la modularidad y reutilización**  
+   - Separar la aplicación en módulos (`app`, `lib`, etc.) facilita el mantenimiento y permite compartir funcionalidades entre proyectos.
+3. **Las dependencias se administran en cada módulo**  
+   - Los módulos pueden importar otros módulos o bibliotecas externas de forma independiente.
+4. **El catálogo de versiones centraliza la gestión de dependencias**  
+   - Usar un archivo `libs.versions.toml` ayuda a garantizar coherencia y facilita actualizaciones en todas las partes del proyecto.
+
+### 🚀 Reflexión final
+
+El uso de **proyectos multi-módulo** en Gradle permite escalar aplicaciones y bibliotecas de manera eficiente, promoviendo la separación de responsabilidades y la optimización del tiempo de compilación. A medida que avancemos en el curso, veremos cómo aplicar estas configuraciones en escenarios más avanzados, incluyendo la integración con herramientas de pruebas.
+
+Esta estructura te prepara para proyectos más complejos y te da herramientas clave para desarrollar **software reutilizable y mantenible**.
 
 <div className="language-card-container">
     <LanguageCard
