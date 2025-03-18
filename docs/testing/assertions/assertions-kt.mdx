@@ -21,7 +21,6 @@ import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 
 <ReadingTime />
 <GithubRepoLink repo={"assertions-kt"} user={"r8vnhill"}/>
-<RepoClone repoName={"assertions-kt"} />
 <ModuleSetup module='assertions' task='setupAssertionsModule'>
     ```kotlin showLineNumbers
     import tasks.ModuleSetupTask
@@ -48,7 +47,7 @@ import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 
 Las **aserciones** son instrucciones que verifican si una condición específica es verdadera en un punto particular del código. Si la condición es falsa, la aserción falla y se lanza una excepción, interrumpiendo la ejecución del programa o prueba. Los frameworks de testing capturan estas excepciones para generar reportes detallados de los resultados.
 
-## Implementación manual
+## 📌 Implementación manual
 
 Por ejemplo, consideremos una prueba escrita manualmente:
 
@@ -150,7 +149,7 @@ Sin embargo, podemos simplificar y mejorar este test utilizando las aserciones q
     Aquí, en lugar de lanzar una excepción manualmente, utilizamos la función `fail` proporcionada por el framework, que marca la prueba como fallida y proporciona el mensaje de error correspondiente. Esto también ayudará al framework a generar un informe detallado de la prueba.
 </Explanation>
 
-## Implementación de Aserciones Personalizadas
+## 🛠️ Implementación de Aserciones Personalizadas
 
 Supongamos ahora que queremos implementar nuestras propias funciones de aserción personalizadas para simplificar la escritura de pruebas. Por ejemplo, podemos crear una función `assertTrue` que verifique si una condición es verdadera y lance una excepción si no lo es.
 
@@ -178,7 +177,7 @@ fun assertTrue(
     Si la condición no se cumple, se lanza una excepción `AssertionError` con el mensaje especificado.
 </Explanation>
 
-### Ejemplo de uso en tu prueba
+### 🔥 Ejemplo de uso en tu prueba
 
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
@@ -253,19 +252,10 @@ fun assertTrue(
     <Solution title='(Alternativa)'>
         ```kotlin showLineNumbers
         fun assertIsOrdered(list: List<Int>, isStrictlyOrdered: Boolean) {
-            if (isStrictlyOrdered) {
-                list.zipWithNext { a, b -> 
-                    if (a >= b) {
-                        fail("List is not strictly ordered") 
-                    }
-                }
-            } else {
-                list.zipWithNext { a, b -> 
-                    if (a > b) {
-                        fail("List is not ordered") 
-                    }
-                }
-            }
+            val comparator = if (isStrictlyOrdered) { a: Int, b: Int -> a < b }
+                            else { a: Int, b: Int -> a <= b }
+            list.zipWithNext().all { (a, b) -> comparator(a, b) } || 
+                fail("List is not ordered")
         }
         ```
 
@@ -279,22 +269,33 @@ fun assertTrue(
     </Solution>
 </Exercise>
 
-## ¿Qué aprendimos?
+## 🎯 Conclusiones
 
-En este módulo, exploramos las **aserciones** y cómo implementarlas tanto manualmente como utilizando frameworks de pruebas como Kotest. También aprendimos a crear **aserciones personalizadas** para simplificar las pruebas y proporcionar mensajes de error más claros y específicos.
+Las **aserciones** son una herramienta fundamental en el desarrollo de software, especialmente en la escritura de pruebas unitarias. A lo largo de esta lección, exploramos su implementación manual, el uso de frameworks de testing como **Kotest**, y la creación de **aserciones personalizadas** para mejorar la claridad y reusabilidad del código de pruebas.
 
-### Puntos clave
+### 🔑 Puntos clave
 
-- Las aserciones son fundamentales para verificar que el comportamiento del código cumple con las expectativas.
-- Usar aserciones manuales es útil, pero los frameworks de testing proporcionan herramientas más potentes y legibles.
-- Crear aserciones personalizadas mejora la claridad y reusabilidad del código de pruebas.
-- La función `fail` facilita el manejo de fallos en pruebas, proporcionando un flujo más claro que lanzar manualmente excepciones.
+1. **Aserciones como mecanismo de validación**  
+   - Permiten verificar que una condición se cumple en un punto específico del código.  
+   - Si la condición es falsa, la ejecución se detiene con un mensaje de error, facilitando la detección de fallos.  
+2. **Implementación manual vs. uso de frameworks**  
+   - Aunque es posible escribir aserciones manualmente, los frameworks de testing como **Kotest** ofrecen herramientas más expresivas y fáciles de usar.  
+   - Métodos como `fail` mejoran la integración con los reportes de pruebas, facilitando el diagnóstico de errores.  
+3. **Aserciones personalizadas**  
+   - Permiten encapsular verificaciones repetitivas en funciones reutilizables.  
+   - Mejoran la claridad de los tests y hacen que los mensajes de error sean más comprensibles.  
+   - Deben mantenerse bien documentadas para evitar confusión en el equipo de desarrollo.  
+4. **Beneficios y limitaciones**  
+   - **Beneficios**: Mayor legibilidad, reusabilidad y personalización en los mensajes de error.  
+   - **Limitaciones**: Pueden introducir sobrecarga inicial y aumentar la complejidad de mantenimiento si no se diseñan correctamente.  
+5. **Ejercicio práctico**  
+   - Diseñamos una aserción `assertIsOrdered` para verificar si una lista está ordenada, explorando distintas estrategias de implementación.  
 
----
+### ✅ Reflexión final
 
-Las aserciones son una herramienta clave para garantizar la calidad del software, ayudando a detectar errores y asegurarse de que el comportamiento del código es el esperado en diferentes escenarios.
+Las aserciones no solo ayudan a detectar errores en el código, sino que también mejoran la **seguridad y confianza** en su ejecución. Un buen conjunto de aserciones bien diseñadas facilita la depuración, reduce el tiempo de mantenimiento y hace que las pruebas sean más comprensibles.  
 
-xUnit Patterns. (2003). En K. Beck, Test-driven development: By example. Addison-Wesley.
+Al integrar **aserciones personalizadas** y aprovechar las funcionalidades de los frameworks de testing, es posible escribir código de prueba más limpio, expresivo y mantenible.
 
 <References references={[
     {

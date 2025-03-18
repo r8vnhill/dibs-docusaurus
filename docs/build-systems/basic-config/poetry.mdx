@@ -21,9 +21,8 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="echo-app-poetry" />
 
-**Poetry** es una herramienta para gestionar dependencias y empaquetar proyectos en Python. Proporciona una configuración centralizada que facilita la instalación de dependencias, el manejo de versiones y la publicación en repositorios de Python. Es comparable a Gradle en algunos aspectos, especialmente en cómo centraliza la configuración del proyecto y permite definir dependencias.
-
-A continuación, exploraremos cómo usar Poetry para configurar proyectos de múltiples módulos, centralizar dependencias y definir versiones, comparando su funcionalidad con Gradle.
+**Poetry** es una herramienta moderna para gestionar dependencias y empaquetar proyectos en Python. Simplifica la instalación de paquetes, la gestión de versiones y la publicación en PyPI, todo desde un único archivo de configuración (`pyproject.toml`).  
+En esta lección, aprenderemos a utilizar Poetry para configurar proyectos multi-módulo y gestionar dependencias, comparando su funcionalidad con herramientas similares como Gradle.
 
 ## Instalación de Poetry
 
@@ -74,7 +73,7 @@ authors = ["r8vnhill <reachme@ravenhill.cl>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.13.2"
 
 
 [build-system]
@@ -84,16 +83,121 @@ build-backend = "poetry.core.masonry.api"
 
 ## Proyectos Multi-Módulo en Poetry
 
-Para organizar un proyecto en múltiples módulos con **Poetry**, puedes crear subdirectorios para cada módulo y añadir archivos `pyproject.toml` en cada uno de ellos. Esto permite definir dependencias y configuraciones específicas para cada módulo. Por ejemplo, en un proyecto con los módulos `app` y `lib`, la estructura de directorios se vería así:
+A diferencia de herramientas como **Gradle**, **Poetry no tiene soporte nativo** para proyectos multi-módulo. Sin embargo, es posible organizar un proyecto con múltiples módulos utilizando **dependencias locales** dentro del archivo `pyproject.toml`. 
 
-```plaintext
-echo-app-poetry
-│   poetry.lock
-│   pyproject.toml
-├───app
-│       pyproject.toml
-└───lib
-        pyproject.toml
+En este enfoque, cada módulo tiene su propio `pyproject.toml`, y los módulos pueden referenciarse entre sí mediante la opción `{ path = "<ruta>" }`. Esto permite definir configuraciones y dependencias específicas para cada módulo sin necesidad de publicarlos en PyPI.
+
+### Estructura del Proyecto
+
+Supongamos que tenemos un proyecto llamado **`echo-app-poetry`**, compuesto por dos módulos:
+- **`app/`**: Contiene la lógica principal de la aplicación.
+- **`lib/`**: Un módulo independiente que proporciona funciones reutilizables.
+
+La estructura del proyecto sería:
+
+```mermaid
+graph TD;
+    A[echo-app-poetry] --> B[poetry.lock]
+    A --> C[pyproject.toml]
+    A --> D[app]
+    D --> D1[pyproject.toml]
+    D --> D2[src]
+    D2 --> D3[app]
+    D3 --> D4[main.py]
+    D3 --> D5[__init__.py]
+    A --> E[lib]
+    E --> E1[pyproject.toml]
+    E --> E2[src]
+    E2 --> E3[lib]
+    E3 --> E4[utils.py]
+    E3 --> E5[__init__.py]
+```
+
+### Configuración del Módulo Raíz
+
+El archivo `pyproject.toml` en la raíz del proyecto define las dependencias principales y las referencias a los módulos internos (`app` y `lib`).
+
+```toml title="pyproject.toml"
+[tool.poetry]
+name = "echo-app-poetry"
+version = "1.0.0"
+description = "A simple echo app using Poetry"
+authors = ["r8vnhill <reachme@ravenhill.cl>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13.2"
+app = { path = "app", develop = true }
+lib = { path = "lib", develop = true }
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+```
+
+Aquí, `app` y `lib` se definen como **dependencias locales** usando `{ path = "<ruta>" }`, con la opción `develop = true` para indicar que son módulos en desarrollo.
+
+### Configuración de los Módulos `app` y `lib`
+
+Cada módulo necesita su propio `pyproject.toml`, donde se pueden declarar dependencias adicionales.
+
+#### 📁 `app/pyproject.toml`
+```toml title="app/pyproject.toml"
+[tool.poetry]
+name = "app"
+version = "1.0.0"
+description = "Main application module"
+authors = ["r8vnhill <reachme@ravenhill.cl>"]
+
+[tool.poetry.dependencies]
+python = "^3.13.2"
+lib = { path = "../lib", develop = true }  # Dependencia local a lib
+```
+
+#### 📁 `lib/pyproject.toml`
+```toml title="lib/pyproject.toml"
+[tool.poetry]
+name = "lib"
+version = "1.0.0"
+description = "Utility library module"
+authors = ["r8vnhill <reachme@ravenhill.cl>"]
+
+[tool.poetry.dependencies]
+python = "^3.13.2"
+```
+
+### Evitar Bucles en las Dependencias
+
+Al configurar módulos en un proyecto multi-módulo, es importante **evitar dependencias cíclicas**. Un **bucle de dependencia** ocurre cuando:
+- `app` depende de `lib`
+- `lib` también depende de `app`
+
+Esto generará errores en Poetry y puede hacer que el entorno de desarrollo sea inconsistente. Para evitarlo:
+
+✅ **Define relaciones de dependencia de manera unidireccional**  
+✅ **Extrae funcionalidades comunes en módulos independientes**  
+✅ **Reconsidera la arquitectura si detectas ciclos innecesarios**
+
+### Ejecutando el Proyecto 🚀
+
+Una vez configurados los módulos, instala todas las dependencias del proyecto, incluyendo los módulos locales, con:
+
+```bash
+poetry install --no-root
+```
+
+<details>
+    <summary>
+        ¿Por qué `--no-root`?
+    </summary>
+    
+    Este flag evita instalar el paquete raíz en sí mismo dentro del entorno virtual. Es útil en proyectos multi-módulo, ya que **solo instala las dependencias** sin tratar al módulo principal como una dependencia más.
+</details>
+
+Después de la instalación, puedes verificar que los módulos están accesibles ejecutando:
+
+```bash
+poetry run python -c "import app, lib; print('Módulos cargados correctamente')"
 ```
 
 ### Configuración del Módulo Raíz
@@ -109,9 +213,7 @@ authors = ["r8vnhill <reachme@ravenhill.cl>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
-app = { path = "app", develop = true }
-lib = { path = "lib", develop = true }
+python = "^3.13.2"
 
 [build-system]
 requires = ["poetry-core"]
@@ -132,7 +234,7 @@ description = "A subproject for the app"
 authors = ["Ignacio Slater <reachme@ravenhill.cl>"]
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.13.2"
 ```
 
 ```toml title="lib/pyproject.toml"
@@ -143,7 +245,7 @@ description = "A subproject for the lib"
 authors = ["Ignacio Slater <reachme@ravenhill.cl>"]
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.13.2"
 ```
 
 ## Gestión de Dependencias en Poetry
@@ -166,7 +268,7 @@ Esto agregará **Flask** a las dependencias de tu proyecto y actualizará el arc
 
 ```toml title="pyproject.toml"
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.13.2"
 app = { path = "app", develop = true }
 lib = { path = "lib", develop = true }
 flask = "^3.0.3"
@@ -175,6 +277,8 @@ flask = "^3.0.3"
 Con este sistema, **Poetry** permite un control centralizado de todas las versiones y dependencias del proyecto, manteniéndolas en un solo archivo de configuración.
 
 ## Resumen Comparativo
+
+Aunque Poetry y Gradle son herramientas de gestión de dependencias, cada una está diseñada para su propio ecosistema. Mientras Gradle ofrece un amplio soporte para múltiples lenguajes y configuraciones avanzadas, Poetry se centra exclusivamente en la simplicidad y eficiencia para proyectos Python. Veamos una comparación de sus características clave:
 
 | **Característica**                          | **Poetry**                                                                                               | **Gradle**                                                                                               |
 |---------------------------------------------|----------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
@@ -205,23 +309,38 @@ Con este sistema, **Poetry** permite un control centralizado de todas las versio
     </Cons>
 </ProCons>
 
-## ¿Qué Aprendimos?
+## 📌 Conclusiones  
 
-En este artículo, exploramos cómo utilizar **Poetry** para configurar y gestionar proyectos en Python, con especial enfoque en estructuras multi-módulo y la gestión centralizada de dependencias. Poetry facilita la organización de proyectos complejos gracias a su configuración en archivos `pyproject.toml`, simplificando la administración de versiones, entornos virtuales, y dependencias tanto a nivel de proyecto como de módulo.
+En esta lección, exploramos cómo **Poetry** facilita la gestión de dependencias y la configuración de proyectos **multi-módulo** en Python. Aunque no ofrece soporte **nativo** para proyectos multi-módulo como Gradle, es posible estructurar proyectos organizados mediante **dependencias locales**, permitiendo un control claro de cada módulo y sus relaciones.
 
-A través de un **Resumen Comparativo**, vimos que, si bien Poetry y Gradle comparten similitudes en cuanto a la gestión de dependencias y la estructura multi-módulo, cada herramienta está adaptada a un ecosistema específico: **Poetry** para Python y **Gradle** para lenguajes en la plataforma JVM, entre otros.
+### 🔑 Puntos clave  
 
-### Puntos Clave
+1. **Gestión centralizada de dependencias**  
+   - Poetry permite administrar paquetes de manera estructurada con `pyproject.toml`, simplificando la instalación y actualización de librerías.  
+2. **Organización de proyectos multi-módulo**  
+   - Aunque Poetry no tiene una arquitectura multi-módulo integrada, se puede lograr mediante dependencias locales y archivos `pyproject.toml` individuales para cada módulo.  
+3. **Evitando dependencias cíclicas**  
+   - Es crucial definir relaciones de dependencia **de manera unidireccional** para evitar bucles que puedan generar errores en la instalación o dificultar la gestión del código.  
+4. **Comparación con Gradle**  
+   - Mientras Gradle está diseñado para la flexibilidad y el soporte multi-lenguaje, Poetry se enfoca exclusivamente en **Python**, ofreciendo una solución más sencilla pero con menos opciones avanzadas de personalización.  
+5. **Manejo eficiente de entornos**  
+   - Poetry crea automáticamente **entornos virtuales aislados**, lo que facilita el control de dependencias sin interferir con otros proyectos o configuraciones del sistema.  
 
-- **Gestión de dependencias**: Poetry permite agregar, actualizar y centralizar dependencias con comandos sencillos, mejorando la consistencia del proyecto.
-- **Configuración multi-módulo**: Al definir módulos separados con `pyproject.toml`, es posible gestionar proyectos con múltiples componentes independientes.
-- **Comparación con Gradle**: Aunque ambos permiten una configuración modular, Poetry carece de algunas de las extensiones y flexibilidad avanzada de Gradle, especialmente en proyectos que requieren scripts complejos o configuraciones multiplataforma.
+### ✅ Reflexión final  
 
-### Conclusión
+Poetry es una excelente opción para proyectos Python que buscan una solución **moderna y centralizada** para la gestión de dependencias. Si bien su enfoque en Python lo hace menos flexible que herramientas como Gradle, su simplicidad y facilidad de uso lo convierten en una herramienta poderosa para el desarrollo estructurado y modular.  
 
-**Poetry** es una herramienta poderosa para proyectos en Python, enfocada en la simplicidad y accesibilidad en la administración de dependencias y configuración de entornos. Es ideal para quienes buscan una solución integral para gestionar sus proyectos de Python de forma organizada y eficiente, con soporte directo para entornos virtuales y publicación en PyPI. Sin embargo, para proyectos más complejos o multiplataforma, herramientas como **Gradle** pueden ofrecer la flexibilidad y el soporte de ecosistema necesarios.
+Para proyectos más complejos con múltiples dependencias internas, es importante planificar cuidadosamente la estructura del proyecto y evitar ciclos de dependencia. Con una correcta configuración, **Poetry puede ser una alternativa eficiente y escalable para la gestión de proyectos en Python**. 🚀
 
 <References references={[
+    {
+        title: "Dependency Management With Python Poetry – Real Python",
+        url: "https://realpython.com/dependency-management-python-poetry/",
+        type: "article",
+        author: "Philipp Acsany",
+        publishedDate: "15 de diciembre de 2024",
+    },
+]} additionalReferences={[
     {
         title: "Poetry—Python dependency management and packaging made easy",
         url: "https://python-poetry.org/",

@@ -24,21 +24,13 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
     
 </ModuleSetup>
 
-En Kotlin, las **expresiones infijas** permiten escribir funciones de manera más legible y fluida, haciendo que el código se acerque a una sintaxis más natural. Estas expresiones pueden ser muy útiles en el desarrollo de **bibliotecas de software**, ya que ofrecen una forma clara de representar operaciones comunes y hacer que el uso de las bibliotecas sea más legible y fácil de usar.
+En Kotlin, las **expresiones infijas** permiten escribir funciones de manera más legible y fluida, eliminando la necesidad de paréntesis o puntos. Estas expresiones pueden mejorar la claridad del código en casos donde las operaciones se asemejan a un lenguaje natural, como en **pruebas unitarias**, **DSLs** y **operaciones sobre colecciones**.
 
-## ¿Qué es una Expresión Infija?
+## 🎯 ¿Qué es una Expresión Infija?
 
 Una expresión infija es una función que se puede llamar sin el uso de paréntesis ni puntos, de manera similar a los operadores matemáticos. Para declarar una función como infija, se utiliza la palabra clave `infix`. Estas funciones infijas solo pueden ser miembros de una clase o extensiones de una clase.
 
-### Reglas para Crear Funciones Infijas
-
-Para que una función pueda ser utilizada como infija, debe cumplir las siguientes reglas:
-
-1. **Debe ser una función miembro o una extensión**.
-2. **Debe aceptar solo un parámetro**.
-3. **No debe aceptar parámetros con valores predeterminados**.
-
-### Sintaxis de las Expresiones Infijas
+### 💡 Sintaxis de las Expresiones Infijas
 
 Para definir una función infija en Kotlin, se utiliza la siguiente estructura:
 
@@ -61,52 +53,127 @@ Para definir una función infija en Kotlin, se utiliza la siguiente estructura:
     </TabItem>
 </BoxedTabs>
 
-## Caso de estudio: Matcher en Kotest
+### 📝 Reglas para Crear Funciones Infijas
 
-Un uso común de expresiones infijas en Kotlin es el framework de pruebas **Kotest**, donde las expresiones infijas permiten crear **matchers** que hacen que las pruebas sean más legibles y expresivas.
+Para que una función pueda ser utilizada como infija, debe cumplir las siguientes reglas:
 
-Por ejemplo, en una prueba unitaria, podemos verificar la longitud mínima de un nombre de usuario usando Kotest y una expresión infija, lo cual mejora la claridad del test:
+1. **Debe ser una función miembro o una extensión**.
+2. **Debe aceptar solo un parámetro**.
+3. **No debe aceptar parámetros con valores predeterminados**.
+
+```kotlin
+// ✅ Correcto: función de extensión con un solo parámetro
+infix fun String.concatenate(other: String) = this + other
+
+// ❌ Incorrecto: función con más de un parámetro
+infix fun String.concatenate(other: String, separator: String) = this + separator + other
+
+// ❌ Incorrecto: función con un parámetro opcional
+infix fun String.concatenate(other: String = "default") = this + other
+```
+
+### ⚠️ Precedencia y Ambigüedad en Expresiones Infijas
+
+Las funciones infijas en Kotlin pueden hacer que el código sea **más legible**, pero **también pueden introducir ambigüedades** en expresiones donde se combinan con **operadores matemáticos u otras funciones infijas**.
+
+#### 🔍 Ejemplo de Ambigüedad
+
+```kotlin
+infix fun Int.multiplyBy(value: Int): Int = this * value
+
+// ❌ Potencialmente ambiguo: ¿(3 + 5) * 2 o 3 + (5 * 2)?
+val result = 3 + 5 multiplyBy 2  
+
+println(result) // ¿16 o 13?
+```
+
+:::danger
+
+En este caso, es difícil saber si **multiplyBy** tiene mayor precedencia que el `+`, lo que puede llevar a **resultados inesperados**.
+
+:::
+
+#### ✅ Solución: Usar Paréntesis
+
+Para evitar confusión, **siempre es recomendable usar paréntesis** cuando se mezclan **operadores estándar** con **funciones infijas**:
+
+```kotlin
+// 🚀 Opción clara y sin ambigüedad
+val result1 = (3 + 5) multiplyBy 2  // (3 + 5) * 2 = 16
+val result2 = 3 + (5 multiplyBy 2)  // 3 + (5 * 2) = 13
+```
+
+## 🏆 Caso de estudio: Expresiones infijas en Kotest
+
+Un uso común de expresiones infijas en Kotlin es en **frameworks de pruebas**, como **Kotest**, donde ayudan a escribir **assertions** más legibles y expresivas.  
+
+Por ejemplo, en una prueba unitaria, podemos verificar la longitud mínima de un nombre de usuario usando Kotest y una expresión infija.  
+
+### 🔄 Comparación: Expresión Infija vs. Función Normal
+
+Veamos cómo se vería una prueba usando una **función estándar** frente a una **expresión infija**:
+
+```kotlin
+// ❌ Sin expresión infija (función estándar)
+username.shouldHaveMinimumLength(5)
+
+// ✅ Con expresión infija
+username shouldHaveMinimumLength 5
+```
+
+#### 🎯 ¿Por qué la versión infija es mejor?
+1. **Legibilidad mejorada** → La sintaxis infija imita una oración natural, lo que hace que las pruebas sean más fáciles de leer y entender.  
+2. **Menos ruido visual** → Se eliminan los paréntesis innecesarios, haciendo que la intención del test sea más clara.  
+3. **Mayor expresividad** → Se asemeja a un lenguaje natural, lo que es especialmente útil en **DSLs de testing**.  
+
+### ✍ Implementación en Kotest
 
 <BoxedTabs>
-<TabItem label={"Código esencial"} value={"Código esencial"}>
-```kotlin showLineNumbers
-infix fun Username.shouldHaveMinimumLength(length: Int): Username {
-    this should haveMinimumLength(length)
-    return this
-}
-```
-</TabItem>
-<TabItem label={"Código completo"} value={"Código completo"}>
-```kotlin showLineNumbers title="infix/src/test/kotlin/cl/ravenhill/matchers/haveMinimumLength.kt"
-package com.github.username.matchers
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
 
-import com.github.username.users.Username
-import io.kotest.matchers.Matcher
-import io.kotest.matchers.MatcherResult
-import io.kotest.matchers.should
-import io.kotest.matchers.shouldNot
+        ```kotlin showLineNumbers
+        infix fun Username.shouldHaveMinimumLength(length: Int): Username {
+            this should haveMinimumLength(length)
+            return this
+        }
+        ```
 
-fun haveMinimumLength(length: Int) = Matcher<Username> { username ->
-    MatcherResult(
-        username.value.length >= length,
-        { "Username should have a minimum length of $length" },
-        { "Username should not have a minimum length of $length" }
-    )
-}
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
 
-infix fun Username.shouldHaveMinimumLength(length: Int): Username {
-    this should haveMinimumLength(length)
-    return this
-}
-```
-</TabItem>
+        ```kotlin showLineNumbers title="infix/src/test/kotlin/cl/ravenhill/matchers/haveMinimumLength.kt"
+        package com.github.username.matchers
+
+        import com.github.username.users.Username
+        import io.kotest.matchers.Matcher
+        import io.kotest.matchers.MatcherResult
+        import io.kotest.matchers.should
+        import io.kotest.matchers.shouldNot
+
+        fun haveMinimumLength(length: Int) = Matcher<Username> { username ->
+            MatcherResult(
+                username.value.length >= length,
+                { "Username should have a minimum length of $length" },
+                { "Username should not have a minimum length of $length" }
+            )
+        }
+
+        infix fun Username.shouldHaveMinimumLength(length: Int): Username {
+            this should haveMinimumLength(length)
+            return this
+        }
+        ```
+
+    </TabItem>
 </BoxedTabs>
 
 <Explanation>
-En este ejemplo, la función infija `shouldHaveMinimumLength` permite verificar si un `Username` tiene la longitud mínima requerida, aumentando la legibilidad de las pruebas.
+    - **Uso de expresiones infijas** → La función `shouldHaveMinimumLength` se define como infija para hacer que la prueba sea más legible y expresiva.  
+    - **Compatibilidad con Kotest** → Se integra con `should`, manteniendo la coherencia con el estilo del framework.  
+    - **Retorno fluido** → Se devuelve la propia instancia (`this`) para permitir encadenamiento de validaciones si es necesario.  
 </Explanation>
 
-### Uso de la función en pruebas unitarias
+### 🧪 Uso de la Función en Pruebas Unitarias
 
 El uso de `shouldHaveMinimumLength` en pruebas unitarias facilita la generación de valores aleatorios para verificar esta condición:
 
@@ -194,7 +261,7 @@ class HaveMinimumLengthTest : FreeSpec({
     - **Manejo de excepciones**: Cuando un nombre de usuario no cumple con la longitud mínima, el test lanza una excepción como se espera.
 </Explanation>
 
-### Beneficios y limitaciones de las expresiones infijas
+### 📊 Beneficios y Limitaciones de las Expresiones Infijas
 
 <ProCons>
     <Pros>
@@ -202,26 +269,60 @@ class HaveMinimumLengthTest : FreeSpec({
         - **Ideal para operadores personalizados**: Facilitan la creación de operadores personalizados que se comporten de manera similar a los operadores incorporados, sin necesidad de sobrecargar operadores preexistentes.
         - **Compatibilidad con librerías de pruebas**: En bibliotecas de pruebas como Kotest, las expresiones infijas mejoran la claridad y comprensión de los casos de prueba al representar directamente el comportamiento esperado.
         - **Simplicidad en la implementación**: Implementar una función infija solo requiere cumplir algunas reglas simples, permitiendo a quien desarrolla a personalizar operaciones sin complicaciones adicionales.
+        - **Facilita la escritura de DSLs en Kotlin**, donde se busca una sintaxis cercana al lenguaje natural.
+        - **Reduce la necesidad de sobrecargar operadores**, permitiendo definir funciones con una sintaxis más expresiva.
     </Pros>
     <Cons>
         - **Limitaciones en parámetros**: Las funciones infijas solo aceptan un parámetro, lo que limita su aplicabilidad a casos específicos y podría no ser suficiente en operaciones que requieren varios argumentos.
         - **Ambigüedad potencial**: En situaciones complejas, las expresiones infijas pueden introducir ambigüedad en la precedencia de operaciones, especialmente cuando se combinan múltiples expresiones infijas en una sola línea.
         - **Menor reusabilidad en ciertos contextos**: Dado que están pensadas para operaciones simplificadas y expresivas, las funciones infijas pueden no ser ideales para lógica compleja o de múltiples pasos.
+        - **Puede hacer el código menos predecible** si se abusa de ellas sin una convención clara.
+        - **Menor compatibilidad con Java**, ya que las funciones infijas no son idiomáticas en otros lenguajes de la JVM.
     </Cons>
 </ProCons>
 
-## ¿Qué aprendimos?
+## 📌 **Conclusiones**  
 
-En esta lección, exploramos cómo las **expresiones infijas** en Kotlin pueden mejorar la claridad y legibilidad del código, especialmente en el desarrollo de **bibliotecas de software** y pruebas. Estas expresiones ofrecen una manera de definir funciones más intuitivas y cercanas al lenguaje natural, permitiendo a quienes desarrollan aprovechar una sintaxis concisa y expresiva.
+Las **expresiones infijas** en Kotlin son una herramienta poderosa que permite escribir código más expresivo y legible, eliminando la necesidad de paréntesis y puntos en ciertas operaciones. A lo largo de esta lección, exploramos sus **beneficios**, **limitaciones** y **casos de uso**, con énfasis en su aplicación en **DSLs y frameworks de pruebas** como **Kotest**.
 
-### Puntos clave:
+### 🔑 **Puntos clave**  
 
-- Las **expresiones infijas** son funciones que se pueden invocar sin paréntesis ni puntos, mejorando la fluidez y claridad del código.
-- Estas funciones requieren ser miembros o extensiones de una clase, aceptar solo un parámetro y no tener valores predeterminados, lo que limita su uso a casos específicos.
-- En **Kotest**, las expresiones infijas permiten escribir pruebas que son más legibles, como en el ejemplo del matcher `shouldHaveMinimumLength`, que verifica si un nombre de usuario cumple con una longitud mínima.
-- Las **expresiones infijas** son ideales para operadores personalizados y estructuras de código donde la claridad y el flujo de lectura son esenciales.
-- Aunque son útiles y mejoran la legibilidad, también presentan limitaciones, como la restricción de parámetros y posibles ambigüedades en casos complejos.
+1. **Expresividad y legibilidad mejorada**  
+   - Las expresiones infijas permiten escribir código más cercano al lenguaje natural, lo que mejora su comprensión y mantenimiento.  
+   - Son especialmente útiles en **DSLs**, **frameworks de pruebas** y **APIs declarativas**.  
+2. **Uso en Kotest y DSLs**  
+   - En **pruebas unitarias**, las expresiones infijas ayudan a escribir assertions más claras, como:  
+     ```kotlin
+     username shouldHaveMinimumLength 5
+     ```
+   - Esto mejora la **legibilidad** y hace que las pruebas sean más autoexplicativas en comparación con llamadas de función tradicionales.  
+3. **Reglas y limitaciones**  
+   - Una función infija **debe ser miembro o extensión de una clase**, aceptar **un solo parámetro** y **no tener valores predeterminados**.  
+   - **No se recomienda su uso excesivo**, ya que pueden hacer el código menos predecible si no se utilizan con claridad.  
+4. **Precedencia y ambigüedad**  
+   - **Las expresiones infijas pueden generar ambigüedad** cuando se combinan con operadores matemáticos u otras funciones infijas.  
+   - Se recomienda **usar paréntesis** para evitar confusión en expresiones compuestas:
+     ```kotlin
+     val result = (3 + 5) multiplyBy 2  // Sin ambigüedad
+     ```
+5. **Comparación con funciones tradicionales**  
+   - Aunque mejoran la fluidez del código, **no siempre son la mejor opción**.  
+   - Para casos en los que **se necesiten múltiples parámetros**, es preferible una función estándar.  
 
-### Conclusión
+### ✅ **Reflexión final**  
 
-En conclusión, las expresiones infijas son una herramienta poderosa para hacer que el código sea más expresivo y fácil de entender, especialmente en contextos como las pruebas o los DSLs. Sin embargo, se debe considerar su uso con precaución, ya que en aplicaciones más complejas pueden introducir desafíos de legibilidad y reutilización.
+Las expresiones infijas ofrecen una **sintaxis elegante** que hace el código más legible en contextos adecuados, como **DSLs** y **frameworks de pruebas**. Sin embargo, **deben usarse con criterio**, evitando ambigüedades y asegurando que realmente aporten claridad al código.  
+
+En proyectos donde la expresividad es clave, como **bibliotecas de pruebas o APIs de alto nivel**, las funciones infijas pueden hacer una diferencia significativa en la calidad del código.
+
+Understanding Kotlin Infix Functions: A Detailed Guide. (s. f.). Recuperado 18 de marzo de 2025, de https://www.dhiwise.com/post/understanding-kotlin-infix-functions-a-beginners-guide
+
+<References references={[
+    {
+        title: "Understanding Kotlin Infix Functions: A Detailed Guide",
+        url: "https://www.dhiwise.com/post/understanding-kotlin-infix-functions-a-beginners-guide",
+        type: "article",
+        author: "Pratik Chothani",
+        publishedDate: "25 de septiembre de 2024"
+    },    
+]} />
