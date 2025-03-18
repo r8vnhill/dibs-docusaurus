@@ -23,7 +23,7 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 En este ejemplo, queremos probar una función `biggest` que toma una lista de enteros y devuelve el valor máximo. Para este caso, definiremos una propiedad que verifique que el valor máximo de una lista es igual al último elemento de la lista una vez ordenada.
 
-## Propiedades y Generación de Datos
+## 🔢 Propiedades y Generación de Datos
 
 Con **Hypothesis**, podemos definir estrategias que generen listas de enteros y escribir tests que verifiquen las propiedades esperadas de nuestra función `biggest`. Comenzamos creando un test para asegurar que, en una lista no vacía, el valor máximo devuelto por `biggest` coincida con el último elemento de la lista cuando esta se encuentra ordenada.
 
@@ -42,11 +42,14 @@ def test_biggest_with_empty_list() -> None:
     assert biggest([]) == float('-inf')
 ```
 
-<Explanation>
-    En este código, **Hypothesis** genera listas de enteros para probar que, en una lista no vacía, `biggest` devuelve el mismo valor que el último elemento de la lista ordenada. También añadimos un caso para listas vacías, verificando que `biggest` devuelve `-inf`.
+<Explanation>  
+    - **`@given(lists(integers(), min_size=1))`**: Hypothesis genera listas aleatorias de enteros y las pasa como argumento a la prueba. Esto permite verificar el comportamiento de la función con una gran variedad de entradas sin necesidad de escribir casos de prueba manualmente.  
+    - **Exploración de casos límite**: Hypothesis no solo genera listas de tamaño arbitrario, sino que también detecta automáticamente **casos límite** como listas con un solo elemento o listas con valores extremos, lo que ayuda a descubrir posibles errores en la implementación.  
+    - **Manejo de listas vacías**: Como `max([])` en Python lanza una excepción, `biggest([])` está diseñado para devolver `float('-inf')`, asegurando un comportamiento predecible y evitando errores de ejecución en escenarios donde la lista es vacía.  
+
 </Explanation>
 
-## Implementación de la Función `biggest`
+## 🛠️ Implementación de la Función `biggest`
 
 La función `biggest` toma una lista de enteros y devuelve el valor máximo. En este ejemplo, `biggest` retorna `-inf` cuando recibe una lista vacía, usando `reduce` para encontrar el valor máximo en otros casos.
 
@@ -57,7 +60,7 @@ def biggest(lst: list[int]) -> int | float:
     return reduce(lambda acc, number: number if number > acc else acc, lst, float('-inf'))
 ```
 
-## Resumen comparativo
+## 📊 Resumen comparativo
 
 | **Característica**                          | **Hypothesis**                                                                                           | **Kotest**                                                                                               |
 |---------------------------------------------|----------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
@@ -66,7 +69,7 @@ def biggest(lst: list[int]) -> int | float:
 | **Manejo de casos especiales**              | Proporciona mecanismos automáticos para listas vacías o valores extremos en datos generados.             | Kotest permite configuración en generadores, pero requiere especificaciones más detalladas en algunos casos.|
 | **Personalización de estrategias**          | Permite definir estrategias avanzadas mediante combinaciones y composición de estrategias.               | Ofrece una flexibilidad comparable, pero requiere más configuraciones manuales para generar ciertos datos complejos.|
 
-### Beneficios y limitaciones de Hypothesis
+### ⚖️ Beneficios y Limitaciones de Hypothesis
 
 <ProCons>
     <Pros>
@@ -79,16 +82,25 @@ def biggest(lst: list[int]) -> int | float:
     </Cons>
 </ProCons>
 
-## ¿Qué aprendimos?
+## 📌 Conclusiones
 
-En esta lección, exploramos cómo utilizar **Hypothesis** para realizar pruebas basadas en propiedades de una función en Python, en este caso, la función `biggest` que devuelve el máximo de una lista. Analizamos cómo generar datos de prueba con **estrategias** y cómo validar propiedades de funciones para asegurar un comportamiento correcto en diferentes escenarios. Además, revisamos cómo manejar casos límite, como listas vacías, mediante pruebas adicionales que cubren situaciones especiales.
+En esta lección, exploramos cómo utilizar **Hypothesis** para realizar pruebas basadas en propiedades (**Property-Based Testing, PBT**) en Python. A través del caso de estudio de la función `biggest`, demostramos cómo generar datos automáticamente y verificar propiedades generales del código en lugar de depender de pruebas manuales.
 
-### Puntos clave
+### 🔑 Puntos clave
 
-- **Pruebas basadas en propiedades**: Aprendimos a verificar el comportamiento de funciones usando propiedades generales en lugar de ejemplos específicos.
-- **Generación automática de datos**: Hypothesis permite automatizar la creación de datos, asegurando una amplia cobertura en las pruebas sin necesidad de definir casos manualmente.
-- **Manejo de casos límite**: A través de tests específicos, verificamos que nuestra función `biggest` maneja correctamente situaciones como listas vacías, devolviendo el valor adecuado (`-inf`).
+1. **Pruebas basadas en propiedades**:  
+   - En lugar de definir casos específicos de prueba, usamos estrategias para generar datos aleatorios y verificar que se cumplan ciertas propiedades de la función bajo prueba.
+2. **Generación automática de datos**:  
+   - Hypothesis permite definir estrategias que producen una amplia variedad de entradas, lo que ayuda a detectar errores en escenarios inesperados.
+3. **Detección de casos límite**:  
+   - Hypothesis explora automáticamente situaciones extremas, como listas vacías o valores atípicos, lo que mejora la cobertura de las pruebas sin esfuerzo adicional.
+4. **Manejo de listas vacías**:  
+   - Implementamos `biggest([]) == float('-inf')` para evitar excepciones y garantizar un comportamiento predecible en escenarios con entradas vacías.
+5. **Comparación con Kotest**:  
+   - Hypothesis y Kotest ofrecen enfoques similares para PBT, pero mientras Hypothesis automatiza la detección de casos límite, Kotest permite mayor personalización en la generación de datos.
 
----
+### ✅ Reflexión final
 
-El uso de **Property-Based Testing** con Hypothesis ofrece una herramienta poderosa para validar el comportamiento de funciones de manera escalable, mejorando la confiabilidad y la robustez del código frente a diferentes conjuntos de datos y casos límite.
+El **Property-Based Testing** con Hypothesis proporciona una forma escalable y eficiente de validar funciones en Python, asegurando robustez y fiabilidad en el código. Aunque puede requerir configuraciones adicionales para datos complejos, su capacidad para descubrir errores ocultos lo convierte en una herramienta valiosa en el desarrollo de software.
+
+Este enfoque es especialmente útil en **librerías de software** y proyectos donde la validación exhaustiva de funciones es crítica. Aplicar PBT en tu flujo de trabajo te ayudará a mejorar la calidad del código y reducir la probabilidad de errores inesperados.
