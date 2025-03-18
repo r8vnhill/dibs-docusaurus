@@ -6,92 +6,70 @@ title: "Tarea 1 - Introducción a Kotlin"
 
 > Utiliza ``?.`` y ``?:`` para manejar valores nulos de manera segura. No utilices ``!!`` ni hagas chequeos manuales de nulos (por ejemplo, ``if (x != null)``).
 
-Crearás una biblioteca que permita a lxs desarrolladorxs gestionar eventos de manera flexible y segura. La biblioteca deberá permitir:
+### P1 [4 pts] Biblioteca para Validación Segura de Formularios
 
-- Registrar diferentes tipos de eventos.
-- Suscribirse a eventos específicos.
-- Filtrar eventos basados en criterios definidos.
-- Manejar posibles valores nulos de manera segura.
+Las bibliotecas permiten reutilizar código y crear software más robusto y mantenible. Un aspecto crítico en la creación de una biblioteca es garantizar una API clara, simple y segura frente a valores nulos, especialmente al validar formularios donde algunos campos podrían no estar presentes.
 
-Todos los eventos se definen por un nombre (``String``), una fecha (``LocalDate``), una descripción opcional (``String?``) y unx organizadorx opcional (``String?``). Cada evento puede ser de un tipo específico, como una conferencia o un webinar, y puede tener propiedades adicionales, como un número de asistentes o una URL de transmisión.
+Tu tarea consiste en desarrollar una pequeña biblioteca en Kotlin llamada `FormValidator` que permita validar formularios simples de forma segura usando operadores de seguridad ante valores nulos (`?.`, `?:`) y la función `let`. La biblioteca debe:
 
-## P1. [2 pts] Definición de eventos
+- Proporcionar una API simple, clara y concisa.
+- Evitar que lxs usuarixs puedan utilizar la biblioteca incorrectamente.
+- Ocultar detalles internos y ofrecer encapsulación adecuada.
 
-Considera que existen dos tipos de eventos:
+Debes implementar las siguientes funciones en la clase `FormValidator`:
 
-- **``ConferenceEvent``:** Representa una conferencia con un número de asistentes.
-- **``WebinarEvent``:** Representa un webinar con una URL de transmisión.
+- `fun addRequiredField(fieldName: String): FormValidator`
+- `fun addOptionalField(fieldName: String): FormValidator`
+- `fun validate(form: Map<String, String?>): ValidationResult`
 
-1. Define una jerarquía de clases que permita representar estos eventos de manera eficiente y segura.
-2. Implementa el método ``toString()`` que muestre la información relevante a cada tipo de evento, incluyendo propiedades opcionales. El formato de salida debe ser ``<event-type>(name='<name>', date=<date>{, description='<description>'}{, organizer='<organizer>}, propiedadAdicional='<valor>')``, donde los elementos entre `<>` son los valores de las propiedades correspondientes y los elementos entre `{ }` son opcionales y deben incluirse solo si la propiedad correspondiente está definida. Por ejemplo, ``ConferenceEvent(name='KotlinConf', date=2022-10-15, description='Annual Kotlin Conference', organizer='JetBrains', attendees=300)`` si todos los campos están definidos o ``ConferenceEvent(name='KotlinConf', date=2022-10-15, attendees=300)`` si la descripción y el organizador son nulos.
+La validación debe:
+- Retornar un resultado que indique claramente si la validación fue exitosa o, en caso contrario, listar los campos faltantes o inválidos.
+- Utilizar obligatoriamente una combinación efectiva de los operadores `?.`, `?:`, y la función `let`.
+
+### Formato del resultado:
+
+La clase `ValidationResult` puede tener la siguiente estructura:
+
+```kotlin
+sealed class ValidationResult {
+    object Success : ValidationResult()
+    data class Failure(val missingFields: List<String>) : ValidationResult()
+}
+```
+
+### Ejemplo de uso:
+
+```kotlin
+val validator = FormValidator()
+    .addRequiredField("username")
+    .addRequiredField("email")
+    .addOptionalField("phone")
+
+val formData = mapOf(
+    "username" to "juan",
+    "email" to null,
+    "phone" to "123456789"
+)
+
+val result = validator.validate(formData)
+
+when (result) {
+    is ValidationResult.Success -> println("Validación exitosa")
+    is ValidationResult.Failure -> println("Campos faltantes: ${result.missingFields}")
+}
+```
 
 _Hints:_
-- _Utiliza parámetros por defecto para manejar propiedades opcionales._
-- _Piensa cómo minimizar la duplicación de código, aquí puede serte de utilidad saber que ``this::class.simpleName`` te entrega el nombre de la clase actual._
+- _Usa el operador `?:` para establecer valores predeterminados en campos opcionales._
+- _Usa la función `let` para validar valores específicos cuando existan._
+- _Emplea el operador `?.` para manejar campos potencialmente ausentes de forma segura._
 
-### P2. [2 pts] Implementación de suscripciones
+### P2 [1 pt] Documentación
 
-Además, se requiere implementar un sistema de suscripciones que permita a lxs desarrolladorxs recibir notificaciones sobre eventos específicos. Para esto, se define la siguiente jerarquía:
+Añade documentación clara y concisa para la clase y cada función pública en formato KDoc, explicando brevemente qué hacen y cómo usarlas correctamente.
 
-```kotlin
-interface Subscriber {
-    fun update(event: Event)
-}
+### P3 [1 pt] Validaciones personalizadas
 
-class EmailSubscriber(private val email: String?) : Subscriber {
-    override fun update(event: Event) {
-        TODO("Not implemented")
-    }
-}
+Permite que lxs usuarixs puedan especificar validaciones personalizadas (ejemplo: formato de correo electrónico) para cada campo usando funciones lambda, asegurando siempre la seguridad ante valores nulos.
 
-class SMSSubscriber(private val phoneNumber: String?) : Subscriber {
-    override fun update(event: Event) {
-        TODO("Not implemented")
-    }
-}
-```
-
-Implementa el método ``update(event: Event)`` en la clase ``EmailSubscriber`` que imprima un mensaje en la consola con la información del evento si el email no es nulo, o ``Test subscriber: email not set`` si el email es nulo.
-
-### c) [2 pts] Gestor de eventos
-
-Finalmente, se requiere implementar un gestor de eventos que almacene una lista de eventos (``MutableList<Event>``) y un diccionario de suscriptores a eventos (``MutableMap<Event, MutableList<Subscriber>>``). El gestor debe permitir:
-
-- **Registrar eventos:** Agregar un evento a la lista de eventos.
-- **Suscribirse a eventos:** Agregar un suscriptor a la lista de suscriptorxs de un evento específico. Si el evento no existe, se debe crear.
-- **Notificar eventos:** Notificar a lxs suscriptorxs de un evento específico.
-
-Completa la siguiente implementación:
-
-```kotlin
-object EventManager {
-    private val events: MutableList<Event> = mutableListOf()
-    private val subscribers: MutableMap<Event, MutableList<Subscriber>> = mutableMapOf()
-
-    // Tu código aquí
-}
-```
-
-_Hint: Te pueden ser de utilidad dos funciones: [``getOrPut``](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/get-or-put.html) o [``run``](https://kotlinlang.org/docs/scope-functions.html#run) (una o la otra)_
-
-1. _``getOrPut``: Si la clave no existe, la crea y retorna el valor por defecto. Si la clave ya existe, retorna el valor asociado a la clave. Por ejemplo:_
-
-    ```kotlin
-    val map = mutableMapOf<String, MutableList<String>>()
-    val list = map.getOrPut("key") { mutableListOf() }
-    list.add("value")
-    ```
-
-    _Aquí, si la clave ``"key"`` no existe, se crea una lista vacía y se agrega el valor ``"value"``. Si la clave ya existe, se obtiene la lista asociada a la clave y se agrega el valor ``"value"``._
-
-2. _``run``: Ejecuta un bloque de código en el contexto de un objeto. Por ejemplo:_
-
-    ```kotlin
-    val list = mutableListOf<String>().run {
-        add("value")
-        add("value2")
-        this
-    }
-    ```
-
-    _Aquí, se crea una lista mutable vacía, se agregan los valores ``"value"`` y ``"value2"``, y se retorna la lista._
+_Hint: Puedes usar una estructura como `Map<String, (String) -> Boolean>` para almacenar estas validaciones adicionales._
