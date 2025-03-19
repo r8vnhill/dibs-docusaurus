@@ -7,29 +7,67 @@ import GitHubRepoLink from "/src/components/GithubRepoLink";
 import References from "/src/components/ReferencesComponent";
 import ReadingTime from '/src/components/ReadingTime';
 import CollectionsVariance from '/src/pages/collections/types/collections-variance.mdx';
+import Explanation from '@site/src/components/admonitions/Explanation'
 
 <ReadingTime />
 <GitHubRepoLink repo={"collections-kt"} user={"r8vnhill"} />
 
 Kotlin ofrece una amplia variedad de **colecciones inmutables** que permiten gestionar datos de manera eficiente sin modificar su estado. Estas colecciones garantizan la seguridad en situaciones donde no se desea que los datos cambien después de ser inicializados, proporcionando inmutabilidad por defecto.
 
-:::note Diferenciación entre Colecciones Iterables y Diccionarios
-A diferencia de otros lenguajes, Kotlin separa las colecciones iterables (``Collection``) de los diccionarios (``Map``).
-:::
+## 📌 Diferenciación entre `Collection` y `Map`
 
-## `Collection`
+En muchos lenguajes, como Java, los mapas (`Map`) forman parte de la jerarquía de colecciones y, en algunos casos, se consideran iterables. Sin embargo, **Kotlin hace una distinción clara entre colecciones iterables (`Collection`) y diccionarios (`Map`)**.
 
-En Kotlin, una **colección** es una estructura iterable que almacena elementos de manera organizada. Las colecciones tienen un tamaño definido (`size`) y permiten buscar elementos dentro de ellas utilizando el método `contains`, o el operador `in`, que es equivalente.
+### 🔹 `Collection` (List, Set) vs `Map` en Kotlin
 
-### Ejemplo
+| **Tipo**  | **Orden** | **Duplicados** | **Acceso** |
+|-----------|----------|---------------|------------|
+| `List`    | Sí       | Sí            | Índice     |
+| `Set`     | No       | No            | Contenido  |
+| `Map`     | No       | Claves únicas | Clave      |
+
+- **`Collection<E>`** representa un conjunto de elementos de tipo `E` que pueden recorrerse secuencialmente. Esto incluye `List<E>` (listas ordenadas) y `Set<E>` (conjuntos sin duplicados).
+- **`Map<K, V>`** almacena pares clave-valor (`K -> V`) y **no** hereda de `Collection`, ya que su estructura y forma de acceso son distintas.
 
 ```kotlin showLineNumbers
-val strings: Collection<String> = listOf("Kotlin", "Java")
-println(strings.contains("Kotlin"))  // Output: true
-println("Java" in strings)  // Output: true
+val lista: List<String> = listOf("Kotlin", "Scala", "Java")
+val mapa: Map<String, Int> = mapOf("Kotlin" to 1, "Scala" to 2)
+
+println(lista[0])        // Acceso por índice
+println(mapa["Kotlin"])  // Acceso por clave
 ```
 
-### Nota sobre Covarianza
+### ❓ ¿Por qué `Map` no es una `Collection` en Kotlin?
+
+1. **No es iterable de la misma manera**  
+   - Una `Collection` permite recorrer elementos directamente (`for (x in collection)`).
+   - Un `Map` requiere iterar sobre `keys`, `values` o `entries`.
+
+   ```kotlin showLineNumbers
+   for (entry in mapa) { // ❌ Error: Map<K, V> no es Iterable
+       println(entry)
+   }
+
+   for ((clave, valor) in mapa.entries) { // ✅ Forma correcta
+       println("$clave -> $valor")
+   }
+   ```
+
+2. **Distinta estructura de acceso**  
+   - En `Collection`, los elementos se acceden secuencialmente (`list[index]`).
+   - En `Map`, los valores se acceden por clave (`map[key]`).
+
+3. **Diferente semántica en métodos comunes**  
+   - `Collection.contains(element)` busca un valor específico.  
+   - `Map.contains(key)` verifica si existe una **clave**.  
+
+   ```kotlin showLineNumbers
+   println(lista.contains("Kotlin"))  // true
+   println(mapa.containsKey("Kotlin"))  // true
+   println(mapa.containsValue(1))  // true
+   ```
+
+### 🔀 Covarianza en Colecciones
 
 Las colecciones son covariantes, lo que permite asignar una colección de un tipo a una colección de su supertipo. Aunque algunos métodos podrían requerir contravarianza, Kotlin los permite siempre y cuando no modifiquen la colección, ya que son métodos de solo lectura, como `contains`.
 
@@ -45,108 +83,78 @@ Las colecciones son covariantes, lo que permite asignar una colección de un tip
     println(strings.contains(420))  // Error de compilación
     ```
 
-    **Explicación**:
-- **[2]**: La asignación es válida debido a la **covarianza**: `Collection<String>` es un subtipo de `Collection<Any>`.
-- **[3]**: Aunque `420` no es un `String`, el método `contains` espera un `Any` en `anys`, lo que permite la llamada. El resultado es `false`, ya que `420` no está en la colección.
-- **[4]**: Al intentar usar `contains` directamente en `strings` con un `Int`, el compilador arroja un error porque espera un parámetro de tipo `String`.
+    <Explanation>
+        - **[2]**: La asignación es válida debido a la **covarianza**: `Collection<String>` es un subtipo de `Collection<Any>`.
+        - **[3]**: Aunque `420` no es un `String`, el método `contains` espera un `Any` en `anys`, lo que permite la llamada. El resultado es `false`, ya que `420` no está en la colección.
+        - **[4]**: Al intentar usar `contains` directamente en `strings` con un `Int`, el compilador arroja un error porque espera un parámetro de tipo `String`.
+    </Explanation>
 </details>
 
 La covarianza en colecciones permite flexibilidad al tratar con tipos genéricos sin comprometer la seguridad de los tipos en operaciones de solo lectura.
 
-### `List`
-
-Una **lista** es una colección ordenada de elementos, en la que cada elemento tiene una posición indexada, lo que permite acceder y manipular elementos directamente mediante su índice. Además, las listas pueden contener elementos duplicados, lo que significa que un mismo valor puede aparecer en múltiples posiciones dentro de la lista.
-
-```kotlin showLineNumbers
-public interface List<out E> : Collection<E>
-```
-
-#### Ejemplo:
-
-```kotlin showLineNumbers
-val immutableList: List<String> = listOf("Kotlin", "Java", "Scala")
-println(immutableList[0])  // Output: Kotlin
-```
-
-### `Set`
-
-Un **set** es una colección que no permite elementos duplicados y no garantiza un orden específico de los mismos. Los sets son útiles cuando se necesita asegurar que cada elemento sea único dentro de la colección. Además, los sets soportan operaciones matemáticas como **unión**, **intersección** y **diferencia**. En Kotlin, se pueden crear sets utilizando la función `setOf`.
-
-```kotlin showLineNumbers
-public interface Set<out E> : Collection<E>
-```
-
-#### Ejemplo:
-
-```kotlin showLineNumbers
-val immutableSet: Set<String> = setOf("Kotlin", "Java", "Scala")
-println("Kotlin" in immutableSet)  // Output: true
-```
-
-## `Map`
-
-Un **map** es una colección que asocia claves (*keys*) con valores (*values*), donde cada clave está vinculada a un único valor. Esta estructura permite acceder de manera eficiente a un valor dado su clave. En un map, las claves deben ser únicas, aunque los valores pueden repetirse. Los mapas en Kotlin se crean usando la función `mapOf`, seguida de una secuencia de pares clave-valor.
-
-```kotlin showLineNumbers
-public interface Map<K, out V>
-```
-
-### Ejemplo
-
-```kotlin showLineNumbers
-val immutableMap: Map<String, Int> = mapOf("Kotlin" to 1, "Java" to 2)
-println(immutableMap["Kotlin"])  // Output: 1
-```
+## ⚖️ Ventajas y Desventajas de las Colecciones Inmutables
 
 <ProCons>
     <Pros>
-        - **Seguridad en concurrencia**: Las colecciones inmutables son intrínsecamente seguras para usar en entornos concurrentes, ya que no pueden ser modificadas, eliminando riesgos de condiciones de carrera.
-        - **Simplicidad y claridad**: Al no poder modificar las colecciones, el código es más fácil de entender y mantener, ya que se evita la lógica compleja relacionada con la modificación del estado.
-        - **Garantía de integridad de los datos**: Al utilizar colecciones inmutables, se garantiza que los datos no cambiarán accidentalmente después de ser inicializados, lo que proporciona mayor control y confianza en el comportamiento del programa.
+        - **Seguridad en concurrencia**: No pueden modificarse, evitando condiciones de carrera.
+        - **Código más claro y mantenible**: Se evitan errores por modificaciones accidentales.
+        - **Garantía de integridad de datos**: Los valores no cambian después de ser inicializados.
     </Pros>
     <Cons>
-        - **Menor flexibilidad**: En situaciones donde se requiere modificar una colección frecuentemente, las colecciones inmutables pueden resultar menos eficientes, ya que cada modificación requiere la creación de una nueva colección.
-        - **Mayor uso de memoria**: Al no permitir modificaciones, cada cambio genera una nueva colección, lo que puede incrementar el consumo de memoria en operaciones que normalmente modificarían la colección original.
-        - **Costo de conversión**: Si se necesita transformar una colección mutable en inmutable o viceversa, el costo de conversión puede ser significativo en términos de rendimiento, especialmente en colecciones grandes.
+        - **Menor flexibilidad**: Cada modificación requiere crear una nueva colección.
+        - **Mayor uso de memoria**: Si hay muchas modificaciones, puede ser menos eficiente.
     </Cons>
 </ProCons>
 
-## ¿Qué Aprendimos?
+## 🎯 Conclusiones 
 
-En esta lección, hemos aprendido sobre las **colecciones inmutables en Kotlin** y su importancia en la programación segura y eficiente. A lo largo del texto, vimos cómo las colecciones como **`List`**, **`Set`**, y **`Map`** pueden ser utilizadas para manejar datos de manera **inmutable**, garantizando que no sean modificados accidentalmente una vez creados.
+Las **colecciones inmutables en Kotlin** permiten gestionar datos de forma segura y predecible, garantizando que no se modifiquen accidentalmente una vez inicializadas. A lo largo de esta lección, hemos explorado sus características y diferencias con otras estructuras de datos.  
 
 ### Puntos clave
 
-1. **Inmutabilidad por defecto**: Las colecciones inmutables en Kotlin proporcionan seguridad en el manejo de datos, especialmente en entornos concurrentes, evitando modificaciones inesperadas.
-2. **Covarianza en colecciones**: Permite asignar colecciones de subtipos a supertipos de manera segura, preservando la integridad de las operaciones de solo lectura.
-3. **Diferentes tipos de colecciones**: Kotlin ofrece una variedad de colecciones inmutables (`List`, `Set`, `Map`) que permiten organizar datos de diversas formas y realizar operaciones eficientes sin riesgo de modificaciones.
+- **Diferenciación entre `Collection` y `Map`**  
+   - A diferencia de otros lenguajes, Kotlin trata `Map` como una estructura separada, no como parte de `Collection`, debido a sus diferencias en iterabilidad y acceso.  
+- **Covarianza en colecciones**  
+   - Las colecciones en Kotlin son covariantes, lo que permite mayor flexibilidad en la manipulación de tipos genéricos sin comprometer la seguridad en operaciones de solo lectura.  
+- **Beneficios de la inmutabilidad**  
+   - Se evitan modificaciones inesperadas, lo que hace que el código sea más predecible y fácil de mantener.  
+   - Son ideales para entornos concurrentes, ya que eliminan problemas de sincronización.  
+- **Limitaciones de las colecciones inmutables**  
+   - En escenarios donde se requieren modificaciones frecuentes, pueden resultar menos eficientes en términos de memoria y rendimiento.  
 
-Aunque las colecciones inmutables son útiles para garantizar la integridad de los datos y simplificar el código, en algunos casos pueden introducir **ineficiencias** relacionadas con el **mayor consumo de memoria** y la **necesidad de conversiones** si se requiere modificar los datos.
+### ✅ Cuándo usarlas
 
-En resumen, las colecciones inmutables son una excelente opción cuando se necesita seguridad y estabilidad en el manejo de datos, pero es importante considerar las implicaciones de rendimiento en contextos donde las modificaciones son frecuentes.
+- **Cuando la estabilidad y la seguridad son prioridad**, como en concurrencia o en estructuras de datos compartidas.  
+- **Para mejorar la mantenibilidad del código**, evitando estados mutables difíciles de rastrear.  
+- **En funciones puras**, donde se busca garantizar que los datos no se alteren.  
 
-<div className="language-card-container">
-    <LanguageCard
-        logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Logo_C_sharp.svg/1200px-Logo_C_sharp.svg.png"
-        language="C#"
-        link="/docs/collections/types/csharp"
-    />
-    <LanguageCard
-        logoSrc="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Haskell-Logo.svg/1200px-Haskell-Logo.svg.png"
-        language="Haskell"
-        link="/docs/collections/types/haskell"
-    />
-</div>
+### ⚠️ Alternativas cuando se requiere mutabilidad
 
-<References references={[
-    {
-        title: "Chapter 9. Collections: Get Organized",
-        bookTitle: "Head First Kotlin",
-        pages: "439-502",
-        location: "Beijing Boston Farnham Sebastopol Tokyo",
-        publisher: "O’Reilly",
-        year: "2019",
-        type: "book",
-        author: 'Dawn Griffiths & David Griffiths'
-    },
-]}/>
+- **Si se necesitan modificaciones frecuentes**, `MutableList`, `MutableSet` y `MutableMap` pueden ser opciones más eficientes.  
+- **Si la eficiencia en memoria es una prioridad**, en algunos casos las colecciones mutables pueden reducir la sobrecarga de creación de nuevas instancias.  
+
+En general, **usar colecciones inmutables por defecto** y recurrir a estructuras mutables solo cuando sea estrictamente necesario es una buena práctica en Kotlin.
+
+<References
+    references={[
+        {
+            title: "Collections overview | Kotlin",
+            url: "https://kotlinlang.org/docs/collections-overview.html",
+            accessedDate: "19 de marzo de 2025",
+            type: "web",
+        },
+    ]}
+    additionalReferences={[
+        {  
+            title: "Chapter 9. Collections: Get Organized",  
+            bookTitle: "Head First Kotlin",  
+            pages: "439-502",  
+            location: "Beijing Boston Farnham Sebastopol Tokyo",  
+            publisher: "O’Reilly",  
+            year: "2019",  
+            type: "book",  
+            author: 'Dawn Griffiths & David Griffiths'  
+        }
+    ]}
+/>
+

@@ -1,83 +1,110 @@
 ---
-title: maven
+title: Configuraciones básicas de proyectos multi-módulo con Maven
 ---
-import References from "/src/components/ReferencesComponent";
-import ReadingTime from '/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
 import Tabs from '@theme/Tabs'
 import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard, PoetryCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="echo-app-maven" />
 
-## JVM: Maven
+Cuando trabajamos con **Maven** en proyectos que contienen múltiples módulos, es fundamental configurar correctamente el archivo `pom.xml` del proyecto raíz. Este archivo define la estructura del proyecto, permitiendo organizar módulos de manera eficiente y facilitando la reutilización del código.
 
-En **Maven**, el archivo `pom.xml` actúa como el punto de entrada para gestionar la configuración de un proyecto, incluyendo sus dependencias, compilación, y estructura de módulos. Un proyecto multi-módulo en Maven se define utilizando este archivo en el **proyecto raíz**, que centraliza y organiza los módulos.
+En esta lección, exploraremos cómo configurar proyectos multi-módulo en Maven, entenderemos el papel de las **dependencias**, y aprenderemos a gestionar versiones de manera centralizada utilizando un **BOM (Bill of Materials)**. Estas prácticas son clave para desarrollar bibliotecas de software modulares y mantenibles.
 
-### Propósito Principal
+## 🛠️ `pom.xml` en proyectos multi-módulo
 
-1. **Definir el nombre y estructura del proyecto**: En el archivo `pom.xml` del proyecto raíz, se definen las propiedades del proyecto, sus dependencias, y la estructura multi-módulo.
-2. **Gestionar dependencias compartidas y específicas**: En proyectos multi-módulo, las dependencias comunes pueden gestionarse desde el proyecto raíz, mientras que los módulos individuales pueden agregar dependencias específicas.
+El archivo `pom.xml` es el núcleo de la configuración en Maven. En un **proyecto multi-módulo**, el `pom.xml` del proyecto raíz se conoce como **"POM padre"**, y los submódulos heredan su configuración.
 
-### Proyectos Multi-Módulo en Maven
+En el caso de nuestro proyecto, comenzaríamos con un archivo `pom.xml` simple en el directorio raíz:
 
-Maven permite gestionar proyectos multi-módulo de manera similar a Gradle, dividiendo el código en módulos manejables. A continuación, se muestra un ejemplo de cómo configurar un proyecto multi-módulo utilizando Maven:
-
-```xml title="pom.xml"
+```xml showLineNumbers title="pom.xml (proyecto raíz)"
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.example</groupId>
-    <artifactId>echo-app</artifactId>
+    <groupId>com.github.username</groupId>
+    <artifactId>echo-app-maven</artifactId>
+    <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
-    <packaging>pom</packaging> <!-- Tipo de empaquetado para un proyecto multi-módulo -->
+    <name>echo-app-maven</name>
 
     <modules>
         <module>app</module>
         <module>lib</module>
     </modules>
-
-    <!-- Dependencias compartidas por todos los módulos -->
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-core</artifactId>
-                <version>5.3.8</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 </project>
 ```
 
-En este archivo `pom.xml`:
+<Explanation>
+    - **`<packaging>pom</packaging>`** → Indica que este módulo es solo un contenedor de otros módulos y no generará un artefacto propio.
+    - **`<modules>`** → Lista los submódulos que forman parte del proyecto. Cada entrada dentro de `<modules>` debe coincidir con una carpeta dentro del directorio raíz del proyecto.
+    - **Herencia de configuración** → Los submódulos heredan automáticamente configuraciones comunes del `pom.xml` principal, lo que permite evitar redundancias en cada módulo individual.
+    - **Compilación en cascada** → Cuando ejecutamos `mvn install` desde el directorio raíz, Maven compilará primero los submódulos en el orden definido dentro de `<modules>`, asegurando que las dependencias internas se resuelvan correctamente.
+</Explanation>
 
-- **`<modules>`**: Definimos los subproyectos que componen el proyecto principal. En este caso, los módulos son `app` y `lib`.
-- **`<dependencyManagement>`**: Usamos esta sección para definir dependencias comunes que serán compartidas entre los módulos. Las dependencias específicas de cada módulo se gestionan en los `pom.xml` de los módulos individuales.
+## 📂 Proyectos Multi-Módulo en Maven
 
-### Configuración de un Módulo Individual
+En proyectos grandes, gestionar todo en un único módulo puede volverse ineficiente y difícil de mantener. Dividir el código en módulos facilita la reutilización y mejora la modularidad. 
 
-Cada módulo tiene su propio archivo `pom.xml` donde se pueden definir dependencias adicionales y configuraciones específicas. Aquí tienes un ejemplo de cómo sería el archivo `pom.xml` del módulo `app`:
+A diferencia de otros sistemas de construcción, en Maven:
+- **Cada módulo tiene su propio `pom.xml`**, que puede definir dependencias específicas.
+- **Los módulos heredan configuraciones del POM padre**, pero pueden sobrescribirlas si es necesario.
 
-```xml title="app/pom.xml"
+### 📌 Estructura de un Proyecto Multi-Módulo en Maven
+
+```mermaid
+graph TD;
+    root["📂 echo-app (root)"]
+    app["📂 app"]
+    lib["📂 lib"]
+
+    root --> app
+    root --> lib
+    app --> lib
+```
+
+:::info Estructura del Proyecto
+
+- **📂 `echo-app (root)`**: Contiene el POM padre (`pom.xml`), que define la estructura del proyecto.
+- **📂 `app` (módulo de aplicación)**: Contiene la lógica principal y depende del código en `lib`.
+- **📂 `lib` (módulo de biblioteca)**: Contiene código reutilizable que puede ser consumido por `app` y otros proyectos.
+
+:::
+
+Cada submódulo tiene su propio `pom.xml`. Por ejemplo, el módulo `app` incluiría lo siguiente:
+
+```xml showLineNumbers title="app/pom.xml"
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.example</groupId>
-        <artifactId>echo-app</artifactId>
+        <groupId>com.github.username</groupId>
+        <artifactId>echo-app-maven</artifactId>
         <version>1.0-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>app</artifactId>
 
-    <!-- Dependencias adicionales -->
     <dependencies>
         <dependency>
-            <groupId>com.example</groupId>
+            <groupId>com.github.username</groupId>
             <artifactId>lib</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
@@ -85,17 +112,122 @@ Cada módulo tiene su propio archivo `pom.xml` donde se pueden definir dependenc
 </project>
 ```
 
-En este archivo:
+<Explanation>
+    - **`<parent>`** → Define que este módulo (`app`) hereda la configuración del `pom.xml` del proyecto raíz (`echo-app-maven`). Esto evita la necesidad de duplicar configuraciones comunes en cada submódulo.
+    - **`<artifactId>app</artifactId>`** → Especifica el identificador único para este módulo dentro del proyecto.
+    - **`<dependencies>`** → Declara las dependencias necesarias para este módulo. 
+        - En este caso, el módulo `app` depende del módulo `lib`, por lo que se incluye como una dependencia.
+        - Como ambos módulos pertenecen al mismo proyecto, se usa la misma `groupId` (`com.github.username`) y la misma versión (`1.0-SNAPSHOT`).
+    - **Gestión de versiones** → Al heredar del `POM` padre, este módulo puede omitir ciertas configuraciones como la versión de `Maven` o plugins, ya que serán tomadas del `pom.xml` raíz.
+    - **Compilación jerárquica** → Cuando se ejecuta `mvn install` en el directorio raíz, primero se compilará `lib` (porque `app` depende de él) y luego `app`, asegurando que todas las dependencias internas estén disponibles.
+</Explanation>
 
-- **`<parent>`**: Indicamos que este módulo hereda del proyecto principal (`echo-app`), lo que permite compartir configuraciones y dependencias.
-- **Dependencias específicas**: Aquí, el módulo `app` tiene una dependencia del módulo `lib`, lo que permite reutilizar el código definido en `lib`.
+## 🏗️ Gestión de Dependencias en Maven
 
-### Similitudes con Gradle
+### 📦 Herencia vs. Dependencias en Multi-Módulo
 
-- **Modularidad**: Al igual que Gradle, Maven soporta proyectos multi-módulo, permitiendo dividir el código en componentes reutilizables.
-- **Gestión de Dependencias**: Ambos frameworks permiten centralizar las dependencias compartidas en el proyecto raíz, mientras que los módulos individuales pueden tener sus propias dependencias específicas.
+A diferencia de otros sistemas de construcción, en Maven un **módulo puede heredar configuraciones globales** a través de `<parent>`, pero debe **declarar explícitamente sus dependencias** en `<dependencies>`. Esto es crucial para mantener independencia entre módulos.
 
-### Diferencias con Gradle
+### 🔥 Bill of Materials (BOM)
 
-- **Configuración**: Maven utiliza archivos XML (`pom.xml`), mientras que Gradle permite configuraciones en Kotlin o Groovy. Esto hace que Gradle sea más flexible y expresivo en algunos casos.
-- **Ejecución de Tareas**: Maven gestiona las fases de compilación y ejecución de manera más estricta, siguiendo un ciclo de vida predefinido, mientras que Gradle permite más libertad y personalización a través de sus tareas.
+Maven permite gestionar versiones de dependencias de manera centralizada usando un **BOM (Bill of Materials)**. Esto se logra a través del `dependencyManagement`, que permite definir versiones sin repetirlas en cada módulo.
+
+Ejemplo de un BOM en el `pom.xml` raíz:
+
+```xml showLineNumbers title="pom.xml"
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-dependencies</artifactId>
+            <version>3.0.0</version>
+            <scope>import</scope>
+            <type>pom</type>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+```
+
+<Explanation>
+    - **`dependencyManagement`** centraliza versiones de dependencias.
+    - **Los módulos hijos pueden usar estas dependencias sin especificar la versión.**
+</Explanation>
+
+## 📊 Comparación entre Maven y Gradle en Proyectos Multi-Módulo
+
+| **Aspecto**               | **Maven**                                  | **Gradle**                                   |
+|--------------------------|------------------------------------------|----------------------------------------------|
+| **Definición de módulos** | Se usa `<modules>` en el `pom.xml` raíz  | Se usa `include(":modulo")` en `settings.gradle.kts` |
+| **Herencia de configuración** | Se logra con `<parent>` en cada `pom.xml` | Se logra con `plugins` y `subprojects` |
+| **Manejo de versiones** | Se centraliza con un **BOM** | Se centraliza con un **catálogo de versiones** |
+| **Compilación incremental** | No soporta compilación incremental | Sí soporta compilación incremental |
+| **Flexibilidad** | Estricto, basado en XML | Más flexible, basado en código |
+| **Ecosistema** | Usado en grandes proyectos empresariales | Preferido en proyectos modernos y startups |
+
+### ⚖️ Beneficios y limitaciones
+
+<ProCons>
+    <Pros>
+        - **Estandarización**: Maven sigue convenciones estrictas, lo que hace que su estructura sea predecible.
+        - **Compatibilidad con grandes proyectos**: Usado en entornos empresariales con dependencias complejas.
+    </Pros>
+    <Cons>
+        - **Menos flexibilidad**: No permite definir tareas personalizadas fácilmente.
+        - **XML más verboso**: Las configuraciones pueden ser largas y difíciles de leer.
+    </Cons>
+</ProCons>
+
+## 🎯 Conclusiones
+
+A lo largo de esta lección, hemos explorado la configuración de **proyectos multi-módulo en Maven**, abordando su estructura, gestión de dependencias y diferencias con otros sistemas de construcción como **Gradle**. Esta configuración es fundamental para desarrollar **bibliotecas de software** modulares, reutilizables y mantenibles.
+
+### 🔑 Puntos clave
+
+1. **Maven estructura proyectos multi-módulo con un POM padre (`pom.xml`)**  
+   - Define la relación entre los módulos y permite que hereden configuraciones comunes.
+   - Facilita la organización de grandes proyectos en componentes independientes.
+2. **Cada módulo tiene su propio `pom.xml`, pero hereda configuraciones del POM padre**  
+   - La herencia simplifica la configuración, evitando duplicación innecesaria.
+   - A diferencia de Gradle, las dependencias deben declararse explícitamente en cada módulo.
+3. **La compilación en Maven es jerárquica**  
+   - Maven compila primero los módulos en el orden especificado dentro de `<modules>`.
+   - Asegura que las dependencias internas estén disponibles antes de compilar otros módulos.
+4. **Manejo centralizado de versiones con BOM (`Bill of Materials`)**  
+   - Permite definir versiones de dependencias en un solo lugar.
+   - Los módulos pueden utilizar estas dependencias sin necesidad de especificar la versión.
+5. **Diferencias clave entre Maven y Gradle en proyectos multi-módulo**  
+   - **Maven** es más estricto y basado en XML, con una estructura rígida pero predecible.
+   - **Gradle** ofrece mayor flexibilidad con su DSL basada en código, lo que facilita la configuración de tareas personalizadas.
+
+### ✅ Cuándo elegir Maven sobre Gradle
+
+Maven es una excelente opción en los siguientes casos:
+
+✔️ **Proyectos empresariales grandes** con múltiples equipos, donde la estandarización y la compatibilidad son clave.  
+✔️ **Sistemas con muchas dependencias** que necesitan versiones bien controladas y estabilidad.  
+✔️ **Organizaciones que ya usan Maven** y buscan continuidad en herramientas y flujos de trabajo.  
+
+### ⚠️ Cuándo considerar Gradle en su lugar
+
+En cambio, **Gradle** puede ser preferible si:
+
+❌ **Se requiere mayor flexibilidad**, ya que permite definir tareas personalizadas de forma más sencilla.  
+❌ **Se busca optimizar tiempos de compilación**, dado que Gradle admite compilación incremental.  
+❌ **Se quiere evitar XML verboso**, optando por una sintaxis más concisa y expresiva.  
+
+### 🚀 Reflexión final
+
+El uso de **proyectos multi-módulo en Maven** permite escalar aplicaciones y bibliotecas de manera eficiente, promoviendo la **separación de responsabilidades** y la **modularidad**. Si bien Gradle ofrece más flexibilidad, **Maven sigue siendo la opción preferida en proyectos empresariales** por su predictibilidad y amplia adopción en el ecosistema Java.  
+
+Guide to Working with Multiple Subprojects in Maven 4 – Maven. (s. f.). Recuperado 19 de marzo de 2025, de https://maven.apache.org/guides/mini/guide-multiple-subprojects-4.html
+
+<References references={[
+    {
+        title: "Guide to Working with Multiple Subprojects in Maven 4",
+        url: "https://maven.apache.org/guides/mini/guide-multiple-subprojects-4.html",
+        accessedDate: "19 de marzo de 2025",
+        type: "web",
+    },    
+]} additionalReferences={[
+    
+]}/>
