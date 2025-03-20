@@ -26,7 +26,7 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
     tasks.register<ModuleSetupTask>("setupStrCatModule") {
         description = "Creates the base module and files for the string concatenation properties lesson"
-        moduleName.set("str-cat")
+        module.set("str-cat")
 
         doLast {
             createFiles(
@@ -41,7 +41,7 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 Supongamos que queremos asegurarnos de que la concatenación de strings en nuestro proyecto funciona de forma correcta. En lugar de probar casos específicos con entradas puntuales, podemos buscar definir propiedades generales que deberían cumplirse sin importar los valores de entrada. Esto nos lleva a preguntarnos: ¿qué propiedades fundamentales debe respetar la concatenación de strings?
 
-## Integrando Property-Based Testing en Nuestro Proyecto
+## 📦 Integrando Property-Based Testing en Nuestro Proyecto
 
 Para comenzar a utilizar **Property-Based Testing** en tu proyecto, lo primero que debes hacer es agregar las dependencias necesarias en tu catálogo de versiones. Esto incluye las bibliotecas de Kotest para pruebas basadas en propiedades.
 
@@ -59,17 +59,17 @@ Añade las dependencias correspondientes en el archivo `versions.toml`:
     <TabItem label={"Código completo"} value={"Código completo"}>
         ```toml showLineNumbers title="gradle/libs.versions.toml"
         [versions]
-        kotlin = "2.0.21"
-        pbt = "1.0.0"
-        detekt = "1.23.7"
-        kotest = "5.9.1"
+        kotlin = "2.1.10"
+        testing = "1.0.0"
+        detekt = "1.23.8"
+        kotest-framework = "5.9.1"
 
         [libraries]
         kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
         detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
-        kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
-        kotest-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest" }
-        kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+        kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest-framework" }
+        kotest-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest-framework" }
+        kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest-framework" }
 
         [plugins]
         detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
@@ -82,9 +82,11 @@ Añade las dependencias correspondientes en el archivo `versions.toml`:
 
 Con este **bundle** configurado, ya no es necesario añadir las dependencias de Kotest manualmente en el bloque `dependencies` de tu archivo de configuración `build.gradle.kts`. Simplemente, puedes referenciar el bundle `kotest` y asegurarte de tener todas las herramientas necesarias para realizar pruebas basadas en propiedades.
 
-Este enfoque mantiene tu archivo de dependencias limpio y organizado, permitiendo una fácil actualización o adición de herramientas de prueba en el futuro.
+Con este enfoque, el archivo de dependencias se mantiene limpio y organizado, facilitando futuras actualizaciones o la adición de herramientas de prueba.
 
-## Implementación del Test
+## 🛠️ Implementación del Test
+
+Queremos asegurarnos de que al concatenar dos strings, la longitud del resultado siempre sea igual a la suma de sus longitudes. Esto es una propiedad **universal** de la concatenación de cadenas, y podemos verificarlo con Property-Based Testing de la siguiente manera:
 
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
@@ -119,21 +121,19 @@ Este enfoque mantiene tu archivo de dependencias limpio y organizado, permitiend
     </TabItem>
 </BoxedTabs>
 
-:::info Explicación del Código
-
-- Usamos `checkAll` para realizar **testing basado en propiedades**, probando con diferentes combinaciones de inputs generados automáticamente.
-- `Arb.string()` es un generador arbitrario que proporciona strings aleatorios, incluyendo casos de borde como el string vacío.
-- La propiedad que estamos verificando es que la **longitud de la concatenación de dos strings debe ser igual a la suma de las longitudes de los strings originales**. Esto se mantiene sin importar los valores específicos de los strings generados.
-
-:::
+<Explanation>
+    - Usamos `checkAll` para realizar **testing basado en propiedades**, probando con diferentes combinaciones de inputs generados automáticamente.
+    - `Arb.string()` es un generador arbitrario que proporciona strings aleatorios, incluyendo casos de borde como el string vacío.
+    - La propiedad que estamos verificando es que la **longitud de la concatenación de dos strings debe ser igual a la suma de las longitudes de los strings originales**. Esto se mantiene sin importar los valores específicos de los strings generados.
+</Explanation>
 
 Esta técnica permite probar de forma exhaustiva la propiedad del código, garantizando que funcione correctamente bajo una variedad de condiciones.
 
-## Probando más propiedades
+## 🔍 Probando más propiedades
 
 Además de la propiedad de longitud que ya hemos probado, podemos definir otras propiedades fundamentales sobre los strings, que deberían mantenerse sin importar la implementación. Aquí es útil introducir el concepto de **monoide**.
 
-### ¿Qué es un Monoide?
+### 📖 ¿Qué es un Monoide?
 
 Un **monoide** es una estructura algebraica formada por:
 
@@ -148,7 +148,7 @@ Dicha estructura debe cumplir con las siguientes propiedades:
 
 En el contexto de strings, la operación de **concatenación** cumple con estas propiedades, y el string vacío actúa como el **elemento neutro**. Diremos entonces que los strings forman un monoide bajo la operación de concatenación.
 
-### Definiendo Propiedades del Monoide para Strings
+### 🧪 Definiendo Propiedades del Monoide para Strings
 
 Podemos verificar que la concatenación de strings sigue las leyes de los monoides: la **identidad** (izquierda y derecha) y la **asociatividad**.
 
@@ -219,15 +219,17 @@ Podemos verificar que la concatenación de strings sigue las leyes de los monoid
 
 Este enfoque nos permite probar formalmente propiedades importantes de los strings y asegurar que el comportamiento esperado se mantenga bajo cualquier circunstancia.
 
-### ¿Qué Aprendimos?
+## 📌 Conclusiones
 
-En esta lección, hemos explorado cómo aplicar **Property-Based Testing** para verificar propiedades generales sobre la concatenación de strings. En lugar de realizar pruebas con casos específicos, nos enfocamos en propiedades fundamentales que los strings deben cumplir, como la **longitud de la concatenación** y las **leyes de los monoides**.
+En esta lección, exploramos cómo **Property-Based Testing** nos permite verificar propiedades fundamentales de la concatenación de strings, asegurando su comportamiento correcto sin depender de casos de prueba específicos.  
 
-- **Testing Basado en Propiedades**: A través de herramientas como `Kotest`, podemos generar inputs variados y aleatorios, lo que permite probar exhaustivamente un amplio rango de casos. Esto es útil para detectar errores que podrían no aparecer en pruebas específicas o unitarias.
-- **Monoides**: Identificamos que los strings forman un monoide bajo la operación de concatenación, cumpliendo con las propiedades de **asociatividad** y **elemento neutro**. Verificamos estas propiedades en el código para asegurarnos de que se mantengan en cualquier situación.
-- **Verificación Formal**: Definir propiedades generales nos ayuda a crear pruebas más robustas y reutilizables. Verificamos que la longitud de la concatenación sea la suma de las longitudes individuales, y que la concatenación respete las leyes del monoide.
+### 🔑 Puntos clave
 
-Este enfoque nos permite garantizar que la concatenación de strings en nuestro proyecto se comporte de manera consistente y correcta bajo una amplia variedad de condiciones, sin importar las entradas específicas.
+- **Testing basado en propiedades**: Probamos **principios generales** en lugar de valores concretos, lo que nos permite detectar más errores de manera automática.  
+- **Concatenación y longitud**: Verificamos que la longitud de una concatenación siempre sea igual a la suma de las longitudes individuales.  
+- **Monoides y concatenación**: Demostramos que los strings forman un **monoide**, cumpliendo con las propiedades de **asociatividad** e **identidad**.  
+
+Al aplicar estos principios, aseguramos que la concatenación de strings sea **correcta en cualquier situación**, sin importar los valores de entrada.  
 
 <div className="language-card-container">
     <JqwikCard link="/docs/testing/pbt/concatenation/jqwik"/>
@@ -252,6 +254,16 @@ Este enfoque nos permite garantizar que la concatenación de strings en nuestro 
         pages: "150–176",
         year: "2021",
         author: "Marco Vermeulen, Rúnar Bjarnason, Paul Chiusano",
+        type: "book",
+    },
+]} additionalReferences={[
+    {
+        title: "Estructuras Algebráicas como Ejemplos de 2-Gráficas",
+        bookTitle: "Gráficas De Gráficas: Introducción a Teoría De Categorías",
+        publisher: "",
+        pages: "29–34",
+        year: "2012",
+        author: "Zbigniew Oziewicz & Fernando Raymundo Velázquez Quesada",
         type: "book",
     },
 ]}/>
