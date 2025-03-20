@@ -10,9 +10,9 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime/>
 
-En Swift, las propiedades, al igual que en Kotlin, combinan el comportamiento de variables con métodos **getter** y **setter**. Sin embargo, hay algunas particularidades que vale la pena mencionar.
+En Swift, las propiedades combinan el comportamiento de variables con métodos **getter** y **setter**, al igual que en Kotlin. Sin embargo, Swift introduce algunas características únicas como **observadores de propiedades** y una mayor flexibilidad en **propiedades `lazy`**, lo que lo diferencia del enfoque de Kotlin.
 
-## Propiedades Almacenadas y Computadas
+## 📦 Propiedades Almacenadas y Computadas
 
 Swift distingue entre **propiedades almacenadas** y **propiedades computadas**. Las propiedades almacenadas funcionan como las propiedades estándar de Kotlin, donde se guarda un valor específico. Las propiedades computadas, por otro lado, no almacenan un valor, sino que proporcionan un cálculo cada vez que se accede a ellas, muy parecido a lo que Kotlin hace con las **propiedades calculadas**. Sin embargo, en Swift no es necesario declarar un `getter` explícito si la propiedad es de solo lectura, lo que simplifica la sintaxis en comparación con Kotlin.
 
@@ -53,74 +53,87 @@ Swift distingue entre **propiedades almacenadas** y **propiedades computadas**. 
 
 :::
 
-## Observadores de Propiedades
+## 👀 Observadores de Propiedades
 
-Otro aspecto distintivo de Swift es el uso de **observadores de propiedades**, conocidos como **`willSet`** y **`didSet`**, que permiten ejecutar código automáticamente antes o después de que se actualice el valor de una propiedad. Esta funcionalidad no tiene un equivalente directo en Kotlin, donde la personalización del comportamiento de las propiedades se realiza típicamente a través de `getter` y `setter`.
+Otro aspecto distintivo de Swift es el uso de **observadores de propiedades**, conocidos como **`willSet`** y **`didSet`**, que permiten ejecutar código automáticamente antes o después de que se actualice el valor de una propiedad. En Kotlin, no existe un equivalente directo, pero se pueden personalizar los `getter` y `setter` para modificar el comportamiento del acceso a la propiedad. Sin embargo, estos no permiten reaccionar automáticamente a los cambios como en Swift.
 
 <BoxedTabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```swift showLineNumbers
-        class Temperature {
-            var celsius: Double {
-                willSet(newTemperature) {
-                    print("La temperatura va a cambiar de \(celsius)°C a \(newTemperature)°C")
-                }
-                didSet {
-                    print("La temperatura cambió de \(oldValue)°C a \(celsius)°C")
-                }
-            }
+<TabItem label={"Código esencial"} value={"Código esencial"}>
+```swift showLineNumbers
+class Temperature {
+    var celsius: Double {
+        willSet(newTemperature) {
+            print("La temperatura va a cambiar de \(celsius)°C a \(newTemperature)°C")
         }
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```swift showLineNumbers
-        class Temperature {
-            var celsius: Double {
-                willSet(newTemperature) {
-                    print("La temperatura va a cambiar de \(celsius)°C a \(newTemperature)°C")
-                }
-                didSet {
-                    print("La temperatura cambió de \(oldValue)°C a \(celsius)°C")
-                }
-            }
-
-            init(celsius: Double) {
-                self.celsius = celsius
-            }
+        didSet {
+            print("La temperatura cambió de \(oldValue)°C a \(celsius)°C")
         }
+    }
+}
+```
+</TabItem>
+<TabItem label={"Código completo"} value={"Código completo"}>
+```swift showLineNumbers
+class Temperature {
+    var celsius: Double {
+        willSet(newTemperature) {
+            print("La temperatura va a cambiar de \(celsius)°C a \(newTemperature)°C")
+        }
+        didSet {
+            print("La temperatura cambió de \(oldValue)°C a \(celsius)°C")
+        }
+    }
 
-        let temp = Temperature(celsius: 25.0)
-        temp.celsius = 30.0
-        ```
-    </TabItem>
+    init(celsius: Double) {
+        self.celsius = celsius
+    }
+}
+
+let temp = Temperature(celsius: 25.0)
+temp.celsius = 30.0
+```
+</TabItem>
 </BoxedTabs>
 
 :::info Explicación del Código
 
-- **[3-5]** `willSet`: Este observador se ejecuta justo antes de que el valor de la propiedad cambie. Recibe como parámetro el nuevo valor que se le asignará (en este caso, `newTemperature`).
+- **[3-5]** `willSet`: Se ejecuta justo antes de que el valor de la propiedad cambie. Recibe como parámetro el nuevo valor (`newTemperature`).
 - **[6-8]** `didSet`: Se ejecuta inmediatamente después de que el valor haya cambiado. El valor anterior se puede acceder a través de `oldValue`.
+- Este comportamiento automático de observación es una ventaja de Swift en comparación con Kotlin.
 
 :::
 
-<details>
-    <summary>
-        Propiedades Observables en Kotlin
-    </summary>
+### 🔄 Diferencia con Kotlin
 
-    En Kotlin, aunque no hay un equivalente directo a los observadores de propiedades como **`willSet`** y **`didSet`** de Swift, se pueden lograr comportamientos similares utilizando **propiedades observables** con `Delegates.observable`. Este enfoque permite ejecutar código cuando cambia el valor de una propiedad, proporcionando una forma estructurada de observar y reaccionar a los cambios.
+En Kotlin, los `getter` y `setter` permiten personalizar el acceso y la modificación de las propiedades, pero no reaccionan automáticamente a los cambios como los observadores de Swift. Para lograr un comportamiento similar, Kotlin ofrece `Delegates.observable`.
+
+<details>
+    <summary>Propiedades Observables en Kotlin</summary>
+
+    En Kotlin, aunque no hay un equivalente directo a `willSet` y `didSet`, se pueden lograr comportamientos similares utilizando **`Delegates.observable`**, que permite ejecutar código cada vez que cambia el valor de una propiedad.
 
     ```kotlin showLineNumbers
+    import kotlin.properties.Delegates
+
     class Temperature {
         var celsius: Double by Delegates.observable(25.0) { property, oldValue, newValue ->
             println("La temperatura cambió de $oldValue°C a $newValue°C")
         }
     }
     ```
+
+    📌 **Diferencias clave con Swift:**
+    - En Kotlin, `Delegates.observable` solo reacciona **después** de que el valor cambie, por lo que no hay un equivalente exacto a `willSet`.
+    - Mientras `willSet` y `didSet` funcionan en **clases y estructuras** en Swift, `Delegates.observable` solo se puede usar en **clases** en Kotlin.
+    - No es compatible con `data class` con `copy()`, ya que los delegados no se copian automáticamente.
+
 </details>
 
-## Propiedades `lazy`
+## 💤 Propiedades `lazy`
 
-Además, Swift permite definir **propiedades `lazy`**, que se inicializan solo la primera vez que se acceden. Esto es útil para optimizar recursos, especialmente cuando el cálculo inicial es costoso. Kotlin también ofrece propiedades `lazy`, pero solo para propiedades `val` inmutables, lo que impone una ligera restricción comparado con Swift.
+Swift permite definir **propiedades `lazy`**, que se inicializan solo la primera vez que se acceden. Esto es útil para optimizar recursos, especialmente cuando el cálculo inicial es costoso. Kotlin también ofrece propiedades `lazy`, pero con una diferencia importante: en Kotlin, `lazy` **solo puede aplicarse a propiedades `val` inmutables**, mientras que en Swift se puede usar con `var`, permitiendo modificar su valor después de la inicialización.
+
+### Lazy en Swift
 
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
@@ -156,30 +169,111 @@ Además, Swift permite definir **propiedades `lazy`**, que se inicializan solo l
 
 :::info Explicación del Código
 
-- **[2]**: Se declara una propiedad `lazy` llamada `greeting` que se inicializa solo la primera vez que se accede.
-- **[2-5]**: La propiedad `greeting` utiliza una *closure* para construir el valor inicial, lo que permite usar la propiedad `name` de la instancia.
-- Cuando se accede a `greeting` por primera vez, la *closure* se ejecuta, generando y devolviendo el saludo. En accesos posteriores, se reutiliza el valor calculado previamente.
+- **[2]**: Se declara una propiedad `lazy` llamada `greeting`, que solo se inicializa la primera vez que se accede.
+- **[2-5]**: La propiedad `greeting` usa una *closure* para construir el valor inicial, lo que permite usar la propiedad `name` de la instancia.
+- Cuando se accede a `greeting` por primera vez, la *closure* se ejecuta, generando y devolviendo el saludo.
+- En accesos posteriores, se reutiliza el valor calculado previamente.
+- Como `greeting` es un **`var`**, se podría reasignar un nuevo valor más adelante si fuera necesario.
 
 :::
 
-## Comparación Final
+### Lazy en Kotlin
 
-| **Característica**                          | **Swift**                                                                                                                                                                                                      | **Kotlin**                                                                                                                                                                                      |
-|---------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Propiedades Almacenadas y Computadas**    | Distingue entre **propiedades almacenadas** (valores directos) y **propiedades computadas** (cálculos). Las computadas no requieren un getter explícito si son de solo lectura, lo que simplifica la sintaxis. | Kotlin permite **propiedades calculadas** de manera similar, pero siempre requieren un getter explícito, incluso si son de solo lectura, lo que puede ser un poco más detallado.                |
-| **Observadores de Propiedades**             | Ofrece **`willSet`** y **`didSet`** para ejecutar código antes y después de que una propiedad cambie, aplicable tanto a clases como a estructuras.                                                             | Kotlin no tiene un equivalente directo; sin embargo, se pueden usar **`Delegates.observable`** para lograr un comportamiento similar, aunque con una sintaxis más indirecta y solo para clases. |
-| **Propiedades `lazy`**                      | Soporta **propiedades `lazy`** que pueden ser mutables (`var`) o inmutables (`let`), y se inicializan solo cuando se accede a ellas por primera vez.                                                           | Kotlin permite **propiedades `lazy`** únicamente para propiedades inmutables (`val`), lo que restringe su uso si se necesita modificar la propiedad después de la inicialización.               |
+<BoxedTabs>
+<TabItem label={"Código esencial"} value={"Código esencial"}>
+```kotlin showLineNumbers
+class Person(val name: String) {
+    val greeting: String by lazy {
+        println("Generando saludo...")
+        "Hello, $name"
+    }
+}
+```
+</TabItem>
+<TabItem label={"Código completo"} value={"Código completo"}>
+```kotlin showLineNumbers
+class Person(val name: String) {
+    val greeting: String by lazy {
+        println("Generando saludo...")
+        "Hello, $name"
+    }
+}
+
+fun main() {
+    val person = Person("John")
+    println(person.greeting)  // "Generando saludo..." seguido de "Hello, John"
+    println(person.greeting)  // Solo "Hello, John"
+}
+```
+</TabItem>
+</BoxedTabs>
+
+:::info Explicación del Código
+
+- **[2]**: En Kotlin, `lazy` se usa con `val`, lo que significa que la propiedad es inmutable después de la inicialización.
+- **[2-5]**: La inicialización diferida ocurre solo cuando `greeting` se accede por primera vez.
+- En accesos posteriores, el valor calculado previamente se reutiliza.
+- A diferencia de Swift, no se puede reasignar `greeting`, ya que `lazy` solo funciona con `val`.
+
+:::
+
+## 📊 Comparación Final
+
+| **Característica**                          | **Swift**                                                                                                         | **Kotlin**                                                                                                        |
+|---------------------------------------------|-------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| **Propiedades Almacenadas y Computadas**    | Soporta **propiedades almacenadas** (valores directos) y **propiedades computadas** (cálculos sin almacenamiento). | Permite **propiedades calculadas**, pero requieren un `getter` explícito, incluso si son de solo lectura.        |
+| **Observadores de Propiedades**             | Usa `willSet` y `didSet` para reaccionar antes y después de modificar una propiedad.                              | No tiene un equivalente directo, pero se pueden usar `Delegates.observable` o personalizar `getter` y `setter`.  |
+| **Delegados de Propiedades**                | No hay un sistema nativo de delegados como en Kotlin.                                                             | Soporta delegados como `Delegates.observable` y `Delegates.vetoable`.                                             |
+| **Propiedades `lazy`**                      | Se pueden definir con `lazy var` y se inicializan solo en la primera llamada. **Pueden ser mutables (`var`)**.    | `lazy` solo puede aplicarse a `val` inmutables. La inicialización se ejecuta solo una vez en el primer acceso.   |
+| **Inmutabilidad**                           | Se usa `let` para propiedades inmutables y `var` para mutables.                                                   | Se usa `val` para propiedades inmutables y `var` para mutables.                                                   |
+| **Compatibilidad con Estructuras (`struct`)** | `struct` en Swift admite propiedades computadas y observadores (`willSet` / `didSet`).                            | `data class` en Kotlin permite propiedades calculadas con `getter`, pero los observables no funcionan con `copy()`. |
+| **Personalización del Acceso**              | Se pueden definir `getter` y `setter` personalizados.                                                              | Se pueden definir `getter` y `setter` personalizados, pero no reaccionan automáticamente como en Swift.          |
+
+### ✅ Beneficios y ❌ Limitaciones
 
 <ProCons>
     <Pros>
-        - **Simplificación con Propiedades Computadas**: En Swift, las propiedades computadas de solo lectura no requieren un getter explícito, lo que reduce la verbosidad y hace que el código sea más limpio y fácil de leer.
-        - **Observadores de Propiedades**: Swift ofrece una implementación directa y clara para observar y reaccionar a cambios en las propiedades con `willSet` y `didSet`, que se puede aplicar tanto a clases como a estructuras, proporcionando más versatilidad.
-        - **Mayor Flexibilidad con Propiedades `lazy`**: La posibilidad de tener propiedades `lazy` tanto mutables como inmutables en Swift otorga más opciones para optimizar recursos en diferentes situaciones.
+        - **Mayor flexibilidad en Swift con propiedades `lazy`**: En Swift, las propiedades `lazy` pueden ser `var`, lo que permite modificar su valor después de la inicialización, mientras que en Kotlin solo pueden ser `val`.
+        - **Observadores de propiedades (`willSet` / `didSet`) en Swift**: Permiten ejecutar código automáticamente antes y después de modificar una propiedad sin necesidad de crear un setter personalizado.
+        - **Código más conciso en propiedades computadas en Swift**: No requieren `getter` explícito si son de solo lectura, lo que simplifica la sintaxis.
+        - **Soporte de observadores en `struct` en Swift**: A diferencia de Kotlin, donde las `data class` tienen limitaciones en la copia de delegados, Swift permite observadores en estructuras (`struct`).
     </Pros>
     <Cons>
-        - **Complejidad Adicional en el Uso de Observadores**: Aunque los observadores de propiedades (`willSet` y `didSet`) en Swift son útiles, pueden agregar complejidad innecesaria si no se usan con cuidado, especialmente cuando hay lógica compleja que podría haberse implementado mejor en otro lugar.
+        - **No hay delegados de propiedades en Swift**: A diferencia de Kotlin, Swift no tiene un mecanismo nativo de delegados de propiedades reutilizables, lo que obliga a definir `getter` y `setter` personalizados si se necesita lógica avanzada.
+        - **Mayor complejidad con observadores en Swift**: Aunque `willSet` y `didSet` son útiles, pueden agregar lógica innecesaria dentro de una propiedad, lo que puede dificultar el mantenimiento del código.
     </Cons>
 </ProCons>
 
-## ¿Qué Aprendimos?
+## 🎯 Conclusiones
 
+En esta comparación entre las propiedades en **Swift** y **Kotlin**, hemos explorado las diferencias clave en su manejo y funcionalidades. Ambas tecnologías ofrecen herramientas poderosas para la gestión de propiedades, pero con enfoques distintos en términos de flexibilidad, sintaxis y personalización.
+
+### 🔑 Puntos clave
+
+- **Propiedades computadas en Swift son más concisas**: No requieren un `getter` explícito si son de solo lectura, mientras que en Kotlin siempre es necesario definirlo.  
+- **Swift permite observadores (`willSet` y `didSet`) para reaccionar automáticamente a cambios en una propiedad**, mientras que en Kotlin no existe un equivalente directo, aunque `Delegates.observable` ofrece una alternativa similar con algunas limitaciones.  
+- **Los delegados en Kotlin aportan más reutilización**: Swift no tiene un sistema de delegados nativo para propiedades, lo que puede hacer que la reutilización de lógica sea menos conveniente.  
+- **Mayor flexibilidad en `lazy` en Swift**: Se pueden definir como `var`, lo que permite modificarlas después de la inicialización, a diferencia de Kotlin, donde `lazy` solo puede usarse con `val`.  
+- **Diferencias en compatibilidad con estructuras**: Swift permite observadores de propiedades en `struct`, mientras que en Kotlin, `data class` tiene ciertas limitaciones con `copy()` y los delegados de propiedades.  
+
+### 💡 Reflexión final
+ 
+Swift y Kotlin ofrecen formas eficientes de manejar propiedades, pero con diferencias significativas en la flexibilidad y el nivel de abstracción.  
+
+- **Swift** prioriza la simplicidad con **propiedades computadas sin `getter` explícito** y **observadores nativos (`willSet` y `didSet`)**, lo que hace que el código sea más conciso y fácil de leer.  
+- **Kotlin**, por otro lado, apuesta por la **reutilización y extensibilidad** con su sistema de **delegados de propiedades**, que permite implementar lógica compartida de manera eficiente.  
+
+Si buscas un enfoque más estructurado con delegados reutilizables, **Kotlin es una mejor opción**. Sin embargo, si prefieres una sintaxis más concisa y una **mayor integración de observadores en el lenguaje**, **Swift ofrece herramientas más directas para la manipulación de propiedades**.
+
+<References references={[
+    {
+        title: "¿Qué son las propiedades computadas en Swift y cómo usarlas?",
+        url: "https://keepcoding.io/blog/que-son-propiedades-computadas-en-swift/",
+        type: "article",
+        author: "Bustos, J. L.",
+        publishedDate: "31 de octubre de 2024",
+    },
+    // Último acceso: ???
+]} additionalReferences={[
+    
+]}/>
