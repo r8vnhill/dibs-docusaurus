@@ -1,0 +1,359 @@
+---
+title: Composición de Generadores
+---
+
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="testing-kt" />
+<ModuleSetup module='stats' task='setupStatsModule'>
+    ```kotlin showLineNumbers
+    import tasks.ModuleSetupTask
+
+    tasks.register<ModuleSetupTask>("setupArbCompositionModule") {
+        description = "Creates the base module and files for the arbitrary composition lesson"
+        module.set("pbt:arbitrary:composition")
+        doLast {
+            createFiles(
+                "forms",
+                main to "UserInput.kt",
+                test to "FormValidationTest.kt",
+            )
+            createFiles(
+                "config",
+                test to "ConfigGenerators.kt"
+            )
+        }
+    }
+    ```
+</ModuleSetup>
+
+En **property-based testing (PBT)**, la clave es generar datos variados y realistas para verificar que una biblioteca de software funcione correctamente en distintos escenarios. En **Behavior-Driven Development (BDD)**, primero definimos las expectativas sobre el comportamiento de la funcionalidad antes de implementar los generadores. 
+
+Kotest nos permite definir pruebas expresivas siguiendo BDD y generar datos complejos mediante **composición de generadores**. Esto es útil en bibliotecas de software que manejan estructuras configurables o datos extensibles.
+
+## 📝 Definiendo los Tests Antes de los Generadores
+
+Antes de crear los generadores, escribiremos los tests que definirán el comportamiento esperado de la biblioteca. Supongamos que estamos desarrollando una **biblioteca de validación de formularios**, donde validamos que los datos generados cumplan ciertas condiciones.
+
+Usaremos Kotest con **property-based testing** para definir las siguientes pruebas:
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        checkAll(arbUserInput()) { user ->
+            user.name shouldHaveMinLength 3
+        }
+        ```
+
+        ```kotlin showLineNumbers
+        checkAll(arbUserInput()) { user ->
+            user.email shouldMatch Regex("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}")
+        }
+        ```
+
+        ```kotlin showLineNumbers
+        checkAll(arbUserInput()) { user ->
+            (user.age shouldBeGreaterThanOrEqual 18) and
+                    (user.age shouldBeLessThanOrEqual 99)
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="pbt/arbitrary/composition/src/test/kotlin/cl/ravenhill/forms/FormValidationTest.kt"
+        package cl.ravenhill.forms
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
+        import io.kotest.matchers.ints.shouldBeLessThanOrEqual
+        import io.kotest.matchers.string.shouldHaveMinLength
+        import io.kotest.matchers.string.shouldMatch
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.bind
+        import io.kotest.property.arbitrary.int
+        import io.kotest.property.arbitrary.string
+        import io.kotest.property.arbitrary.stringPattern
+        import io.kotest.property.checkAll
+
+        class FormValidationTest : FreeSpec({
+            "Given a user input" - {
+                "when validating it" - {
+                    "then it should have at least 3 characters" {
+                        checkAll(arbUserInput()) { user ->
+                            user.name shouldHaveMinLength 3
+                        }
+                    }
+
+                    "then it should have the correct format" {
+                        checkAll(arbUserInput()) { user ->
+                            user.email shouldMatch Regex("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}")
+                        }
+                    }
+
+                    "then it should be between 18 and 99" {
+                        checkAll(arbUserInput()) { user ->
+                            (user.age shouldBeGreaterThanOrEqual 18) and
+                                    (user.age shouldBeLessThanOrEqual 99)
+                        }
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</BoxedTabs>
+
+Aquí, cada prueba define una propiedad que debe cumplirse para todos los datos generados. Ahora, implementaremos los generadores para que los tests pasen.
+
+## 🚀 Construyendo Generadores para Validaciones
+
+Kotest proporciona herramientas para construir generadores reutilizables. Vamos a definir generadores para nombres, correos electrónicos y edades, asegurándonos de que cumplan con los requisitos de validación.
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        fun arbName(): Arb<String> = Arb.string(3..20)  // Nombres de mínimo 3 caracteres
+        fun arbEmail(): Arb<String> = Arb.stringPattern("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}") // Emails válidos
+        fun arbAge(): Arb<Int> = Arb.int(18..99)  // Edad dentro del rango permitido
+        ```
+
+        Ahora, combinemos estos generadores en una sola estructura con `Arb.bind`:
+
+        ```kotlin showLineNumbers
+        fun arbUserInput(): Arb<UserInput> = Arb.bind(
+            arbName(),
+            arbEmail(),
+            arbAge()
+        ) { name, email, age -> UserInput(name, email, age) }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="pbt/arbitrary/composition/src/test/kotlin/cl/ravenhill/forms/FormValidationTest.kt"
+        package cl.ravenhill.forms
+
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
+        import io.kotest.matchers.ints.shouldBeLessThanOrEqual
+        import io.kotest.matchers.string.shouldHaveMinLength
+        import io.kotest.matchers.string.shouldMatch
+        import io.kotest.property.Arb
+        import io.kotest.property.arbitrary.bind
+        import io.kotest.property.arbitrary.int
+        import io.kotest.property.arbitrary.string
+        import io.kotest.property.arbitrary.stringPattern
+        import io.kotest.property.checkAll
+
+        class FormValidationTest : FreeSpec({
+            "Given a user input" - {
+                "when validating it" - {
+                    "then it should have at least 3 characters" {
+                        checkAll(arbUserInput()) { user ->
+                            user.name shouldHaveMinLength 3
+                        }
+                    }
+
+                    "then it should have the correct format" {
+                        checkAll(arbUserInput()) { user ->
+                            user.email shouldMatch Regex("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}")
+                        }
+                    }
+
+                    "then it should be between 18 and 99" {
+                        checkAll(arbUserInput()) { user ->
+                            (user.age shouldBeGreaterThanOrEqual 18) and
+                                    (user.age shouldBeLessThanOrEqual 99)
+                        }
+                    }
+                }
+            }
+        })
+
+        // highlight-start
+        private fun arbName(): Arb<String> = Arb.string(3..20)  // Nombres de mínimo 3 caracteres
+        private fun arbEmail(): Arb<String> = Arb.stringPattern("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}") // Emails válidos
+        private fun arbAge(): Arb<Int> = Arb.int(18..99)  // Edad dentro del rango permitido
+        private fun arbUserInput(): Arb<UserInput> = Arb.bind(
+            arbName(), 
+            arbEmail(), 
+            arbAge()
+        ) { name, email, age -> UserInput(name, email, age) }
+        // highlight-end
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    `Arb.bind` combina múltiples generadores en una estructura de datos compleja. En este caso, generamos un `UserInput` con un nombre, un correo electrónico y una edad válidos.
+</Explanation>
+
+Con este generador, cada ejecución de `arbUserInput()` producirá un usuario con datos aleatorios pero válidos.
+
+## 🔄 Generación de Datos en Colecciones
+
+Si nuestra biblioteca maneja **listas de usuarios**, podemos definir un generador de listas:
+
+```kotlin showLineNumbers
+fun arbUserList(): Arb<List<UserInput>> = Arb.list(arbUserInput(), 1..10)
+```
+
+Si queremos garantizar que los emails no se repitan en una lista de usuarios, usamos un conjunto:
+
+```kotlin showLineNumbers
+fun arbUniqueUsers(): Arb<Set<UserInput>> = Arb.set(arbUserInput(), 1..10)
+```
+
+## 📚 Ejercicio Práctico: Generar Configuración de una Biblioteca
+
+<Exercise>
+    Supongamos que estamos diseñando una **biblioteca para gestionar configuraciones de una aplicación**. Los usuarios pueden definir **opciones de configuración**, que pueden incluir valores de diferentes tipos, como:
+
+    - `String` para nombres de usuario.
+    - `Boolean` para opciones de activación/desactivación.
+    - `Int` para límites numéricos.
+
+    💡 **Objetivo:** Crea un generador que produzca una lista de opciones de configuración. Cada opción debe ser representada como un par `<clave, valor>`, donde la clave es un `String` y el valor puede ser un `String`, `Int` o `Boolean`.
+
+    <Hint hints={[
+        <>
+            Utiliza el generador <code>Arb.pair: (Arb&lt;A&gt;, Arb&lt;B&gt;) -&gt; Arb&lt;Pair&lt;A, B&gt;&gt;</code> para combinar generadores de claves y valores.
+        </>,
+        <>
+            Utiliza <code>Arb.choice: (Arb&lt;A&gt;, Arb&lt;A&gt;, ...) -&gt; Arb&lt;A&gt;</code> para elegir entre diferentes tipos de valores. Puedes considerar el tipo de <code>A</code> como un <code>Any</code>.
+        </>
+    ]}/>
+
+    <Solution>
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```kotlin showLineNumbers
+                fun arbConfigOption(): Arb<Pair<String, Any>> = Arb.pair(
+                    Arb.string(5..15), // Clave con longitud entre 5 y 15 caracteres
+                    Arb.choice(Arb.string(1..20), Arb.int(1..100), Arb.boolean()) // Valores de diferentes tipos
+                )
+
+                fun arbConfigList(): Arb<List<Pair<String, Any>>> = Arb.list(arbConfigOption(), 3..10)
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```kotlin showLineNumbers
+                package cl.ravenhill.config
+
+                import io.kotest.core.spec.style.FreeSpec
+                import io.kotest.matchers.collections.shouldHaveAtLeastSize
+                import io.kotest.matchers.collections.shouldHaveAtMostSize
+                import io.kotest.matchers.or
+                import io.kotest.matchers.should
+                import io.kotest.matchers.string.shouldHaveMinLength
+                import io.kotest.matchers.types.beInstanceOf
+                import io.kotest.property.Arb
+                import io.kotest.property.arbitrary.*
+                import io.kotest.property.checkAll
+
+                class ConfigGeneratorsTest : FreeSpec({
+
+                    "Given a configuration option generator" - {
+                        "when generating a configuration option" - {
+                            "then the key should be a non-empty string with at least 5 characters" {
+                                checkAll(arbConfigOption()) { (key, _) ->
+                                    key shouldHaveMinLength 5
+                                }
+                            }
+
+                            "then the value should be a String, Int, or Boolean" {
+                                checkAll(arbConfigOption()) { (_, value) ->
+                                    value should (beInstanceOf<String>()
+                                            or beInstanceOf<Int>()
+                                            or beInstanceOf<Boolean>())
+                                }
+                            }
+                        }
+                    }
+
+                    "Given a configuration list generator" - {
+                        "when generating a list of configuration options" - {
+                            "then the list should contain between 3 and 10 elements" {
+                                checkAll(arbConfigList()) { configList ->
+                                    configList
+                                        .shouldHaveAtLeastSize(3)
+                                        .shouldHaveAtMostSize(10)
+                                }
+                            }
+
+                            "then each configuration option should have a valid key-value pair" {
+                                checkAll(arbConfigList()) { configList ->
+                                    configList.forEach { (key, value) ->
+                                        key.shouldHaveMinLength(5)
+                                        value should (beInstanceOf<String>()
+                                                or beInstanceOf<Int>()
+                                                or beInstanceOf<Boolean>())
+                                    }
+                                }
+                            }
+                        }
+                    }
+                })
+
+                // highlight-start
+                private fun arbConfigOption(): Arb<Pair<String, Any>> = Arb.pair(
+                    Arb.string(5..15),
+                    Arb.choice(Arb.string(1..20), Arb.int(1..100), Arb.boolean())
+                )
+
+                private fun arbConfigList(): Arb<List<Pair<String, Any>>> = Arb.list(arbConfigOption(), 3..10)
+                // highlight-end
+                ```
+            </TabItem>
+        </BoxedTabs>
+    </Solution>
+</Exercise>
+
+## 🎯 Conclusiones
+
+En esta lección, exploramos la **composición de generadores** en **Kotest** y su aplicación en **property-based testing** (PBT) para validar bibliotecas de software. Mediante la combinación de generadores básicos, logramos generar estructuras de datos más complejas y realistas, asegurando una cobertura más amplia en las pruebas.
+
+### 📌 Puntos Clave
+
+1. **Definir pruebas antes que los generadores**  
+   - Siguiendo **Behavior-Driven Development (BDD)**, establecimos primero los tests que describen el comportamiento esperado de la biblioteca.
+   - Esto nos permitió diseñar generadores que se ajustaran a los requisitos de validación.
+2. **Uso de `Arb.bind` para modelar estructuras de datos**  
+   - `Arb.bind` nos permitió combinar generadores individuales en estructuras completas, asegurando que los datos generados cumplan con restricciones específicas.
+3. **Generación de listas y colecciones**  
+   - Utilizamos `Arb.list` y `Arb.set` para generar listas de elementos y evitar duplicados cuando era necesario.
+   - Esto resultó útil para probar bibliotecas que manejan configuraciones o validaciones masivas.
+4. **Flexibilidad en la generación de datos**  
+   - Con herramientas como `Arb.choice`, creamos generadores capaces de producir valores de diferentes tipos.
+   - Este enfoque es valioso para bibliotecas que manejan configuraciones dinámicas o tipos de datos heterogéneos.
+
+### ⚖️ Reflexión Final
+
+El uso de **composición de generadores** permite aumentar la robustez de las pruebas en bibliotecas de software, proporcionando una **variedad de datos** que ayuda a detectar errores en escenarios inesperados. Aunque este enfoque introduce cierta complejidad, su capacidad para mejorar la cobertura y reducir sesgos en las pruebas lo convierte en una técnica esencial en el desarrollo de software confiable.
+
+Al integrar estos conceptos en la validación de bibliotecas, logramos sistemas más sólidos, adaptables y menos propensos a fallos en producción.
+
+<References references={[
+    {
+        title: "Generator Operations | Kotest",
+        url: "https://kotest.io/docs/proptest/generator-operations.html",
+        accessedDate: "20 de marzo de 2025",
+        type: "web",
+        // Último acceso: 20 de marzo de 2025	
+    },
+]} additionalReferences={[
+    
+]}/>
