@@ -19,16 +19,16 @@ import RepoClone from '@site/src/components/admonitions/RepoClone'
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="" />
 
-En **Python**, los **generadores** son una forma poderosa de crear iteradores de manera eficiente y perezosa. Un generador es una función que utiliza la palabra clave `yield` para producir una secuencia de valores sobre la marcha, sin almacenar todos los elementos en memoria a la vez. Esto los hace ideales para trabajar con grandes conjuntos de datos o secuencias infinitas.
+En **Python**, los **generadores** ofrecen una manera elegante y eficiente de construir iteradores que producen valores bajo demanda. A diferencia de las colecciones tradicionales, no almacenan todos los elementos en memoria, sino que generan cada valor **en el momento en que se necesita**. Esto permite procesar grandes volúmenes de datos o incluso secuencias infinitas con un uso mínimo de recursos, lo que los convierte en una herramienta fundamental para escribir código más ligero, expresivo y escalable.
 
-## Características Principales de los Generadores en Python
+## ⚙️ Características principales de los generadores en Python
 
 1. **Creación Simple**: Los generadores se definen como funciones normales que contienen al menos una instrucción `yield`.
 2. **Ejecución Perezosa**: Los valores se generan y devuelven uno a uno a medida que se solicitan, lo que ahorra memoria y mejora el rendimiento.
 3. **Iteración Fácil**: Los generadores son iterables y pueden ser utilizados en bucles `for`, comprensiones de listas, y otras construcciones iterativas de Python.
 4. **Estado Persistente**: Los generadores mantienen su estado entre las llamadas, permitiendo continuar la generación de valores donde se dejó.
 
-## Ejemplo de un Generador en Python
+## 🌀 Ejemplo de un Generador en Python
 
 A continuación, se muestra cómo implementar un generador en Python que produce una secuencia infinita de números pares, similar a la implementación de Kotlin presentada anteriormente:
 
@@ -47,32 +47,90 @@ first_ten_evens: List[int] = [next(gen) for _ in range(10)]
 print(first_ten_evens)  # Output: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
 ```
 
-## Comparación Detallada
+## 🧠 Otras formas de crear generadores
 
-| **Característica**                    | **Kotlin (`Sequence`)**                                 | **Python (`Generators`)**                                                    |
-|---------------------------------------|---------------------------------------------------------|------------------------------------------------------------------------------|
-| **Sintaxis de Creación**              | Utiliza `sequence {}` con `yield`                       | Funciones definidas con `def` y `yield`                                      |
-| **Tipo Estático vs Dinámico**         | Tipado estático con generics                            | Tipado dinámico                                                              |
-| **Control de Flujo**                  | Control explícito mediante constructores de secuencias  | Control implícito a través de la lógica del generador                        |
-| **Manejo de Estado**                  | Mantiene estado interno automáticamente                 | Mantiene estado interno automáticamente                                      |
-| **Reusabilidad**                      | Se pueden encadenar múltiples operaciones               | Se pueden encadenar múltiples operaciones                                    |
-| **Evaluación Perezosa**               | Totalmente perezosa, ejecuta operaciones bajo demanda   | Totalmente perezosa, ejecuta operaciones bajo demanda                        |
-| **Manejo de Secuencias Infinitas**    | Soportado mediante `while (true)` y `yield`             | Soportado mediante `while True` y `yield`                                    |
-| **Integración con APIs**              | Integrado en la biblioteca estándar de Kotlin           | Integrado en la biblioteca estándar de Python                                |
-| **Performance y Optimización**        | Optimizado para JVM con inlining y otras optimizaciones | Optimizado para CPython, pero puede ser menos eficiente en ciertos contextos |
+Además de usar funciones con `yield`, Python también permite crear **generadores en una sola línea** usando **expresiones generadoras**, que se parecen a las comprensiones de listas pero utilizan **paréntesis** en lugar de corchetes.
 
-## Consideraciones Finales
+```python showLineNumbers
+# List comprehension: crea una lista completa en memoria
+doubles = [2 * n for n in range(50)]
 
-Ambos **Kotlin** y **Python** ofrecen poderosas herramientas para trabajar con colecciones perezosas, cada una adaptada a las características y filosofías de su respectivo lenguaje. Mientras que Kotlin brinda un enfoque robusto y tipado estáticamente seguro, ideal para aplicaciones que requieren alta performance y seguridad de tipos, Python proporciona una solución más flexible y fácil de usar, perfecta para desarrolladores que valoran la rapidez y la simplicidad.
+# Generador equivalente: produce los valores uno a uno, bajo demanda
+doubles = (2 * n for n in range(50))
+```
 
-Al elegir entre **secuencias de Kotlin** y **generadores de Python**, es esencial considerar el contexto del proyecto, las necesidades de rendimiento, y las preferencias en cuanto al sistema de tipos. Ambas herramientas son altamente efectivas para manejar grandes volúmenes de datos y flujos infinitos de manera eficiente, aprovechando la evaluación perezosa para optimizar el uso de recursos.
+<Explanation>
+    La primera línea crea una lista entera con los 50 valores generados, lo que puede consumir mucha memoria si el rango es muy grande. En cambio, la segunda línea **no crea la lista completa**, sino que devuelve un generador que calcula cada valor solo cuando se necesita. Esto permite **evaluación perezosa** con una sintaxis compacta.
+</Explanation>
 
-<References references={[
-    {
-        title: "Generators - Python Wiki",
-        url: "https://wiki.python.org/moin/Generators",
-        type: "web",
-        accessedDate: "28 de septiembre de 2024",
-        siteOrAuthor: "Python Wiki"
-    },
-]} />
+Puedes convertir ese generador en una lista cuando lo necesites:
+
+```python showLineNumbers
+doubles_list = list(doubles)
+```
+
+Esto es útil cuando primero quieres trabajar con un flujo perezoso, pero eventualmente necesitas materializar los datos.
+
+## 📊 Resumen comparativo
+
+| **Aspecto**                    | **Python**                                                                 | **Kotlin**                                                               |
+|-------------------------------|-----------------------------------------------------------------------------|--------------------------------------------------------------------------|
+| **Nombre del mecanismo**      | Generadores (`yield`, expresiones generadoras)                             | Secuencias (`sequence {}`, `generateSequence()`)                        |
+| **Evaluación**                | Perezosa (lazy)                                                            | Perezosa (lazy)                                                          |
+| **Sintaxis principal**        | Función con `yield`                                                        | Bloque `sequence {}` o función `generateSequence()`                     |
+| **Alternativas de creación**  | Expresiones generadoras con paréntesis `(x for x in ...)`                  | No tiene una alternativa tan concisa como expresión literal             |
+| **Estado interno**            | Mantenido automáticamente                                                  | Mantenido automáticamente                                                |
+| **Tipado**                    | Dinámico (`Generator`, sin tipos en tiempo de compilación)                 | Estático (`Sequence<T>`)                                                 |
+| **Integración con el lenguaje** | Total: soportado en bucles, comprensiones, funciones nativas (`next()`)   | Total: interoperable con colecciones y APIs estándar                     |
+| **Recolección de elementos**  | `list(generator)`                                                         | `.toList()`                                                              |
+| **Encadenamiento de operaciones** | Limitado (requiere funciones externas como `map`, `filter`, etc.)     | Rico en funciones intermedias y terminales encadenables (`map`, `take`) |
+| **Facilidad de comprensión**  | Muy accesible para principiantes                                           | Requiere comprensión de lambdas y API funcional                         |
+| **Ventajas**                  | Sencillez, expresividad, bajo consumo de memoria                           | Tipado seguro, rendimiento optimizado en JVM                             |
+| **Limitaciones**              | Falta de tipado estático, menos expresividad para transformar flujos      | Más verboso al declarar secuencias simples                              |
+
+### ✅ Beneficios y ❌ limitaciones
+
+<ProCons>
+    <Pros>
+        - **Evaluación perezosa eficiente**: Los generadores calculan valores solo cuando se necesitan, lo que permite trabajar con flujos infinitos o grandes cantidades de datos sin agotar la memoria.
+        - **Simplicidad y expresividad**: Son fáciles de escribir y entender, especialmente usando `yield` o expresiones generadoras con paréntesis.
+        - **Excelente integración con el lenguaje**: Funcionan de forma nativa con bucles `for`, funciones como `next()`, y estructuras como comprensiones de listas.
+        - **Control total del flujo**: Al mantener su estado entre invocaciones, permiten pausar y reanudar la ejecución de manera intuitiva.
+        - **Evitan colecciones intermedias**: Reducen la creación de estructuras temporales al encadenar operaciones.
+
+    </Pros>
+    <Cons>
+        - **Falta de tipado estático**: Aunque se puede usar `typing.Generator`, el sistema de tipos no es tan estricto ni expresivo como en lenguajes como Kotlin.
+        - **Una sola pasada**: Un generador solo puede iterarse una vez; una vez agotado, no puede reiniciarse sin volver a crearlo.
+        - **Menor soporte para operaciones encadenables**: No poseen una API rica de transformaciones encadenadas como `Sequence` en Kotlin; se requiere usar funciones externas o `itertools`.
+        - **Depuración más difícil**: Como la ejecución es diferida, puede ser más difícil rastrear errores o entender el estado interno durante la ejecución.
+        - **No tan adecuados para transformaciones complejas**: Para operaciones que requieren múltiples pasos o reutilización, puede ser preferible usar listas o estructuras más explícitas.
+    </Cons>
+</ProCons>
+
+## 🎯 Conclusiones
+
+En esta lección exploramos el concepto de **colecciones perezosas** en Python, centrándonos en los **generadores** como mecanismo principal para implementar flujos eficientes de datos. Aprendimos cómo se definen, cómo funcionan internamente y cómo se pueden utilizar tanto mediante funciones con `yield` como con expresiones generadoras.
+
+Los generadores en Python ofrecen una solución elegante para trabajar con datos que no necesitan ser evaluados inmediatamente, lo cual es ideal para flujos infinitos, procesamiento en streaming o contextos donde se busca minimizar el uso de memoria.
+
+### 🔑 Puntos clave:
+
+- **Evaluación perezosa**: Los generadores calculan cada elemento a medida que se solicita, permitiendo eficiencia tanto en tiempo como en memoria.
+- **Expresiones generadoras**: Son una alternativa compacta y expresiva a las funciones con `yield`, y se comportan de forma completamente perezosa.
+- **Una sola iteración**: Un generador no puede reiniciarse una vez agotado, lo que requiere planificación si se desea reutilizar la secuencia.
+- **Tipado dinámico**: Python no impone tipos en tiempo de compilación, lo que otorga flexibilidad pero también reduce la capacidad de verificación estática.
+
+### 🧰 ¿Qué nos llevamos?
+
+El uso de generadores en Python nos invita a repensar cómo procesamos datos: ya no es necesario cargar todo en memoria ni construir listas completas si solo necesitamos una parte de la información. Gracias a su evaluación perezosa, los generadores nos permiten escribir código más eficiente, más expresivo y más alineado con las necesidades reales del programa.
+
+Además, su simplicidad sintáctica —ya sea mediante `yield` o expresiones generadoras— los hace accesibles incluso para quienes están dando sus primeros pasos en Python. Y sin embargo, su utilidad no se limita a casos simples: los generadores pueden ser una herramienta poderosa en flujos de datos complejos, en algoritmos que necesitan mantener estado, y en la construcción de pipelines livianos que respetan los recursos del sistema.
+
+En definitiva, aprender a usar generadores no es solo incorporar una nueva técnica, sino adoptar una mentalidad que prioriza la **eficiencia, la claridad y el control sobre los datos** que realmente importan.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+🌐 Generadores—Learn Python—Free Interactive Python Tutorial. (s. f.). Recuperado 21 de marzo de 2025, de https://www.learnpython.org/es/Generators {/* Última revisión: ??? */}
