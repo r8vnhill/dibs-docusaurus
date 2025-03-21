@@ -1,10 +1,10 @@
-import React from 'react';
+import React from "react";
 
 interface Reference {
   id?: string;
   title: string;
   url?: string;
-  type: 'web' | 'video' | 'book' | 'article' | 'paper';
+  type: "web" | "video" | "book" | "article" | "paper";
   accessedDate?: string;
   publishedDate?: string;
   siteOrAuthor?: string;
@@ -23,26 +23,26 @@ interface ReferencesProps {
   additionalReferences?: Reference[];
 }
 
-const renderTypeEmoji = (type: Reference['type']) => {
+const renderTypeEmoji = (type: Reference["type"]) => {
   switch (type) {
-    case 'web':
-      return '🌐';
-    case 'video':
-      return '📹';
-    case 'book':
-      return '📚';
-    case 'article':
-      return '📰';
-    case 'paper':
-      return '📄';
+    case "web":
+      return "🌐";
+    case "video":
+      return "📹";
+    case "book":
+      return "📚";
+    case "article":
+      return "📰";
+    case "paper":
+      return "📄";
     default:
-      return '';
+      return "";
   }
 };
 
 const sortBooks = (a: Reference, b: Reference) => {
-  const authorA = (a.author || '').toLowerCase();
-  const authorB = (b.author || '').toLowerCase();
+  const authorA = (a.author || "").toLowerCase();
+  const authorB = (b.author || "").toLowerCase();
   const yearA = a.year ? parseInt(a.year, 10) : 0;
   const yearB = b.year ? parseInt(b.year, 10) : 0;
   const titleA = a.title.toLowerCase();
@@ -58,8 +58,8 @@ const sortBooks = (a: Reference, b: Reference) => {
 };
 
 const sortWebReferences = (a: Reference, b: Reference) => {
-  const siteA = (a.siteOrAuthor || '').toLowerCase();
-  const siteB = (b.siteOrAuthor || '').toLowerCase();
+  const siteA = (a.siteOrAuthor || "").toLowerCase();
+  const siteB = (b.siteOrAuthor || "").toLowerCase();
   const titleA = a.title.toLowerCase();
   const titleB = b.title.toLowerCase();
 
@@ -90,11 +90,13 @@ const categorizeReferences = (refs: Reference[]) => {
   });
 
   return {
-    books: referencesWithId.filter(r => r.type === 'book').sort(sortBooks),
-    web: referencesWithId.filter(r => r.type === 'web').sort(sortWebReferences),
-    video: referencesWithId.filter(r => r.type === 'video'),
-    article: referencesWithId.filter(r => r.type === 'article'),
-    paper: referencesWithId.filter(r => r.type === 'paper'),
+    books: referencesWithId.filter((r) => r.type === "book").sort(sortBooks),
+    web: referencesWithId
+      .filter((r) => r.type === "web")
+      .sort(sortWebReferences),
+    video: referencesWithId.filter((r) => r.type === "video"),
+    article: referencesWithId.filter((r) => r.type === "article"),
+    paper: referencesWithId.filter((r) => r.type === "paper"),
   };
 };
 
@@ -116,24 +118,23 @@ const renderReference = (reference: Reference) => {
 
   const emoji = renderTypeEmoji(type);
 
-  if (type === 'book') {
+  if (type === "book") {
     return (
       <li key={id}>
-        {emoji}{' '}
-        <em>"{title}"</em>.{' '}
+        {emoji} <em>"{title}"</em>.{" "}
         {year && `(${year}). ` /* e.g. "(2020). " */}
         {author && `${author}, `}
         {bookTitle && (
           <>
-            en <em>{bookTitle},</em>{' '}
+            en <em>{bookTitle},</em>{" "}
           </>
         )}
         {(edition || pages) && (
           <>
-            {'('}
+            {"("}
             {edition && `${edition}, `}
             {pages && `pp. ${pages}.`}
-            {') '}
+            {") "}
           </>
         )}
         {publisher && `${publisher}. `}
@@ -141,12 +142,10 @@ const renderReference = (reference: Reference) => {
     );
   }
 
-  if (type === 'article') {
+  if (type === "article") {
     return (
       <li key={id}>
-        {emoji}{' '}
-        <em>"{title}."</em>{' '}
-        {author && `${author}, `}
+        {emoji} <em>"{title}."</em> {author && `${author}, `}
         {publishedDate && `${publishedDate}. `}
         {url && (
           <a href={url} target="_blank" rel="noopener noreferrer">
@@ -157,11 +156,10 @@ const renderReference = (reference: Reference) => {
     );
   }
 
-  if (type === 'web') {
+  if (type === "web") {
     return (
       <li key={id}>
-        {emoji}{' '}
-        <em>"{title}."</em>{' '}
+        {emoji} <em>"{title}."</em>{" "}
         {accessedDate && `Accedido: ${accessedDate}. `}
         {[`[En línea]. Disponible en: `]}
         {url && (
@@ -173,26 +171,34 @@ const renderReference = (reference: Reference) => {
     );
   }
 
-    if (type === 'video') {
-        return (
-        <li key={id}>
-            {emoji}{' '}
-            <em>"{title}."</em>{' '}
-            {year && `(${year}). `}
-            {author && `${author}, `}
-            {url && (
-            <a href={url} target="_blank" rel="noopener noreferrer">
-                {url}
-            </a>
-            )}
-        </li>
-        );
-    }
+  if (type === "video") {
+    return (
+      <li key={id}>
+        {emoji} <em>"{title}."</em> {year && `(${year}). `}
+        {author && `${author}, `}
+        {url && (
+          <a href={url} target="_blank" rel="noopener noreferrer">
+            {url}
+          </a>
+        )}
+      </li>
+    );
+  }
+
+  if (type === "paper") {
+    return (
+      <li key={id}>
+        {emoji} <em>"{title}."</em> {author && `${author}, `}
+        {year && `(${year}). `}
+        {publishedDate && `${publishedDate}. `}
+      </li>
+    );
+  }
 
   // Default / fallback render:
   return (
     <li key={id}>
-      {emoji}{' '}
+      {emoji}{" "}
       {url ? (
         <a href={url} target="_blank" rel="noopener noreferrer">
           {title}
@@ -204,11 +210,20 @@ const renderReference = (reference: Reference) => {
   );
 };
 
-const References: React.FC<ReferencesProps> = ({ references, additionalReferences }) => {
+const References: React.FC<ReferencesProps> = ({
+  references,
+  additionalReferences,
+}) => {
   // If performance is a concern (large lists), use useMemo to avoid re-categorizing on every render
-  const categorizedRefs = React.useMemo(() => categorizeReferences(references), [references]);
+  const categorizedRefs = React.useMemo(
+    () => categorizeReferences(references),
+    [references]
+  );
   const categorizedAdditionalRefs = React.useMemo(
-    () => (additionalReferences ? categorizeReferences(additionalReferences) : emptyCategories),
+    () =>
+      additionalReferences
+        ? categorizeReferences(additionalReferences)
+        : emptyCategories,
     [additionalReferences]
   );
 

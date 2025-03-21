@@ -1,0 +1,202 @@
+---
+title: Expresiones infijas en Scala
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard, ScalaCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="scala-dibs" />
+
+Las **expresiones infijas** permiten escribir funciones de manera más legible y fluida, eliminando la necesidad de paréntesis o puntos. En Scala, este concepto ha evolucionado entre **Scala 2** y **Scala 3**, con cambios en la forma en que se manejan los métodos infijos y los operadores personalizados.
+
+### ✅ Sintaxis de Expresiones Infijas
+
+<BoxedTabs>
+    <TabItem value="Scala 3" label="Scala 3">
+    </TabItem>
+    <TabItem value="Scala 2" label="Scala 2">
+    </TabItem>
+</BoxedTabs>
+
+En **Scala 2**, cualquier método con un único parámetro puede ser utilizado como infijo.
+
+```scala
+class Persona(val nombre: String) {
+  def saluda(a: Persona): String = s"Hola, ${a.nombre}, soy $nombre"
+}
+
+val juan = new Persona("Juan")
+val ana = new Persona("Ana")
+
+println(juan saluda ana)  // "Hola, Ana, soy Juan"
+```
+
+En este caso, `saluda` se invoca sin paréntesis ni punto, permitiendo un código más expresivo.
+
+### 🚀 Expresiones Infijas en Scala 3
+
+En **Scala 3**, el uso de expresiones infijas está **restringido a métodos marcados explícitamente como `infix`**.
+
+```scala
+class Persona(val nombre: String) {
+  infix def saluda(a: Persona): String = s"Hola, ${a.nombre}, soy $nombre"
+}
+
+val juan = new Persona("Juan")
+val ana = new Persona("Ana")
+
+println(juan saluda ana)  // "Hola, Ana, soy Juan"
+```
+
+El modificador `infix` **no es obligatorio**, pero su uso es recomendado para hacer explícito que el método debe ser usado de manera infija.
+
+---
+
+## 🔍 Diferencias Clave entre Scala 2 y Scala 3
+
+| Característica               | Scala 2                          | Scala 3                              |
+|-----------------------------|--------------------------------|--------------------------------|
+| **Métodos infijos**         | Cualquier método con 1 parámetro | Requiere la anotación `infix` (opcional pero recomendado) |
+| **Uso en clases**           | Implícito en cualquier método de una clase | Se recomienda marcar con `infix` |
+| **Expresiones ambiguas**    | Permitidas sin restricciones | Pueden generar advertencias si no están marcadas con `infix` |
+| **Precedencia**             | Similar a operadores estándar | No ha cambiado en Scala 3 |
+
+---
+
+## 📌 **Expresiones Infijas con Operadores Personalizados**
+
+En **Scala 2**, cualquier método puede ser infijo, incluyendo aquellos que usan caracteres especiales como `+`, `*`, etc.
+
+```scala
+class Vector2D(val x: Int, val y: Int) {
+  def +(other: Vector2D): Vector2D = new Vector2D(this.x + other.x, this.y + other.y)
+}
+
+val v1 = new Vector2D(1, 2)
+val v2 = new Vector2D(3, 4)
+
+val v3 = v1 + v2  // Vector(4, 6)
+```
+
+En **Scala 3**, esto sigue siendo válido, pero se recomienda marcar los operadores con `infix`.
+
+```scala
+class Vector2D(val x: Int, val y: Int) {
+  infix def +(other: Vector2D): Vector2D = new Vector2D(this.x + other.x, this.y + other.y)
+}
+
+val v1 = new Vector2D(1, 2)
+val v2 = new Vector2D(3, 4)
+
+val v3 = v1 + v2  // Vector(4, 6)
+```
+
+El beneficio de usar `infix` en Scala 3 es que el compilador emite advertencias si el método se usa de una manera no esperada.
+
+---
+
+## ⚠️ Ambigüedades y Precedencia  
+
+En ambos casos, las expresiones infijas pueden generar ambigüedades cuando se combinan con operadores estándar.
+
+```scala
+class Number(val value: Int) {
+  infix def doubleAdd(other: Number): Number = new Number(this.value + other.value * 2)
+}
+
+val a = new Number(2)
+val b = new Number(3)
+
+val result = a doubleAdd b + b  // Ambiguo: ¿(a doubleAdd b) + b o a doubleAdd (b + b)?
+```
+
+Para evitar confusión, **Scala recomienda usar paréntesis explícitos**.
+
+```scala
+val result1 = (a doubleAdd b) + b
+val result2 = a doubleAdd (b + b)
+```
+
+---
+
+## 🏆 **Caso de estudio: Expresiones Infijas en Librerías de Pruebas**
+
+Un uso común de las expresiones infijas en Scala es en **frameworks de pruebas**, como **ScalaTest** y **MUnit**, donde ayudan a escribir **assertions** más legibles y expresivas.
+
+```scala
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
+class ExampleSpec extends AnyFlatSpec with Matchers {
+  "Una lista" should "contener elementos esperados" in {
+    List(1, 2, 3) should contain(2)
+  }
+}
+```
+
+El uso de `should contain` como una expresión infija mejora la claridad y legibilidad del test.
+
+En **Scala 3**, `should` y otros operadores personalizados pueden beneficiarse de la anotación `infix`:
+
+```scala
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
+class ExampleSpec extends AnyFlatSpec with Matchers {
+  infix def esMayorQue(x: Int, y: Int): Boolean = x > y
+
+  "Comparaciones" should "ser más legibles" in {
+    (10 esMayorQue 5) shouldBe true
+  }
+}
+```
+
+---
+
+## 📊 **Beneficios y Limitaciones**
+
+<ProCons>
+    <Pros>
+        - **Mayor legibilidad**: Las expresiones infijas hacen que el código sea más intuitivo y fácil de leer, especialmente en DSLs y librerías de pruebas.
+        - **Compatibilidad con librerías de pruebas**: Frameworks como **ScalaTest** aprovechan las expresiones infijas para hacer los tests más expresivos.
+        - **Ideal para operadores personalizados**: Facilitan la creación de operadores que se comportan como los operadores estándar.
+    </Pros>
+    <Cons>
+        - **Ambigüedades en precedencia**: Sin paréntesis, algunas expresiones pueden ser difíciles de interpretar.
+        - **Restricciones en Scala 3**: La necesidad de usar `infix` puede hacer que algunas migraciones desde Scala 2 requieran cambios.
+    </Cons>
+</ProCons>
+
+---
+
+## 📌 **Conclusiones**  
+
+Las **expresiones infijas** en Scala han evolucionado con **Scala 3**, introduciendo el modificador `infix` para mejorar la claridad y evitar ambigüedades. Aunque su uso sigue siendo opcional, se recomienda para garantizar una sintaxis más predecible y evitar advertencias del compilador.
+
+### 🔑 **Puntos clave**  
+
+1. **Expresividad y legibilidad mejorada**  
+   - En ambos casos, las expresiones infijas permiten escribir código más natural y menos cargado de paréntesis.
+   - Scala 3 introduce `infix` para indicar explícitamente qué métodos pueden usarse de manera infija.
+2. **Uso en librerías de pruebas**  
+   - Frameworks como **ScalaTest** y **MUnit** utilizan expresiones infijas para hacer los tests más declarativos.
+3. **Precedencia y ambigüedad**  
+   - Se recomienda **usar paréntesis** en expresiones complejas para evitar confusión.
+
+### ✅ **Reflexión final**  
+
+Las expresiones infijas son una herramienta poderosa para mejorar la claridad del código en Scala, pero deben usarse con criterio. Scala 3 introduce restricciones que hacen el código más predecible, asegurando que el uso de infijos sea más controlado y claro para quien desarrolla.

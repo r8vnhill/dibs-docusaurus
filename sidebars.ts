@@ -170,7 +170,7 @@ const sidebars: SidebarsConfig = {
                 'oop/anonymous/kt',
                 'oop/extension/kt',
                 'oop/operator-overload/kt',
-                'oop/infix',
+                'oop/infix/kt',
                 'oop/static/kt',
                 'oop/inheritance-2',
             ],
