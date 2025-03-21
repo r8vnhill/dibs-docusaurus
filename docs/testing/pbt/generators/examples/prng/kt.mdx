@@ -33,6 +33,10 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
                 main to "average.kt",
                 test to "AverageTest.kt",
             )
+            createFiles(
+                "maps",
+                test to "IntStringMapTest.kt",
+            )
         }
     }
     ```
@@ -40,11 +44,11 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 Una de las formas más básicas de crear un generador en Kotest es utilizando la función de orden superior `arbitrary`, que aprovecha un **Pseudo-Random Number Generator** manejado internamente por Kotest. Esta función permite generar datos de prueba controlados y reproducibles, útiles para la creación de tests basados en propiedades.
 
-## Ejemplo: Generador de listas de enteros
+## 📋 Ejemplo: Generador de listas de números
 
-### Definiendo la especificación
+### 🧭 Definiendo la especificación
 
-Supongamos que queremos generar listas de enteros de tamaño arbitrario para probar una función que calcula el promedio de una lista. Para lograrlo, podemos definir un generador que cree un par de datos: el primer elemento será una lista de enteros y el segundo será el promedio esperado de esa lista. De esta manera, podremos validar fácilmente si la función de promedio calcula correctamente el resultado.
+Supongamos que queremos generar listas de **números reales (Double)** de tamaño arbitrario para probar una función que calcula el promedio. Para lograrlo, podemos definir un generador que cree un par de datos: el primer elemento será una lista de números y el segundo será el promedio esperado de esa lista. De esta manera, podremos validar fácilmente si la función de promedio calcula correctamente el resultado.
 
 Comencemos por definir una especificación BDD (Behavior-Driven Development) para nuestro test:
 
@@ -52,16 +56,14 @@ Comencemos por definir una especificación BDD (Behavior-Driven Development) par
 "Given a list of integers" - {
     "when calculating the average of a non-empty list" - {
         ("should return the sum of the elements divided by the number of " +
-                "elements") {
-            
-        }
+                "elements") {}
     }
 }
 ```
 
 Este enfoque sigue el flujo natural del lenguaje BDD, lo que permite expresar el comportamiento de la función de manera clara y comprensible.
 
-Ahora implementamos los detalles de nuestro test, donde usaremos un generador para crear pares de listas de enteros y sus promedios correspondientes:
+Ahora implementamos los detalles de nuestro test, donde usaremos un generador para crear pares de listas de números y sus promedios correspondientes:
 
 ```kotlin showLineNumbers
 checkAll(...) { (list, expectedAverage) ->
@@ -70,10 +72,10 @@ checkAll(...) { (list, expectedAverage) ->
 ```
 
 <Explanation>
-    Este ejemplo ilustra cómo esperamos que nuestro generador funcione. Generará pares de listas de enteros junto con sus promedios esperados. Luego, el test verificará que el promedio calculado por nuestra función sea igual al promedio esperado generado previamente. Esto garantiza que nuestra implementación de la función de promedio sea correcta bajo una variedad de casos de prueba.
+    Este ejemplo ilustra cómo esperamos que nuestro generador funcione. Generará pares de listas de números junto con sus promedios esperados. Luego, el test verificará que el promedio calculado por nuestra función sea igual al promedio esperado generado previamente. Esto garantiza que nuestra implementación de la función de promedio sea correcta bajo una variedad de casos de prueba.
 </Explanation>
 
-### Implementando el generador
+### 🛠️ Implementando el generador
 
 Para crear un generador personalizado en **Kotest**, utilizaremos la función `arbitrary`, que nos permite definir cómo se generan los datos de prueba según nuestro caso de uso específico. A continuación, seguiremos dos convenciones para mantener nuestro código limpio y organizado:
 
@@ -108,7 +110,7 @@ Para crear un generador personalizado en **Kotest**, utilizaremos la función `a
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="pbt/arbitrary/prng/src/test/kotlin/cl/ravenhill/lists/AverageTest.kt"
+        ```kotlin showLineNumbers title="pbt/arbitrary/prng/src/test/kotlin/com/github/username/lists/AverageTest.kt"
         package com.github.username.lists
 
         import io.kotest.core.spec.style.FreeSpec
@@ -151,23 +153,35 @@ Para crear un generador personalizado en **Kotest**, utilizaremos la función `a
 </BoxedTabs>
 
 <Explanation>
-    - Definimos un alias `ListAndAverage` para representar un par que contiene una lista de enteros y su promedio calculado. Esto nos ayuda a que el tipo de retorno del generador sea más explícito y descriptivo.
-    - Implementamos un generador llamado `arbIntListAndAverage` que genera listas de enteros y calcula su promedio correspondiente:
-        - Utilizamos la función `arbitrary`, que nos da acceso a un generador de números aleatorios (`random`), con el cual generamos los elementos de la lista.
-        - El generador crea una lista de enteros de tamaño aleatorio entre 1 y 100. Se asegura de que la lista nunca esté vacía, ya que el promedio de una lista vacía no tendría sentido.
-        - Para cada elemento de la lista, generamos un número aleatorio entre 1 y 100, lo añadimos a la lista, y simultáneamente calculamos el promedio sumando el número dividido por el tamaño de la lista.
-        - El generador devuelve un par que contiene la lista generada y el promedio calculado.
-    - Utilizamos `shouldBeGreaterThanOrEqual` y `shouldBeLessThan` para verificar que el promedio calculado por nuestra función `average` esté dentro de un rango de tolerancia de 0.0001 del promedio esperado. Esto se debe a que los cálculos de punto flotante pueden tener errores de redondeo, por lo que debemos permitir una pequeña variación en el resultado.
+    - Definimos un alias `ListAndAverage` para representar un par que contiene una lista de números reales y su promedio aproximado. Esto hace que el propósito del generador sea más explícito.
+    - Implementamos un generador llamado `arbIntListAndAverage` que produce listas aleatorias y calcula un promedio de forma **deliberadamente distinta** a la implementación real:
+        - En lugar de sumar todos los elementos y luego dividir, el generador utiliza una **acumulación parcial**: suma el resultado de dividir cada número por el tamaño de la lista.  
+        - Esta forma alternativa introduce pequeñas imprecisiones por errores de redondeo, lo cual es **intencional**.
+    - ¿Por qué hacerlo así?  
+        - El objetivo del generador no es replicar exactamente la lógica de la función `average`, sino proporcionar un valor de referencia suficientemente cercano que **no dependa de la misma lógica que estamos testeando**.
+        - Al usar una fórmula distinta, aumentamos la confianza de que estamos validando correctamente el comportamiento de la función.
+    - Para compensar la posible diferencia introducida por la forma alternativa de cálculo, el test no exige una igualdad exacta, sino que verifica que el resultado esté dentro de un **margen de tolerancia razonable** (`±0.0001`).
+    - La función `arbitrary` recibe una pareja `(random, seed)`, donde `random` es un generador de números aleatorios que usamos para construir nuestros datos.
 </Explanation>
 
-### Implementando la función de promedio
+:::tip Buenas prácticas al diseñar generadores
 
-Finalmente, implementamos la función `average` que calcula el promedio de una lista de enteros. Es importante recordar que la implementación de la función debe ser distinta a la lógica del generador, ya que replicar esa lógica no sería útil para realizar pruebas efectivas.
+Cuando escribas un generador para una prueba basada en propiedades, **evita replicar directamente la lógica de la función bajo prueba**. Si ambos usan el mismo algoritmo, el test puede pasar incluso si la lógica está equivocada en ambos lados.
+
+En lugar de eso, genera los datos de entrada de forma aleatoria y calcula los valores esperados usando **una lógica alternativa, una aproximación o una propiedad matemática conocida**. Luego, compara los resultados permitiendo un pequeño margen de error si es necesario (por ejemplo, con tolerancia para `Double` o `Float`).
+
+💡 _Esto ayuda a que el test valide el comportamiento real de la función y no simplemente replique su implementación._
+
+:::
+
+### 🧮 Implementando la función de promedio
+
+Finalmente, implementamos la función `average` que calcula el promedio de una lista de números. Es importante recordar que la implementación de la función debe ser distinta a la lógica del generador, ya que replicar esa lógica no sería útil para realizar pruebas efectivas.
 
 <BoxedTabs>
   <TabItem label={"Implementación iterativa"} value={"Implementación iterativa"}>
-    ```kotlin showLineNumbers title="pbt/arbitrary/prng/src/main/kotlin/cl/ravenhill/lists/average.kt"
-    package com.github.username.generators.average
+    ```kotlin showLineNumbers title="pbt/arbitrary/prng/src/main/kotlin/com/github/username/lists/average.kt"
+    package com.github.username.lists.average
 
     fun average(list: List<Double>): Double {
         var sum = 0.0
@@ -186,8 +200,8 @@ Finalmente, implementamos la función `average` que calcula el promedio de una l
   </TabItem>
 
   <TabItem label={"Implementación funcional"} value={"Implementación funcional"}>
-    ```kotlin showLineNumbers title="pbt/arbitrary/prng/src/main/kotlin/cl/ravenhill/lists/average.kt"
-    package com.github.username.generators.average
+    ```kotlin showLineNumbers title="pbt/arbitrary/prng/src/main/kotlin/com/github/username/lists/average.kt"
+    package com.github.username.lists.average
 
     fun average(list: List<Double>) =
         list.fold(0.0) { acc, number -> 
@@ -202,6 +216,41 @@ Finalmente, implementamos la función `average` que calcula el promedio de una l
     </Explanation>
   </TabItem>
 </BoxedTabs>
+
+<details>
+    <summary>📐 Controlar la semilla del generador</summary>
+
+    En algunos casos, es útil **controlar la semilla del generador aleatorio** para garantizar **reproducibilidad de los tests**. Esto puede ser importante cuando necesitas depurar un fallo o mantener pruebas estables.
+
+    En Kotest, esto se puede lograr usando `PropTestConfig` y marcando la clase con `@OptIn(ExperimentalKotest::class)`:
+
+    ```kotlin showLineNumbers
+    // highlight-next-line
+    @OptIn(ExperimentalKotest::class)
+    class AverageTest : FreeSpec({
+        "Given a list of integers" - {
+            "when calculating the average of a non-empty list" - {
+                ("should return the sum of the elements divided by the number of " +
+                        "elements") {
+                    checkAll(
+                        // highlight-next-line
+                        PropTestConfig(seed = 123456), // 🔐 Semilla fija
+                        arbIntListAndAverage()
+                    ) { (list, average) ->
+                        average(list)
+                            .shouldBeGreaterThanOrEqual(average - 0.0001)
+                            .shouldBeLessThan(average + 0.0001)
+                    }
+                }
+            }
+        }
+    })
+    ```
+
+    Esto asegura que el test use la **misma secuencia de valores generados cada vez**, facilitando la identificación de errores difíciles de reproducir.
+</details>
+
+## 🧪 Ejercicio: Generador de diccionarios
 
 <Exercise>
     Implementa un generador arbitrario que produzca diccionarios donde:
@@ -224,36 +273,151 @@ Finalmente, implementamos la función `average` que calcula el promedio de una l
     Este código generará un número aleatorio en el rango Unicode y lo convertirá a su correspondiente carácter. Usa este enfoque para construir las cadenas que serán los valores del diccionario.
     
     <Solution>
-        ```kotlin showLineNumbers
-        typealias IntStringMap = Map<Int, String>
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```kotlin showLineNumbers
+                typealias IntStringMap = Map<Int, String>
 
-        private fun arbIntStringMap(): Arb<IntStringMap> = arbitrary { (random, seed) ->
-            val map = mutableMapOf<Int, String>()
-            val size = random.nextInt(1, 100)
-            while (map.size < size) {
-                val key = random.nextInt()
-                val stringSize = random.nextInt(1, 100)
-                val value = List(stringSize) {
-                    random.nextInt(0x0000, 0xFFFF).toChar()
-                }.joinToString("")
-                map[key] = value
-            }
-            map
-        }
-        ```    
+                fun arbIntStringMap(): Arb<IntStringMap> = arbitrary { (random, seed) ->
+                    val map = mutableMapOf<Int, String>()
+                    val size = random.nextInt(1, 100)
+                    while (map.size < size) {
+                        val key = random.nextInt()
+                        val stringSize = random.nextInt(1, 100)
+                        val value = List(stringSize) {
+                            random.nextInt(0x0000, 0xFFFF).toChar()
+                        }.joinToString("")
+                        map[key] = value
+                    }
+                    map
+                }
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```kotlin showLineNumbers tile="pbt/arbitrary/prng/src/test/kotlin/com/github/username/maps/IntStringMapTest.kt"
+                package com.github.username.maps
+
+                import io.kotest.core.spec.style.FreeSpec
+                import io.kotest.matchers.collections.shouldHaveSize
+                import io.kotest.matchers.ints.shouldBeGreaterThan
+                import io.kotest.matchers.ints.shouldBeLessThanOrEqual
+                import io.kotest.matchers.shouldBe
+                import io.kotest.property.Arb
+                import io.kotest.property.arbitrary.arbitrary
+                import io.kotest.property.checkAll
+
+                class IntStringMapTest : FreeSpec({
+
+                    "Given a randomly generated map of Int to String" - {
+                        "when generating a new map" - {
+                            "then it should contain at least one entry" {
+                                checkAll(arbIntStringMap()) { map ->
+                                    map.size shouldBeGreaterThan 0
+                                }
+                            }
+
+                            "then it should not contain duplicate keys" {
+                                checkAll(arbIntStringMap()) { map ->
+                                    map.keys shouldHaveSize map.size
+                                }
+                            }
+
+                            "then all string values should have at least one character" {
+                                checkAll(arbIntStringMap()) { map ->
+                                    map.values.forEach { value ->
+                                        value.length shouldBeGreaterThan 0
+                                    }
+                                }
+                            }
+
+                            "then all string values should have at most 100 characters" {
+                                checkAll(arbIntStringMap()) { map ->
+                                    map.values.forEach { value ->
+                                        value.length shouldBeLessThanOrEqual 100
+                                    }
+                                }
+                            }
+
+                            "then the total number of entries should be at most 100" {
+                                checkAll(arbIntStringMap()) { map ->
+                                    map.size shouldBeLessThanOrEqual 100
+                                }
+                            }
+                        }
+                    }
+                })
+
+                // highlight-start
+                private typealias IntStringMap = Map<Int, String>
+
+                private fun arbIntStringMap(): Arb<IntStringMap> = arbitrary { (random, seed) ->
+                    val map = mutableMapOf<Int, String>()
+                    val size = random.nextInt(1, 100)
+                    while (map.size < size) {
+                        val key = random.nextInt()
+                        val stringSize = random.nextInt(1, 100)
+                        val value = List(stringSize) {
+                            random.nextInt(0x0000, 0xFFFF).toChar()
+                        }.joinToString("")
+                        map[key] = value
+                    }
+                    map
+                }
+                // highlight-end
+                ```
+            </TabItem>
+        </BoxedTabs>
     </Solution>
 </Exercise>
 
-## ¿Qué aprendimos?
+## 🎯 Conclusiones
 
-En esta lección, aprendimos a implementar generadores personalizados en **Kotest** utilizando un **Pseudo-Random Number Generator (PRNG)** para generar datos de prueba controlados y reproducibles. Específicamente, exploramos cómo generar listas de enteros y sus promedios correspondientes para validar el comportamiento de una función que calcula el promedio de una lista. También revisamos distintas maneras de implementar la función de promedio, ya sea con un enfoque iterativo o funcional.
+En esta lección aprendimos a diseñar generadores personalizados usando la función `arbitrary` de Kotest, aprovechando un generador de números pseudoaleatorios (PRNG) para crear datos variados, controlables y reproducibles. Este enfoque es fundamental en pruebas basadas en propiedades.
 
-### Puntos clave
+### 🔑 Puntos clave:
 
-- **Generadores personalizados con `arbitrary`**: Utilizamos la función `arbitrary` para definir generadores personalizados, aprovechando un PRNG que facilita la creación de datos de prueba variados y controlados.
-- **Especificaciones BDD**: Definimos nuestras pruebas utilizando un enfoque BDD para describir el comportamiento esperado de nuestra función de promedio, lo que mejora la claridad y la mantenibilidad de los tests.
-- **Verificación de precisión en tests**: Aprendimos a verificar resultados que involucran cálculos de punto flotante permitiendo una pequeña variación para evitar problemas con la precisión de los cálculos.
+- **El generador no debe replicar la lógica de la función bajo prueba.**  
+  En lugar de eso, utilizamos una aproximación distinta para calcular el resultado esperado. Esto ayuda a detectar errores reales en la implementación.
+- **La reproducibilidad es posible gracias a la configuración de semillas.**  
+  Usar `PropTestConfig(seed = ...)` permite depurar fallos y mantener resultados consistentes entre ejecuciones.
+- **Los generadores pueden componerse libremente.**  
+  Vimos cómo construir estructuras más complejas como listas o diccionarios a partir de combinaciones de generadores simples.
+- **Las comparaciones deben tener en cuenta la naturaleza de los datos.**  
+  Para tipos como `Double`, es importante permitir un margen de tolerancia debido a los errores de redondeo acumulados.
 
----
+### 🧰 ¿Qué nos llevamos?
 
-Esta lección ofrece una base sólida para usar generadores en tests basados en propiedades, que son cruciales para verificar que nuestras funciones se comporten correctamente bajo una amplia variedad de entradas.
+Al usar generadores personalizados basados en PRNG, ganamos mayor **control sobre los datos**, mejor **reproducibilidad de tests**, y la posibilidad de crear verificaciones más robustas y variadas, lo que resulta especialmente valioso en el desarrollo de **librerías confiables**.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+🌐 Generador de números pseudoaleatorios. (2024). En Wikipedia, la enciclopedia libre. https://es.wikipedia.org/w/index.php?title=Generador_de_n%C3%BAmeros_pseudoaleatorios&oldid=161973175 {/* Última revisión: ??? */}
+
+{/* ### 🔹 Adicionales */}
+
+{/* TODO: Bibliografìas por revisar */}
+{/*
+## 2. Generadores de Números Pseudoaleatorios (PRNG)  
+Un **generador de números pseudoaleatorios** es un algoritmo determinístico que produce una secuencia de valores “aleatorios” a partir de una semilla inicial. Aunque la secuencia está completamente determinada por su estado interno, un buen PRNG imita las propiedades estadísticas de la aleatoriedad verdadera ([Generador de números pseudoaleatorios - Wikipedia, la enciclopedia libre](https://es.wikipedia.org/wiki/Generador_de_n%C3%BAmeros_pseudoaleatorios#:~:text=una%20sucesi%C3%B3n%20de%20n%C3%BAmeros%20que,papel%20central%20en%20la%20criptograf%C3%ADa)). Los PRNG son fundamentales en simulaciones de Monte Carlo y desempeñan un papel central en criptografía y en la generación de datos de prueba ([Generador de números pseudoaleatorios - Wikipedia, la enciclopedia libre](https://es.wikipedia.org/wiki/Generador_de_n%C3%BAmeros_pseudoaleatorios#:~:text=pseudoaleatorios%20son%20importantes%20en%20la,central%20en%20la%20%2068)). La mayoría de PRNG clásicos (ej. congruenciales lineales, generadores de Fibonacci retrasados, **LFSR** de registros de desplazamiento) están diseñados para producir distribuciones uniformes ([Generador de números pseudoaleatorios - Wikipedia, la enciclopedia libre](https://es.wikipedia.org/wiki/Generador_de_n%C3%BAmeros_pseudoaleatorios#:~:text=La%20mayor%C3%ADa%20de%20los%20algoritmos,74%2C%20y%20el%20Mersenne%20twister)) y periodos largos, pero deben someterse a riguroso análisis matemático para asegurar su calidad ([Generador de números pseudoaleatorios - Wikipedia, la enciclopedia libre](https://es.wikipedia.org/wiki/Generador_de_n%C3%BAmeros_pseudoaleatorios#:~:text=Se%20requiere%20de%20un%20cuidadoso,2%20%5D%E2%80%8B)). A continuación se listan referencias sobre teoría de PRNG, algoritmos emblemáticos y aplicaciones en testing/data generation:
+
+- **D. E. Knuth – _The Art of Computer Programming, Vol. 2: Seminumerical Algorithms_, Ch. 3** – Referencia clásica que cubre en profundidad la generación de números aleatorios y pruebas estadísticas de aleatoriedad ([Pseudorandom number generator - Wikipedia](https://en.wikipedia.org/wiki/Pseudorandom_number_generator#:~:text=,randomness)). *En inglés, libro físico o digital (no libre)*. Es un recurso **muy técnico** (bíblico en computación) que sienta las bases teóricas de los PRNG (calidad, periodo, pruebas de uniformidad, etc.).  
+- **Matsumoto & Nishimura (1998), “Mersenne Twister: A 623-dimensionally equidistributed… PRNG”** – Artículo que presentó el **Mersenne Twister**, uno de los PRNG más utilizados. *En inglés, PDF libre*. Introdujo un periodo extremadamente largo (2^19937−1) y excelente uniformidad en alta dimensión ([Pseudorandom number generator - Wikipedia](https://en.wikipedia.org/wiki/Pseudorandom_number_generator#:~:text=The%201997%20invention%20of%20the,at%20the%20time%20of%20its)), superando muchos defectos de generadores previos. Es un trabajo técnico, pero sus resultados (MT19937) se adoptaron ampliamente (ej. como default en Python, R, etc.) dada su eficiencia y calidad estadística.  
+- **Wikipedia (es) – “Generador de números pseudoaleatorios”** – Artículo enciclopédico en español con una visión general. *En español, libre online*. Resume las clases comunes de PRNG y ejemplos históricos ([Generador de números pseudoaleatorios - Wikipedia, la enciclopedia libre](https://es.wikipedia.org/wiki/Generador_de_n%C3%BAmeros_pseudoaleatorios#:~:text=La%20mayor%C3%ADa%20de%20los%20algoritmos,74%2C%20y%20el%20Mersenne%20twister)), discute problemas típicos (periodos cortos, secuencias correlacionadas, mala distribución en varias dimensiones) ([Generador de números pseudoaleatorios - Wikipedia, la enciclopedia libre](https://es.wikipedia.org/wiki/Generador_de_n%C3%BAmeros_pseudoaleatorios#:~:text=En%20la%20pr%C3%A1ctica%2C%20los%20resultados,Entre%20estos%20se%20incluyen)) e incluye anécdotas clásicas (e.g. el infame RANDU con serias deficiencias ([Generador de números pseudoaleatorios - Wikipedia, la enciclopedia libre](https://es.wikipedia.org/wiki/Generador_de_n%C3%BAmeros_pseudoaleatorios#:~:text=Los%20defectos%20que%20son%20exhibidos,lo%20que%20podr%C3%ADa%20haber%20sido)), la cita “la generación de números aleatorios es demasiado importante para dejarla al azar” ([Generador de números pseudoaleatorios - Wikipedia, la enciclopedia libre](https://es.wikipedia.org/wiki/Generador_de_n%C3%BAmeros_pseudoaleatorios#:~:text=,2%20%5D%E2%80%8B))). Es un buen **punto de partida** para conceptos básicos, con referencias a fuentes más detalladas.  
+- **L’Ecuyer, P. (2007), “Random Number Generation”** – Capítulo de libro (Handbook of Comp. Statistics) por un experto en PRNG. *En inglés, disponible en línea en sitios académicos*. Profundiza en criterios de calidad (periodo, uniformidad multidimensional, tests teóricos y empíricos) y describe algoritmos modernos. Por su naturaleza, es un recurso **avanzado**, útil si se requiere un entendimiento matemático riguroso de los PRNG.  
+- **PRNG criptográficamente seguros** – En contextos de seguridad, se emplean PRNG con fuertes garantías impredecibles (a costa de velocidad). Por ejemplo, **Blum Blum Shub (1986)** es un algoritmo con fundamentación teórica en teoría de números que ofrece secuencias impredecibles bajo ciertas premisas ([Generador de números pseudoaleatorios - Wikipedia, la enciclopedia libre](https://es.wikipedia.org/wiki/Generador_de_n%C3%BAmeros_pseudoaleatorios#:~:text=congruentes%20%2C%20generadores%20Fibonacci%20demorados,74%2C%20y%20el%20Mersenne%20twister)). También existen frameworks como Fortuna (de Bruce Schneier) para entropía acumulada. Estos algoritmos suelen documentarse en estándares oficiales (ej. NIST SP 800-90A) y literatura de criptografía. *En inglés y español, varias fuentes; a menudo requieren suscripción*. Son recursos **muy técnicos** orientados a aplicaciones críticas (seguridad, casinos, etc.), complementando la comprensión de PRNG generales.  
+- **Documentación de lenguajes (Python `random`, Java `java.util.Random`, etc.)** – Las implementaciones prácticas de PRNG vienen en bibliotecas estándar. Por ejemplo, la documentación de Python (módulo `random`) explica el uso de su PRNG (basado en Mersenne Twister) ([Generador de números pseudoaleatorios - Wikipedia, la enciclopedia libre](https://es.wikipedia.org/wiki/Generador_de_n%C3%BAmeros_pseudoaleatorios#:~:text=congruentes%20%2C%20generadores%20Fibonacci%20demorados,74%2C%20y%20el%20Mersenne%20twister)). *Multilingüe, libre*. Estas referencias son **didácticas** para aprender a usar PRNG en código, aunque no profundizan en la teoría. Son útiles para ver aplicaciones inmediatas en generación de datos pseudoaleatorios en tests o simulaciones.
+
+## 3. Técnicas de generación de datos para testing automatizado  
+La eficacia de las pruebas automatizadas depende en gran medida de la calidad y variedad de los **datos de entrada generados**. En el contexto de PBT, existen librerías que permiten definir *generadores* de datos aleatorios con ciertas restricciones, así como procedimientos de **shrinking** para simplificar casos fallo. Por ejemplo, Hypothesis (Python) ofrece un amplio catálogo de *estrategias* para generar datos (números, cadenas, estructuras, etc.) que el usuario puede componer y ajustar ([hypothesis/hypothesis-python/docs/data.rst at master · HypothesisWorks/hypothesis · GitHub](https://github.com/HypothesisWorks/hypothesis/blob/master/hypothesis-python/docs/data.rst#:~:text=Most%20things%20should%20be%20easy,and%20everything%20should%20be%20possible)). Cada estrategia sabe cómo *simplificar* un valor complejo a uno más pequeño equivalente cuando se halla un contraejemplo, facilitando el análisis del error ([hypothesis/hypothesis-python/docs/data.rst at master · HypothesisWorks/hypothesis · GitHub](https://github.com/HypothesisWorks/hypothesis/blob/master/hypothesis-python/docs/data.rst#:~:text=Shrinking)) (por ejemplo, si una propiedad falla con una lista de 10 elementos, Hypothesis intentará reducirla a la lista más pequeña que también falle). QuickCheck y derivados funcionan de forma similar: definen generadores aleatorios para tipos de datos (mediante la clase `Arbitrary` en Haskell/Scala, por ejemplo) y usan combinadores para crear generadores de estructuras más complejas a partir de los básicos ([Property-based testing con ScalaCheck. - Adictos al trabajo](https://adictosaltrabajo.com/2018/02/27/property-based-testing-con-scalacheck/#:~:text=Tal%20y%20como%20se%20vi%C3%B3,Gen)) ([Property-based testing con ScalaCheck. - Adictos al trabajo](https://adictosaltrabajo.com/2018/02/27/property-based-testing-con-scalacheck/#:~:text=Si%20se%20necesitan%20crear%20generadores,existenes.%20Por%20ejemplo)). Algunas técnicas y recursos relevantes en este ámbito son:
+
+- **Estrategias y generadores en frameworks PBT** – La documentación oficial de Hypothesis ([hypothesis/hypothesis-python/docs/data.rst at master · HypothesisWorks/hypothesis · GitHub](https://github.com/HypothesisWorks/hypothesis/blob/master/hypothesis-python/docs/data.rst#:~:text=Most%20things%20should%20be%20easy,and%20everything%20should%20be%20possible)) y ScalaCheck ([Property-based testing con ScalaCheck. - Adictos al trabajo](https://adictosaltrabajo.com/2018/02/27/property-based-testing-con-scalacheck/#:~:text=match%20at%20L196%20Tal%20y,Gen)) detalla cómo construir generadores personalizados. *En inglés (Hypothesis) y español (ScalaCheck), libre*. Estos recursos muestran enfoques **prácticos**: uso de combinadores para mezclar fuentes aleatorias, elección ponderada de casos (ej. `oneOf` con preferencias) y control de tamaños de estructura para explorar casos pequeños primero. Son útiles para aprender a *especificar datos de prueba* de forma declarativa.  
+- **Shrinkage (reducción de casos)** – Mecanismo clave en PBT. El blog de Hypothesis explica claramente el proceso: generar datos arbitrarios según una especificación y, si se encuentra un fallo, “cortarlo hasta que sea mucho más pequeño” conservando el fallo ([Hypothesis 6.130.0 documentation](https://hypothesis.readthedocs.io/#:~:text=It%20works%20by%20generating%20arbitrary,forget%20it%20in%20the%20future)). *En inglés, libre*. Comprender el shrinking es importante para aprovechar PBT al máximo; muchos frameworks lo hacen automáticamente, pero el desarrollador debe conocer cómo sus generadores influyen en el orden de simplificación.  
+- **Modelos de estado y secuencias de acciones** – Para probar software con estado (p.ej. APIs, bases de datos), las técnicas de **model-based testing** permiten generar no solo datos, sino secuencias de operaciones. Herramientas como PropEr/Hypothesis soportan definir modelos de máquina de estados para generar llamadas válidas aleatorias a un sistema (por ejemplo, secuencias de inserción/borrado en una estructura de datos) y verificar invariantes en cada paso. Un recurso avanzado es el capítulo experimental de FsCheck sobre testing basado en modelos ([Test data: generators, shrinkers and Arbitrary instances
+](https://fscheck.github.io/FsCheck//TestData.html#:~:text=)) ([Test data: generators, shrinkers and Arbitrary instances
+](https://fscheck.github.io/FsCheck//TestData.html#:~:text=Shrinkers%20have%20types%20of%20the,process%20continues%20with%20that%20value)). *En inglés, libre*. Es un tema **técnico** avanzado, pero muy poderoso para automatizar pruebas de sistemas complejos mediante generación de interacciones.  
+- **Fuzzing guiado y generación dirigida** – Más allá de los generadores aleatorios puros, existen técnicas para *dirigir* la generación hacia casos interesantes. Por ejemplo, **fuzzers** como AFL utilizan heurísticas (e incluso instrumentación del código) para generar entradas que maximicen la cobertura o alcanzan ramas raras. Un estudio relevante es *“Targeted Property-Based Testing”* (Löscher, 2019) que combina búsqueda heurística con PBT ([Targeted property-based testing - ACM Digital Library](https://dl.acm.org/doi/10.1145/3092703.3092711#:~:text=Targeted%20property,Verif)). *En inglés, puede requerir subscripción*. Estos enfoques híbridos (search-based testing) son **avanzados**, y apuntan a automatizar la generación de datos de prueba *no aleatoria pura* sino informada por objetivos (cobertura, condiciones específicas), lo cual complementa a los generadores aleatorios estándar.  
+- **Reutilización de generadores en testing tradicional** – Una buena práctica es aprovechar los generadores de datos incluso en pruebas unitarias clásicas. Por ejemplo, el tutorial de ScalaCheck señala que los generadores pueden emplearse para crear datos de entrada de manera centralizada (*Object Mother*) en tests manuales ([Property-based testing con ScalaCheck. - Adictos al trabajo](https://adictosaltrabajo.com/2018/02/27/property-based-testing-con-scalacheck/#:~:text=A%20lo%20largo%20del%20tutorial,los%20test%20basados%20en%20propiedades)). *En español, libre*. Esto es **didáctico** para ver que las técnicas de generación automáticas no se limitan a PBT estricto, sino que pueden ayudar a producir casos diversos y reproducibles en cualquier tipo de prueba automatizada. Al centralizar la lógica de generación, se obtiene mayor variedad de pruebas con menos esfuerzo y se reduce la duplicación de código de *setup* de tests.
+
+**Nota:** Muchos de estos recursos son de acceso libre (documentación, blogs, papers en arXiv o repositorios universitarios). En caso de artículos académicos en ACM/IEEE u otros, a menudo existen versiones preprint o slides de conferencia disponibles públicamente. Los recursos marcados como libros comerciales (e.g. Knuth, Fred Hebert) pueden requerir compra o suscripción, aunque sus ideas principales suelen estar resumidas en papers o páginas web de la comunidad. Se recomienda comenzar por los materiales didácticos (tutoriales, documentación oficial, blogs introductorios) e ir profundizando hacia las fuentes técnicas y académicas conforme se necesite un mayor nivel de detalle teórico. Esto asegurará construir una base sólida antes de abordar contenidos más avanzados. */}
