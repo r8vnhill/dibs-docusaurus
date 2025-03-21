@@ -42,7 +42,9 @@ import Tooltip from '@site/src/components/Tooltip'
     ```
 </ModuleSetup>
 
-Como vimos en la lección sobre [tipos suma](docs/fp/adt/sum/index.mdx), **Either** es un tipo de dato que se utiliza para representar uno de dos posibles valores: `Left` o `Right`. Es comúnmente empleado para manejar operaciones que pueden tener dos resultados: un valor esperado (`Right`) o un error o situación inesperada (`Left`).
+Como vimos en la lección sobre [tipos suma](docs/fp/adt/sum/index.mdx), **`Either`** es una construcción que representa un valor que puede tener **una de dos formas**: `Left` o `Right`. Este tipo es especialmente útil cuando una operación puede **fallar o tener éxito**, ya que permite capturar explícitamente ambos casos en el tipo de retorno.
+
+En la práctica funcional, `Either` se usa para modelar funciones que pueden devolver un resultado válido (`Right`) o un error (`Left`) sin recurrir a excepciones, facilitando así un código más **seguro, predecible y composable**.
 
 :::tip Nemotécnica
 
@@ -50,9 +52,10 @@ Como vimos en la lección sobre [tipos suma](docs/fp/adt/sum/index.mdx), **Eithe
 
 :::
 
-## El problema con las excepciones
+## 📉 El problema con las excepciones
 
-> "But why do we consider throwing exceptions bad? Why is it not the desired effect? The answer has much to do with a loss of control."
+> "¿Pero por qué consideramos que lanzar excepciones es algo negativo? ¿Por qué no es el efecto deseado?
+> La respuesta tiene mucho que ver con la pérdida de control."
 > — *Vermeulen, et al. (2021)*
 
 El <Tooltip text={"Al menos desde una perspectiva de programación funcional."} highlight={true}>problema con las excepciones</Tooltip> radica en que no son **referencialmente transparentes**. Esto significa que no se pueden reemplazar por su valor sin alterar el comportamiento del programa. Veamos un ejemplo:
@@ -118,7 +121,7 @@ En este caso, `y` no es referencialmente transparente, porque no podemos sustitu
     En **Kotlin**, no existen **checked exceptions**, lo que permite un enfoque más flexible y funcional. Sin embargo, esto significa que se deben manejar las excepciones de manera explícita, por ejemplo, usando patrones de error como `Either`.
 </details>
 
-## Leyes de las Mónadas
+## 📜 Leyes de las Mónadas
 
 Para validar que nuestra implementación cumple con las **leyes de las mónadas**, definimos pruebas para las tres leyes: **identidad izquierda**, **identidad derecha**, y **asociatividad**. Estas pruebas nos aseguran que la estructura monádica se comporta como se espera en cualquier caso.
 
@@ -239,9 +242,9 @@ Para validar que nuestra implementación cumple con las **leyes de las mónadas*
     - **Ley de asociatividad**: Verifica que la secuencia de aplicación de funciones encadenadas produce el mismo resultado, independientemente del orden de agrupación de las funciones.
 </Explanation>
 
-## Implementación
+## 🏗️ Implementación
 
-### Implementando Either
+### ⚖️ Implementando Either
 
 Para implementar **Either** en Kotlin podemos utilizar una clase sellada para representar los dos posibles casos (`Left` y `Right`):
 
@@ -255,7 +258,7 @@ data class Left<L>(val value: L) : Either<L, Nothing>()
 data class Right<R>(val value: R) : Either<Nothing, R>()
 ```
 
-### Implementando la mónada Either
+### 🧩 Implementando la mónada Either
 
 ```kotlin showLineNumbers title="monads/src/main/kotlin/com/github/username/either/EitherMonad.kt"
 package com.github.username.either
@@ -270,7 +273,7 @@ object EitherMonad {
 }
 ```
 
-## Ejemplo de uso
+## 🛠️ Ejemplo de uso
 
 En este ejemplo, vamos a implementar un caso sencillo de **`Either`** para manejar operaciones que pueden fallar, utilizando las funciones **`pure`** y **`flatMap`** para trabajar con la mónada **`Either`**.
 
@@ -305,35 +308,71 @@ Este patrón es particularmente útil cuando queremos manejar flujos de operacio
     En este ejemplo, utilizamos la mónada **`Either`** para validar una contraseña, aplicando dos funciones de validación secuenciales. Si alguna de las validaciones falla, se devuelve un `Left` con un mensaje de error. Si todas las validaciones son exitosas, se devuelve un `Right` con la contraseña válida.    
 </Explanation>
 
-## Comparación con `Option`
+## ✅ Beneficios y ❌ limitaciones de Either
+
+<ProCons>
+    <Pros>
+        - **Manejo explícito de errores**: Permite modelar los errores de manera clara y estructurada, evitando el uso de excepciones y haciendo que los errores sean parte del tipo de retorno.
+        - **Mejor composición**: `Either` facilita la composición funcional de operaciones que pueden fallar, utilizando `flatMap` para encadenar transformaciones sin afectar el flujo del programa.
+        - **Referencialmente transparente**: A diferencia de las excepciones, `Either` mantiene la predictibilidad de las funciones, ya que no altera el flujo de control de forma oculta.
+        - **No propaga excepciones inesperadas**: Los errores se manejan explícitamente mediante `Left`, lo que evita sorpresas en tiempo de ejecución debido a excepciones no controladas.
+        - **Facilita el testing**: Al hacer que los errores sean valores explícitos, las pruebas pueden centrarse en los diferentes resultados posibles sin necesidad de depender de excepciones.
+    </Pros>
+    <Cons>
+        - **Mayor verbosidad**: Requiere envoltura explícita en `Left` y `Right`, lo que puede hacer que el código sea más extenso en comparación con el uso de excepciones o `Result`.
+        - **Curva de aprendizaje**: Para quienes están acostumbradxs a excepciones, puede tomar tiempo adoptar `Either` y acostumbrarse a su uso con funciones como `map` y `flatMap`.
+        - **Puede ser innecesario en casos simples**: Para operaciones donde solo se necesita representar la ausencia de un valor, `Option` puede ser más adecuado y menos verboso.
+        - **No previene la omisión del manejo de errores**: Aunque obliga a manejar ambos casos (`Left` y `Right`), sigue siendo posible ignorar el error.
+    </Cons>
+</ProCons>
+
+## ⚖️ Comparación con otras estructuras
+
+### 🔍 Comparación con `Option`
 
 Tanto **Either** como **Option** son tipos algebraicos de datos en Kotlin que nos permiten manejar de manera segura operaciones que pueden no devolver un resultado exitoso. Aunque ambos sirven para modelar la ausencia o presencia de un valor, **Either** se utiliza principalmente cuando queremos capturar más información sobre el fallo, mientras que **Option** es más simple y se usa cuando el error no importa tanto.
 
-### Option
+#### Option
+
 - **Propósito**: Modela la **presencia o ausencia** de un valor. Se usa en casos donde puede no haber un resultado, pero no nos importa mucho el por qué.
 - **Construcción**: Puede ser **`Some`** (cuando el valor está presente) o **`None`** (cuando no hay valor).
 - **Uso típico**: Se utiliza cuando el **fallo** o la **ausencia de valor** no es el punto central y no se necesita más información sobre por qué no se devolvió un valor.
 - **Manejo de la ausencia**: La falta de un valor en `Option` no contiene información adicional, simplemente indica que no hay nada.
 
-### Either
+#### Either
+
 - **Propósito**: Modela dos resultados posibles: un **éxito** o un **fallo**, representados por `Right` y `Left`, respectivamente.
 - **Construcción**: Se construye con dos variantes: **`Left`** para el fallo y **`Right`** para el éxito.
 - **Uso típico**: Se usa cuando es importante conocer la razón por la cual no se obtuvo un resultado exitoso, proporcionando un mensaje de error o un código que explique el fallo.
 - **Manejo del fallo**: El uso de `Left` permite contener información útil sobre el error, lo que lo convierte en una opción más poderosa para manejar fallos explícitamente.
 
-## Comparación con `Result`
+### ⚡ Comparación con `Result`
 
 Al comparar **Either** y **Result**, encontramos que ambos tipos son útiles para modelar resultados que pueden tener éxito o fallar, pero existen diferencias clave en cuanto a su propósito, uso y cómo gestionan los errores.
 
-### Either
+#### Either
+
 - **Generalidad**: `Either` es un tipo genérico que puede representar cualquier tipo de resultado, no solo éxito o fallo. En el contexto de fallos, `Left` puede contener un error o una situación inesperada, mientras que `Right` contiene el resultado exitoso.
 - **Similitud con excepciones verificadas**: `Either` se puede comparar con las **excepciones verificadas** en lenguajes como Java, donde se requiere que los errores sean manejados explícitamente. Al usar `Either`, debes manejar tanto el caso de `Left` como el de `Right`, obligando a quien desarrolla a tratar los errores de manera explícita.
 
-### Result
+#### Result
+
 - **Especialización**: `Result` está diseñado específicamente para modelar operaciones que pueden tener éxito o fallo. Al usar `Result`, los errores se manejan mediante excepciones, lo que hace que sea más adecuado para capturar fallos inesperados, como errores de tiempo de ejecución o fallos no planeados.
 - **Similitud con excepciones no verificadas**: `Result` se asemeja a las **excepciones no verificadas** (unchecked exceptions) en lenguajes como Kotlin y Java, donde los errores pueden ser propagados sin ser manejados explícitamente. Esto permite que el código que usa `Result` sea más fluido, pero también significa que los errores pueden ser ignorados si no se manejan correctamente.
 
-<Exercise title="Extendiendo Either">
+### 📊 Resumen comparativo
+
+| **Característica**            | **Either**                              | **Option**                            | **Result**                              |
+|------------------------------|----------------------------------------|--------------------------------------|----------------------------------------|
+| **Propósito**                | Modela éxito (`Right`) o fallo (`Left`) | Modela presencia (`Some`) o ausencia (`None`) | Modela éxito (`Success`) o fallo (`Failure`) |
+| **Captura de errores**       | Explícita (`Left` contiene error)       | Implícita (`None` indica ausencia)  | Implícita (`Failure` encapsula excepción) |
+| **Información del fallo**    | Rica (permite mensajes detallados)     | Nula (solo indica que no hay valor) | Rica (contiene la excepción lanzada)  |
+| **Similitud con excepciones** | Similar a excepciones verificadas (checked) | No modela errores explícitos        | Similar a excepciones no verificadas (unchecked) |
+| **Casos de uso**             | Validaciones, errores controlados      | Valores opcionales, ausencia esperada | Operaciones propensas a fallos inesperados |
+
+## 📝 Ejercicio: Extendiendo Either
+
+<Exercise>
     Implementa las funciones:
     - ``fold: (Either<A, B>, (A) -> C, (B) -> C): C``: Aplica una función a cada caso de `Either` y devuelve el resultado. Si es `Left`, aplica la primera función, si es `Right`, aplica la segunda.
     - ``swap: (Either<L, R>) -> Either<R, L>``: Intercambia los valores de `Left` y `Right`. Utiliza la función `fold` para implementar `swap`.
@@ -358,29 +397,26 @@ Al comparar **Either** y **Result**, encontramos que ambos tipos son útiles par
     </Solution>
 </Exercise>
 
-## Beneficios y limitaciones de Either
+## 🎯 Conclusiones
 
-<ProCons>
-    <Pros>
-        
-    </Pros>
-    <Cons>
-        
-    </Cons>
-</ProCons>
+La mónada **Either** proporciona una alternativa clara y funcional para el manejo de errores en Kotlin sin recurrir a excepciones. Su enfoque basado en `Left` y `Right` permite representar tanto fallos como éxitos de forma explícita, facilitando la composición de funciones y garantizando mayor seguridad en el flujo del programa.
 
-## ¿Qué hemos aprendido?
+A lo largo de la lección, hemos explorado su implementación, las **leyes monádicas** que cumple, y su comparación con estructuras similares como `Option` y `Result`. También hemos analizado sus beneficios y limitaciones, así como ejemplos prácticos de uso.
 
-En esta lección hemos explorado el uso de **Either** como una poderosa alternativa para manejar errores y representar casos de éxito o falla en operaciones que pueden tener más de un resultado posible.
+### 🔑 Puntos clave
 
-### Puntos clave:
-- **Either** proporciona una forma clara y explícita de manejar errores sin recurrir a excepciones.
-- El uso de **Right** para el caso exitoso y **Left** para el caso fallido permite un manejo estructurado de los resultados.
-- Con **Either**, evitamos el flujo implícito de errores que se puede producir con excepciones, forzando el manejo explícito de todos los casos posibles.
-- Hemos comparado el enfoque de **Either** con el manejo de excepciones tipadas en Java, mostrando cómo Kotlin ofrece una solución más funcional y limpia.
-- También hemos discutido cómo **Either** se diferencia de **Option**, siendo más adecuado cuando se necesita proporcionar contexto adicional en caso de error.
+- **Manejo explícito de errores**: `Either` encapsula tanto el éxito como el fallo dentro de su tipo de retorno, evitando excepciones inesperadas.
+- **Composición funcional**: Facilita la aplicación secuencial de operaciones mediante `flatMap`, permitiendo encadenar transformaciones de forma segura.
+- **Referencialmente transparente**: A diferencia de las excepciones, el uso de `Either` no interrumpe el flujo del programa ni introduce efectos laterales inesperados.
+- **Comparación con otras estructuras**: Mientras que `Option` modela la presencia o ausencia de un valor y `Result` encapsula excepciones, `Either` es más flexible y adecuado para manejar fallos de manera detallada.
 
-Con estas ideas, ahora puedes aplicar **Either** en escenarios que requieran un manejo explícito de errores y evitar la propagación oculta de fallos en tu código.
+### 🧰 ¿Qué nos llevamos?
+
+El uso de `Either` en Kotlin nos invita a repensar la forma en que manejamos los errores y estructuramos nuestro código. En lugar de depender de excepciones, que pueden ser difíciles de rastrear y manejar de manera segura, `Either` nos permite modelar explícitamente tanto el éxito como el fallo dentro del tipo de retorno de una función. Esta aproximación no solo mejora la predictibilidad y seguridad del código, sino que también promueve una composición más clara y fluida.
+
+Si bien `Either` puede parecer más verboso en comparación con otros enfoques, su capacidad para hacer que los errores sean explícitos y tratables justifica su uso en contextos donde la confiabilidad y la claridad del flujo del programa son esenciales. Adoptarlo implica un cambio de mentalidad hacia un diseño más declarativo, donde los errores no son interrupciones inesperadas, sino valores manejables dentro del propio lenguaje de nuestro código.
+
+Al finalizar esta lección, queda claro que `Either` es más que una alternativa a las excepciones: es una herramienta que nos permite escribir software más robusto, predecible y alineado con los principios de la programación funcional. Su uso consciente nos lleva a diseñar aplicaciones en las que el manejo de errores no es un obstáculo, sino una parte integral del flujo de ejecución. 
 
 <div className="language-card-container">
     <LanguageCard
@@ -410,24 +446,10 @@ Con estas ideas, ahora puedes aplicar **Either** en escenarios que requieran un 
     />
 </div>
 
-<References references={[
-    {
-        publisher: "Manning Publications",
-        pages: "56–76",
-        type: "book",
-        title: "4. Handling errors without exceptions",
-        author: "Marco Vermeulen, Rúnar Bjarnason, Paul Chiusano",
-        year: 2021,
-        bookTitle: "Functional Programming in Kotlin"
-    },
-    {
-        title: "6. Simple Algebraic Data Types",
-        type: "book",
-        bookTitle: "Category Theory for Programmers",
-        author: "Bartosz Milewski",
-        pages: "55–68",
-        publisher: "Millington Keynes",
-        year: "2019",
-        location: "Lightning Source UK",
-    },
-]}/>
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+📚 Handling errors without exceptions. (2021). En Marco Vermeulen, Rúnar Bjarnason, & Paul Chiusano, Functional Programming in Kotlin (pp. 56–76). Manning Publications Co. LLC.
+
+🌐 Mark Seemann. (2022, mayo 9). An Either monad. https://blog.ploeh.dk/2022/05/09/an-either-monad/
