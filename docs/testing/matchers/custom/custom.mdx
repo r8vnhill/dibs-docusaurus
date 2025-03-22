@@ -165,25 +165,74 @@ kotest = ["kotest-runner-junit5", "kotest-datatest", "kotest-assertions-core"]
         <>Puede serte de utilidad la función <code>kotlin.math.abs: (Double) -&gt; Double</code> de Kotlin, que retorna el valor absoluto de un número.</>,
     ]}/>
     <Solution>
-        ```kotlin showLineNumbers title="matchers/custom/src/test/kotlin/com/github/username/metrics/matchers/beCloseTo.kt"
-        package com.github.username.metrics.matchers
-
-        import io.kotest.matchers.Matcher
-        import io.kotest.matchers.MatcherResult
-        import kotlin.math.abs
-
-        fun beCloseTo(expected: Double, tolerance: Double) = Matcher<Double> { value ->
-            MatcherResult(
-                passed = abs(value - expected) < tolerance,
-                failureMessageFn = {
-                    "$value should be in the vicinity of $expected within a tolerance of $tolerance"
-                },
-                negatedFailureMessageFn = {
-                    "$value should not be in the vicinity of $expected within a tolerance of $tolerance"
+        <BoxedTabs>
+            <TabItem label={"Código esencial"} value={"Código esencial"}>
+                ```kotlin showLineNumbers
+                fun beCloseTo(expected: Double, tolerance: Double) = Matcher<Double> { value ->
+                    MatcherResult(
+                        passed = abs(value - expected) < tolerance,
+                        failureMessageFn = {
+                            "$value should be in the vicinity of $expected within a tolerance of $tolerance"
+                        },
+                        negatedFailureMessageFn = {
+                            "$value should not be in the vicinity of $expected within a tolerance of $tolerance"
+                        }
+                    )
                 }
-            )
-        }
-        ```
+                ```
+            </TabItem>
+            <TabItem label={"Código completo"} value={"Código completo"}>
+                ```kotlin showLineNumbers title="matchers/custom/src/test/kotlin/com/github/username/metrics/matchers/beCloseTo.kt"
+                package com.github.username.metrics.matchers
+
+                import io.kotest.matchers.Matcher
+                import io.kotest.matchers.MatcherResult
+                import kotlin.math.abs
+
+                fun beCloseTo(expected: Double, tolerance: Double) = Matcher<Double> { value ->
+                    MatcherResult(
+                        passed = abs(value - expected) < tolerance,
+                        failureMessageFn = {
+                            "$value should be in the vicinity of $expected within a tolerance of $tolerance"
+                        },
+                        negatedFailureMessageFn = {
+                            "$value should not be in the vicinity of $expected within a tolerance of $tolerance"
+                        }
+                    )
+                }
+                ```
+
+                ```kotlin showLineNumbers title="matchers/custom/src/test/kotlin/com/github/username/metrics/IdentifierGeneratorTest.kt"
+                package com.github.username.metrics
+
+                import com.github.username.metrics.matchers.beCloseTo
+                import io.kotest.core.spec.style.FreeSpec
+                import io.kotest.matchers.should
+
+                class AverageCalculatorTest : FreeSpec({
+
+                    "Given a calculator of event averages" - {
+                        "when it processes a list of durations in milliseconds" - {
+                            val durations = listOf(100.0, 102.0, 98.0, 101.0)
+
+                            "then the average should be close to the expected baseline" - {
+                                val result = AverageCalculator.average(durations)
+                                result should beCloseTo(100.0, 1.5)
+                            }
+                        }
+                    }
+                })
+                ```
+
+                ```kotlin showLineNumbers title="matchers/custom/src/main/kotlin/com/github/username/metrics/AverageCalculator.kt"	
+                package com.github.username.metrics
+
+                object AverageCalculator {
+                    fun average(durations: List<Double>) = durations.average()
+                }
+                ```
+            </TabItem>
+        </BoxedTabs>
     </Solution>
 </Exercise>
 
