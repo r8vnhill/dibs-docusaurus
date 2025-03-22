@@ -1,70 +1,138 @@
 ---
 title: Propiedades/Accessors
 ---
-import { LanguageCard } from "/src/components/cards/LanguageCard";
-import References from "/src/components/ReferencesComponent";
-import ReadingTime from '/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard, AssertJCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
 
-Las **propiedades** son fundamentales para definir el estado de una clase y funcionan como variables miembro. En Kotlin, las propiedades combinan el comportamiento de los campos con los métodos *getter* y *setter*, ofreciendo una manera más concisa y expresiva de manejar datos.
+Al desarrollar bibliotecas de software, es fundamental definir estructuras de datos que no solo sean fáciles de usar, sino también **robustas, seguras y expresivas**. Las propiedades en Kotlin ofrecen un mecanismo poderoso para encapsular estado, controlar acceso y definir reglas de negocio de forma declarativa.
 
-Kotlin genera automáticamente un método `get` para propiedades inmutables (declaradas con `val`), y tanto `get` como `set` para propiedades mutables (declaradas con `var`). No obstante, es posible personalizar estos métodos si se requiere un comportamiento más específico.
+En lugar de exponer campos directamente, Kotlin permite usar *getters* y *setters* personalizados, propiedades calculadas o con *backing fields*, lo que aporta claridad semántica y control fino sobre cómo se accede y modifica la información.
 
-### Ejemplo de Propiedad con Getter y Setter Personalizados en Kotlin
+En esta lección, exploraremos cómo aplicar estos mecanismos al diseñar bibliotecas reutilizables —ya sea de métricas, gráficos, geometría o configuración— para que tus propiedades no solo sirvan como contenedores de datos, sino como contratos explícitos sobre el comportamiento esperado del sistema.
+
+### 🧪 Setter personalizado: validación de entrada
+
+Supón que estás construyendo una biblioteca de gráficos. Quieres exponer una propiedad `opacity` en un componente visual, pero restringir sus valores entre `0.0` y `1.0`:
 
 ```kotlin
-class GettersAndSetters {
-    var name: String = "John"
-        get() { // Getter personalizado
-            return field
-        }
-        set(value) { // Setter personalizado
+class GraphicElement {
+    var opacity: Double = 1.0
+        set(value) {
+            require(value in 0.0..1.0) { "Opacity must be between 0.0 and 1.0" }
             field = value
         }
 }
 ```
 
-En **Kotlin**, `field` es una palabra clave especial que representa el valor almacenado internamente en la propiedad. Es útil en *getters* y *setters* personalizados para acceder o modificar ese valor.
+<Explanation>
+    Este setter personalizado valida que el valor esté dentro del rango permitido antes de asignarlo.  
+    `require` lanza una excepción si la condición no se cumple, y `field` hace referencia al valor interno de la propiedad.
+</Explanation>
 
-### Propiedad Calculada
+:::note `require` vs `error`
 
-Una **propiedad calculada** es una propiedad cuyo valor se evalúa cada vez que se accede a ella. En Kotlin, puedes usar un *getter* para hacer esto:
+Ambas funciones lanzan una excepción, pero con propósitos distintos:
+
+- `require: (Boolean, () -> Any) -> Unit`: valida argumentos o entradas, lanza `IllegalArgumentException` si la condición es falsa.
+- `error: (Any) -> Unit`: lanza incondicionalmente una `IllegalStateException`, útil para estados inválidos del programa.
+
+Ambas permiten expresar errores de forma concisa y clara.
+
+:::
+
+
+### ⏱ Propiedad calculada: evitar almacenamiento innecesario
+
+En una biblioteca de métricas, puedes querer exponer el tiempo actual cada vez que alguien lo consulte, sin almacenarlo:
 
 ```kotlin
-class GettersAndSetters {
-    val now: String
+class Timer {
+    val timestamp: String
         get() = Clock.System.now().toString()
 }
 ```
 
-Cada vez que se accede a la propiedad `now`, se genera un valor basado en la hora actual.
+<Explanation>
+    Esta propiedad calculada obtiene el tiempo actual cada vez que se accede, evitando almacenar un valor que quedaría rápidamente obsoleto.  
+    Es útil en bibliotecas donde se requiere información siempre actualizada sin gestionar su estado manualmente.
+</Explanation>
 
-### Propiedad con Setter Privado
+## 🔒 Setter privado: control de modificaciones
 
-A veces, necesitas permitir que otras partes del programa lean el valor de una propiedad, pero restringir quién puede modificarla. En Kotlin, esto se logra mediante un *setter* privado:
+En una biblioteca de configuración, podrías permitir leer un identificador desde fuera, pero restringir quién puede modificarlo. Así proteges valores importantes del estado interno de tu clase:
 
 ```kotlin
-class GettersAndSetters(age: Int) {
-    var age: Int = age
-        private set // Setter privado
+class Config {
+    var id: String = "default"
+        private set
+
+    fun resetId() {
+        id = "new-id"
+    }
 }
 ```
 
-### Propiedad con Backing Field
+<Explanation>
+    El `setter` privado impide que otras clases modifiquen directamente la propiedad `id`, protegiendo la integridad del estado.  
+    Solo los métodos definidos dentro de `Config` pueden actualizar su valor, lo que ayuda a mantener un control más estricto sobre su modificación.
+</Explanation>
 
-En Kotlin, el **backing field** permite controlar el acceso a una propiedad, manteniendo el valor almacenado en una variable privada:
+:::tip Otros privilegios de acceso
+
+Además de `private`, también podemos definir setters con `protected` o `internal`, según el nivel de acceso que queramos otorgar.
+
+:::
+
+## 🎭 Backing field privado: control de representación
+
+Supongamos que estás construyendo una biblioteca de geometría, y necesitas que una propiedad calcule internamente su representación textual:
 
 ```kotlin
-class GettersAndSetters(private var _age: Int) {
-    val age: Int
-        get() = _age
+class Vector2D(private var _x: Double, private var _y: Double) {
+    val description: String
+        get() = "Vector(x=$_x, y=$_y)"
 }
 ```
 
-## En resumen
+<Explanation>
+    Esta propiedad calculada usa un *backing field* privado (`_x` y `_y`) para construir una descripción pública del vector.  
+    De esta forma, se encapsula el estado interno y se expone una vista controlada sin permitir modificaciones externas directas.
+</Explanation>
 
-Las **propiedades** permiten gestionar el estado de una clase de manera eficiente al combinar el comportamiento de los campos con los métodos *getter* y *setter*. En **Kotlin**, estos métodos se generan automáticamente, pero pueden ser personalizados para un mayor control. Además, el uso de **propiedades calculadas**, **setters privados**, y **backing fields** proporciona flexibilidad en la forma en que se manejan y protegen los datos.
+## 🎯 Conclusiones
+
+Las propiedades en Kotlin no son simples campos: son herramientas expresivas para controlar cómo se accede, representa y modifica el estado dentro de una clase. Al desarrollar bibliotecas, esto se vuelve aún más relevante: una propiedad mal diseñada puede comprometer invariantes, exponer implementación interna o dificultar la evolución del API.
+
+A través de setters personalizados, propiedades calculadas, setters restringidos y backing fields, Kotlin nos permite definir con precisión cómo debe interactuar un usuario con nuestra API, manteniendo el equilibrio entre **ergonomía, encapsulamiento y robustez**.
+
+### 🔑 Puntos clave
+
+1. **Un setter puede ser más que asignación**: validar entradas desde el inicio evita errores silenciosos en el uso de la API.
+2. **Propiedades calculadas permiten evitar estados redundantes o inconsistentes**.
+3. **Restricción de acceso a setters protege la integridad del modelo interno**.
+4. **Backing fields privados facilitan separar estado interno de representación externa.**
+
+### 🧰 ¿Qué nos llevamos?
+
+Al construir bibliotecas, no solo definimos funciones: **definimos contratos**. Las propiedades son parte fundamental de esos contratos. Saber cuándo usar una propiedad calculada, cuándo restringir un setter, o cómo ocultar el estado interno sin perder expresividad, es clave para ofrecer **interfaces claras, seguras y fáciles de mantener**.
+
+Las decisiones que tomas al definir propiedades afectan directamente la **calidad y confiabilidad del código que otras personas escribirán usando tu biblioteca**. Aprovechar las herramientas que Kotlin ofrece para declararlas no solo mejora el diseño, también eleva la experiencia de quien la utiliza.
 
 <div className="language-card-container">
     <LanguageCard
@@ -94,15 +162,8 @@ Las **propiedades** permiten gestionar el estado de una clase de manera eficient
     />
 </div>
 
-<References references={[
-    {
-        title: "2. Kotlin basics",
-        bookTitle: "Kotlin in action",
-        pages: "17–43",
-        location: "Shelter Island, NY",
-        publisher: "Manning Publications Co",
-        year: "2017",
-        type: "book",
-        author: 'Dmitry Jemerov & Svetlana Isakova'
-    },
-]}/>
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+🌐 Properties | Kotlin. (2024, septiembre 25). Kotlin Help. https://kotlinlang.org/docs/properties.html
