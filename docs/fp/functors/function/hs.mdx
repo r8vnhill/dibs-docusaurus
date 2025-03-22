@@ -19,203 +19,74 @@ import RepoClone from '@site/src/components/admonitions/RepoClone'
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="" />
 
-En Haskell, los **functores** son una parte fundamental del lenguaje y están incorporados en su sistema de tipos. El tipo de función `(->) r`, donde `r` es un tipo fijo, es una instancia de la clase `Functor`. Esto significa que podemos aplicar `fmap` para mapear una función sobre la salida de otra función.
+Ya viste en Kotlin cómo una función `(T) -> R` puede comportarse como un **funtor** al permitir transformar su salida sin alterar su entrada. Esta idea se implementaba mediante una función de extensión `map`, lo que te permitió encadenar transformaciones de forma declarativa sobre el resultado de una función.
 
-### Definición del functor función
+En **Haskell**, este concepto se formaliza aún más: el tipo `(->) r` (funciones que reciben un valor de tipo `r`) es **una instancia nativa del tipo de clase `Functor`**. Es decir, **todas las funciones que comparten el mismo tipo de entrada son automáticamente funtores en su salida**.
 
-En Haskell, la instancia de `Functor` para las funciones se define de la siguiente manera:
+Esto implica que puedes usar `fmap` directamente sobre funciones, sin necesidad de definir manualmente una operación `map`. Esta integración directa en el sistema de tipos permite composiciones más expresivas y verificables, y nos abre la puerta a herramientas como **QuickCheck**, que permiten verificar automáticamente que las leyes del funtor se cumplen.
 
-```haskell showLineNumbers
+En esta lección, verás cómo aprovechar esa integración, cómo se compara con Kotlin, y qué ventajas te ofrece Haskell al trabajar con el funtor función.
+
+## Instancia Functor para funciones en Haskell
+
+```haskell
 instance Functor ((->) r) where
-    fmap = (.)
+    fmap f g = \x -> f (g x)
 ```
 
-Aquí, `fmap` es equivalente a la composición de funciones `(.)`. Esto permite aplicar transformaciones a la salida de una función de manera sencilla y elegante.
+Esto quiere decir que si tienes una función `g :: r -> a`, y una transformación `f :: a -> b`, entonces `fmap f g` te da una nueva función `r -> b`. Esta operación es exactamente la misma que en Kotlin con `map`.
 
-### Propiedades del functor función en Haskell
+## ✅ Verificando las leyes del funtor con QuickCheck
 
-#### Identidad
+Una ventaja de Haskell es que puedes **verificar automáticamente** las leyes del funtor utilizando pruebas **propiedadales** con [QuickCheck](https://hackage.haskell.org/package/QuickCheck).
 
-Aplicar `fmap id` a una función no cambia la función original:
+### 📐 Ley de Identidad
 
-```haskell showLineNumbers
-fmap id f == f
+```haskell
+prop_identity :: (Eq b, Show r, Arbitrary r) => Fun r b -> r -> Bool
+prop_identity (Fun _ f) x = (fmap id f) x == f x
 ```
 
-#### Composición
+Este test genera funciones arbitrarias `f :: r -> b` y verifica que `fmap id f ≡ f`.
 
-La composición de dos mapeos es equivalente a un único mapeo con la composición de las dos funciones:
+### 📐 Ley de Composición
 
-```haskell showLineNumbers
-fmap (g . h) f == fmap g (fmap h f)
+```haskell
+prop_composition :: (Eq c, Show r, Arbitrary r) => Fun b c -> Fun a b -> Fun r a -> r -> Bool
+prop_composition (Fun _ f) (Fun _ g) (Fun _ h) x =
+  (fmap f (fmap g h)) x == (fmap (f . g) h) x
 ```
 
-Estas propiedades aseguran que el functor función cumple con las leyes de los functores en Haskell.
+Esto prueba que aplicar dos veces `fmap` equivale a aplicar una sola vez con la composición de funciones: `fmap f . fmap g ≡ fmap (f . g)`.
 
-## Ejemplos Prácticos
+### 🧪 Ejemplo de ejecución
 
-### Transformando la salida de una función
-
-Supongamos que tenemos una función que duplica un número entero:
-
-```haskell showLineNumbers
-double :: Int -> Int
-double x = x * 2
-```
-
-Queremos crear una nueva función que sume 3 al resultado de `double`. Usando `fmap`, podemos hacer lo siguiente:
-
-```haskell showLineNumbers
-doublePlusThree :: Int -> Int
-doublePlusThree = fmap (+3) double
-```
-
-Esto es equivalente a componer las dos funciones:
-
-```haskell showLineNumbers
-doublePlusThree = (+3) . double
-```
-
-Al utilizar `fmap`, estamos aplicando la transformación `(+3)` a la salida de `double`.
-
-### Composición vs. mapeo
-
-Aunque podríamos lograr lo mismo mediante la composición directa:
-
-```haskell showLineNumbers
-doublePlusThree x = (+3) (double x)
-```
-
-Usar `fmap` proporciona una forma más declarativa y enfatiza que estamos mapeando una función sobre otra dentro del contexto del functor.
-
-## Implementación generalizada
-
-La función `fmap` está disponible para cualquier instancia de `Functor`, incluyendo las funciones. Esto nos permite aplicar transformaciones a las salidas de funciones de manera genérica.
-
-### Definición de `fmap` para funciones
-
-Como vimos, `fmap` para funciones es simplemente la composición:
-
-```haskell showLineNumbers
-fmap :: (a -> b) -> (r -> a) -> (r -> b)
-fmap = (.)
-```
-
-Esto significa que podemos encadenar transformaciones fácilmente:
-
-```haskell showLineNumbers
-transformedFunction :: Int -> String
-transformedFunction = fmap show (fmap (*2) (+1))
-```
-
-Aquí, `(+1)` es una función que incrementa un número, `(*2)` lo duplica, y `show` convierte el número a una cadena.
-
-### Uso del functor contravariante
-
-En Haskell, también existe la clase `Contravariant`, que permite transformar la entrada de una función. Sin embargo, esta funcionalidad requiere importar el módulo `Data.Functor.Contravariant` y no está disponible para las funciones regulares `(->)` sin una nueva definición.
-
-Por ejemplo:
-
-```haskell showLineNumbers
-import Data.Functor.Contravariant
-
-instance Contravariant (Op r) where
-    contramap f (Op g) = Op (g . f)
-```
-
-Este concepto es más avanzado y no se utiliza tan comúnmente como el `Functor` regular.
-
-## Ejemplo: Conversión de temperatura
-
-Vamos a replicar el ejercicio de convertir grados Celsius a Fahrenheit y aplicar transformaciones adicionales.
-
-```haskell showLineNumbers
-celsiusToFahrenheit :: Double -> Double
-celsiusToFahrenheit c = c * (9/5) + 32
-
-roundedFahrenheit :: Double -> Int
-roundedFahrenheit = fmap round celsiusToFahrenheit
-
-formattedFahrenheit :: Double -> String
-formattedFahrenheit = fmap (\f -> show f ++ "°F") roundedFahrenheit
+```haskell
+import Test.QuickCheck
+import Test.QuickCheck.Function
 
 main :: IO ()
 main = do
-    let tempC = 36.6
-    putStrLn $ "Temperatura original: " ++ show tempC ++ "°C"
-    putStrLn $ "Fahrenheit redondeado y formateado: " ++ formattedFahrenheit tempC
+  quickCheck (prop_identity :: Fun Int String -> Int -> Bool)
+  quickCheck (prop_composition :: Fun Bool Char -> Fun Int Bool -> Fun String Int -> String -> Bool)
 ```
 
-**Salida:**
-
-```
-Temperatura original: 36.6°C
-Fahrenheit redondeado y formateado: 98°F
-```
-
-<Explanation>
-    En este ejemplo:
-
-    - `celsiusToFahrenheit` convierte de Celsius a Fahrenheit.
-    - `roundedFahrenheit` aplica `round` a la salida anterior.
-    - `formattedFahrenheit` convierte el número redondeado en una cadena con el símbolo de grados Fahrenheit.
-</Explanation>
-
-## Comparación final
-
-| **Característica**                | **Haskell**                                                                 | **Kotlin**                                                                 |
-|-----------------------------------|-----------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| **Functor función**               | Haskell tiene soporte nativo para el functor función, utilizando `fmap` para mapear sobre funciones. `fmap` es equivalente a la composición de funciones `(.)`. | En Kotlin, puedes definir una función de extensión para funciones que actúa como el método `map`, pero esto no está integrado de manera nativa como en Haskell. |
-| **Leyes del functor**             | En Haskell, las leyes de identidad y composición para los funtores son parte del diseño del lenguaje y se verifican en todas las instancias de `Functor`. | En Kotlin, aunque puedes seguir las leyes del functor, no existe un mecanismo automático para garantizar que todas las transformaciones respeten estas leyes. |
-| **Tipado estático**               | Haskell cuenta con un sistema de tipos fuerte y estático, lo que permite mayor seguridad en el uso de `fmap` y otras funciones de orden superior. | Kotlin también ofrece un tipado estático fuerte, pero el soporte para construcciones funcionales como los funtores es menos expresivo sin bibliotecas adicionales. |
-| **Composición de funciones**      | En Haskell, la composición de funciones es una operación fundamental. `fmap` es solo una aplicación del concepto más general de composición `(.)`. | En Kotlin, la composición de funciones no es tan fundamental, pero puedes componer funciones manualmente o definir métodos de extensión para hacerlo. |
-| **Functor contravariante**        | Haskell soporta `Contravariant`, lo que permite transformar la entrada de una función, pero requiere una definición específica. | Kotlin no tiene soporte nativo para funtores contravariantes, aunque puedes implementar un concepto similar usando funciones de orden superior. |
-| **Simplicidad y expresividad**    | Haskell es muy expresivo en la manipulación de funciones y transformaciones, lo que lo convierte en un lenguaje adecuado para la programación funcional pura. | Kotlin es expresivo y compatible con la programación funcional, pero la sintaxis y las herramientas integradas no son tan específicas como en Haskell. |
-| **Aplicaciones prácticas**        | En Haskell, el uso de `fmap` es natural en la mayoría de los escenarios funcionales, lo que lo hace ideal para manipular funciones de manera concisa y declarativa. | En Kotlin, puedes aplicar el concepto de funtores y `map` en transformaciones funcionales, pero es menos fluido sin extensiones o bibliotecas adicionales. |
-
-### Beneficios y limitaciones
-
-<ProCons>
-    <Pros>
-        - **Soporte nativo para funtores**: Haskell ofrece soporte nativo para funtores a través de su sistema de tipos, lo que permite aplicar `fmap` a cualquier instancia de `Functor`, incluidas las funciones, de manera natural y fluida.
-        - **Composición concisa**: La sintaxis de Haskell permite una composición de funciones muy concisa, utilizando operadores como `(.)` para combinar transformaciones de manera clara y declarativa.
-        - **Leyes de funtores garantizadas**: Haskell asegura que todas las instancias de `Functor` cumplan con las leyes de identidad y composición, lo que brinda seguridad y consistencia en las transformaciones.
-        - **Tipado fuerte y estático**: El sistema de tipos estático de Haskell asegura que los errores se detecten en tiempo de compilación, lo que mejora la seguridad y previene errores en tiempo de ejecución.
-        - **Expresividad en la programación funcional**: Haskell es un lenguaje diseñado específicamente para la programación funcional, lo que lo hace altamente expresivo en la manipulación de funtores, permitiendo un código más declarativo y legible.
-    </Pros>
-    <Cons>
-        - **Curva de aprendizaje pronunciada**: Para lxs desarrolladorxs que no están familiarizados con la teoría de categorías o la programación funcional, Haskell puede ser difícil de dominar debido a la cantidad de conceptos abstractos como los funtores y las mónadas.
-        - **Limitaciones del entorno**: Aunque Haskell es muy adecuado para aplicaciones funcionales puras, su ecosistema no es tan robusto en áreas como el desarrollo de aplicaciones comerciales o de sistemas, en comparación con otros lenguajes como Kotlin.
-        - **Rendimiento**: Aunque Haskell es muy eficiente en el manejo de funciones puras y transformaciones, en algunos casos puede tener un sobrecoste de rendimiento comparado con lenguajes más imperativos y optimizados para la ejecución secuencial, como Kotlin.
-        - **Depuración**: El estilo declarativo y el uso intensivo de funciones de alto nivel pueden dificultar la depuración y el seguimiento del flujo de ejecución, especialmente cuando se encadenan múltiples transformaciones usando `fmap`.
-    </Cons>
-</ProCons>
-
-## ¿Qué aprendimos?
-
-En esta lección, exploramos el **functor función** en Haskell y lo comparamos con su equivalente en Kotlin.
-
-### Puntos clave
-
-1. **Definición del functor función en Haskell**: Aprendimos que Haskell tiene soporte nativo para los funtores y que la función `fmap` actúa sobre funciones, permitiendo transformar su salida sin modificar su entrada. Esto se basa en la operación de composición `(.)`.
-2. **Propiedades del functor**: Vimos que los funtores en Haskell deben seguir las leyes de identidad y composición, lo que garantiza que las transformaciones aplicadas sean consistentes y predecibles.
-3. **Composición y mapeo**: Exploramos cómo `fmap` en Haskell nos permite transformar la salida de funciones de manera declarativa, en lugar de utilizar una composición manual de funciones, lo que facilita el trabajo con transformaciones complejas.
-4. **Aplicaciones prácticas**: Usamos el ejemplo de la conversión de temperaturas para mostrar cómo `fmap` puede encadenar transformaciones sobre funciones de manera sencilla y eficiente en Haskell, con un código altamente expresivo y legible.
-5. **Comparación con Kotlin**: Aunque Kotlin permite realizar transformaciones similares a través de funciones de extensión, la integración nativa de Haskell con funtores lo hace más adecuado para la programación funcional pura. Kotlin, por otro lado, puede necesitar bibliotecas adicionales para alcanzar un nivel de expresividad similar.
-6. **Beneficios y limitaciones**: Discutimos los beneficios de Haskell, como su fuerte tipado estático y la capacidad de cumplir automáticamente con las leyes de los funtores, pero también mencionamos sus limitaciones, como la curva de aprendizaje pronunciada y sus desafíos en áreas de aplicación fuera del ámbito funcional puro.
+Haskell infiere los tipos y genera automáticamente las funciones y datos necesarios para verificar las propiedades. Este nivel de automatización no es posible en Kotlin de forma directa.
 
 ---
 
-Con todo esto, podemos ver cómo el uso de funtores en Haskell proporciona una forma poderosa de manipular funciones y aplicar transformaciones funcionales de manera elegante y segura.
+## 🔄 Diferencias clave con Kotlin
 
-<References references={[
-    {
-        title: "Introducing Monads",
-        bookTitle: "Effective Haskell: Solving real-world problems with strongly typed functional programming",
-        publisher: "The Pragmatic Bookshelf",
-        pages: "333–363",
-        year: "2022",
-        author: "R. Skinner",
-        type: "book",
-    },
-]}/>
+| Característica                     | Kotlin                                      | Haskell                                        |
+|----------------------------------|---------------------------------------------|-----------------------------------------------|
+| Sintaxis                         | Manual: se implementa `map` como extensión  | Automática: `(->) r` es instancia de `Functor` |
+| Verificación de leyes            | Manual (Kotest, assert)                     | Automática (QuickCheck)                       |
+| Composición de funciones         | `.map(f).map(g)`                            | `fmap g . fmap f`                             |
+| Generalidad                      | Solo si se define explícitamente            | Automática por el sistema de tipos            |
+| Contrafuntores (`Contravariant`) | Manual (`contramap`)                        | Instancia de `Contravariant` disponible       |
+
+---
+
+<Definition>
+En Haskell, gracias a su sistema de clases de tipos, las funciones son funtores de forma nativa, y las leyes del funtor se pueden verificar automáticamente con herramientas como QuickCheck. En Kotlin, aunque se puede definir una operación `map` equivalente, no existe soporte automático para validar las leyes del funtor: deben probarse de forma manual.
+</Definition>
