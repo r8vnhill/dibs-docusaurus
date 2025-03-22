@@ -21,41 +21,66 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="swift-dibs" />
 
-En Swift, las cotas superiores se implementan de forma similar a Kotlin, restringiendo los tipos genéricos a un tipo específico o a un protocolo. Al igual que Kotlin, esta práctica asegura que solo se usen tipos compatibles dentro de una función o clase genérica.
+En esta sección compararemos cómo Swift maneja las **restricciones en tipos genéricos** con respecto a Kotlin. Si ya leíste la parte de Kotlin, ya estás familiarizadx con las **cotas superiores** y cómo Kotlin **no** soporta **cotas inferiores** directamente. Ahora veamos qué tanto se puede o no hacer en Swift, y qué mecanismos ofrece este lenguaje.
 
-Swift usa la palabra clave `where` para establecer múltiples restricciones de una manera que es casi idéntica a Kotlin. Supongamos que tenemos una clase `Repository` que almacena elementos de tipo `Entity`, asegurándonos de que estos implementen el protocolo `Serializable` para que puedan ser serializados. En Swift, podríamos implementar el repositorio de la siguiente forma:
+## 🧭 Restricciones en Swift: las “constraints”
 
-```swift showLineNumbers
-protocol Entity {
-    var id: Int { get }
-}
+En Swift, las **restricciones en tipos genéricos** se declaran con la palabra clave `where`, aunque también se pueden definir directamente en la lista de parámetros del genérico, igual que en Kotlin.
 
-protocol Serializable {
-    func serialize() -> String
-}
+### 🔼 Cota superior en Swift
 
-class Repository<T> where T: Entity, T: Serializable {
-    private var entities: [T] = []
+En Swift, podemos restringir el tipo genérico a una clase o protocolo (interfaz) usando dos formas:
 
-    func save(_ entity: T) {
-        entities.append(entity)
-    }
+#### ✅ Declaración directa
 
-    func serializeAll() -> String {
-        return entities.map { $0.serialize() }.joined(separator: ", ")
-    }
+```swift
+func printId<T: Entity>(_ value: T) {
+    print(value.id)
 }
 ```
 
-En este ejemplo:
+Esto equivale a `T : Entity` en Kotlin. Aquí `T` debe conformar al protocolo `Entity`.
 
-- **Restricción Directa**: El parámetro genérico `T` debe ser un subtipo de `Entity` y de `Serializable`.
-- **Uso de `where`**: Como en Kotlin, `where` permite una sintaxis clara para manejar múltiples restricciones.
+#### ✅ Usando `where` para múltiples restricciones
 
-### Comparación: ¿Por qué usar `where` en Swift?
+```swift
+func serialize<T>(_ value: T) -> String
+where T: Entity, T: Serializable {
+    return value.serialize()
+}
+```
 
-Swift y Kotlin permiten usar `where` para restricciones múltiples, pero Swift requiere que la cláusula `where` aparezca en los protocolos y las extensiones, mientras que en Kotlin puede aparecer también en clases y funciones. En Swift, **no se puede usar `where` en las definiciones de parámetros genéricos en las clases directamente**, sino que se usa para las extensiones y funciones que cumplen con varias condiciones.
+Esto es directamente análogo a `where T : Entity, T : Serializable` en Kotlin, y se puede usar tanto en funciones como en tipos.
 
-## Cotas Inferiores
+## 📊 Resumen comparativo
 
-A diferencia de Kotlin, Swift **no permite la contravarianza** de forma nativa, por lo que no tiene una forma directa de emular cotas inferiores. Esto significa que en Swift no es posible indicar que un tipo genérico debe ser un supertipo de otro. En Kotlin, este comportamiento se emula mediante **varianza en sitio de uso** (con `in` para contravarianza).
+| **Aspecto**                                       | **Swift**                                                            | **Kotlin**                                                                |
+| ------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| **Cotas superiores (1 restricción)**              | `T: Protocol` o `T: Clase` en la lista de genéricos                  | `T : Interface` o `T : Clase` en la lista de genéricos                    |
+| **Cotas superiores múltiples**                    | `where T: A, T: B`                                                   | `where T : A, T : B`                                                      |
+| **Cotas inferiores**                              | ❌ No soportadas directamente                                         | ❌ No soportadas directamente                                              |
+
+## 🎯 Conclusiones
+
+Swift proporciona un sistema poderoso y expresivo para trabajar con **restricciones genéricas**, particularmente mediante el uso de protocolos y la cláusula `where`.
+
+### 🔑 Puntos clave
+
+1. **Cotas superiores**  
+   - Swift permite imponer restricciones a tipos genéricos utilizando protocolos o clases base.
+   - Estas restricciones pueden declararse de forma directa (`T: Protocolo`) o con `where` para múltiples condiciones.
+3. **Comparación con Kotlin**  
+   - Ambos lenguajes carecen de soporte nativo para cotas inferiores.
+   - Kotlin permite declarar varianza, lo que facilita ciertos patrones que en Swift requieren más trabajo manual o indirecto.
+
+### 🧰 ¿Qué nos llevamos?
+
+Si estás diseñando **APIs genéricas en Swift**, puedes lograr gran expresividad utilizando cotas superiores y restricciones condicionales. Sin embargo, cuando necesites reutilizar handlers, consumidores u otras entidades con jerarquías complejas, deberás considerar cuidadosamente si tu diseño puede beneficiarse de técnicas como protocolos con `associatedtype` o tipos existenciales. 
+
+En resumen, Swift **ofrece herramientas potentes pero menos directas** para expresar ciertas relaciones de tipo. Aprovechar sus fortalezas implica conocer bien el sistema de protocolos y sus limitaciones.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+🌐 Generics. (s. f.). Documentation. Recuperado 22 de marzo de 2025, de https://docs.swift.org/swift-book/documentation/the-swift-programming-language/generics/
