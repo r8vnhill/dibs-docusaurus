@@ -21,98 +21,150 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="" />
 
-En **Python**, las **funciones lambda** son también una forma de definir funciones anónimas, permitiendo crear bloques de código simples que se pueden asignar a variables o pasar como parámetros, similar a Kotlin. Sin embargo, hay diferencias significativas en la implementación y capacidades entre ambos lenguajes.
+En Python, las **funciones lambda** también son funciones anónimas que pueden definirse en una sola línea. Son útiles cuando se requiere una función simple sin necesidad de declararla explícitamente con `def`. Sin embargo, en comparación con Kotlin, las lambdas en Python tienen varias limitaciones.
 
-## Sintaxis
+## 📌 Definición y sintaxis
 
-En **Python**, las lambdas utilizan una sintaxis compacta que se limita a expresiones simples. La sintaxis es la siguiente:
+En Python, una función lambda se define con la palabra clave `lambda`, seguida de los argumentos y una única expresión que se evalúa y devuelve como resultado.
 
-```python showLineNumbers
-lambda argumentos: expresión
+```python showLineNumbers title="lambda_example.py"
+add = lambda a, b: a + b
+
+print(add(3, 4))  # Output: 7
 ```
 
-:::warning Limitaciones
+### 🔍 Diferencias con Kotlin
 
-Las lambdas se limitan a una única expresión y no permiten múltiples líneas o bloques complejos. Esto las hace ideales para operaciones simples, pero menos flexibles comparadas con las lambdas de Kotlin, que pueden tener varias líneas y acceder a un contexto más amplio.
+| Aspecto                 | Python                          | Kotlin                           |
+|-------------------------|--------------------------------|---------------------------------|
+| **Palabra clave**       | `lambda`                       | `{}` para la expresión, `fun` para funciones anónimas |
+| **Retorno implícito**   | Sí, siempre devuelve el resultado de la expresión | Sí, última expresión se devuelve implícitamente |
+| **Bloques múltiples**   | ❌ No permite múltiples expresiones | ✅ Sí, permite múltiples expresiones dentro de una función anónima |
+| **Tipos de parámetros** | No se especifican (dinámico)  | Se pueden definir explícitamente |
+| **Acceso a variables externas** | Solo permite acceso a variables no reasignadas | Permite capturas de contexto mutable |
 
+:::info 💡 Importante
+Las funciones lambda en Python **no pueden contener múltiples sentencias**. Solo admiten **una única expresión**.  
 :::
 
-## Acceso y Captura de Variables
+## 📏 Restricciones en Python
 
-Las lambdas en **Python** pueden acceder a variables del contexto en el que se definen (clausuras), pero con algunas restricciones cuando se trata de modificar variables externas:
+Python restringe las lambdas a **una sola expresión**, lo que significa que no se pueden definir múltiples líneas dentro de una lambda.
 
-```python showLineNumbers
-count = 0
-
-increment = lambda x: x + count
-
-count = 10
-print(increment(5))  # Output: 15
+```python showLineNumbers title="invalid_lambda.py"
+# Esto dará error en Python
+lambda a, b: c = a + b  # SyntaxError
 ```
 
-En este ejemplo, la lambda en Python captura el valor de `count` en el momento en que se ejecuta, no en el momento en que se define. **Kotlin**, en cambio, permite un control más explícito sobre qué se captura y cuándo.
+Para definir funciones más complejas en Python, es necesario utilizar `def`:
 
-## Uso en Funciones de Orden Superior
-
-Ambos lenguajes admiten el uso de lambdas como argumentos en funciones de orden superior, pero la sintaxis y capacidades varían:
-
-En **Python**, las funciones de orden superior como `map`, `filter` o `reduce` son comunes y se utilizan con lambdas. No obstante, la estructura limitada de las lambdas puede requerir definir funciones anónimas más detalladas o recurrir a funciones regulares (`def`).
-
-```python showLineNumbers
-numbers = [1, 2, 3, 4, 5]
-evens = list(filter(lambda x: x % 2 == 0, numbers))
-print(evens)  # Output: [2, 4]
+```python showLineNumbers title="valid_function.py"
+def add(a, b):
+    c = a + b  # Ahora es válido
+    return c
 ```
 
-## Comparación Final
-
-| **Característica**              | **Python**                                                                                                                | **Kotlin**                                                                                                                                |
-|--------------------------------|----------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
-| **Sintaxis Lambda**             | Utiliza `lambda` seguido de `argumentos: expresión`, pero se limita a expresiones simples.                                  | Utiliza `{ }` y `->` para definir lambdas, permite múltiples líneas y bloques complejos, ofreciendo mayor flexibilidad.                    |
-| **Captura de Variables**        | Captura variables en el momento de ejecución, lo que puede llevar a comportamientos inesperados si las variables cambian.  | Captura variables externas con control explícito sobre cuándo y cómo se capturan, permitiendo mayor precisión en su uso.                   |
-| **Funciones de Orden Superior** | Admite el uso de funciones de orden superior (`map`, `filter`, `reduce`), pero las lambdas se limitan a una única expresión. | Soporta funciones de orden superior con lambdas complejas, y es compatible con trailing lambdas, mejorando la legibilidad del código.     |
-| **Compatibilidad**              | Compatible con versiones más antiguas de Python, asegurando aplicabilidad en proyectos legacy.                              | Integra lambdas en una estructura moderna de programación funcional, optimizando su uso en entornos avanzados y con características más robustas. |
-
-<ProCons>
-    <Pros>
-        - **Simplicidad en la Sintaxis**: Las lambdas en Python tienen una sintaxis simple y directa, ideal para operaciones pequeñas y rápidas.
-        - **Compatibilidad con Proyectos Legacy**: Dado que Python es compatible con versiones más antiguas, las lambdas se pueden utilizar sin preocuparse por problemas de compatibilidad, lo cual es útil en proyectos heredados.
-        - **Facilidad de Uso en Funciones de Orden Superior**: Python cuenta con funciones de orden superior como `map`, `filter` y `reduce` que facilitan el uso de lambdas para manipular y transformar datos de manera sencilla.
-        - **Desestructuración Flexible**: Aunque la desestructuración en lambdas no es tan avanzada como en Kotlin, Python permite desestructurar listas y tuplas en otros contextos, lo cual sigue siendo útil para simplificar el acceso a datos.
-    </Pros>
-    <Cons>
-        - **Limitaciones en Expresiones**: Las lambdas en Python solo soportan expresiones de una línea, lo que limita su uso en casos donde se requiere lógica más compleja o múltiple.
-        - **Menos Control en la Captura de Variables**: La captura de variables en Python ocurre en el momento de ejecución, lo que puede causar comportamientos inesperados si las variables cambian, a diferencia de Kotlin, que ofrece un control más preciso.
-        - **Falta de Desestructuración en Lambdas**: La falta de soporte para desestructuración directa en lambdas limita la legibilidad y simplicidad del código en comparación con Kotlin, que permite desestructurar dentro de la propia lambda.
-        - **Menor Flexibilidad para Funciones Complejas**: La estructura limitada de las lambdas en Python puede obligar a definir funciones `def` adicionales cuando se necesitan operaciones más complejas, lo que incrementa la verbosidad y reduce la concisión.
-    </Cons>
-</ProCons>
-
-## ¿Qué Aprendimos?
-
-En esta lección, exploramos cómo las **funciones lambda** se implementan en **Python** y las comparamos con **Kotlin**, destacando las diferencias clave y las limitaciones de cada enfoque.
-
-### Puntos Clave
-
-1. **Sintaxis y Limitaciones**: Vimos que Python ofrece una sintaxis simple para las lambdas, pero está limitada a expresiones de una sola línea, lo cual puede ser insuficiente para funciones más complejas, a diferencia de Kotlin, que permite bloques de múltiples líneas.
-2. **Captura de Variables**: En Python, las lambdas capturan variables en el momento de ejecución, lo que puede llevar a comportamientos inesperados si las variables cambian después de definir la lambda. Kotlin, en cambio, ofrece un control más preciso sobre la captura de variables, proporcionando mayor estabilidad y predictibilidad en su comportamiento.
-3. **Desestructuración**: Mientras que Python permite desestructurar listas y tuplas en algunos contextos, esta capacidad no se extiende a las lambdas. Kotlin, en cambio, permite la desestructuración directamente dentro de las lambdas, lo cual mejora la legibilidad y simplifica el acceso a los componentes de estructuras complejas como `data classes`.
-4. **Funciones de Orden Superior**: Ambos lenguajes admiten el uso de funciones de orden superior, pero las capacidades de las lambdas en Python se limitan a casos simples debido a la restricción de una única expresión. Kotlin permite utilizar lambdas más complejas y soporta trailing lambdas, lo que mejora la legibilidad y flexibilidad del código.
-5. **Compatibilidad y Uso en Proyectos Legacy**: Python mantiene una amplia compatibilidad con versiones anteriores, haciendo que sus lambdas sean útiles en proyectos heredados. Kotlin, por otro lado, se enfoca en proporcionar un entorno moderno para programación funcional, con características más robustas pero menos aplicabilidad en versiones de lenguajes anteriores.
+🔹 En Kotlin, se pueden tener múltiples expresiones en una **función anónima** sin necesidad de `return`, lo que hace que las funciones lambda sean más flexibles.
 
 ---
 
-Con estas diferencias en mente, hemos aprendido a evaluar cuándo usar lambdas en Python o Kotlin, según las capacidades, limitaciones y necesidades específicas de nuestros proyectos.
+## 📦 Funciones de Orden Superior
 
-<References references={[
-    {
-        title: "7. Functions as First-Class Objects",
-        bookTitle: "Fluent Python: Clear, concise, and effective programming",
-        publisher: "O’Reilly",
-        location: "Beijing Boston Farnham Sebastopol Tokyo",
-        pages: "231–252",
-        year: "2022",
-        author: "Luciano Ramalho",
-        type: "book",
-    },
-]}/>
+Las funciones lambda en Python son ampliamente usadas en **funciones de orden superior**, como `map`, `filter` y `reduce`.
+
+### 🔹 `map` con lambda en Python
+
+```python showLineNumbers title="map_example.py"
+numbers = [1, 2, 3, 4, 5]
+squared = list(map(lambda x: x ** 2, numbers))
+print(squared)  # Output: [1, 4, 9, 16, 25]
+```
+
+📌 **Diferencia con Kotlin:**  
+- Python usa `map(función, iterable)`, mientras que en Kotlin se usa `.map { it * it }`.
+- En Kotlin, los tipos pueden inferirse o definirse explícitamente.
+
+---
+
+## 🔎 **Captura de Variables en Lambdas**
+
+Las funciones lambda en Python **capturan variables por referencia**, lo que puede causar problemas inesperados.
+
+```python showLineNumbers title="closure.py"
+multipliers = [lambda x: x * i for i in range(5)]
+print(multipliers )  # Output: 8 en vez de 0
+```
+
+📌 **¿Qué está pasando?**  
+El valor de `i` se **comparte** entre todas las lambdas, lo que puede llevar a resultados inesperados. Para solucionar esto:
+
+```python showLineNumbers title="fix_closure.py"
+multipliers = [lambda x, i=i: x * i for i in range(5)]
+print(multipliers )  # Output: 0 (correcto)
+```
+
+✅ **En Kotlin, las lambdas pueden capturar variables mutables sin problemas.**
+
+---
+
+## 🚀 **Expresiones Lambda en Estructuras de Control**
+
+### ❌ **Python NO permite usar lambdas en `if`, `while`, `for` directamente**
+En Python, no es posible utilizar una lambda directamente en una estructura de control como `if` o `for`.
+
+```python showLineNumbers title="invalid_lambda_control.py"
+# Esto dará error
+if lambda x: x > 10:
+    print("Mayor que 10")
+```
+
+🔹 **Alternativa en Python:**
+```python showLineNumbers title="valid_lambda_control.py"
+check = lambda x: x > 10
+if check(15):
+    print("Mayor que 10")  # Output: Mayor que 10
+```
+
+✅ **En Kotlin, sí se pueden usar directamente dentro de estructuras de control.**
+
+---
+
+## 🏆 **¿Cuándo usar lambdas en Python?**
+🔹 Casos donde **sí** es recomendable:
+- Pasar funciones simples a `map`, `filter`, `sorted`, `reduce`.
+- Definir pequeñas funciones en una sola línea.
+
+🔹 Casos donde **no** es recomendable:
+- Funciones que requieren más de una línea de código.
+- Casos donde la legibilidad se vea afectada.
+
+📌 **Conclusión:**
+- Python ofrece funciones lambda sencillas pero con **restricciones**.
+- Kotlin tiene una sintaxis más flexible que permite expresiones múltiples y una mejor integración con estructuras de control.
+
+---
+
+## 🎯 **Resumen Final**
+
+| Característica             | Python                           | Kotlin                           |
+|---------------------------|--------------------------------|---------------------------------|
+| **Lambdas en una línea**  | ✅ Sí                          | ✅ Sí                          |
+| **Lambdas con múltiples expresiones** | ❌ No  | ✅ Sí                          |
+| **Uso con `if` y `for`**  | ❌ No permitido                | ✅ Sí, sin restricciones       |
+| **Captura de variables mutables** | ⚠️ Posible problema | ✅ Sin problemas |
+| **Inferencia de tipos**   | ⚠️ Dinámico, puede fallar | ✅ Sí, más control sobre los tipos |
+| **Uso en funciones de orden superior** | ✅ Sí (`map`, `filter`) | ✅ Sí (`map`, `filter`) |
+
+✅ **Si necesitas una lambda rápida y sencilla, Python es suficiente.**  
+✅ **Si buscas más flexibilidad y poder en expresiones complejas, Kotlin ofrece una mejor alternativa.**
+
+---
+
+### 📚 **Referencias**
+- Python Software Foundation. (2024). *Lambda Expressions*. Retrieved from [docs.python.org](https://docs.python.org/3/tutorial/controlflow.html#lambda-expressions)
+- Jemerov, D., & Isakova, S. (2017). *Kotlin in Action*. Manning Publications.
+- Luciano Ramalho. (2015). *Fluent Python*. O’Reilly Media.
+
+---
+
+Esta lección resalta las **ventajas y limitaciones** de cada lenguaje. Python es más restrictivo con las lambdas, mientras que Kotlin permite expresiones más avanzadas. 🚀

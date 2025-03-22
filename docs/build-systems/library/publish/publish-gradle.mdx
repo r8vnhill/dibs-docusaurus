@@ -19,14 +19,33 @@ import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
-<GithubRepoLink user="r8vnhill" repo="echo-app-kt" addLineBreak={false}/>
+<GithubRepoLink user="r8vnhill" repo="echo-app-kt"/>
 
-## Publicando un release
+La publicación de bibliotecas es una etapa clave en el desarrollo de software, ya que permite compartir y distribuir código reutilizable con otros proyectos o desarrolladorxs. Existen diversas formas de hacerlo, desde subir archivos de release manualmente hasta utilizar un repositorio de paquetes como GitHub Packages para gestionar versiones y dependencias de manera más eficiente.
+
+## 📌 Versionado semántico (SemVer)
+
+Antes de publicar una biblioteca, es importante definir un esquema de versionado adecuado para garantizar compatibilidad y control sobre los cambios.
+
+<Definition title='Versionado Semántico (SemVer)'>
+    Un esquema comúnmente usado es **SemVer (Semantic Versioning)**, que sigue la estructura `MAJOR.MINOR.PATCH`:
+    - `MAJOR`: Cambios incompatibles con versiones anteriores.
+    - `MINOR`: Nuevas características compatibles con versiones anteriores.
+    - `PATCH`: Correcciones de errores sin cambios en la API.
+
+    Ejemplo: `1.2.3` donde `1` es la versión mayor, `2` es la menor y `3` es el parche.
+</Definition>
+
+
+Este esquema permite que otrxs desarrolladorxs comprendan fácilmente la compatibilidad de una nueva versión y reduzcan el riesgo de romper integraciones en sus proyectos.
+
+## 🚀 Publicando un release
 
 La primera forma que veremos de publicar una biblioteca es hacer un release en GitHub. Para ello, debemos seguir los siguientes pasos:
 
 <details>
     <summary>Versión más "sencilla" utilizando ``gh``</summary>
+
     <BoxedTabs groupId={"os"}>
         <TabItem value={"Windows"} label={"Windows"}>
         ```powershell
@@ -53,11 +72,11 @@ La primera forma que veremos de publicar una biblioteca es hacer un release en G
 2. **Subir los archivo JAR**: Subir los archivos JAR generados por la biblioteca, que contienen el código compilado y la documentación.
 3. **Publicar el release**: Una vez completados los pasos anteriores, hacer clic en "Publish release" para publicar el release en GitHub.
 
-## GitHub Packages
+## 📦 GitHub Packages
 
 GitHub Packages es un sistema integrado en GitHub que permite **almacenar, gestionar y compartir paquetes de software** dentro del ecosistema de GitHub, facilitando la distribución y reutilización en diferentes proyectos.
 
-### Principales características
+### 🔑 Principales características
 
 - **Soporte para múltiples formatos**: GitHub Packages admite una variedad de tipos de paquetes, incluidos **Maven**, **Gradle**, **npm**, **NuGet**, **RubyGems** y **Docker**, entre otros.
 - **Integración completa con GitHub**: Puedes publicar, versionar y compartir paquetes directamente desde tus repositorios de GitHub, lo que facilita la colaboración y el control de versiones.
@@ -65,7 +84,7 @@ GitHub Packages es un sistema integrado en GitHub que permite **almacenar, gesti
 
 A continuación, procederemos a publicar nuestra biblioteca en GitHub Packages, lo que nos permitirá incluirla fácilmente en otros proyectos.
 
-### Generar un token de acceso
+### 🔐 Generar un token de acceso
 
 Para publicar paquetes en GitHub Packages, necesitamos un **token de acceso personal** con los permisos adecuados. Sigue estos pasos para generar un token de acceso:
 
@@ -83,7 +102,7 @@ Para publicar paquetes en GitHub Packages, necesitamos un **token de acceso pers
 
 Ahora, debemos tener acceso desde el script de construcción a este token y a nuestro nombre de usuario de GitHub. Para ello, podemos utilizar variables de entorno o un archivo de configuración externo. Utilizaremos un archivo de configuración para mantener la información segura y accesible desde el script de construcción.
 
-### Crear un archivo de configuración
+### 🛠️ Crear un archivo de configuración
 
 Crea un archivo de configuración llamado `github.properties` en el directorio raíz de tu proyecto con la siguiente estructura:
 
@@ -92,7 +111,7 @@ github.token=ghp_tu-token
 github.username=tu-usuario
 ```
 
-### Configurar Gradle para publicar en GitHub Packages
+### ⚙️ Configurar Gradle para publicar en GitHub Packages
 
 Lo primero que haremos será crear un nuevo plugin de convenciones llamado `publish.conventions.gradle.kts` con el siguiente contenido:
 
@@ -265,7 +284,7 @@ project.extensions.create<ArtifactExtension>("artifact")
     </TabItem>
 </BoxedTabs>
 
-### `.gitignore`
+### 🚫 `.gitignore`
 
 Es MUY IMPORTANTE que agregues el archivo `github.properties` al `.gitignore` para evitar subir tus credenciales a GitHub. A continuación te proporcionamos un ejemplo de archivo `.gitignore` que puedes utilizar:
 
@@ -316,7 +335,7 @@ Este comando generará los artefactos de la biblioteca y los enviará a GitHub P
 
 ¡Y eso es todo! 🎉 Ahora has aprendido a publicar tu biblioteca en GitHub Packages, facilitando compartir tu código con otrxs desarrolladorxs de manera rápida y eficiente. 🤝✨
 
-### Utilizar la biblioteca publicada
+### 📥 Utilizar la biblioteca publicada
 
 Para utilizar la biblioteca que has publicado en GitHub Packages en otro proyecto, debes agregarla como una dependencia a tu proyecto.
 
@@ -343,6 +362,13 @@ Luego, indicamos a _Gradle_ que busque el paquete en **GitHub Packages**:
 
 ```kotlin title="settings.gradle.kts"
 // ...
+val githubProperties = Properties().apply {
+    load(rootProject.file("github.properties").reader())
+}
+
+val githubToken: String = githubProperties.getProperty("github.token")
+val githubUser: String = githubProperties.getProperty("github.username")
+
 @Suppress("UnstableApiUsage")
 dependencyResolutionManagement {
     repositories {
@@ -351,8 +377,8 @@ dependencyResolutionManagement {
         maven {
             url = uri("https://maven.pkg.github.com/tu-usuario/tu-repositorio")
             credentials {
-                username = System.getenv("GITHUB_USER")
-                password = System.getenv("GITHUB_TOKEN")
+                username = githubUser
+                password = githubToken
             }
         }
     }
@@ -370,17 +396,37 @@ dependencies {
 
 ¡Listo! Ahora solo sincroniza el proyecto, y la biblioteca estará disponible para su uso en tu aplicación.
 
-## ¿Qué aprendimos?
+## ❓ ¿Cuándo usar Releases vs. GitHub Packages?
 
-En esta lección, vimos cómo publicar bibliotecas en GitHub utilizando dos métodos principales: la creación de releases en GitHub y la publicación en GitHub Packages. Ambos enfoques ofrecen ventajas que permiten compartir y distribuir bibliotecas de manera eficiente y segura, facilitando su reutilización en otros proyectos y asegurando un control preciso sobre las versiones.
+| **Método**         | **Cuándo usarlo** |
+|--------------------|------------------|
+| **GitHub Releases** | Cuando necesitas compartir una versión específica de la biblioteca en un formato descargable, como un `.jar` o `.zip`. Ideal para distribuciones manuales y accesibles sin configuración adicional. |
+| **GitHub Packages** | Cuando necesitas gestionar dependencias de manera automática en proyectos que usan Maven o Gradle. Facilita la integración con otros proyectos y versiones futuras. |
 
-### Puntos clave
+## 🎯 Conclusiones
 
-- **Releases en GitHub**: Esta opción permite compartir una versión específica de la biblioteca de manera directa, ofreciendo archivos de descarga que incluyen el código compilado y su documentación. Es útil para distribuir versiones estáticas y fáciles de implementar.
-- **GitHub Packages**: Esta solución avanzada permite gestionar versiones de la biblioteca mediante un repositorio de Maven, lo cual facilita la integración automática en proyectos que requieran versiones específicas. Incluye soporte para múltiples formatos de paquetes, lo cual es ideal para proyectos en diversos lenguajes y entornos.
-- **Automatización con Gradle**: Configuramos Gradle para que gestione las credenciales de acceso a GitHub y automatice el proceso de publicación, asegurando una configuración segura y eficiente.
-- **Control de acceso y seguridad**: La publicación en GitHub Packages requiere de un token de acceso personal con permisos específicos, lo cual protege la biblioteca y permite un control detallado sobre quiénes pueden acceder a los recursos publicados.
+Publicar bibliotecas es un paso esencial en el desarrollo de software, ya que permite compartir código reutilizable con otrxs desarrolladorxs y proyectos. A lo largo de esta lección, hemos explorado dos formas de distribuir una biblioteca: **GitHub Releases** y **GitHub Packages**, cada una con sus propias ventajas y casos de uso.
 
----
+Además, revisamos la importancia del **versionado semántico (SemVer)** para garantizar compatibilidad entre versiones y evitar interrupciones en el código de quienes consumen nuestra biblioteca.
 
-Publicar bibliotecas de forma eficiente no solo facilita el trabajo colaborativo, sino que también garantiza que las versiones correctas de las bibliotecas estén disponibles para otros desarrolladores y proyectos. Estos métodos permiten mantener una gestión de dependencias organizada, confiable y segura, cumpliendo con los estándares de calidad requeridos en la industria del software.
+### 🔑 Puntos clave
+
+- **Versionado Semántico**: Usar SemVer (`MAJOR.MINOR.PATCH`) permite comunicar claramente cambios en la API de una biblioteca.
+- **GitHub Releases**: Útil para distribuir versiones descargables sin necesidad de gestionar dependencias.
+- **GitHub Packages**: Facilita la integración con **Maven** y **Gradle**, permitiendo incluir la biblioteca en otros proyectos sin necesidad de descargas manuales.
+- **Automatización con Gradle**: Configurar `publish.conventions.gradle.kts` simplifica la publicación de la biblioteca y mantiene la gestión de versiones organizada.
+- **Gestión de credenciales**: Usar `github.properties` evita exponer datos sensibles en el código fuente y mantiene la seguridad del acceso.
+
+### 🧰 ¿Qué nos llevamos?
+
+Publicar bibliotecas no es solo compartir código, sino **construir herramientas que otras personas puedan utilizar, mejorar y expandir**. Al adoptar buenas prácticas en versionado, compatibilidad y distribución, facilitamos la integración y fomentamos un ecosistema más sólido y colaborativo.
+
+Si queremos ofrecer una biblioteca fácil de descargar y usar sin configuración adicional, **GitHub Releases** es una gran opción. Pero si buscamos que nuestra biblioteca crezca y sea adoptada en múltiples proyectos de manera eficiente, **GitHub Packages** nos permite gestionar versiones de forma automatizada y mantener un flujo de trabajo profesional.
+
+Dominar estos procesos no solo mejora la calidad de nuestro software, sino que también **nos posiciona dentro de una comunidad de desarrolladorxs que crean, mantienen y colaboran en herramientas abiertas y reutilizables**. Al compartir conocimientos y mejores prácticas, ayudamos a que más personas contribuyan y se beneficien del ecosistema que construimos juntxs. 🚀✨
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+🌐 Preston-Werner, T. (s. f.). Versionado Semántico 2.0.0. Semantic Versioning. Recuperado 21 de marzo de 2025, de https://semver.org/lang/es/

@@ -1,0 +1,166 @@
+---
+title: Iterator pattern en TypeScript
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import CodeBlock from '@theme/CodeBlock'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="  " />
+
+El **patrón Iterador** es una técnica utilizada en programación orientada a objetos para recorrer una colección de manera secuencial sin exponer su estructura interna. En TypeScript, este patrón se implementa utilizando la **interfaz iterable** nativa y los generadores (`generators`), ofreciendo un enfoque flexible para recorrer estructuras de datos.  
+
+## 📌 Iteradores en TypeScript
+
+TypeScript proporciona soporte nativo para el patrón iterador a través de la interfaz `Iterable<T>`, que define el método `Symbol.iterator()`. Este método retorna un iterador que implementa `Iterator<T>`, con las funciones `next()` para avanzar y `done` para verificar si se ha completado el recorrido.  
+
+```typescript showLineNumbers
+interface Iterator<T> {
+  next(): { value: T; done: boolean };
+}
+
+interface Iterable<T> {
+  [Symbol.iterator](): Iterator<T>;
+}
+```
+
+## 🛠️ Implementación del patrón Iterador
+
+Supongamos que queremos modelar una biblioteca que almacena libros y proporciona un iterador para recorrerlos.  
+
+### 🏗️ 1. Definir el Iterador
+
+El primer paso es definir la clase que implementa la interfaz `Iterator<T>` para recorrer la colección de libros.  
+
+```typescript showLineNumbers
+class BookIterator implements Iterator<string> {
+  private position = 0;
+
+  constructor(private books: string[]) {}
+
+  next(): { value: string; done: boolean } {
+    if (this.position >= this.books.length) {
+      return { value: "", done: true };
+    }
+    return { value: this.books[this.position++], done: false };
+  }
+}
+```
+
+Aquí, `next()` devuelve el siguiente libro en la colección hasta que no quedan más elementos.  
+
+### 📚 2. Implementar la colección iterable
+
+La biblioteca debe implementar `Iterable<T>` para devolver una instancia del iterador.  
+
+```typescript showLineNumbers
+class Library implements Iterable<string> {
+  constructor(private books: string[]) {}
+
+  [Symbol.iterator](): Iterator<string> {
+    return new BookIterator(this.books);
+  }
+}
+```
+
+### 🔄 3. Uso del iterador
+
+Ahora podemos recorrer la biblioteca utilizando un `for...of`.  
+
+```typescript showLineNumbers
+const library = new Library([
+  "Historia del Feminismo",
+  "El general en su laberinto",
+  "Choque de reyes"
+]);
+
+for (const book of library) {
+  console.log(book);
+}
+```
+
+### ⚡ Iterador con Generadores en TypeScript
+
+Podemos simplificar el código usando un **generador**, eliminando la necesidad de una clase iteradora separada:  
+
+```typescript showLineNumbers
+class Library implements Iterable<string> {
+  constructor(private books: string[]) {}
+
+  *[Symbol.iterator](): IterableIterator<string> {
+    for (const book of this.books) {
+      yield book;
+    }
+  }
+}
+```
+
+## 📊 Resumen comparativo
+
+| **Aspecto**                 | **TypeScript**                                           | **Kotlin**                                   |
+|-----------------------------|---------------------------------------------------------|----------------------------------------------|
+| **Soporte nativo**          | Usa `Iterable<T>` e `Iterator<T>` con `Symbol.iterator` | Usa `Iterable<T>` e `Iterator<T>`           |
+| **Definición del iterador** | Implementa `Iterator<T>` con `next()` y `done`         | Implementa `Iterator<T>` con `next()` y `hasNext()` |
+| **Iteración nativa**        | `for...of` y el operador de propagación `...`         | `for` loop y `iterator()` implícito         |
+| **Iteradores avanzados**    | Usa **generadores** con `function*`                    | Usa **secuencias (`Sequence<T>`)**          |
+| **Acceso a iteradores**     | `library[Symbol.iterator]()`                           | `library.iterator()`                         |
+| **Control de finalización** | `done: boolean` en `next()` indica fin del recorrido  | `hasNext()` indica si hay más elementos     |
+| **Laziness (Evaluación diferida)** | Disponible con `yield` en generadores         | Disponible con `Sequence<T>`                |
+| **Paralelismo**             | No soporta paralelismo en iteradores nativos           | Puede usar `asIterable()` con `parallelStream()` |
+| **Compatibilidad con estructuras existentes** | Funciona con `Array`, `Set`, `Map` y `String` | Funciona con `List`, `Set`, `Map` y `String` |
+| **Sobrecarga de memoria**   | Baja con generadores (`yield`)                         | Baja con `Sequence<T>`                      |
+
+### ✅ Beneficios y ❌ limitaciones de TypeScript
+
+<ProCons>
+    <Pros>
+        - **Soporte nativo**: TypeScript integra `Iterable<T>` y `Symbol.iterator`, lo que facilita la implementación del patrón sin necesidad de clases adicionales.
+        - **Iteración simplificada**: Permite recorrer estructuras de datos usando `for...of` y el operador de propagación `...`, evitando el manejo manual del iterador.
+        - **Evaluación diferida con generadores**: Los generadores (`function*`) permiten recorrer colecciones grandes sin cargar todos los elementos en memoria.
+        - **Compatibilidad con estructuras nativas**: Funciona con `Array`, `Set`, `Map` y `String` sin necesidad de modificaciones.
+        - **Interoperabilidad con JavaScript**: TypeScript puede trabajar con cualquier iterador de JavaScript, permitiendo su uso en bibliotecas externas y APIs nativas.
+    </Pros>
+    <Cons>
+        - **Sin control sobre concurrencia**: A diferencia de Kotlin, TypeScript no ofrece una alternativa directa para recorrer colecciones en paralelo.
+        - **Sin soporte para secuencias avanzadas**: No tiene un equivalente directo a `Sequence<T>` de Kotlin, lo que limita la composición funcional de iteradores.
+        - **Menor seguridad de tipos en iteradores externos**: TypeScript permite el uso de iteradores sin verificación estricta, lo que puede generar errores en tiempo de ejecución si los datos no son consistentes.
+    </Cons>
+</ProCons>
+
+## 🎯 Conclusiones
+
+El patrón **Iterator** en TypeScript ofrece una manera flexible y estructurada de recorrer colecciones sin exponer su implementación interna. Gracias a `Iterable<T>` y `Symbol.iterator`, la integración con las estructuras nativas del lenguaje es sencilla, permitiendo iteraciones eficientes y concisas.
+
+A lo largo de la lección, hemos explorado su implementación, su comparación con Kotlin y sus ventajas en términos de **simplicidad, evaluación diferida con generadores y compatibilidad con estructuras de datos estándar**. También hemos analizado sus **limitaciones**, como la falta de soporte nativo para concurrencia y secuencias avanzadas.
+
+### 🔑 Puntos clave
+
+- **Iteración nativa**: TypeScript proporciona iteradores de forma integrada con `for...of` y `Symbol.iterator`, lo que simplifica su uso.
+- **Soporte para evaluación diferida**: Los generadores (`function*`) permiten recorrer colecciones sin cargar todos los elementos en memoria, mejorando la eficiencia.
+- **Compatibilidad con estructuras estándar**: Funciona de manera directa con `Array`, `Set`, `Map` y `String` sin necesidad de modificaciones.
+- **Diferencias con Kotlin**: Aunque ambos lenguajes soportan iteradores, Kotlin ofrece **secuencias (`Sequence<T>`)** como alternativa más poderosa para manipulación de datos.
+
+### 🧰 ¿Qué nos llevamos?
+
+El patrón iterador sigue siendo una herramienta fundamental para la manipulación de colecciones, tanto en TypeScript como en otros lenguajes. En TypeScript, su implementación es natural gracias a `Symbol.iterator`, y su combinación con generadores lo hace aún más poderoso. Sin embargo, su uso debe evaluarse según el contexto: en colecciones simples, una iteración directa puede ser suficiente, mientras que en estructuras más complejas o grandes volúmenes de datos, los generadores ofrecen una alternativa eficiente.
+
+Si bien existen diferencias con Kotlin en términos de abstracción y soporte para secuencias, ambos enfoques buscan lo mismo: **recorrer estructuras de datos de forma eficiente sin comprometer la encapsulación ni la claridad del código**. Comprender cómo cada lenguaje implementa este patrón nos permite aprovechar mejor sus capacidades y elegir la mejor solución según nuestras necesidades.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+🌐 Documentation—Iterators and Generators. (s. f.). Recuperado 21 de marzo de 2025, de https://www.typescriptlang.org/docs/handbook/iterators-and-generators.html

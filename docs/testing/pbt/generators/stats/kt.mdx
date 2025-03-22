@@ -44,11 +44,13 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
     ```
 </ModuleSetup>
 
-La **recolección de estadísticas** en pruebas basadas en propiedades es crucial para verificar si los datos generados por nuestros generadores personalizados cumplen las expectativas del test. En Kotest, la función `collect` permite obtener estadísticas sobre los valores generados, ayudándonos a detectar problemas como distribuciones sesgadas o errores en la implementación del generador.
+Cuando usamos pruebas basadas en propiedades, no basta con verificar que un programa funciona **para algunos valores**: queremos que funcione **para todos los casos posibles**, o al menos, para una muestra significativa y representativa.
+
+Pero ¿cómo saber si esa muestra es realmente representativa? ¿Y si nuestro generador produce más de un tipo de dato que otro? Ahí entra en juego la función `collect`. En Kotest, la función `collect` permite obtener estadísticas sobre los valores generados, ayudándonos a detectar problemas como distribuciones sesgadas o errores en la implementación del generador.
 
 En esta lección aprenderemos cómo usar `collect` para verificar y corregir errores comunes en generadores personalizados mediante un ejemplo práctico.
 
-## ¿Qué es la función `collect`?
+## 🎛️ ¿Qué es la función `collect`?
 
 La función `collect` permite contabilizar y mostrar la frecuencia con que ciertos valores o categorías son generados durante la ejecución de pruebas basadas en propiedades. Esto resulta especialmente útil cuando queremos asegurarnos de que un generador personalizado produce datos variados y equilibrados.
 
@@ -61,7 +63,7 @@ checkAll(arbGeneradorPersonalizado()) { valorGenerado ->
 }
 ```
     
-## Caso práctico: Detectando sesgos sutiles en un generador
+## 🧪 Caso práctico: Detectando sesgos sutiles en un generador
 
 En este ejemplo, queremos generar animales de tres tipos: `Lion`, `Penguin` y `Turtle`, con la siguiente distribución:
 
@@ -71,9 +73,9 @@ En este ejemplo, queremos generar animales de tres tipos: `Lion`, `Penguin` y `T
 
 Suena simple, pero veremos que un error pequeño puede desviar por completo la distribución.
 
-### Paso 1: Definimos nuestro Generador
+### 🔧 Paso 1: Definimos nuestro Generador
 
-A continuación, se muestra un generador que **aparentemente** produce los tres animales con la distribución deseada. Sin embargo, verás que hay un error en la última rama del `if-else`:
+Este generador **aparenta** cumplir con la distribución deseada, pero contiene un error sutil en la última rama del `if-else`:
 
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
@@ -123,7 +125,7 @@ Observa que la última rama de `else` **repite** `Penguin`, en lugar de devolver
 
 :::
 
-### Paso 2: Verificamos la Distribución con `collect`
+### 📊 Paso 2: Verificamos la Distribución con `collect`
 
 Para saber si nuestro generador está produciendo la distribución que esperamos, utilizamos la función `collect`. Cada vez que se genera un animal, lo registramos como una categoría:
 
@@ -184,11 +186,11 @@ com.github.username.zoo.Penguin@1a411b8c   496 (50%)
 
 De este mensaje podemos observar lo siguiente:
 
-- **Distribución incorrecta**: Esperábamos que se generaran tres tipos de animales (`Cat`, `Penguin` y otro más), pero en los resultados solo aparecen dos (`Cat` y `Penguin`), ambos con distribuciones del 50%. Esto indica que el generador no está distribuyendo correctamente los valores.
+- **Distribución incorrecta**: Esperábamos que se generaran tres tipos de animales (`Lion`, `Penguin` y otro más), pero en los resultados solo aparecen dos (`Lion` y `Penguin`), ambos con distribuciones del 50%. Esto indica que el generador no está distribuyendo correctamente los valores.
 - **Falta de `Turtle`**: Según la implementación, debería existir una probabilidad para generar `Turtle`, pero no aparece en las estadísticas. Esto sugiere que el bloque `else -> Penguin` está causando que `Penguin` se genere dos veces en lugar de asignar un tercer valor distinto.
 - **Iteraciones**: Se realizaron **1000 iteraciones** con un solo argumento (`1 args`), lo que confirma que la prueba se ejecutó un número suficiente de veces para revelar inconsistencias en la distribución.
 
-### Paso 3: Corregimos el Generador
+### 🛠️ Paso 3: Corregimos el Generador
 
 La solución consiste en arreglar la última rama del `else`, asegurando que devuelva `Turtle` en lugar de `Penguin`:
 
@@ -253,7 +255,7 @@ La solución consiste en arreglar la última rama del `else`, asegurando que dev
     </TabItem>
 </BoxedTabs>
 
-### Paso 4: Recolectamos Estadísticas Nuevamente
+### 🔁 Paso 4: Recolectamos Estadísticas Nuevamente
 
 Actualizamos la prueba para usar el generador corregido:
 
@@ -341,13 +343,17 @@ Es importante recordar que, debido a la naturaleza aleatoria de los generadores,
 
 :::
 
-## ¿Por qué `collect` es tan valioso?
+## 🧠 ¿Por qué `collect` es tan valioso?
 
-- **Visibilidad instantánea**: Con `collect` podemos ver rápidamente si la muestra generada se aproxima a la distribución planeada.
-- **Detección de errores sutiles**: Como viste, un generador puede lucir correcto, pero un signo mal puesto o una línea repetida puede romper por completo la distribución.
-- **Diagnóstico de sesgos**: Permite verificar no solo si se generan las categorías correctas, sino también si se respetan los porcentajes esperados.
+- Muestra la frecuencia de valores generados.
+- Ayuda a detectar sesgos en generadores.
+- No requiere aserciones adicionales.
+- Complementa otras técnicas de validación.
+- 1000 iteraciones suelen bastar para notar errores.
 
-<Exercise title="Corrigiendo un generador de triángulos">
+## 📐 Ejercicio: Corrigiendo un generador de triángulos
+
+<Exercise>
 
     Implementa un generador arbitrario que genere triángulos según la clasificación de sus lados:
 
@@ -553,31 +559,34 @@ Es importante recordar que, debido a la naturaleza aleatoria de los generadores,
     </Solution>
 </Exercise>
 
-## Conclusiones
+## 🧭 Buenas prácticas con `collect`
 
-La **recolección de estadísticas** con `collect` es una herramienta clave en pruebas basadas en propiedades, permitiendo detectar errores en la distribución de datos generados. Un pequeño fallo en la lógica de un generador puede alterar significativamente la distribución esperada, afectando la validez de las pruebas.
+- **Evita categorizar con datos de alta cardinalidad**: por ejemplo, usar `collect(x.toString())` para enteros podría saturar la salida con miles de líneas distintas.
+- **Usa `collect` para agrupar en buckets o categorías**: como “Equilateral”, “Isosceles”, “Scalene” o tipos de animales.
+- **No abuses de `collect` en asserts**: su propósito es exploratorio, no para validaciones estrictas.
 
-Gracias a `collect`, logramos:
-- **Identificar sesgos en los generadores** y detectar distribuciones incorrectas.
-- **Corregir errores lógicos en la generación de datos**, asegurando su adecuada variedad y proporción.
+## 🎯 Conclusiones
 
-El ejercicio sobre triángulos mostró cómo errores sutiles en la selección de lados pueden generar tipos incorrectos. Mediante `collect`, pudimos visualizar la distribución real y ajustar el generador.
+El uso de `collect` en pruebas basadas en propiedades no solo nos permite observar qué tan bien se comportan nuestros generadores, sino también descubrir errores sutiles que podrían pasar desapercibidos si solo nos fijáramos en casos individuales. A través de estadísticas sobre los valores generados, podemos evaluar si la distribución se ajusta a nuestras expectativas y ajustar la implementación en caso contrario.
 
-### Puntos clave
+La recolección de estadísticas es una herramienta sencilla pero poderosa, que fortalece la calidad de nuestras pruebas al agregar una capa de análisis cuantitativo sobre los datos generados.
 
-- **`collect` permite inspeccionar la distribución de valores generados**, verificando si cumplen con la proporción esperada.
-- **Los generadores deben diseñarse con cuidado**, ya que pequeños errores pueden alterar la distribución significativamente.
-- **`checkAll` junto con `collect` facilita la depuración**, proporcionando estadísticas sobre miles de iteraciones para detectar fallos en la generación de datos.
+### 🔑 Puntos clave
 
----
+- `collect` permite ver la frecuencia de aparición de valores generados durante una prueba.
+- Es útil para detectar sesgos o errores en la lógica de los generadores personalizados.
+- Podemos usar `collect` sin necesidad de definir aserciones adicionales.
+- El análisis de estadísticas complementa otras técnicas de validación, especialmente cuando trabajamos con distribución probabilística.
+- Una muestra de 1000 iteraciones suele ser suficiente para revelar problemas evidentes.
 
-El uso de **pruebas basadas en propiedades** con Kotest y `collect` mejora la confiabilidad del código, permitiendo asegurar que los generadores producen datos representativos y bien distribuidos, optimizando la calidad de las **bibliotecas de software**.
+### 🧰 ¿Qué nos llevamos?
 
-<References references={[
-    {
-        title: "Statistics | Kotest",
-        url: "https://kotest.io/docs/proptest/property-test-statistics.html",
-        accessedDate: "14 de marzo de 2025",
-        type: "web",
-    },
-]}  />
+Cuando escribimos pruebas basadas en propiedades, muchas veces confiamos en que nuestros generadores están haciendo lo correcto. Pero `collect` nos recuerda que incluso los errores más simples —una rama mal escrita, una condición mal evaluada— pueden tener consecuencias profundas en la calidad de nuestras pruebas.
+
+Nos llevamos, entonces, una lección esencial: **probar no es solo verificar que algo funciona, sino entender cómo y con qué frecuencia funciona**. Con `collect`, agregamos una dimensión estadística que nos ayuda a escribir generadores más confiables, más variados y más representativos. En el fondo, es una invitación a mirar los datos con más atención, y a tomar decisiones informadas sobre su distribución y variedad.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+🌐 Statistics | Kotest. (s. f.). Recuperado 14 de marzo de 2025, de https://kotest.io/docs/proptest/property-test-statistics.html
