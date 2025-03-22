@@ -1,168 +1,245 @@
 ---
-title: csharp
+title: Introducción a la programación orientada a objetos en C#
 ---
-import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
-<ReadingTime/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="csharp-dibs" />
+
+Esta sección complementa lo aprendido en Kotlin al explorar cómo se expresan los mismos conceptos en **C#**, un lenguaje fuertemente orientado a objetos con un sistema de tipos y sintaxis similares en muchos aspectos. Veremos qué se puede hacer en uno u otro lenguaje, y en qué se diferencian.
+
+## 🧍 Singleton
+
+En C#, un singleton se implementa con una combinación de constructor privado, una propiedad estática, y control de concurrencia (opcionalmente).
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```csharp showLineNumbers
+        public class MySingleton
+        {
+            private MySingleton() { }
+
+            public static MySingleton Instance { get; } = new MySingleton();
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```csharp showLineNumbers title="OOP/MySingleton.cs"
+        namespace OOP;
+
+        public class MySingleton
+        {
+            public string Name { get; set; } = "Singleton";
+
+            private MySingleton() { }
+
+            public static MySingleton Instance { get; } = new MySingleton();
+
+            public string Greet() => $"Hello, {Name}";
+        }
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    Este patrón asegura que solo exista **una única instancia** de la clase durante la ejecución del programa. Se logra declarando una **propiedad estática** (`Instance`) que se inicializa en el momento en que se carga la clase, y un **constructor privado** que impide crear instancias desde fuera.
+
+    La propiedad `Instance` actúa como **punto de acceso global** al singleton. Dado que es una propiedad con inicialización directa (`get; } = new ...`), la instancia se crea de forma **segura y garantizada por el runtime**, incluso en contextos **multihilo**, sin necesidad de mecanismos adicionales de sincronización.
+</Explanation>
 
 
-## C#
-
-### Singleton
-
-En **C#**, no existe la palabra clave `object` para crear un singleton de manera directa, pero el patrón **singleton** se puede implementar utilizando una clase estática con un constructor privado, lo que garantiza que solo se cree una instancia de la clase.
+### Ejemplo de uso
 
 ```csharp
-public class MySingleton {
-    private static readonly MySingleton instance = new MySingleton();
+var singleton = MySingleton.Instance;
+singleton.Name = "Power";
+Console.WriteLine(singleton.Greet()); // Output: Hello, Power
 
-    private MySingleton() {}
+var other = MySingleton.Instance;
+other.Name = "Makima";
+Console.WriteLine(other.Greet()); // Output: Hello, Makima
 
-    public static MySingleton Instance => instance;
-
-    public string Name => "Singleton";
-
-    public string Greet() => $"Hello, {Name}";
-}
+Console.WriteLine(singleton.Greet()); // Output: Hello, Makima (same instance)
 ```
 
-#### Similitudes
+<Explanation>  
+    Este ejemplo muestra que `MySingleton.Instance` siempre devuelve la **misma instancia**. Al modificar `Name` desde cualquier variable, el cambio se refleja en todas, porque comparten el mismo objeto. Esto valida que es un verdadero **singleton**.
+</Explanation>
 
-- Ambos lenguajes soportan el patrón singleton.
-- En ambos casos, se garantiza que solo haya una instancia del objeto.
+### ¿Qué pasa en entornos multihilo?
 
-#### Diferencias
+El patrón singleton garantiza una única instancia, pero **no garantiza seguridad frente a modificaciones simultáneas**. En el ejemplo anterior, si múltiples hilos acceden y modifican la propiedad `Name` al mismo tiempo, puede generarse una [condición de carrera](https://es.wikipedia.org/wiki/Condici%C3%B3n_de_carrera).
 
-- Kotlin tiene soporte nativo para singletons mediante `object`, lo que simplifica su creación.
-- En C#, se requiere una implementación manual utilizando una clase con un constructor privado.
+Esto ocurre porque `Name` es una propiedad mutable compartida globalmente. En contextos multihilo, esto equivale a tener una **variable global modificable** que puede cambiar de forma impredecible según el orden de ejecución de los hilos.
 
-### Clases
+Para evitar estos problemas se recomienda:
 
-Las clases en _C#_ son similares, pero con sintaxis y convenciones propias del lenguaje.
+- Hacer los singletons **inmutables**.
+- Usar **sincronización** (`lock`, `Monitor`, etc.) si es necesario modificar estado compartido.
+- Utilizar tipos **thread-safe** como `ConcurrentDictionary` o `ImmutableList`.
+- O emplear un singleton con **estado encapsulado por actor**, como en arquitecturas basadas en mensajes.
+
+<details>
+    <summary>¿Y si quiero inicialización tardía + control de concurrencia?</summary>
+
+    Una alternativa segura y flexible es usar `Lazy<T>`:
+
+    ```csharp showLineNumbers
+    public class MySingleton
+    {
+        private static readonly Lazy<MySingleton> lazy =
+            new(() => new MySingleton());
+
+        public static MySingleton Instance => lazy.Value;
+
+        private MySingleton() { }
+    }
+    ```
+
+    Esto garantiza que la instancia se crea **una sola vez**, solo cuando se accede por primera vez, y de forma segura incluso en contextos **multihilo**.
+</details>
+
+## 👤 Clases
 
 ```csharp
-public class Person {
+public class Person
+{
     public string Name { get; }
 
-    public Person(string name) {
-        Name = name;
-    }
+    public Person(string name) => Name = name;
 
     public string Greet() => $"Hello, {Name}";
 }
 ```
 
-#### Similitudes
+<Explanation>
+    
+</Explanation>
 
-- Ambos lenguajes definen clases de forma similar, permitiendo almacenar propiedades y comportamientos.
-- Soportan propiedades inmutables, en Kotlin usando `val` y en C# usando propiedades solo de lectura (`get`).
-
-#### Diferencias
-
-- En Kotlin, los constructores primarios se definen en la cabecera de la clase, mientras que en C# se declaran dentro del cuerpo de la clase.
-
-### Interfaces
-
-Tanto Kotlin como C# soportan **interfaces**, que definen contratos que las clases deben implementar.
+## 🎛️ Interfaces
 
 ```csharp
-public interface IGreeter {
+public interface IGreeter
+{
     string Greet();
 }
 
-public class Person : IGreeter {
+public interface IWalker
+{
+    string Walk();
+}
+
+public class Person : IGreeter, IWalker
+{
+    public string Name { get; }
+
+    public Person(string name) => Name = name;
+
     public string Greet() => $"Hello, {Name}";
+    public string Walk() => "Walking...";
 }
 ```
 
-#### Similitudes
+**Comparación**:
+- C# permite implementar múltiples interfaces, igual que Kotlin.
+- Desde C# 8.0, también se pueden definir implementaciones por defecto en interfaces (como en Kotlin), pero es menos común en la práctica.
 
-- Ambos lenguajes permiten definir interfaces con métodos abstractos y métodos con implementación predeterminada.
-- Las clases pueden implementar múltiples interfaces en ambos lenguajes.
+---
 
-:::info
-En _C#_, la convención es que los nombres de las interfaces comiencen con `I`, como `IGreeter` en lugar de `Greeter`.
-:::
-
-### Clases Abstractas
-
-Las **clases abstractas** en Kotlin y C# son similares en cuanto a su propósito: no se pueden instanciar directamente y pueden contener tanto métodos abstractos como implementados.
+## 🧱 Clases abstractas
 
 ```csharp
-public abstract class Animal {
+public abstract class AbstractAnimal
+{
     public abstract string Sound();
-    public string Walk() => "Walking...";
+    public virtual string Walk() => "Walking...";
 }
 
-public class Dog : Animal {
+public class Dog : AbstractAnimal
+{
     public override string Sound() => "Woof";
 }
 ```
 
-#### Similitudes
+**Comparación**:
+- Las clases abstractas en C# son conceptualmente idénticas a las de Kotlin.
+- Se usan `abstract` y `virtual` para permitir o exigir la implementación de métodos.
 
-- Ambos lenguajes permiten la creación de clases abstractas con métodos abstractos y concretos.
-- Tanto en Kotlin como en C#, una clase abstracta puede ser extendida por otras clases que implementen sus métodos abstractos.
+---
 
-#### Diferencias
-
-- No hay grandes diferencias conceptuales, aunque la sintaxis varía entre los dos lenguajes.
-
-### Encapsulación
-
-En C#, el concepto es similar, utilizando `public`, `private`, `protected`, e `internal`.
+## 🔐 Encapsulación y visibilidad
 
 ```csharp
-public class Person {
-    private int Age = 30;
+public class Person
+{
+    private int age;
+    public string Name { get; }
 
-    public int GetAge() => Age;
+    public Person(string name, int age)
+    {
+        if (age < 0)
+            throw new ArgumentException("Age must be non-negative");
+
+        this.Name = name;
+        this.age = age;
+    }
 }
 ```
 
-#### Similitudes
+**Comparación**:
+- En C#, `private`, `protected`, `internal` y `public` tienen un significado similar.
+- A diferencia de Kotlin, C# **sí** tiene `internal` y `protected internal` con semántica más extensa.
+- No existe un modificador equivalente a `package-private` de Java (al igual que Kotlin).
 
-- Ambos lenguajes permiten controlar la visibilidad de los miembros de una clase utilizando modificadores de acceso.
+---
 
-#### Diferencias
-
-- En C#, `internal` se usa para limitar la visibilidad al ensamblado, mientras que en Kotlin `internal` restringe la visibilidad al módulo.
-
-### Constructores Primarios y Secundarios
-
-En **C#**, no existe el concepto explícito de constructores primarios como en Kotlin, pero es posible emular este comportamiento mediante la sobrecarga de constructores.
+## 🏗️ Constructores
 
 ```csharp
-public class Person {
+public class Person
+{
     public string Name { get; }
     public int Age { get; }
 
-    // Constructor principal
-    public Person(string name) {
-        Name = name;
-        Age = 0;
-    }
+    public Person(string name) : this(name, 0) { }
 
-    // Constructor secundario
-    public Person(string name, int age) : this(name) {
+    public Person(string name, int age)
+    {
+        Name = name;
         Age = age;
     }
 }
 ```
 
-En este ejemplo, el constructor principal inicializa solo el nombre, mientras que el constructor secundario delega parte de la inicialización al principal y también inicializa la edad.
+**Comparación**:
+- C# no tiene constructores primarios.
+- Usa **sobrecarga de constructores** en lugar de parámetros por defecto (aunque C# también permite valores por defecto desde C# 4.0).
+- Kotlin permite una escritura más compacta usando valores por defecto.
 
-#### Similitudes
+---
 
-- Ambos lenguajes permiten sobrecargar constructores para ofrecer diferentes formas de inicializar una clase.
-- Los constructores en ambos lenguajes pueden delegar parte de la lógica de inicialización a otros constructores.
+## ⚖️ ¿Qué se puede hacer en uno pero no en el otro?
 
-#### Diferencias
-
-- Kotlin tiene una sintaxis más concisa con su constructor primario definido en la cabecera de la clase, y utiliza el bloque `init` para inicializaciones adicionales.
-- En C#, todos los constructores se definen dentro del cuerpo de la clase, lo que puede requerir más código.
-
-<References references={[
-
-]}/>
+| Concepto                        | Kotlin                                      | C#                                             |
+|--------------------------------|---------------------------------------------|------------------------------------------------|
+| `object` como singleton        | ✅ Sí, con palabra clave `object`           | ❌ No directamente. Se necesita patrón manual. |
+| Constructores primarios        | ✅ Sí                                       | ❌ No                                           |
+| Parámetros por defecto         | ✅ Sí, ampliamente usado                    | ✅ Desde C# 4.0, pero menos común               |
+| Interfaces con default methods | ✅ Sí                                       | ✅ Desde C# 8.0                                 |
+| `sealed` por defecto en jerarquías | ✅ `sealed` controla herencia cerrada   | ✅ `sealed` existe, pero se usa menos          |
+| Delegación de implementación   | ✅ Con `by`                                 | ❌ No tiene una construcción nativa             |
