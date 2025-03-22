@@ -45,6 +45,8 @@ import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
     ```
 </ModuleSetup>
 
+En esta lección aprenderás cómo implementar aserciones manuales y personalizadas, entendiendo cómo se comportan y cómo integrarlas con frameworks como Kotest. Esto sienta las bases para usar matchers más expresivos en lecciones futuras.
+
 Las **aserciones** son instrucciones que verifican si una condición específica es verdadera en un punto particular del código. Si la condición es falsa, la aserción falla y se lanza una excepción, interrumpiendo la ejecución del programa o prueba. Los frameworks de testing capturan estas excepciones para generar reportes detallados de los resultados.
 
 :::info Nota didáctica
@@ -232,108 +234,130 @@ fun assertTrue(
     </Cons>
 </ProCons>
 
-<Exercise title={"Verificar si una lista está ordenada"}>
+## 🧠 Buenas prácticas
+
+:::tip
+
+- Reutiliza funciones de aserción en varios tests para evitar duplicación.
+- Incluye siempre mensajes de error descriptivos.
+- Integra tus aserciones con el sistema del framework (como `fail()` en Kotest) para aprovechar sus reportes.
+
+:::
+
+## 🔢 Ejercicio: Verificar si una lista está ordenada
+
+<Exercise>
+    Supón que estás escribiendo una biblioteca que ordena rankings, y quieres asegurarte de que los resultados se ordenan correctamente antes de exponerlos a otrxs usuaries.
+
     Crea una aserción ``assertIsOrdered: (List<Int>, Boolean) -> Unit`` que verifique si una lista de enteros está ordenada de forma ascendente.
     - Si el segundo parámetro es ``true``, la lista debe estar ordenada de forma estrictamente ascendente (sin elementos repetidos).
     - Si el segundo parámetro es ``false``, la lista puede contener elementos repetidos.
 
     <Solution>
-        ```kotlin showLineNumbers
-        fun assertIsOrdered(list: List<Int>, isStrictlyOrdered: Boolean) {
-            if (isStrictlyOrdered) {
-                for (i in 0..<list.size - 1) {
-                    if (list[i] >= list[i + 1]) {
-                        fail("List is not strictly ordered")
+        <BoxedTabs>
+            <TabItem label={"Implementación iterativa"} value={"Implementación iterativa"}>
+                ```kotlin showLineNumbers
+                fun assertIsOrdered(list: List<Int>, isStrictlyOrdered: Boolean) {
+                    if (isStrictlyOrdered) {
+                        for (i in 0..<list.size - 1) {
+                            if (list[i] >= list[i + 1]) {
+                                fail("List is not strictly ordered")
+                            }
+                        }
+                    } else {
+                        for (i in 0..<list.size - 1) {
+                            if (list[i] > list[i + 1]) {
+                                fail("List is not ordered")
+                            }
+                        }
                     }
                 }
-            } else {
-                for (i in 0..<list.size - 1) {
-                    if (list[i] > list[i + 1]) {
+                ```
+            </TabItem>
+            <TabItem label={"Implementación funcional"} value={"Implementación funcional"}>
+                ```kotlin showLineNumbers
+                fun assertIsOrdered(list: List<Int>, isStrictlyOrdered: Boolean) {
+                    val comparator = if (isStrictlyOrdered) { a: Int, b: Int -> a < b }
+                                    else { a: Int, b: Int -> a <= b }
+                    list.zipWithNext().all { (a, b) -> comparator(a, b) } || 
                         fail("List is not ordered")
-                    }
                 }
-            }
-        }
-        ```
-    </Solution>
+                ```
 
-    <Solution title='(Alternativa)'>
-        ```kotlin showLineNumbers
-        fun assertIsOrdered(list: List<Int>, isStrictlyOrdered: Boolean) {
-            val comparator = if (isStrictlyOrdered) { a: Int, b: Int -> a < b }
-                            else { a: Int, b: Int -> a <= b }
-            list.zipWithNext().all { (a, b) -> comparator(a, b) } || 
-                fail("List is not ordered")
-        }
-        ```
-
-        :::info Explicación de la solución alternativa
-
-        - Utilizamos `zipWithNext` para obtener pares consecutivos de elementos en la lista.
-        - Utilizamos una lambda para verificar si cada par cumple con la condición de orden.
-        - Si la condición no se cumple, lanzamos una excepción con el mensaje correspondiente.
-
-        :::
+                <Explanation>
+                    - `zipWithNext()` crea una lista de pares consecutivos: `[a1, a2, a3]` → `[(a1, a2), (a2, a3)]`
+                    - Luego usamos `all { (a, b) -> comparator(a, b) }` para verificar que todos los pares cumplen la relación esperada (estricta o no estricta).
+                    - Si la condición no se cumple, lanzamos una excepción con el mensaje correspondiente.
+                </Explanation>
+            </TabItem>
+        </BoxedTabs>
     </Solution>
 </Exercise>
 
 ## 🎯 Conclusiones
 
-Las **aserciones** son una herramienta fundamental en el desarrollo de software, especialmente en la escritura de pruebas unitarias. A lo largo de esta lección, exploramos su implementación manual, el uso de frameworks de testing como **Kotest**, y la creación de **aserciones personalizadas** para mejorar la claridad y reusabilidad del código de pruebas.
+A lo largo de esta lección, exploramos el rol fundamental de las aserciones en los tests: verificar que las condiciones necesarias se cumplan en distintos puntos del sistema. Partimos desde una implementación manual para entender su estructura básica y luego dimos el paso hacia funciones personalizadas que encapsulan lógica reusable.
+
+Aunque hoy en día preferimos herramientas más expresivas como los *matchers*, comprender cómo funcionan las aserciones en su forma más básica nos da una visión más clara de lo que ocurre "bajo el capó" al ejecutar pruebas, y nos permite construir utilidades propias cuando el dominio lo requiere.
 
 ### 🔑 Puntos clave
 
-1. **Aserciones como mecanismo de validación**  
-   - Permiten verificar que una condición se cumple en un punto específico del código.  
-   - Si la condición es falsa, la ejecución se detiene con un mensaje de error, facilitando la detección de fallos.  
-2. **Implementación manual vs. uso de frameworks**  
-   - Aunque es posible escribir aserciones manualmente, los frameworks de testing como **Kotest** ofrecen herramientas más expresivas y fáciles de usar.  
-   - Métodos como `fail` mejoran la integración con los reportes de pruebas, facilitando el diagnóstico de errores.  
-3. **Aserciones personalizadas**  
-   - Permiten encapsular verificaciones repetitivas en funciones reutilizables.  
-   - Mejoran la claridad de los tests y hacen que los mensajes de error sean más comprensibles.  
-   - Deben mantenerse bien documentadas para evitar confusión en el equipo de desarrollo.  
-4. **Beneficios y limitaciones**  
-   - **Beneficios**: Mayor legibilidad, reusabilidad y personalización en los mensajes de error.  
-   - **Limitaciones**: Pueden introducir sobrecarga inicial y aumentar la complejidad de mantenimiento si no se diseñan correctamente.  
-5. **Ejercicio práctico**  
-   - Diseñamos una aserción `assertIsOrdered` para verificar si una lista está ordenada, explorando distintas estrategias de implementación.  
+1. **Una aserción es una validación que detiene la prueba si una condición no se cumple**.  
+2. **Es posible implementar aserciones manualmente**, pero frameworks como Kotest ofrecen utilidades como `fail()` para integrarse mejor con los reportes.  
+3. **Las funciones de aserción personalizadas** mejoran la expresividad y reusabilidad de los tests.  
+4. **Los mensajes claros** son fundamentales para facilitar la depuración cuando una prueba falla.  
+5. **Preparar funciones propias sienta las bases** para entender herramientas más avanzadas como matchers y validadores.
 
-### ✅ Reflexión final
+### 🧰 ¿Qué nos llevamos?
 
-Las aserciones no solo ayudan a detectar errores en el código, sino que también mejoran la **seguridad y confianza** en su ejecución. Un buen conjunto de aserciones bien diseñadas facilita la depuración, reduce el tiempo de mantenimiento y hace que las pruebas sean más comprensibles.  
+Saber escribir aserciones a mano nos obliga a pensar con precisión: *¿Qué estoy verificando? ¿Cómo quiero que falle si no se cumple?* En una biblioteca, esto se traduce en tests más claros, reutilizables y alineados con las reglas del dominio.
 
-Al integrar **aserciones personalizadas** y aprovechar las funcionalidades de los frameworks de testing, es posible escribir código de prueba más limpio, expresivo y mantenible.
+Este conocimiento también nos permite crear nuestras propias herramientas de validación cuando los frameworks existentes no son suficientes. Así, cada prueba deja de ser un chequeo aislado y se convierte en una afirmación **con intención**, reforzando la confiabilidad y mantenibilidad del sistema que estamos construyendo.
 
-### 🚀 Hacia pruebas más expresivas
+## 📖 Referencias
 
-En esta lección hemos implementado **aserciones manuales y personalizadas** para comprender su funcionamiento.  
-Sin embargo, en la práctica, no es necesario escribir nuestras propias aserciones, ya que los **frameworks de pruebas** ofrecen herramientas más expresivas y flexibles.  
+### 🔥 Recomendadas
 
-En lecciones futuras exploraremos el uso de **matchers**, que permiten escribir pruebas más declarativas, mejorando la legibilidad y la mantenibilidad del código de test.
+📰 Tamas Cser. (2024, septiembre 5). What is Assertion Testing? Ensuring Quality and Accuracy. https://www.functionize.com/automated-testing/assertion
 
-<References references={[
-    {
-        title: "xUnit Patterns",
-        bookTitle: "Test-driven development: By example",
-        publisher: "Addison-Wesley",
-        year: "2003",
-        author: "K. Beck",
-        type: "book",
-    },
-]} additionalReferences={[
-    {
-        accessedDate: '31 de julio de 2024',
-        siteOrAuthor: 'Wikipedia',
-        title: 'Assertion (Software Development)',
-        type: 'web',
-        url: 'https://en.wikipedia.org/w/index.php?title=Assertion_(software_development)&oldid=1237703007',
-    },
-    {
-        accessedDate: '31 de julio de 2024',
-        siteOrAuthor: 'Wikipedia',
-        title: 'Test assertion',
-        type: 'web',
-        url: 'https://en.wikipedia.org/w/index.php?title=Test_assertion&oldid=1110777862',
-    },
-]}/>
+{/* TODO: Bibliografías por revisar
+## Fundamentos generales de las aserciones  
+- Por ejemplo, una aserción típica comprueba que el resultado obtenido iguale al esperado, y si no, interrumpe la ejecución de la prueba. Las aserciones son útiles no solo para probar, sino también para depurar y **documentar las suposiciones y expectativas** sobre el código ([Procedimientos recomendados para usar aserciones en pruebas de código](https://www.linkedin.com/advice/0/what-best-practices-using-assertions-testing-6uxje?lang=es#:~:text=Las%20aserciones%20son%20instrucciones%20que,c%C3%B3mo%20escribirlas%20y%20c%C3%B3mo%20manejarlas)). Es importante notar que las aserciones se deben usar para verificar **condiciones internas que siempre deberían cumplirse** (invariantes de código), y no para el manejo de errores externos; por ejemplo, no se recomienda usar `assert` para validar entradas de usuario, ya que su objetivo es marcar errores lógicos del programador y puede deshabilitarse en producción ([Pruebas en Python | Aserciones | Fundamentos de Programación | LabEx](https://labex.io/es/tutorials/python-python-testing-essentials-132735#:~:text=assert%20isinstance,un%20int)). Un uso extensivo de aserciones está asociado al enfoque de *Diseño por Contrato*, donde se especifican pre y post-condiciones mediante aserciones para garantizar la corrección del programa ([Pruebas en Python | Aserciones | Fundamentos de Programación | LabEx](https://labex.io/es/tutorials/python-python-testing-essentials-132735#:~:text=Tambi%C3%A9n%20conocida%20como%20Dise%C3%B1o%20por,para%20los%20componentes%20del%20software)). *(Recursos: Artículo colaborativo en LinkedIn, gratuito, introductorio ([Procedimientos recomendados para usar aserciones en pruebas de código](https://www.linkedin.com/advice/0/what-best-practices-using-assertions-testing-6uxje?lang=es#:~:text=Las%20aserciones%20son%20instrucciones%20que,c%C3%B3mo%20escribirlas%20y%20c%C3%B3mo%20manejarlas)); Tutorial de LabEx sobre pruebas en Python, gratis, básico/práctico ([Pruebas en Python | Aserciones | Fundamentos de Programación | LabEx](https://labex.io/es/tutorials/python-python-testing-essentials-132735#:~:text=assert%20isinstance,un%20int)) ([Pruebas en Python | Aserciones | Fundamentos de Programación | LabEx](https://labex.io/es/tutorials/python-python-testing-essentials-132735#:~:text=Tambi%C3%A9n%20conocida%20como%20Dise%C3%B1o%20por,para%20los%20componentes%20del%20software)).)*  
+
+- **Importancia de las aserciones en pruebas automatizadas (inglés)** – Las aserciones son consideradas *“una de las técnicas automatizadas más útiles”* para chequear el comportamiento de un programa ([](https://www.idt.mdu.se/ecbs2023/pre-prints/paper_2356.pdf#:~:text=,rendered%20119%20papers%20on%20assertions)). Al incluir aserciones en las pruebas, éstas **se ejecutan de forma automática** y verifican condiciones esperadas sin intervención manual. Esto mejora la **precisión y rapidez de las pruebas** ([What is Assertion Testing? Ensuring Quality and Accuracy](https://www.functionize.com/automated-testing/assertion#:~:text=Assertion%20is%20a%20key%20concept,including%20speeding%20up%20the%20testing)). En palabras de un artículo técnico reciente, *“Assertion is a key concept in functional testing”*, ya que permiten declarar el resultado esperado de una prueba y hacerla fallar automáticamente si el comportamiento real no coincide ([What is Assertion Testing? Ensuring Quality and Accuracy](https://www.functionize.com/automated-testing/assertion#:~:text=Assertion%20is%20a%20key%20concept,including%20speeding%20up%20the%20testing)). Además, existen distintos tipos de aserciones: por ejemplo, las llamadas **aserciones simples** validan una sola condición booleana, mientras que **aserciones compuestas** pueden verificar múltiples condiciones a la vez; también se distinguen **aserciones duras** (hard) de **aserciones blandas** (soft), donde las primeras detienen inmediatamente la ejecución ante un fallo, mientras que las soft permiten continuar ejecutando otras verificaciones y reportar múltiples fallos a la vez ([What is Assertion Testing? Ensuring Quality and Accuracy](https://www.functionize.com/automated-testing/assertion#:~:text=,even%20if%20some%20conditions%20fail)). *(Recursos: Blog técnico de Functionize, gratuito, nivel introductorio-conceptual ([What is Assertion Testing? Ensuring Quality and Accuracy](https://www.functionize.com/automated-testing/assertion#:~:text=Assertion%20is%20a%20key%20concept,including%20speeding%20up%20the%20testing)) ([What is Assertion Testing? Ensuring Quality and Accuracy](https://www.functionize.com/automated-testing/assertion#:~:text=,even%20if%20some%20conditions%20fail)); Artículo de investigación “A Literature Survey of Assertions in Software Testing” (Taromirad & Runeson 2023), *open access*, avanzado y conceptual ([](https://www.idt.mdu.se/ecbs2023/pre-prints/paper_2356.pdf#:~:text=,rendered%20119%20papers%20on%20assertions)).)*  
+
+## Diseño de aserciones personalizadas  
+- **Necesidad de aserciones personalizadas y matchers (inglés)** – En escenarios complejos, las funciones de aserción básicas (p. ej. `assertTrue`, `assertEquals`) pueden quedarse cortas o hacer las pruebas menos legibles. Un artículo en InfoQ señala que aunque *“escribir aserciones parece sencillo”*, comparar resultados con expectativas usando solo métodos básicos puede *“ensuciar nuestras pruebas con detalles de bajo nivel”* ([Custom Assertions in Java Tests - InfoQ](https://www.infoq.com/articles/custom-assertions/#:~:text=Writing%20assertions%20for%20tests%20seems,test%20using%20such%20basic%20assertions)). Lo ideal es que las pruebas *“hablen el lenguaje del negocio”* y no queden ocultas tras logíca repetitiva ([Custom Assertions in Java Tests - InfoQ](https://www.infoq.com/articles/custom-assertions/#:~:text=The%20main%20issue%20is%20that,in%20the%20language%20of%20business)). Por ello, surgen **bibliotecas de matchers** y la posibilidad de implementar **aserciones personalizadas** que expresen mejor la intención de la prueba ([Custom Assertions in Java Tests - InfoQ](https://www.infoq.com/articles/custom-assertions/#:~:text=In%20this%20article%20I%20will,tests%20more%20readable%20and%20maintainable)). Frameworks como JUnit o TestNG permiten extender su conjunto de aserciones, y existen librerías como **Hamcrest**, **AssertJ** o **Truth** que proveen un vocabulario más rico de verificaciones ([Assert with Grace: Custom Assertions using AssertJ for Cleaner Code](https://eliasnogueira.com/assert-with-grace-custom-assertions-for-cleaner-code/#:~:text=)). Estas bibliotecas permiten cadenas de aserciones más legibles (p. ej., `assertThat(item, isValid())`) e incluso crear nuevos métodos de aserción adaptados a tipos de dominio (por ejemplo, AssertJ facilita escribir una clase `PedidoAssert` con métodos como `tieneTotal(expected)` para un objeto `Pedido`). *(Recursos: Artículo **“Custom Assertions in Java Tests”** de InfoQ, gratuito, intermedio-conceptual con código ([Custom Assertions in Java Tests - InfoQ](https://www.infoq.com/articles/custom-assertions/#:~:text=Writing%20assertions%20for%20tests%20seems,test%20using%20such%20basic%20assertions)) ([Custom Assertions in Java Tests - InfoQ](https://www.infoq.com/articles/custom-assertions/#:~:text=In%20this%20article%20I%20will,tests%20more%20readable%20and%20maintainable)); Blog de Elias Nogueira sobre aserciones personalizadas con AssertJ, gratuito, intermedio-práctico ([Assert with Grace: Custom Assertions using AssertJ for Cleaner Code](https://eliasnogueira.com/assert-with-grace-custom-assertions-for-cleaner-code/#:~:text=Because%20of%20this%2C%20new%20libraries,different%20aspects%20providing%20different%20features)).)*  
+
+- **Cómo construir funciones de aserción propias (práctico)** – Crear aserciones personalizadas suele implicar encapsular una condición y lanzar una excepción de fallo si no se cumple. Por ejemplo, en **JUnit (Java)** se puede escribir un método estático que verifique una propiedad específica y lance `AssertionError` o use internamente una aserción existente. En **MSTest (C#)**, una técnica es extender la clase de aserciones mediante *métodos de extensión*: pasos típicos son *“1. Escribir un método de extensión sobre la clase Assert, 2. Comparar los parámetros *actual* y *expected*, 3. Lanzar una AssertFailedException si la comparación falla”* ([How to create custom assertions in C# with MSTest - DEV Community](https://dev.to/canro91/how-to-create-custom-assertions-in-c-with-mstest-4831#:~:text=To%20write%20custom%20assertions%20with,MSTest)). El siguiente fragmento muestra una aserción personalizada `StringIsEmpty` en MSTest, que lanza una excepción con un mensaje claro si la cadena no está vacía: 
+
+  `public static void StringIsEmpty(this Assert assert, string actual) {  
+      if (string.IsNullOrEmpty(actual)) return;  
+      throw new AssertFailedException("Expected empty string but was " + actual);  
+  }` ([How to create custom assertions in C# with MSTest - DEV Community](https://dev.to/canro91/how-to-create-custom-assertions-in-c-with-mstest-4831#:~:text=Here%2C%20we%27re%20creating%20a%20,method))
+
+  Una vez definida, puede usarse en las pruebas como `Assert.That.StringIsEmpty(valorObtenido)` ([How to create custom assertions in C# with MSTest - DEV Community](https://dev.to/canro91/how-to-create-custom-assertions-in-c-with-mstest-4831#:~:text=Enter%20fullscreen%20mode%20Exit%20fullscreen,mode)). De forma análoga, en Kotest (Kotlin) es sencillo definir *matchers* propios implementando la interfaz `Matcher<T>`; estos matchers pueden combinar lógica existente o ser completamente nuevos ([Assertions | Kotest](https://kotest.io/docs/assertions/assertions.html#:~:text=Custom%20Matchers)). La idea central es encapsular la verificación para **reutilizarla en múltiples pruebas** y proporcionar **mensajes de fallo más descriptivos**. *(Recursos: Tutorial *“How to create custom assertions in C# with MSTest”* – blog DEV.to, gratuito, práctico con código ([How to create custom assertions in C# with MSTest - DEV Community](https://dev.to/canro91/how-to-create-custom-assertions-in-c-with-mstest-4831#:~:text=To%20write%20custom%20assertions%20with,MSTest)) ([How to create custom assertions in C# with MSTest - DEV Community](https://dev.to/canro91/how-to-create-custom-assertions-in-c-with-mstest-4831#:~:text=,if%20%28string.IsNullOrEmpty%28actual%29%29%20return)); Documentación oficial de Kotest sobre *Custom Matchers*, gratis, orientado a práctica en Kotlin ([Assertions | Kotest](https://kotest.io/docs/assertions/assertions.html#:~:text=Custom%20Matchers)).)*  
+
+- **Ejemplos de aserciones custom y beneficios** – Diseñar nuestras propias aserciones mejora la legibilidad de los tests. Por ejemplo, usando AssertJ en Java se puede escribir: `assertThat(person).hasName("Juan").hasAge(30)`, tras haber creado métodos `hasName` y `hasAge` dentro de una clase `PersonAssert`. Esto expresa claramente qué se verifica, en contraste con usar múltiples `assertEquals` separados. Las aserciones custom también permiten **reutilizar lógica de verificación compleja** (p. ej., comparar la igualdad de dos gráficos, verificar propiedades de un JSON, etc.) en una sola llamada. La documentación de AssertJ muestra cómo extender `AbstractAssert` para crear aserciones fluentes para tipos específicos ([Assert with Grace: Custom Assertions using AssertJ for Cleaner Code](https://eliasnogueira.com/assert-with-grace-custom-assertions-for-cleaner-code/#:~:text=Because%20of%20this%2C%20new%20libraries,different%20aspects%20providing%20different%20features)). En resumen, invertir en escribir aserciones a medida puede hacer que los tests sean más *“autoexplicativos y mantenibles”* ([Custom Assertions in Java Tests - InfoQ](https://www.infoq.com/articles/custom-assertions/#:~:text=The%20main%20issue%20is%20that,in%20the%20language%20of%20business)), al hablar en términos del problema de negocio en vez de detalles técnicos. *(Recursos: Documentación de AssertJ (open source) y ejemplo en blog de Elias Nogueira ([Assert with Grace: Custom Assertions using AssertJ for Cleaner Code](https://eliasnogueira.com/assert-with-grace-custom-assertions-for-cleaner-code/#:~:text=)); Capítulo sobre *matchers* en libro *“Practical Unit Testing”* de T. Kaczanowski – plantea casos donde asserts básicos no son suficientes (recurso de pago, nivel intermedio).)*
+
+## Integración de aserciones con frameworks de prueba  
+- **Aserciones en JUnit y TestNG (documentación oficial)** – La mayoría de frameworks xUnit proveen una clase utilitaria con métodos estáticos para aserciones. En **JUnit 4** está la clase `org.junit.Assert` (en JUnit 5, `org.junit.jupiter.api.Assertions`). Sus métodos incluyen, por ejemplo, `assertTrue(condición)` – que verifica que la condición booleana es verdadera (lanza `AssertionError` si no lo es) ([
+Assert (JUnit API)
+](https://junit.org/junit4/javadoc/4.13/org/junit/Assert.html#:~:text=assertTrue)) – o `assertEquals(expected, actual)` – que comprueba igualdad de valores. También se define `fail()` para marcar explícitamente una prueba como fallida. Según la documentación, `Assert.fail()` *“falla una prueba sin mensaje”* (solo lanza el error) ([
+Assert (JUnit API)
+](https://junit.org/junit4/javadoc/4.13/org/junit/Assert.html#:~:text=Asserts%20that%20a%20condition%20is,test%20with%20the%20given%20message)); esto se usa típicamente dentro de ramas del test que no deberían ejecutarse. Un ejemplo práctico en JUnit es verificar que un método lance excepción: se llama al método dentro de un bloque try, luego inmediatamente `fail("Should have thrown an exception")` si no se produjo la excepción, y en el catch se puede usar `assertTrue(true)` para indicar que se capturó lo esperado ([JUnit Assert.fail() Method Example](https://www.javaguides.net/2018/08/junit-assertfail-method-example.html#:~:text=Let%27s%20write%20the%20JUnit%20test,list%29%C2%A0method)). En **TestNG**, el funcionamiento es similar; la clase `org.testng.Assert` proporciona métodos equivalentes (`Assert.assertTrue`, `Assert.assertEquals`, etc.). Una diferencia de diseño es el orden de parámetros: TestNG los define en orden “valor actual, valor esperado” (considerado más natural) ([org.testng/testng/7.3.0 : org/testng/Assert.java](https://code.yawk.at/org.testng/testng/7.3.0/org/testng/Assert.java#:~:text=Assertion%20tool%20class,message)), mientras JUnit tradicionalmente usa “esperado, actual”. Por ejemplo, en TestNG se escribe `Assert.assertEquals(objActual, objEsperado)`. La sintaxis general es `Assert.metodo(actual, expected)` ([Guide To TestNG Assertions in Selenium Based Test Automation](https://www.pcloudy.com/blogs/guide-to-testng-assertions-in-selenium-based-test-automation/#:~:text=TestNG%20provides%20an%20Assert%20class,Assert)). *(Recursos: Javadoc de **JUnit 4** (referencia libre) ([
+Assert (JUnit API)
+](https://junit.org/junit4/javadoc/4.13/org/junit/Assert.html#:~:text=Asserts%20that%20a%20condition%20is,test%20with%20the%20given%20message)) ([
+Assert (JUnit API)
+](https://junit.org/junit4/javadoc/4.13/org/junit/Assert.html#:~:text=assertTrue)); Javadoc de **TestNG** (libre) ([org.testng/testng/7.3.0 : org/testng/Assert.java](https://code.yawk.at/org.testng/testng/7.3.0/org/testng/Assert.java#:~:text=Assertion%20tool%20class,message)); Tutorial JavaGuides con ejemplos de `fail()` en JUnit, gratuito, práctico ([JUnit Assert.fail() Method Example](https://www.javaguides.net/2018/08/junit-assertfail-method-example.html#:~:text=The%20fail,Assert%20class)) ([JUnit Assert.fail() Method Example](https://www.javaguides.net/2018/08/junit-assertfail-method-example.html#:~:text=Let%27s%20write%20the%20JUnit%20test,list%29%C2%A0method)).)*  
+
+- **Uso de aserciones con frameworks específicos** – Cada framework de pruebas puede ofrecer *extras*. **Kotest (Kotlin)**, por ejemplo, introduce un estilo fluido: en lugar de métodos estáticos, emplea extensiones infix como `shouldBe` o `shouldContain`. Por ejemplo: `nombre shouldBe "sam"` comprueba que la variable `nombre` sea igual a "sam" ([Assertions | Kotest](https://kotest.io/docs/assertions/assertions.html#:~:text=Multitude%20of%20Matchers)). Estas construcciones se integran idiomáticamente al lenguaje (Kotlin) y permiten encadenar aserciones: p. ej. `"texto".shouldContain("tex").shouldBeLowerCase()` verifica dos propiedades de forma concisa ([Assertions | Kotest](https://kotest.io/docs/assertions/assertions.html#:~:text=For%20example%2C%20to%20assert%20that,function)). **JUnit 5** añadió métodos como `assertAll` para realizar múltiples aserciones agrupadas (reportando todas las fallas juntas) y `assertThrows` para simplificar la verificación de excepciones esperadas. **TestNG** por su parte diferencia entre *Hard Asserts* y *Soft Asserts*: una *hard assert* (las tradicionales) interrumpe la prueba en el primer fallo, mientras que una *soft assert* acumula los errores y los reporta al final, permitiendo que el test continúe ejecutándose ([Guide To TestNG Assertions in Selenium Based Test Automation](https://www.pcloudy.com/blogs/guide-to-testng-assertions-in-selenium-based-test-automation/#:~:text=There%20are%20two%20types%20of,assertions%20in%20testng)) ([What is Assertion Testing? Ensuring Quality and Accuracy](https://www.functionize.com/automated-testing/assertion#:~:text=,even%20if%20some%20conditions%20fail)). En frameworks como **JUnit, NUnit, MSTest, etc.**, normalmente todas las aserciones son *hard* (a menos que se use una librería especial). Integrar aserciones en estos frameworks suele ser tan sencillo como importar estáticamente los métodos de aserción e invocarlos en el bloque de verificación de cada caso de prueba. En todos los casos, **el resultado de la prueba** (pass/fail) **depende de las aserciones**: si alguna falla, el framework marca el test como fallido. *(Recursos: Documentación de Kotest (sitio oficial, gratis) ([Assertions | Kotest](https://kotest.io/docs/assertions/assertions.html#:~:text=Multitude%20of%20Matchers)); Guía “TestNG Assertions” (Shivani Sinha, 2023) – blog técnico, gratis ([Guide To TestNG Assertions in Selenium Based Test Automation](https://www.pcloudy.com/blogs/guide-to-testng-assertions-in-selenium-based-test-automation/#:~:text=Irrespective%20of%20any%20programming%20language,case%20is%20passed%20or%20failed)) ([Guide To TestNG Assertions in Selenium Based Test Automation](https://www.pcloudy.com/blogs/guide-to-testng-assertions-in-selenium-based-test-automation/#:~:text=There%20are%20two%20types%20of,assertions%20in%20testng)); Documentación JUnit 5 (open source); Blog de Microsoft/BrowserStack sobre aserciones en MSTest y NUnit, etc.)*  
+
+- **Consideraciones de implementación** – Es importante escribir las aserciones de forma que aporten información útil. La mayoría de frameworks permiten pasar un mensaje opcional: p. ej. `assertTrue(condición, "Mensaje de error")`. Si la condición falla, el mensaje aparecerá en el reporte, facilitando diagnosticar el problema. Algunos frameworks (JUnit, NUnit) generan mensajes por defecto indicando el valor esperado y actual cuando se usa `assertEquals`, pero en otros casos conviene proporcionar un mensaje manual. Por ejemplo, en JUnit: `assertFalse(lista.isEmpty(), "La lista debería tener elementos")`. También es útil aprovechar las variantes especializadas (como `assertNotNull(obj)` en lugar de `assertTrue(obj != null)`), ya que expresan mejor la intención y a veces dan mensajes más claros. En JUnit 5, una mejora es que los mensajes de error pueden ser *lazy* (usando un `Supplier<String>`), de modo que no se calcula el texto del mensaje si la aserción pasa (optimización menor pero útil en muchas aserciones). En resumen, conocer las facilidades del framework (desde aserciones específicas como `assertArrayEquals` hasta utilidades como `fail()`) permite integrar las aserciones de forma efectiva en la suite de pruebas. *(Recursos: Sección de *Assertions* en la **guía de JUnit 5** (gratuito, conceptual-práctico); Documentación de **TestNG** sobre SoftAssert (web, gratuito); Ejemplos en **Blogs de Baeldung/HowToDoInJava** sobre aserciones en distintos frameworks.)*  
+
+## Buenas prácticas y patrones de diseño de aserciones  
+- **Patrones estilo xUnit: AAA y ubicación de aserciones** – Una recomendación ampliamente aceptada es estructurar las pruebas con el patrón **Arrange-Act-Assert (AAA)**, donde la verificación (*Assert*) viene al final. Es decir, primero se *prepara* el escenario y datos (Arrange), luego se *ejecuta* la funcionalidad a probar (Act) y finalmente se *verifican* los resultados (Assert). Esto mejora la legibilidad y garantiza que las aserciones se hagan *después* de ejercer el código bajo prueba. Un consejo derivado de esto es **limitar cada prueba a un solo “Act” principal y su correspondiente verificación**, evitando mezclar múltiples acciones en una misma prueba ([Assertion Roulette & Eager Test. Assertion Roulette is a test smell… | by bytedev | Medium](https://bytedev.medium.com/assertion-roulette-eager-test-1481db0b744e#:~:text=Assertion%20Roulette%20can%20often%20be,is%20one%20%E2%80%9CAct%E2%80%9D%20per%20test)). Tener **una sola acción y resultado esperado por test** suele implicar una o pocas aserciones relacionadas; si una prueba está verificando muchos aspectos diferentes (múltiples “Act”), podría dividirse en varios tests. Algunos autores llaman a esto “una aserción por prueba” en el sentido de una única *intención verificada*. Sin embargo, no significa que literalmente no pueda haber más de un método de assert, sino que **todas las aserciones de un test deben relacionarse con el mismo comportamiento bajo prueba**. Si se necesitan varias aserciones para ese comportamiento, es válido incluirlas juntas (p.ej., comprobar varias propiedades de un objeto tras una única acción). Lo importante es evitar que un test se vuelva demasiado “ansioso” (*Eager Test*), probando demasiadas cosas a la vez ([Assertion Roulette & Eager Test. Assertion Roulette is a test smell… | by bytedev | Medium](https://bytedev.medium.com/assertion-roulette-eager-test-1481db0b744e#:~:text=Assertion%20Roulette%20can%20often%20be,is%20one%20%E2%80%9CAct%E2%80%9D%20per%20test)). *(Recursos: Entrada “How to write better assertions: 5 Best Practices” – Cesar Aguirre (DEV, 2021), gratis, práctico ([How to write better assertions: 5 Best Practices - DEV Community](https://dev.to/canro91/unit-test-best-practices-on-assertions-1mpm#:~:text=4,and%20Assert)) ([How to write better assertions: 5 Best Practices - DEV Community](https://dev.to/canro91/unit-test-best-practices-on-assertions-1mpm#:~:text=5,methods)); Artículo Medium “Assertion Roulette & Eager Test” – bytedev, 2023 ([Assertion Roulette & Eager Test. Assertion Roulette is a test smell… | by bytedev | Medium](https://bytedev.medium.com/assertion-roulette-eager-test-1481db0b744e#:~:text=Assertion%20Roulette%20can%20often%20be,is%20one%20%E2%80%9CAct%E2%80%9D%20per%20test)).)*  
+
+- **Claridad y mensajes en las aserciones** – Cada aserción debe expresar claramente qué se está validando. Es una **mala práctica** usar aserciones sin contexto o poco descriptivas. Por ejemplo, una aserción como `assertTrue(x > 0)` no indica qué representa `x` ni por qué debería ser positivo, dificultando entender un fallo ([Procedimientos recomendados para usar aserciones en pruebas de código](https://www.linkedin.com/advice/0/what-best-practices-using-assertions-testing-6uxje?lang=es#:~:text=Otra%20pr%C3%A1ctica%20recomendada%20para%20usar,documentar%20su%20l%C3%B3gica%20y%20expectativas)). En su lugar, es preferible usar métodos de aserción más semánticos (p. ej., `assertPositive(x)`, si existe) o al menos agregar un mensaje: `assertTrue(x > 0, "El saldo de la cuenta no debe ser negativo")` ([Procedimientos recomendados para usar aserciones en pruebas de código](https://www.linkedin.com/advice/0/what-best-practices-using-assertions-testing-6uxje?lang=es#:~:text=Otra%20pr%C3%A1ctica%20recomendada%20para%20usar,documentar%20su%20l%C3%B3gica%20y%20expectativas)). De esta forma, si la prueba falla, el mensaje ayuda a ubicar rápidamente la causa. Las **aserciones múltiples** en un mismo test también deben manejarse con cuidado: si todas usan el mismo método genérico sin mensajes, puede ser difícil saber *cuál* falló. Este problema es conocido como **“Assertion Roulette”**, un *test smell* donde *“puede ser difícil determinar cuál de varias aserciones en un test causó la falla”* ([Assertion Roulette & Eager Test. Assertion Roulette is a test smell… | by bytedev | Medium](https://bytedev.medium.com/assertion-roulette-eager-test-1481db0b744e#:~:text=Share)). Para evitarlo, se sugiere: (a) incluir mensajes o usar aserciones específicas que indiquen el valor esperado/actual, (b) no acumular decenas of verificaciones en un solo test – en lugar de eso, repartir en tests más enfocados si es posible, y (c) si se usan muchas aserciones juntas (por necesidad), considerar utilidades como JUnit `assertAll` para que se reporten *todas* las fallas de una vez. En general, la **legibilidad** y **mantenibilidad** de las pruebas mejora si las aserciones se entienden fácilmente. Un principio de diseño es que una persona leyendo el test debe poder captar qué condición se comprueba y qué significa su incumplimiento. *(Recursos: Artículo de LinkedIn *“prácticas recomendadas con aserciones”*, español, básico ([Procedimientos recomendados para usar aserciones en pruebas de código](https://www.linkedin.com/advice/0/what-best-practices-using-assertions-testing-6uxje?lang=es#:~:text=Otra%20pr%C3%A1ctica%20recomendada%20para%20usar,documentar%20su%20l%C3%B3gica%20y%20expectativas)); Descripción de *Assertion Roulette* en xUnit Patterns (Gerard Meszaros) – libro de referencia, 2007 (pago, avanzado) ([Assertion Roulette & Eager Test. Assertion Roulette is a test smell… | by bytedev | Medium](https://bytedev.medium.com/assertion-roulette-eager-test-1481db0b744e#:~:text=Share)).)*  
+
+- **Otras buenas prácticas** – **No duplicar lógica en las aserciones**: evitar cálculos complejos dentro del propio `assert` (por ejemplo, pasando como argumento una expresión con operaciones lógicas intrincadas). Toda la lógica debería estar en la fase Act o Arrange, dejando la aserción lo más simple posible (p. ej., comparar un resultado ya calculado con un valor esperado conocido) ([How to write better assertions: 5 Best Practices - DEV Community](https://dev.to/canro91/unit-test-best-practices-on-assertions-1mpm#:~:text=Have%20a%20single%20Act%20and,to%20assert%20on%20each%20value)) ([How to write better assertions: 5 Best Practices - DEV Community](https://dev.to/canro91/unit-test-best-practices-on-assertions-1mpm#:~:text=5,methods)). **Usar las aserciones apropiadas**: las bibliotecas de pruebas ofrecen muchas variantes, escoger la que comunique mejor la intención. Por ejemplo, en vez de `assertTrue(lista.size() == 5)`, usar `assertEquals(5, lista.size())`; en vez de comparar strings con equals, quizá usar algo como `assertTrue(texto.contains(...))` o, mejor, en JUnit usar `assertLinesMatch` o en Kotest `texto shouldContain "..."`. Algunas bibliotecas tienen clases específicas, como `StringAssert` en JUnit (4) o métodos especializados (`contains`, `startsWith`) ([How to write better assertions: 5 Best Practices - DEV Community](https://dev.to/canro91/unit-test-best-practices-on-assertions-1mpm#:~:text=Use%20the%20right%20assertion%20methods,roll%20your%20own%20assertion%20framework)) – aprovecharlos mejora la expresividad. **Mantener las pruebas limpias**: refactorizar si una misma secuencia de aserciones se repite en muchos tests (posiblemente extrayéndola a una función utilitaria o aserción custom, como se mencionó antes). Revisar periódicamente que las aserciones sigan siendo válidas cuando cambian requisitos; a veces una aserción puede volverse obsoleta o redundante y conviene eliminarla para evitar ruido ([Procedimientos recomendados para usar aserciones en pruebas de código](https://www.linkedin.com/advice/0/what-best-practices-using-assertions-testing-6uxje?lang=es#:~:text=5%20Revisa%20y%20refactoriza%20tus,aserciones%20con%20regularidad)). Finalmente, **“probar las aserciones”** en sí mismas en cierto modo: esto significa verificar que nuestras aserciones fallan cuando deben (por ejemplo, si invertimos una condición deliberadamente para asegurarnos de que el mensaje de error es útil). Aunque uno no escribe tests unitarios para las aserciones, sí puede validarlas empíricamente durante el desarrollo de la prueba. *(Recursos: Serie de artículos *“Unit Testing 101”* – Aguirre, especialmente “Don’t duplicate logic in Asserts” (DEV.to, 2021) para errores comunes ([How to write better assertions: 5 Best Practices - DEV Community](https://dev.to/canro91/unit-test-best-practices-on-assertions-1mpm#:~:text=Have%20a%20single%20Act%20and,to%20assert%20on%20each%20value)) ([How to write better assertions: 5 Best Practices - DEV Community](https://dev.to/canro91/unit-test-best-practices-on-assertions-1mpm#:~:text=5,methods)); Artículo colaborativo de LinkedIn en español – recomendaciones varias ([Procedimientos recomendados para usar aserciones en pruebas de código](https://www.linkedin.com/advice/0/what-best-practices-using-assertions-testing-6uxje?lang=es#:~:text=5%20Revisa%20y%20refactoriza%20tus,aserciones%20con%20regularidad)); **xUnit Test Patterns** – G. Meszaros, capítulo de “Smells” de pruebas, que cubre patrones como *Assertion Roulette*, *Lazy Test*, etc. (conceptual).)* */}
