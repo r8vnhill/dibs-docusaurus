@@ -23,7 +23,7 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 Las **clases e interfaces selladas** son clases abstractas que restringen la herencia a un conjunto específico de subclases, controlando las posibles extensiones. Esto las hace ideales para escenarios donde se quiere limitar las variantes posibles, como cuando se modelan estados finitos o se define una jerarquía cerrada de tipos.
 
-### Características Clave
+## 🎯 Características Clave
 
 - **Propósito**: Controlar y restringir la jerarquía de tipos. Solo las subclases definidas en el mismo paquete y módulo pueden extenderlas.
 - **Restricciones**: Las subclases deben estar dentro del mismo paquete y módulo que la clase o interfaz sellada.
@@ -32,7 +32,7 @@ Las **clases e interfaces selladas** son clases abstractas que restringen la her
     - **Patrones exhaustivos**: Facilita el uso de `when` exhaustivos, mejorando la legibilidad y evitando errores de estado no manejados.
     - **Mantenimiento**: Simplifica el mantenimiento del código, ya que no se puede extender la clase fuera de su contexto definido.
 
-### Ejemplo: Sistema de Pagos
+## 💳 Ejemplo: Sistema de Pagos
 
 ```kotlin
 sealed interface Payment
@@ -41,11 +41,11 @@ data class Cash(val amount: Int) : Payment
 data object Unpaid : Payment
 ```
 
-Aquí, `Payment` es una interfaz sellada que permite solo tres implementaciones posibles: `CreditCard`, `Cash` y `Unpaid`. Este enfoque garantiza que, al manejar pagos, siempre sabrás qué opciones pueden estar presentes.
+`Payment` define un conjunto cerrado de opciones: `CreditCard`, `Cash`, y `Unpaid`. Este enfoque garantiza que, al manejar pagos, siempre sabrás qué opciones pueden estar presentes.
 
-### Tercer Enfoque: Modelado de Estados con Clases Selladas
+### 🔁 Tercer Enfoque: Modelado de Estados con Clases Selladas
 
-Las clases selladas también son muy útiles para modelar estados de un sistema. Veamos un ejemplo donde se modelan los estados de un pedido en una tienda en línea:
+Son especialmente útiles para modelar estados finitos o flujos controlados en sistemas. Veamos un ejemplo donde se modelan los estados de un pedido en una tienda en línea:
 
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
@@ -67,7 +67,7 @@ Las clases selladas también son muy útiles para modelar estados de un sistema.
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
         ```kotlin showLineNumbers
-        package com.github.tu_usuario.deliveries
+        package com.github.username.deliveries
 
         sealed class DeliveryState {
             abstract fun signal(): String
@@ -99,7 +99,7 @@ Las clases selladas también son muy útiles para modelar estados de un sistema.
     </TabItem>
 </BoxedTabs>
 
-### Manejo con `when` Exhaustivo
+### 🧩 Manejo con `when` Exhaustivo
 
 El uso de un `when` exhaustivo asegura que todos los posibles estados sean manejados, lo que ayuda a evitar errores en tiempo de ejecución.
 
@@ -128,7 +128,7 @@ El uso de un `when` exhaustivo asegura que todos los posibles estados sean manej
     </TabItem>
 </BoxedTabs>
 
-### Uso de Reflexión con Clases Selladas
+### 🔬 Uso de Reflexión con Clases Selladas
 
 Para obtener las subclases de una clase o interfaz sellada en Kotlin, puedes usar reflexión. Para ello, es necesario añadir la dependencia de reflexión en el archivo `build.gradle.kts`:
 
@@ -138,26 +138,86 @@ dependencies {
 }
 ```
 
-Y luego puedes listar las subclases selladas:
+#### 🔍 Subclases directas
+
+La función `sealedSubclasses` de Kotlin retorna **solo las subclases directas** de una clase sellada. Si hay subclases anidadas que también son selladas, no se listan recursivamente:
 
 <BoxedTabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin
-        fun listOrderStates() = DeliveryState::class.sealedSubclasses
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin
-        fun listOrderStates() = DeliveryState::class.sealedSubclasses
+  <TabItem label={"Código esencial"} value={"Código esencial"}>
+    ```kotlin
+    fun listOrderStates(): List<KClass<out DeliveryState>> =
+        DeliveryState::class.sealedSubclasses
+    ```
+  </TabItem>
+  <TabItem label={"Código completo"} value={"Código completo"}>
+    ```kotlin
+    import kotlin.reflect.KClass
 
-        fun main() {
-            listOrderStates().forEach { println(it.simpleName) }
-        }
-        ```
-    </TabItem>
+    fun listOrderStates(): List<KClass<out DeliveryState>> =
+        DeliveryState::class.sealedSubclasses
+
+    fun main() {
+        listOrderStates().forEach { println(it.simpleName) }
+    }
+    ```
+  </TabItem>
 </BoxedTabs>
 
-<Exercise title={"Sistema multimedia"}>
+#### 🧬 Subclases directas e indirectas (recursivo)
+
+Si quieres obtener **todas** las subclases posibles —incluyendo las indirectas—, puedes usar una función recursiva como la siguiente:
+
+<BoxedTabs>
+  <TabItem label={"Código esencial"} value={"Código esencial"}>
+    ```kotlin
+    fun <T : Any> allSealedVariants(k: KClass<T>): List<KClass<out T>> =
+        k.sealedSubclasses.flatMap {
+            listOf(it) + if (it.isSealed) allSealedVariants(it as KClass<T>) else emptyList()
+        }
+    ```
+  </TabItem>
+  <TabItem label={"Código completo"} value={"Código completo"}>
+    ```kotlin showLineNumbers
+    import kotlin.reflect.KClass
+    import com.github.username.deliveries.*
+
+    fun <T : Any> allSealedVariants(k: KClass<T>): List<KClass<out T>> =
+        k.sealedSubclasses.flatMap {
+            listOf(it) + if (it.isSealed) allSealedVariants(it as KClass<T>) else emptyList()
+        }
+
+    fun main() {
+        allSealedVariants(DeliveryState::class).forEach {
+            println(it.simpleName)
+        }
+    }
+    ```
+  </TabItem>
+</BoxedTabs>
+
+:::note
+
+Esta técnica es útil si estás desarrollando herramientas de análisis estático o DSLs internos que necesitan conocer todas las variantes de un tipo cerrado.
+
+:::
+
+## ⚖️ Beneficios y Limitaciones
+
+<ProCons>
+  <Pros>
+    - Facilitan el uso de `when` exhaustivo sin `else`.
+    - Evitan extensiones fuera del módulo/paquete previsto.
+    - Buen reemplazo para jerarquías de tipos + `enum class`.
+  </Pros>
+  <Cons>
+    - Menos flexibles si la jerarquía debe ser abierta o extensible por otres.
+    - Requieren reflexión si quieres inspeccionar dinámicamente sus subtipos.
+  </Cons>
+</ProCons>
+
+## 🎧 Ejercicio: Sistema multimedia
+
+<Exercise>
     Desarrolla un sistema que maneje distintos tipos de contenido multimedia. Define una interfaz sellada `Media` que represente diferentes tipos de contenido, como `Music` y `Video`. La interfaz debe incluir dos métodos: `play()` y `pause()`.
 
     Instrucciones:
@@ -166,7 +226,7 @@ Y luego puedes listar las subclases selladas:
 
     2. **Clases `Music` y `Video`**: Implementa dos clases: `Music`, que tendrá un método adicional `skip()`, y `Video`, con un método `fastForward()`.
 
-    ### Ejemplo de Uso
+    #### Ejemplo de Uso
 
     ```kotlin showLineNumbers
     fun main() {
@@ -220,10 +280,25 @@ Y luego puedes listar las subclases selladas:
     </Solution>
 </Exercise>
 
-## Conclusión
+## 🎯 Conclusiones
 
-Las **clases e interfaces selladas** en Kotlin ofrecen un poderoso mecanismo para controlar la herencia y definir jerarquías limitadas de tipos. Al garantizar que todas las subclases sean conocidas en tiempo de compilación, mejoran la seguridad y el mantenimiento del código, permitiendo el uso de patrones exhaustivos como `when`. Este enfoque es ideal para modelar estados finitos o escenarios donde las opciones están claramente definidas y no deben expandirse sin control. Al usarlas, puedes crear código más robusto, legible y fácil de mantener.
+Las **clases e interfaces selladas** en Kotlin permiten modelar jerarquías cerradas y controladas de tipos. Este enfoque potencia la expresividad del lenguaje cuando trabajamos con dominios limitados y bien definidos, como flujos de estados, eventos, resultados, o entidades de un sistema. Al restringir la extensión fuera de su módulo y paquete, facilitan el uso de `when` exhaustivo, reducen errores y hacen el código más claro y mantenible.
 
+### 🔑 Puntos clave
+
+- Las clases e interfaces selladas restringen su jerarquía a subclases definidas dentro del mismo módulo y paquete.
+- Permiten usar `when` sin cláusula `else`, obligando a manejar todos los casos explícitamente.
+- Son ideales para representar alternativas finitas y conocidas, como estados o comandos.
+- La función `sealedSubclasses` permite inspeccionar la jerarquía en tiempo de ejecución, pero solo devuelve subclases directas.
+- Es posible obtener todas las subclases (directas e indirectas) usando reflexión recursiva.
+
+### 🧰 ¿Qué nos llevamos?
+
+Al trabajar con clases e interfaces selladas, no solo obtenemos una herramienta técnica para restringir jerarquías de tipos: también incorporamos una forma de pensar que prioriza la claridad, la exhaustividad y el control sobre nuestro modelo de dominio. Nos obliga a ser explícitas sobre las variantes posibles, a prever todos los escenarios, y a construir estructuras más robustas y sostenibles.
+
+En lugar de abrir la puerta a extensiones arbitrarias, las clases selladas nos invitan a delimitar nuestro universo de casos válidos. Esto no solo reduce errores, sino que hace que nuestro código cuente una historia más coherente, donde cada alternativa está prevista y cada decisión, justificada.
+
+Al final, trabajar con clases selladas es una declaración de intención: queremos sistemas más predecibles, más legibles, y más fáciles de evolucionar con el tiempo. Y en ese camino, Kotlin nos da las herramientas —y el lenguaje— para lograrlo.
 
 <div className="language-card-container">
     <LanguageCard
@@ -248,22 +323,8 @@ Las **clases e interfaces selladas** en Kotlin ofrecen un poderoso mecanismo par
     />
 </div>
 
-<References references={[
-    {
-        title: "4. Classes, objects, and interfaces",
-        bookTitle: "Kotlin in action",
-        pages: "67–102",
-        location: "Shelter Island, NY",
-        publisher: "Manning Publications Co",
-        year: "2017",
-        type: "book",
-        author: 'Dmitry Jemerov, Svetlana Isakova',
-    },
-    {
-        accessedDate: '29 de septiembre de 2024',
-        siteOrAuthor: 'Kotlin Help',
-        title: 'Sealed Classes and Interfaces | Kotlin',
-        type: 'web',
-        url: 'https://kotlinlang.org/docs/sealed-classes.html',
-    },
-]}/>
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+🌐 Sealed classes and interfaces | Kotlin. (s. f.). Kotlin Help. Recuperado 22 de marzo de 2025, de https://kotlinlang.org/docs/sealed-classes.html
