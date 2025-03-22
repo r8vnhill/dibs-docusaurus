@@ -15,234 +15,171 @@ import GithubRepoLink from '@site/src/components/GithubRepoLink'
 import { LanguageCard, AssertJCard } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
-<ReadingTime/>
-<GithubRepoLink user={"r8vnhill"} repo={"assertions-kt"}/>
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="testing-kt" />
+<ModuleSetup module='customMatchers' task='setupCustomMatchersModule'>
+    ```kotlin showLineNumbers
+    import tasks.ModuleSetupTask
 
-<details>
-    <summary>
-        Comencemos por crear un módulo para la lección...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path 'matchers' -ItemType 'Directory' -Force
-            '// Intentionally left blank' |
-                Out-File -FilePath 'matchers\build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            md matchers
-            '// Intentionally left blank' > 'matchers\build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            mkdir matchers
-            echo '// Intentionally left blank' > 'matchers/build.gradle.kts'
-            ```
-        </TabItem>
-    </BoxedTabs>
-
-    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
-</details>
-
-Los **matchers personalizados** permiten definir condiciones específicas que no están cubiertas por los matchers estándar de Kotest.
-
-En Kotest, todos los matchers implementan la interfaz `Matcher<T>`, donde `T` es el tipo de valor que se está probando. Esta interfaz contiene un método abstracto `test(T)`, que retorna un objeto `MatcherResult`.
-
-## Ejemplo de Matcher Personalizado
-
-:::note
-
-Definiremos los matchers solo para el módulo `matchers`, pero podrías colocarlos en un módulo compartido como `test-utils` si quieres reutilizarlos en otros módulos.
-
-:::
-
-### Definir un Matcher Personalizado
-
-<details>
-    <summary>
-        Si quieres crear el archivo desde la terminal...
-    </summary>
-
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-            
-            ```powershell
-            $MatchersDir = "matchers\src\test\kotlin\$Group\matchers"
-            New-Item -Path "$MatchersDir\BeEven.kt" -ItemType 'File' -Force
-            ```
-        </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-            
-            ```powershell
-            $MatchersDir = "matchers\src\test\kotlin\$Group\matchers"
-            ni "$MatchersDir\BeEven.kt" -i 'f' -f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            GROUP="com/github/username"
-            ```
-            
-            ```powershell
-            MATCHERS_DIR="matchers/src/test/kotlin/$GROUP/matchers"
-            mkdir -p $MATCHERS_DIR
-            touch "$MATCHERS_DIR/BeEven.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
-
-A continuación, implementaremos un matcher personalizado en **Kotest** para verificar si un número es par:
-
-<BoxedTabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers title="matchers/src/test/kotlin/com/github/username/matchers/BeEven.kt"
-        fun beEven() = Matcher<Int> { value ->
-            MatcherResult(
-                passed = value % 2 == 0,
-                failureMessageFn = { "$value should be even" },
-                negatedFailureMessageFn = { "$value should not be even" }
+    tasks.register<ModuleSetupTask>("setupCustomMatchersModule") {
+        description = "Creates the base module and files for the custom matchers lesson"
+        module.set("matchers:custom")
+        doLast {
+            createFiles(
+                "metrics",
+                main to "IdentifierGenerator.kt",
+                test to "IdentifierGeneratorTest.kt",
+            )
+            createFiles(
+                "metrics.matchers",
+                test to "beEven.kt",
+                test to "beCloseTo.kt",
             )
         }
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="matchers/src/test/kotlin/com/github/username/matchers/BeEven.kt"
-        package com.github.username.matchers
+    }
+    ```
+</ModuleSetup>
 
-        import io.kotest.matchers.Matcher
-        import io.kotest.matchers.MatcherResult
+Cuando trabajamos con tests, los matchers nos permiten expresar expectativas de forma **clara y legible**: esperamos que una colección esté vacía, que un número sea mayor que otro, que un string contenga cierto texto, etc.
 
-        fun beEven() = Matcher<Int> { value ->
-            MatcherResult(
-                passed = value % 2 == 0,
-                failureMessageFn = { "$value should be even" },
-                negatedFailureMessageFn = { "$value should not be even" }
-            )
-        }
-        ```
-    </TabItem>
-</BoxedTabs>
+Pero no todos los casos están cubiertos por los matchers estándar. ¿Qué pasa si queremos verificar si un número es primo? ¿O si un objeto cumple una condición específica de nuestra lógica de dominio?
 
-### Usar el Matcher Personalizado en Pruebas
+Ahí es donde entran los **matchers personalizados**: funciones reutilizables que nos permiten **extender el sistema de aserciones de Kotest** para expresar verificaciones propias de nuestra aplicación o librería.
 
-<details>
-    <summary>
-        Si quieres crear el archivo desde la terminal...
-    </summary>
+## 🧪 Ejemplo de Matcher Personalizado
 
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path "$MatchersDir\BeEvenTest.kt" -ItemType 'File' -Force
-            ```
-        </TabItem>
-        <TabItem value={"Windows (corto)"} label={"Windows (corto)"}>
-            ```powershell
-            ni "$MatchersDir\BeEvenTest.kt" -i 'File' -f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            touch "$MATCHERS_DIR/BeEvenTest"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
+En Kotest, todos los matchers implementan la interfaz `Matcher<T>`, donde `T` representa el tipo de valor que se desea verificar. Para crear un matcher personalizado, basta con definir el método `test`, que retorna un `MatcherResult` con el resultado de la verificación y los mensajes apropiados en caso de éxito o error.
 
-Ahora, utilizamos el matcher `beEven()` en las pruebas para verificar si los números son pares:
+Imaginemos un caso real: estás desarrollando una **biblioteca de métricas** que genera identificadores para eventos de rendimiento. Por diseño, estos identificadores deben ser **números pares** (quizás por razones de alineación en memoria o consistencia del sistema). Para expresar esta regla de negocio de forma clara y reutilizable en tus pruebas, puedes definir un matcher llamado `beEven()`.
 
 <BoxedTabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers title="matchers/src/test/kotlin/com/github/username/BeEvenTest.kt"
-        "Even numbers" - {
-            withData(2, 4, 6, 8, 10) { number ->
-                number should beEven()
-            }
-        }
+  <TabItem label={"Código esencial"} value={"Código esencial"}>
+    ```kotlin showLineNumbers
+    fun beEven() = Matcher<Int> { value ->
+        MatcherResult(
+            passed = value % 2 == 0,
+            failureMessageFn = { "$value should be even" },
+            negatedFailureMessageFn = { "$value should not be even" }
+        )
+    }
+    ```
+  </TabItem>
+  <TabItem label={"Código completo"} value={"Código completo"}>
+    ```kotlin showLineNumbers title="matchers/custom/src/main/kotlin/com/github/username/metrics/matchers/beEven.kt"
+    package com.github.username.metrics.matchers
 
-        "Odd numbers" - {
-            withData(1, 3, 5, 7, 9) { number ->
-                number shouldNot beEven()
-            }
-        }
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers title="matchers/src/test/kotlin/com/github/username/BeEvenTest.kt"
-        package com.github.username.matchers
+    import io.kotest.matchers.Matcher
+    import io.kotest.matchers.MatcherResult
 
-        import io.kotest.core.spec.style.FreeSpec
-        import io.kotest.datatest.withData
-        import io.kotest.matchers.should
-        import io.kotest.matchers.shouldNot
-
-        class BeEvenTest : FreeSpec({
-            "Even numbers" - {
-                withData(2, 4, 6, 8, 10) { number ->
-                    number should beEven()
-                }
-            }
-
-            "Odd numbers" - {
-                withData(1, 3, 5, 7, 9) { number ->
-                    number shouldNot beEven()
-                }
-            }
-        })
-        ```
-    </TabItem>
+    fun beEven() = Matcher<Int> { value ->
+        MatcherResult(
+            passed = value % 2 == 0,
+            failureMessageFn = { "$value should be even" },
+            negatedFailureMessageFn = { "$value should not be even" }
+        )
+    }
+    ```
+  </TabItem>
 </BoxedTabs>
 
-:::note
+<Explanation>
+    Este matcher define una regla de negocio simple pero importante: que todos los identificadores generados deben ser pares. La función `beEven()` devuelve un objeto `Matcher<Int>`, que verifica esta condición y entrega mensajes personalizados para los casos de éxito y de error.
 
-Aunque aquí reimplementamos `beEven()` para propósitos didácticos, **Kotest** ya lo incluye dentro de su amplia gama de **matchers**. Para acceder a ellos, puedes agregar esta dependencia en tu archivo `libs.versions.toml`:
+    Esto permite que las pruebas no solo validen el comportamiento de la biblioteca, sino que también comuniquen con claridad qué propiedad se espera del sistema. Al encapsular la lógica dentro de un matcher reutilizable, evitamos repetir código y logramos que las pruebas sean más expresivas y alineadas con el dominio del problema.
+</Explanation>
 
-{/* TODO: WAT??! */}
-```toml title="libs.versions.toml"
-# ...
+Ahora puedes utilizarlo en una prueba que verifique que todos los identificadores generados son pares:
+
+<BoxedTabs>
+  <TabItem label={"Código esencial"} value={"Código esencial"}>
+    ```kotlin showLineNumbers
+    withData(ids) { id ->
+        id should beEven()
+    }
+    ```
+  </TabItem>
+  <TabItem label={"Código completo"} value={"Código completo"}>
+    ```kotlin showLineNumbers title="matchers/custom/src/test/kotlin/com/github/username/metrics/IdentifierGeneratorTest.kt"
+    package com.github.username.metrics
+
+    import com.github.username.metrics.matchers.beEven
+    import io.kotest.core.spec.style.FreeSpec
+    import io.kotest.datatest.withData
+    import io.kotest.matchers.should
+
+    class IdentifierGeneratorTest : FreeSpec({
+        "Given an identifier generator for performance events" - {
+            val generator = IdentifierGenerator()
+
+            "when it generates a batch of IDs" - {
+                "then all IDs should be even" - {
+                    withData(1, 2, 10) { size ->
+                        val ids = generator.generateBatch(size)
+                        withData(ids) { id ->
+                            id should beEven()
+                        }
+                    }
+                }
+            }
+        }
+    })
+    ```
+
+    ```kotlin showLineNumbers title="matchers/custom/src/main/kotlin/com/github/username/metrics/IdentifierGenerator.kt"
+    package com.github.username.metrics
+
+    class IdentifierGenerator {
+        fun generateBatch(size: Int) = List(size) { it * 2 }
+    }
+    ```
+  </TabItem>
+</BoxedTabs>
+
+:::note Nota
+
+Aunque aquí reimplementamos `beEven()` como ejemplo didáctico, **Kotest** ya incluye este matcher en su conjunto estándar. Puedes usarlo directamente incluyendo el módulo `kotest-assertions-core` en tu proyecto:
+
+```toml title="gradle/libs.versions.toml"
 [libraries]
-# ...
-kotest-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest" }
-# ...
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest-framework" }
+
 [bundles]
 kotest = ["kotest-runner-junit5", "kotest-datatest", "kotest-assertions-core"]
 ```
 
 :::
 
-<Exercise title={"Igualdad con Tolerancia"}>
-    Implementa un matcher ``beCloseTo: (Double, Double) -> Matcher<Double>`` que compare si dos valores son iguales con una tolerancia arbitraria. Por ejemplo, ``0.1 shoul beCloseTo(0.2, 0.01)`` debería ser verdadero si la diferencia entre ``0.1`` y ``0.2`` es menor a ``0.01``.
+## 📏 Ejercicio: Matcher de cercanía
+
+<Exercise>
+    Supón que estás desarrollando una **biblioteca de métricas** o **análisis numérico**, y necesitas verificar si dos valores de punto flotante son suficientemente cercanos. Esto es común en cálculos donde intervienen aproximaciones, operaciones con decimales o resultados de funciones matemáticas que pueden acumular pequeños errores por precisión.
+
+    Implementa un matcher `beCloseTo: (Double, Double) -> Matcher<Double>` que permita comparar si un valor `Double` es suficientemente cercano a otro, dentro de una **tolerancia** especificada. Por ejemplo, `0.1 should beCloseTo(0.2, 0.01)` debería ser falso, pero `0.1 should beCloseTo(0.11, 0.02)` debería pasar.
+
+    Este matcher puede ser útil en bibliotecas que procesan medidas físicas, estadísticas o valores que provienen de simulaciones, donde rara vez se espera una igualdad exacta.
 
     <Hint hints={[
-        <> Puede serte de utilidad la función <code>abs</code> de la librería estándar de Kotlin.</>,
+        <>Puede serte de utilidad la función <code>kotlin.math.abs: (Double) -&gt; Double</code> de Kotlin, que retorna el valor absoluto de un número.</>,
     ]}/>
     <Solution>
-        ```kotlin showLineNumbers
+        ```kotlin showLineNumbers title="matchers/custom/src/test/kotlin/com/github/username/metrics/matchers/beCloseTo.kt"
+        package com.github.username.metrics.matchers
+
+        import io.kotest.matchers.Matcher
+        import io.kotest.matchers.MatcherResult
+        import kotlin.math.abs
+
         fun beCloseTo(expected: Double, tolerance: Double) = Matcher<Double> { value ->
             MatcherResult(
                 passed = abs(value - expected) < tolerance,
                 failureMessageFn = {
-                    "$value should be in the vicinity of $expected within a tolerance of ${
-                        (expected - tolerance)..(expected + expected)
-                    }"
+                    "$value should be in the vicinity of $expected within a tolerance of $tolerance"
                 },
                 negatedFailureMessageFn = {
-                    "$value should not be in the vicinity of $expected within a tolerance of ${
-                        (expected - tolerance)..(expected + expected)
-                    }"
+                    "$value should not be in the vicinity of $expected within a tolerance of $tolerance"
                 }
             )
         }
@@ -250,20 +187,26 @@ kotest = ["kotest-runner-junit5", "kotest-datatest", "kotest-assertions-core"]
     </Solution>
 </Exercise>
 
-## ¿Qué Aprendimos?
+## 🎯 Conclusiones
 
-En esta lección, hemos explorado los **matchers personalizados** en Kotest y su utilidad para crear condiciones específicas que no están cubiertas por los matchers estándar. Aprendimos cómo implementar y usar matchers personalizados para casos específicos, como la validación de números pares con el matcher `beEven()`.
+Los matchers personalizados son una herramienta clave para escribir pruebas expresivas y alineadas con el dominio de tu biblioteca. Permiten capturar reglas de negocio específicas, comunicar expectativas con claridad y reducir la repetición de código en los tests.
 
-### Puntos clave:
+Al encapsular la lógica de verificación dentro de funciones reutilizables, también se facilita el mantenimiento y la evolución de la biblioteca, ya que las aserciones pueden mantenerse sincronizadas con el comportamiento esperado del sistema.
 
-1. **Matchers Personalizados**: Nos permiten definir reglas personalizadas para validar condiciones específicas que no están disponibles en los matchers predeterminados de Kotest. Estos matchers proporcionan mayor flexibilidad para adaptarse a escenarios particulares en las pruebas.
-2. **Interfaz `Matcher<T>`**: Todos los matchers en Kotest implementan la interfaz `Matcher<T>`, lo que facilita la creación de nuevos matchers reutilizables. La interfaz se basa en el método `test(T)` que devuelve un `MatcherResult`, indicando si la condición de prueba se ha cumplido o no.
-3. **Reutilización**: Aunque los matchers personalizados como `beEven()` o `beCloseTo()` pueden implementarse para casos particulares, también pueden organizarse en módulos compartidos como `test-utils` para que estén disponibles en otros proyectos o módulos.
-4. **Flexibilidad**: La posibilidad de definir matchers como `beCloseTo()` nos permite implementar comparaciones avanzadas (por ejemplo, la igualdad con tolerancia en valores numéricos) que son útiles en escenarios que requieren cálculos precisos.
+### 🔑 Puntos clave
 
----
+1. **Extensibilidad natural**  
+   Kotest permite crear nuevos matchers fácilmente, integrándolos sin fricción con el resto del framework.
+2. **Legibilidad y mantenimiento**  
+   Los matchers personalizados mejoran la claridad de las pruebas al expresar reglas de negocio en el lenguaje del dominio.
+3. **Aplicabilidad real**  
+   Son especialmente útiles en bibliotecas con reglas específicas o cálculos numéricos donde los matchers genéricos no son suficientes.
 
-Este enfoque no solo facilita la creación de pruebas más expresivas y adaptadas, sino que también promueve la reutilización del código, aumentando la robustez y flexibilidad de nuestras pruebas.
+### 🧰 ¿Qué nos llevamos?
+
+Al construir bibliotecas de software, no basta con que el código “funcione”: también debemos asegurar que su comportamiento sea **confiable, claro y validable**. Los matchers personalizados nos permiten transformar reglas de negocio en aserciones expresivas, haciendo que las pruebas no solo verifiquen comportamientos, sino que comuniquen **intención**.
+
+A lo largo de esta sección vimos cómo extender Kotest con funciones reutilizables que elevan el nivel de abstracción en nuestras pruebas. Al hacerlo, nuestras bibliotecas se benefician de una **base de tests más robusta, alineada con el dominio y fácil de mantener**. En definitiva, aprendimos que probar no es solo verificar que algo no se rompa, sino también afirmar, con claridad, qué se espera que haga.
 
 <div className="language-card-container">
     <AssertJCard link="/docs/testing/matchers/custom/assertj"/>
@@ -284,12 +227,9 @@ Este enfoque no solo facilita la creación de pruebas más expresivas y adaptada
     />
 </div>
 
-<References references={[
-    {
-        accessedDate: '23 de septiembre de 2024',
-        siteOrAuthor: 'Kotest',
-        title: 'Custom Matchers | Kotest',
-        type: 'web',
-        url: 'https://kotest.io/docs/assertions/custom-matchers.html',
-    }
-]}/>
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+🌐 Custom Matchers | Kotest. (s. f.). Recuperado 22 de marzo de 2025, de https://kotest.io/docs/assertions/custom-matchers.html
