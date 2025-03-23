@@ -1,0 +1,230 @@
+---
+title: BDD con RSpec
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+Ya exploramos cómo escribir especificaciones BDD en Kotlin usando Kotest. Ahora veremos cómo se implementa un enfoque similar usando [RSpec](https://rspec.info/), el framework de pruebas más utilizado en Ruby, especialmente en el desarrollo de bibliotecas y aplicaciones web con Ruby on Rails.
+
+A lo largo de la comparación, veremos similitudes en estilo y estructura, pero también señalaremos diferencias clave que pueden influir al elegir herramientas según el lenguaje y el dominio del proyecto.
+
+## 🧪 Registro de usuarixs: estructura básica
+
+Tanto Kotest como RSpec permiten una sintaxis descriptiva. En RSpec, las pruebas también se estructuran con `describe`, `context` y `it`, que corresponden conceptualmente a `given`, `when` y `then`.
+
+```ruby showLineNumbers
+require 'user_service'
+
+RSpec.describe UserService do
+  context "when registering a new user" do
+    it "adds the user to the database" do
+      service = UserService.new
+      service.register("saiki.kusuo", "pkpsychic1000")
+      expect(service.users).to include("saiki.kusuo")
+    end
+  end
+end
+```
+
+<Explanation>
+    - **Estructura Given/When/Then**: En RSpec, la combinación de `describe`, `context` e `it` permite modelar pruebas siguiendo una estructura similar a `given`, `when`, `then`. En este ejemplo:
+        - `describe` define el sujeto bajo prueba (`UserService`).
+        - `context` representa la condición inicial (cuando se registra un nuevo usuarix).
+        - `it` describe el comportamiento esperado (debe añadirse a la base de datos).
+    - **Legibilidad natural**: La sintaxis de RSpec favorece la lectura fluida y la escritura expresiva, permitiendo que las pruebas se entiendan fácilmente como especificaciones del comportamiento del sistema.
+    - **Estado aislado**: Al crear una nueva instancia de `UserService` dentro del test, se garantiza un entorno limpio para cada prueba, algo equivalente al uso de `beforeEach` en Kotest.
+</Explanation>
+
+## ⚠️ Manejo de duplicados
+
+```ruby showLineNumbers
+RSpec.describe UserService do
+  context "when registering an existing user" do
+    it "raises an exception" do
+      service = UserService.new
+      service.register("spawn", "hellpowers")
+      expect {
+        service.register("spawn", "hellpowers")
+      }.to raise_error(ArgumentError, "User already exists")
+    end
+  end
+end
+```
+
+<Explanation>
+
+Este test verifica que el servicio no permita registrar un usuario que ya existe. Primero se registra el usuario con un nombre y contraseña. Luego, se intenta registrarlo nuevamente, y se espera que eso genere una excepción.
+
+La línea `expect { ... }.to raise_error(...)` le indica a RSpec que el bloque de código dentro de las llaves debe lanzar una excepción. En este caso, se espera que sea una excepción de tipo `ArgumentError`, y que el mensaje de error sea `"User already exists"`. Esto permite verificar no solo que se lanzó una excepción, sino también que fue la correcta y con el mensaje esperado.
+
+</Explanation>
+
+Por supuesto. Aquí tienes la sección actualizada, contextualizada en el desarrollo de bibliotecas de software:
+
+## ♻️ Reutilización con `shared_examples` y `shared_context`
+
+Al desarrollar bibliotecas de software, es común que distintas implementaciones deban cumplir con un contrato o comportamiento común. RSpec permite reutilizar fragmentos de pruebas mediante `shared_examples` y `shared_context`, lo que facilita validar que distintas clases de la biblioteca respeten los mismos requisitos.
+
+### `shared_examples`
+
+`shared_examples` permite definir ejemplos reutilizables para comprobar que varias clases cumplen con el mismo comportamiento. Esto es especialmente útil cuando tu biblioteca define una interfaz (o protocolo informal) que varias implementaciones deben respetar.
+
+```ruby
+# En una biblioteca de validación de datos:
+RSpec.shared_examples "a constraint" do
+  it "returns a valid result for valid input" do
+    expect(subject.validate("valid input")).to be_success
+  end
+
+  it "returns an error for invalid input" do
+    expect(subject.validate(nil)).to be_failure
+  end
+end
+
+# Uso con una implementación concreta
+RSpec.describe PresenceConstraint do
+  subject { described_class.new }
+  it_behaves_like "a constraint"
+end
+```
+
+<Explanation>
+    En este ejemplo, una biblioteca de validación define una serie de pruebas compartidas bajo el nombre `"a constraint"`. Cualquier clase que implemente el contrato de `Constraint` puede incluir estos ejemplos con `it_behaves_like`.
+
+    Esto asegura que todas las implementaciones respondan correctamente a los mismos casos de uso, sin tener que duplicar las pruebas. Esta técnica permite escalar la cobertura de la biblioteca de forma consistente y facilita agregar nuevas implementaciones que respeten el comportamiento esperado.
+</Explanation>
+
+### `shared_context`
+
+`shared_context` es útil para compartir configuración común entre distintas especificaciones. Por ejemplo, si una biblioteca requiere registrar objetos o configurar componentes, un contexto compartido puede reducir la repetición de código.
+
+```ruby
+# En una biblioteca que maneja usuarios registrados:
+RSpec.shared_context "with registered user" do
+  let(:service) { UserService.new }
+  before { service.register("arthur", "ni!") }
+end
+
+RSpec.describe UserService do
+  include_context "with registered user"
+
+  it "does not allow duplicate registration" do
+    expect {
+      service.register("arthur", "ni!")
+    }.to raise_error(ArgumentError)
+  end
+end
+```
+
+<Explanation>
+    Este ejemplo define un contexto compartido llamado `"with registered user"` que prepara el sistema con un usuario ya registrado. Al incluir este contexto con `include_context`, cualquier prueba que lo necesite puede asumir que el usuario `"arthur"` ya está presente en el sistema.
+
+    Esto permite escribir pruebas más concisas, evitando repetir la configuración inicial en cada especificación. Además, al centralizar esta lógica en un solo lugar, se facilita el mantenimiento y la evolución del código de pruebas en bibliotecas que manejan múltiples escenarios con usuarios registrados.
+</Explanation>
+
+## 🔐 Autenticación
+
+```ruby showLineNumbers
+RSpec.describe UserService do
+  before(:each) do
+    @service = UserService.new
+    @service.register("ichigo", "shinigami123")
+  end
+
+  context "when authenticating an existing user" do
+    it "returns true for valid credentials" do
+      expect(@service.authenticate("ichigo", "shinigami123")).to eq(true)
+    end
+
+    it "returns false for wrong password" do
+      expect(@service.authenticate("ichigo", "wrongpass")).to eq(false)
+    end
+  end
+
+  context "when authenticating a non-existent user" do
+    it "raises an exception" do
+      expect {
+        @service.authenticate("aizen", "anything")
+      }.to raise_error(ArgumentError, "User not found")
+    end
+  end
+end
+```
+
+## 📊 Resumen comparativo
+
+| **Aspecto**                        | **RSpec (Ruby)**                                                                 | **Kotest (Kotlin)**                                                               |
+|-----------------------------------|----------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
+| **Lenguaje**                      | Ruby                                                                             | Kotlin                                                                            |
+| **Estilo BDD**                    | Basado en `describe`, `context`, `it`                                           | Varios estilos disponibles; en esta lección se usó `FreeSpec`                    |
+| **Estructura Given/When/Then**   | Implícita a través de `describe/context/it`                                     | Implícita en la estructura jerárquica de bloques (`"given" - { "when" - { ... }`)|
+| **Reutilización de pruebas**     | `shared_examples`, `shared_context`                                             | `include`, `should behave like`, y funciones auxiliares comunes                  |
+| **Manejo de excepciones**        | `expect { ... }.to raise_error`                                                 | `shouldThrow<T> { ... }`                                                         |
+| **Inicialización por prueba**    | `before(:each)`                                                                 | `beforeEach`                                                                      |
+| **Popularidad**                  | Amplio uso en Ruby on Rails y bibliotecas Ruby                                  | Muy usado en proyectos Kotlin multiplataforma, Android y bibliotecas modernas    |
+| **Legibilidad**                  | Alta legibilidad, cercano al lenguaje natural                                   | Alta legibilidad, especialmente con estilos como `FreeSpec`                      |
+| **Integración con herramientas** | Compatible con herramientas estándar de Ruby (Rails, Rake, etc.)                | Integración con Gradle, IntelliJ, Android Studio, etc.                           |
+| **Madurez del ecosistema**       | Muy maduro, con muchos años de evolución y comunidad establecida                | En crecimiento, con fuerte soporte en el ecosistema Kotlin                       |
+
+### ✅ Beneficios / ❌ limitaciones
+
+<ProCons>
+    <Pros>
+        - **Sintaxis expresiva y legible**: Permite escribir pruebas que se leen como especificaciones funcionales, facilitando la comprensión incluso para personas no técnicas.
+        - **Soporte maduro para BDD**: Fue uno de los primeros frameworks en adoptar y fomentar el estilo BDD, con convenciones establecidas como `describe`, `context` e `it`.
+        - **Reutilización efectiva**: Herramientas como `shared_examples` y `shared_context` permiten mantener las pruebas DRY, especialmente útil en bibliotecas que implementan múltiples variantes de un mismo contrato.
+        - **Integración sólida con herramientas Ruby**: Funciona perfectamente en entornos Ruby/Rails, lo que lo hace ideal para bibliotecas orientadas a ese ecosistema.
+        - **Gran comunidad y documentación**: RSpec cuenta con una comunidad activa y una extensa base de ejemplos y documentación, facilitando el aprendizaje y resolución de problemas.
+    </Pros>
+    <Cons>
+        - **Dependencia del ecosistema Ruby**: Su utilidad se reduce fuera del entorno Ruby, por lo que no es adecuado si la biblioteca debe ser multiplataforma o interoperar con otros lenguajes.
+        - **Curva de aprendizaje inicial**: Aunque su sintaxis es clara, entender completamente su DSL y todas sus capacidades (como `let`, `subject`, hooks, etc.) puede tomar tiempo para personas nuevas en Ruby o RSpec.
+        - **Sobrecarga en proyectos pequeños**: Para bibliotecas simples, la estructura detallada de BDD con RSpec puede sentirse innecesaria o demasiado formal.
+        - **Ejecución más lenta en grandes suites**: En proyectos con muchas pruebas, el rendimiento de RSpec puede ser menor comparado con frameworks más minimalistas, especialmente si se abusa de `before`/`let` anidados.
+    </Cons>
+</ProCons>
+
+## 🎯 Conclusiones
+
+RSpec es una herramienta poderosa y expresiva para escribir especificaciones orientadas al comportamiento en proyectos Ruby. Su diseño favorece la legibilidad, la colaboración y la claridad, lo que lo hace ideal para bibliotecas que necesitan comunicar su comportamiento de forma precisa.
+
+Aunque originalmente popularizado en el contexto de Rails, RSpec también se adapta muy bien al desarrollo de bibliotecas de software. Sus capacidades como `shared_examples` y `shared_context` permiten construir suites de pruebas reutilizables, escalables y alineadas con principios de diseño sólido.
+
+Sin embargo, su utilidad está fuertemente ligada al ecosistema Ruby, por lo que su aplicación fuera de este contexto puede ser limitada. Además, su flexibilidad puede volverse una desventaja si no se usa con disciplina, especialmente en proyectos pequeños o con equipos nuevos en Ruby.
+
+### 🔑 Puntos clave
+
+- RSpec modela las pruebas siguiendo la estructura BDD con `describe`, `context` e `it`, lo que permite escribir especificaciones legibles y alineadas con el comportamiento esperado.
+- La estructura `expect { ... }.to raise_error` es fundamental para validar condiciones excepcionales, especialmente en bibliotecas donde la robustez ante entradas inválidas es crítica.
+- Las herramientas de reutilización como `shared_examples` y `shared_context` ayudan a reducir la duplicación y reforzar contratos comunes en múltiples implementaciones.
+- La claridad de las pruebas escritas en RSpec puede servir como documentación viviente del sistema, facilitando el mantenimiento y la colaboración entre personas técnicas y no técnicas.
+
+### 🧰 ¿Qué nos llevamos?
+
+Adoptar RSpec con enfoque BDD no es solo una decisión técnica, sino también una apuesta por mejorar la comunicación, la claridad y la calidad del software desde su diseño. En el desarrollo de bibliotecas, donde múltiples implementaciones pueden compartir un mismo contrato, la expresividad de RSpec y sus herramientas para la reutilización permiten construir pruebas que no solo verifican el código, sino que lo explican.
+
+Al escribir pruebas que se leen como especificaciones, reforzamos la idea de que el comportamiento es el centro del diseño. Nos permite anticipar errores, capturar expectativas y generar confianza, tanto en el código como en las personas que lo usan o lo mantienen.
+
+En última instancia, lo que nos llevamos no es solo un conjunto de herramientas, sino una forma más deliberada y empática de construir software: pensando en cómo se comporta, cómo se comunica y cómo evoluciona junto a quienes lo utilizan.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+📚 Martin, R. C., & Carter, J. (Eds.). (2011). The Case for BDD. En D. Chelimsky, D. Astels, D. Zach, A. Hellesøy, B. Helmkamp, & D. North, The RSpec book: Behaviour-driven development with RSpec, Cucumber, and friends (P2.0 printing, version: 2011-4-7, pp. 89–103). The Pragmatic Bookshelf.
