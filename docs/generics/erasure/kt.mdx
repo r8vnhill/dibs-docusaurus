@@ -23,7 +23,7 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 El uso de genéricos permite que nuestras funciones y estructuras de datos sean más reutilizables, expresivas y seguras. Podemos escribir código que funciona para múltiples tipos sin duplicación, y el compilador nos ayuda a prevenir errores.
 
-Sin embargo, cuando usamos Kotlin —un lenguaje que corre sobre la JVM— nos enfrentamos a una limitación histórica: el *type erasure*. Esta característica, heredada del sistema de generics de Java, borra la información de tipos genéricos en tiempo de ejecución. Esto puede generar comportamientos inesperados, advertencias del compilador y restricciones en lo que podemos hacer con reflexión o lógica de tipo en tiempo de ejecución.
+Sin embargo, cuando usamos **Kotlin**, que se ejecuta sobre la **JVM**, nos enfrentamos a una limitación heredada de Java: el **type erasure**. Esta característica implica que, en tiempo de ejecución, **una instancia de una clase genérica no conserva información sobre los argumentos de tipo utilizados para crearla**. Como resultado, se pierde la capacidad de inspeccionar o razonar sobre esos tipos en tiempo de ejecución, lo que puede derivar en **comportamientos inesperados**, **advertencias del compilador** y **restricciones al utilizar reflexión o lógica basada en tipos**.
 
 En esta lección aprenderás:
 
@@ -33,13 +33,19 @@ En esta lección aprenderás:
 
 Al comprender el *type erasure*, estarás mejor preparadx para escribir funciones genéricas más seguras y potentes, especialmente al construir bibliotecas que aprovechen las ventajas del sistema de tipos de Kotlin sin caer en sus trampas ocultas.
 
-## 🏛️ Origen del Type Erasure
+## 🏛️ Origen del *Type Erasure*
 
-El **Type Erasure** tiene su origen en la implementación de **Generics** en Java. En 2004, con la llegada de **Java 5**, se introdujo el sistema de tipos genéricos para permitir que lxs desarrolladorxs pudieran escribir código más seguro y reutilizable. Antes de esta versión, las colecciones y otros tipos no podían especificar qué tipo de objetos contenían, lo que hacía necesario realizar *casts* explícitos y a menudo inseguros, generando errores en tiempo de ejecución como el famoso `ClassCastException`.
+El **type erasure** surge con la incorporación de los **genéricos** en Java 5 (2004), cuyo objetivo era permitir un código más **seguro y reutilizable**. Antes de su introducción, las colecciones y otros tipos no especificaban qué tipo de elementos contenían, lo que obligaba a realizar *casts* manuales y propensos a errores como el clásico `ClassCastException`.
 
-Sin embargo, para mantener la compatibilidad con versiones anteriores, los tipos genéricos se implementaron de manera que fueran **borrados** en tiempo de ejecución. Esto aseguraba que el código antiguo, escrito sin genéricos, seguiría funcionando sin necesidad de modificaciones. El compilador de Java genera el bytecode con las mismas instrucciones para las clases con y sin genéricos, lo que implica que durante la ejecución, la JVM no sabe qué tipo concreto se usó en tiempo de compilación.
+Para mantener la **compatibilidad hacia atrás**, Java implementó los genéricos como una característica del **compilador**, no de la JVM. Esto significa que la información de tipo se utiliza durante la compilación para realizar chequeos de tipo y luego se **descarta**: en tiempo de ejecución, la JVM no conoce los argumentos de tipo usados. El bytecode generado es prácticamente el mismo que el del código sin genéricos.
 
-Por esta razón, **Type Erasure** se convirtió en una característica intrínseca de la JVM, y todos los lenguajes que se ejecutan sobre ella, como Kotlin, heredan esta limitación.
+Como resultado, el **type erasure** quedó incorporado en el diseño de la JVM, y todos los lenguajes que se ejecutan sobre ella —incluido Kotlin— heredan esta restricción.
+
+:::tip[Uso de memoria]
+
+El borrado de tipos también tiene un beneficio práctico: **reduce el uso de memoria**, ya que no se guarda información de tipos genéricos en tiempo de ejecución.
+
+::: 
 
 ### 💡 Ejemplo en Java
 
@@ -99,6 +105,44 @@ fun <T> checkType(list: List<T>) {
 
 El código anterior dará un warning en tiempo de compilación: **`"Unchecked cast: List<T> to List<String>"`**. Esto se debe a que en tiempo de ejecución, la JVM no puede saber si `list` es una `List<String>` o cualquier otra lista genérica.
 
+<details>
+    <summary>ℹ️ ¿Cómo funcionan los chequeos de tipo con genéricos en Kotlin?</summary>
+
+    En Kotlin, no puedes usar un tipo genérico sin especificar sus argumentos. Pero si lo que quieres es comprobar si un valor es una lista (independientemente del tipo de sus elementos), puedes usar la sintaxis especial de **proyección estrella**:
+
+    ```kotlin
+    if (value is List<*>) { ... }
+    ```
+
+    Esto permite verificar si un valor es una instancia de `List`, sin conocer el tipo de sus elementos (equivalente a `List<?>` en Java).
+
+    Ahora bien, **los castings con tipos genéricos aún son posibles**, como en:
+
+    ```kotlin
+    val intList = c as? List<Int>
+    ```
+
+    Pero debido al *type erasure*, el tipo de los elementos no puede ser verificado en tiempo de ejecución, por lo que **el compilador emite una advertencia de "unchecked cast"**. Aun así, el código compila y puede ejecutarse sin errores... hasta que ocurre un error en tiempo de ejecución.
+
+    #### Ejemplo:
+
+    ```kotlin
+    fun printSum(c: Collection<*>) {
+        val intList = c as? List<Int>
+            ?: throw IllegalArgumentException("List is expected")
+        println(intList.sum())
+    }
+
+    printSum(listOf(1, 2, 3))       // ✅ Funciona
+    printSum(setOf(1, 2, 3))        // ❌ Lanza IllegalArgumentException
+    printSum(listOf("a", "b", "c")) // 💥 Lanza ClassCastException en tiempo de ejecución
+    ```
+
+    - El primer caso funciona como se espera.
+    - El segundo lanza una `IllegalArgumentException` porque el valor no es una `List`.
+    - El tercero **pasa el cast**, pero falla al ejecutar `.sum()` porque intenta usar un `String` como `Number`, lo que lanza una `ClassCastException`.
+</details>
+
 ## 🔧 Funciones Inline y Reificación de Tipos
 
 Kotlin ofrece una forma de superar algunas de las limitaciones del type erasure mediante el uso de **funciones inline** y **reificación de tipos** (type reification).
@@ -119,9 +163,11 @@ inline fun <reified T> myFunction() {
 }
 ```
 
-### ⚙️ ¿Cómo Funciona?
+### ⚙️ ¿Cómo funciona y qué considerar?
 
-Al marcar la función como `inline` y el tipo genérico como `reified`, el compilador insertará el código de la función en cada lugar donde se llame, y reemplazará `T` con el tipo concreto en cada llamada. Esto permite que el tipo esté disponible en tiempo de ejecución.
+Cuando marcas una función como `inline` y usas un parámetro de tipo `reified`, el compilador inserta el código de la función directamente en cada lugar donde se llama, y reemplaza el tipo genérico `T` por el tipo concreto utilizado. Esto permite acceder al tipo en tiempo de ejecución, algo normalmente imposible en la JVM debido al *type erasure*.
+
+Sin embargo, esta técnica tiene un costo: **si la función es muy grande**, el hecho de que su código se copie en cada llamada puede generar un binario más pesado y afectar el rendimiento. Para evitar esto, es buena práctica **extraer el código que no depende del tipo reificado** a funciones auxiliares que no sean `inline`. Así se mantiene el beneficio del acceso al tipo sin comprometer el tamaño o eficiencia del programa.
 
 ## 🧰 Ejemplo Práctico: Filtrar una Lista por Tipo
 
@@ -192,31 +238,37 @@ fun main() {
 
 ## 🎯 Conclusiones
 
-El *type erasure* es una de las consecuencias más importantes —y a menudo invisibles— del diseño de los genéricos en la JVM. Aunque su implementación permitió compatibilidad hacia atrás en Java, hoy representa una limitación concreta para quienes escriben código genérico sobre la JVM, incluyendo a quienes usamos Kotlin.
+El *type erasure* es una consecuencia histórica del diseño de los genéricos en la JVM. Aunque permitió la compatibilidad hacia atrás en Java, también introdujo limitaciones reales para quienes desarrollamos con lenguajes que se ejecutan sobre ella, como Kotlin.
 
-En esta lección entendimos que:
+En esta lección aprendiste que:
 
-- El *type erasure* elimina la información de tipo en tiempo de ejecución, lo que limita qué podemos hacer con genéricos en tiempo de ejecución.
-- Kotlin, al heredar este comportamiento, sufre las mismas restricciones que Java.
-- Afortunadamente, Kotlin ofrece una alternativa poderosa: las funciones `inline` con parámetros de tipo `reified`, que nos permiten recuperar información de tipo en tiempo de ejecución dentro de ciertos contextos.
+- El *type erasure* elimina la información sobre los tipos genéricos en tiempo de ejecución, lo que restringe el uso de reflexión, validaciones de tipo y creación dinámica de instancias genéricas.
+- Kotlin hereda estas restricciones de Java, pero ofrece mecanismos que permiten sortearlas en contextos específicos.
+- Las funciones `inline` con tipos `reified` constituyen una solución eficaz que restaura parcialmente la capacidad de acceder a los tipos en tiempo de ejecución.
 
-Esto no solo es útil para tareas como filtrado por tipo o instanciación de clases genéricas, sino que también nos da una herramienta clave para diseñar APIs más seguras y expresivas.
+Estas herramientas no solo permiten resolver casos concretos —como filtrar listas por tipo o crear instancias de clases genéricas—, sino que abren la puerta a **diseñar bibliotecas más expresivas, seguras y componibles**.
 
 ### 🔑 Puntos clave
 
-- **Type Erasure** borra los tipos genéricos en tiempo de ejecución, impidiendo su inspección directa.
-- **No es posible** hacer `instanceof` ni crear instancias de tipos genéricos sin usar reflexión o trucos del compilador.
-- **Funciones `inline` con tipos `reified`** permiten recuperar el tipo en tiempo de ejecución y ofrecen soluciones prácticas a estas limitaciones.
-- **Kotlin extiende las capacidades de la JVM** con mecanismos que hacen que trabajar con genéricos sea más flexible y expresivo.
+- **Type erasure** borra los tipos genéricos en tiempo de ejecución, lo que impide su inspección directa o validación dinámica.
+- **No es posible** hacer comprobaciones como `is T` ni crear instancias de `T` sin técnicas adicionales.
+- **Las funciones `inline` con tipos `reified`** permiten recuperar información de tipo en tiempo de ejecución dentro de funciones genéricas.
+- **Kotlin amplía las capacidades de la JVM**, haciendo el trabajo con genéricos más flexible que en Java.
 
 ### 🧰 ¿Qué nos llevamos?
 
-Comprender cómo funciona el *type erasure* y cómo Kotlin nos ayuda a lidiar con sus consecuencias es clave para escribir código genérico más robusto. Al desarrollar bibliotecas, este conocimiento marca la diferencia entre una API limitada por la plataforma y una que aprovecha al máximo las herramientas del lenguaje.
+Más allá de las limitaciones técnicas, comprender el *type erasure* nos permite escribir código genérico más consciente, sólido y predecible. En lugar de frustrarnos por lo que la JVM no nos permite hacer, podemos diseñar funciones y APIs que operen con claridad dentro de sus reglas, e incluso las superen cuando el lenguaje lo permite.
 
-Aunque el *type erasure* puede parecer un obstáculo técnico, también representa una oportunidad: al conocer sus restricciones, podemos tomar decisiones más informadas, diseñar mejores abstracciones y, cuando sea necesario, escapar de sus límites con herramientas como `reified`. Así, convertimos una desventaja heredada en una motivación para escribir código más consciente y efectivo.
+La reificación de tipos en Kotlin no es solo una herramienta técnica: es una invitación a pensar en **cómo usamos los genéricos**, en qué contextos necesitamos la información de tipo, y cómo estructurar nuestro código para aprovechar lo mejor de ambos mundos —la eficiencia del *type erasure* y la expresividad del tipo reificado—.
+
+En resumen, **entender las limitaciones nos hace mejores diseñadores de bibliotecas**: nos obliga a pensar, a justificar nuestras elecciones y a buscar soluciones idiomáticas que mantengan el equilibrio entre rendimiento, expresividad y robustez.
 
 ## 📖 Referencias
 
 ### 🔥 Recomendadas
 
 📚 Generics. (2017). En Dmitry Jemerov & Svetlana Isakova, Kotlin in action (pp. 223–253). Manning Publications Co.
+
+### 🔹 Adicionales
+
+📚 Generics. (2018). En Joshua Bloch, Effective Java (Third edition, pp. 117–155). Addison-Wesley.
