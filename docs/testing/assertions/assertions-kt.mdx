@@ -47,15 +47,63 @@ import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 
 En esta lección aprenderás cómo implementar aserciones manuales y personalizadas, entendiendo cómo se comportan y cómo integrarlas con frameworks como Kotest. Esto sienta las bases para usar matchers más expresivos en lecciones futuras.
 
-Las **aserciones** son instrucciones que verifican si una condición específica es verdadera en un punto particular del código. Si la condición es falsa, la aserción falla y se lanza una excepción, interrumpiendo la ejecución del programa o prueba. Los frameworks de testing capturan estas excepciones para generar reportes detallados de los resultados.
+## 🧪 ¿Por qué necesitamos aserciones?
+
+Al desarrollar bibliotecas o aplicaciones, una parte esencial del proceso es **verificar que nuestro código haga lo que esperamos**. Las **aserciones** son una de las herramientas más directas para lograr esto: son expresiones booleanas que validan condiciones críticas en tiempo de ejecución. Si la condición es verdadera, el programa continúa. Si es falsa, se lanza una excepción que interrumpe la ejecución y señala que **algo se desvió del comportamiento esperado**.
+
+Esto convierte a las aserciones en una técnica valiosa dentro del testing funcional: permiten validar los invariantes del sistema, detectar errores al instante y reducir el tiempo necesario para depurar o corregir fallos.
+
+## ✅ Beneficios clave del uso de aserciones
+
+### 1. Detección temprana de errores
+
+Las aserciones permiten capturar **errores pequeños y sutiles** que podrían pasar desapercibidos con otros métodos. Esto mejora la robustez del sistema y reduce el riesgo de propagar fallos a etapas más avanzadas del desarrollo.
+
+### 2. Falla inmediata = feedback inmediato
+
+En especial con **aserciones duras (hard assertions)**, la ejecución se detiene justo en el punto donde algo falla. Esto facilita un **ciclo de retroalimentación rápido**: no se continúa evaluando condiciones irrelevantes una vez que algo crítico falla, permitiendo al equipo enfocarse directamente en el problema.
+
+### 3. Verificación de garantías internas
+
+Las aserciones también sirven como **contratos internos** dentro del código, ayudando a documentar y reforzar que ciertos bloques de lógica deben producir resultados correctos. Esto fortalece la **autoconfianza del software** al garantizar que sus partes clave se comportan de forma fiable.
+
+## 🔍 ¿Cómo se clasifican las aserciones?
+
+<details>
+  <summary>
+    Tipos de aserciones y `assertSoftly`
+  </summary>
+
+  Las aserciones pueden clasificarse según su comportamiento al validar condiciones:
+
+  - **Aserciones simples**: Verifican una única condición. Si falla, el test se interrumpe inmediatamente. Útiles para validar entradas, salidas o invariantes simples.
+
+  - **Aserciones compuestas**: Agrupan varias condiciones en una misma evaluación. Todas deben cumplirse para que la prueba pase, permitiendo validar estructuras más complejas o múltiples propiedades al mismo tiempo.
+
+  - **Aserciones suaves (soft assertions)**: No interrumpen la ejecución tras el primer fallo. En lugar de eso, acumulan los errores y los reportan al final. Son ideales cuando se quiere tener una **visión completa del estado del sistema**, incluso si algunas partes fallan.
+
+  En Kotest, el mecanismo para realizar aserciones suaves es `assertSoftly`, que agrupa varias verificaciones sin detener la ejecución ante la primera falla:
+
+  ```kotlin showLineNumbers
+  assertSoftly {
+      person.name shouldBe "Alice"
+      person.age shouldBe 30
+      person.email shouldContain "@"
+  }
+  ```
+
+  Si una o más condiciones fallan, el framework mostrará todas las fallas juntas, facilitando el diagnóstico de errores sin necesidad de ejecutar múltiples veces.
+
+</details>
 
 :::info Nota didáctica
 
-Esta lección tiene fines didácticos y busca ilustrar cómo funcionan las aserciones.
+Esta lección tiene fines didácticos y busca ilustrar cómo funcionan las aserciones.  
 En la práctica, en lugar de implementar nuestras propias aserciones, utilizamos **matchers**, que permiten escribir pruebas más expresivas y estructuradas.  
-En lecciones futuras, exploraremos el uso de **matchers** y cómo facilitan la validación en los tests.
+En lecciones futuras, exploraremos el uso de matchers y cómo facilitan la validación en los tests.
 
 :::
+
 
 ## 📌 Implementación manual
 
@@ -296,23 +344,27 @@ fun assertTrue(
 
 ## 🎯 Conclusiones
 
-A lo largo de esta lección, exploramos el rol fundamental de las aserciones en los tests: verificar que las condiciones necesarias se cumplan en distintos puntos del sistema. Partimos desde una implementación manual para entender su estructura básica y luego dimos el paso hacia funciones personalizadas que encapsulan lógica reusable.
+A lo largo de esta lección, exploramos el rol fundamental de las **aserciones** como mecanismo para validar el comportamiento del sistema en distintos puntos clave del código. Comenzamos con implementaciones manuales para comprender su funcionamiento esencial y luego avanzamos hacia la creación de funciones personalizadas que encapsulan lógica reusable.
 
-Aunque hoy en día preferimos herramientas más expresivas como los *matchers*, comprender cómo funcionan las aserciones en su forma más básica nos da una visión más clara de lo que ocurre "bajo el capó" al ejecutar pruebas, y nos permite construir utilidades propias cuando el dominio lo requiere.
+Aunque hoy en día los frameworks modernos favorecen el uso de **matchers** más expresivos, comprender cómo funcionan las aserciones básicas nos permite:
+
+- **Entender qué ocurre "bajo el capó"** en una prueba fallida,
+- **Diseñar validaciones adaptadas al dominio**, y
+- **Construir herramientas propias** cuando las existentes no son suficientes.
 
 ### 🔑 Puntos clave
 
 1. **Una aserción es una validación que detiene la prueba si una condición no se cumple**.  
-2. **Es posible implementar aserciones manualmente**, pero frameworks como Kotest ofrecen utilidades como `fail()` para integrarse mejor con los reportes.  
-3. **Las funciones de aserción personalizadas** mejoran la expresividad y reusabilidad de los tests.  
-4. **Los mensajes claros** son fundamentales para facilitar la depuración cuando una prueba falla.  
-5. **Preparar funciones propias sienta las bases** para entender herramientas más avanzadas como matchers y validadores.
+2. **Es posible implementar aserciones manualmente**, pero frameworks como Kotest ofrecen utilidades como `fail()` y `assertSoftly` para integrarse mejor con los reportes.  
+3. **Las funciones de aserción personalizadas** aumentan la expresividad, reducen duplicación y ayudan a expresar reglas del dominio.  
+4. **Mensajes claros** facilitan la depuración cuando una prueba falla.  
+5. **Preparar funciones propias sienta las bases** para comprender herramientas más potentes como matchers, validadores o DSLs de testing.
 
 ### 🧰 ¿Qué nos llevamos?
 
-Saber escribir aserciones a mano nos obliga a pensar con precisión: *¿Qué estoy verificando? ¿Cómo quiero que falle si no se cumple?* En una biblioteca, esto se traduce en tests más claros, reutilizables y alineados con las reglas del dominio.
+Aprender a escribir aserciones manuales nos obliga a **pensar con precisión** sobre qué se quiere validar, cómo y por qué. En el contexto del desarrollo de bibliotecas, esto es clave: las pruebas dejan de ser simples chequeos y se convierten en **garantías explícitas** del contrato que estamos definiendo para quienes usarán nuestro código.
 
-Este conocimiento también nos permite crear nuestras propias herramientas de validación cuando los frameworks existentes no son suficientes. Así, cada prueba deja de ser un chequeo aislado y se convierte en una afirmación **con intención**, reforzando la confiabilidad y mantenibilidad del sistema que estamos construyendo.
+Este conocimiento también te prepara para transicionar a herramientas más declarativas, como los *matchers*, que exploraremos en próximas lecciones. Así, ganamos control y flexibilidad para construir pruebas que sean no solo correctas, sino también **claras, mantenibles y alineadas con el propósito de la biblioteca**.
 
 ## 📖 Referencias
 
@@ -320,9 +372,13 @@ Este conocimiento también nos permite crear nuestras propias herramientas de va
 
 📰 Tamas Cser. (2024, septiembre 5). What is Assertion Testing? Ensuring Quality and Accuracy. https://www.functionize.com/automated-testing/assertion
 
+### 🔹 Adicionales
+
+🌐 ¿Cuáles son las prácticas recomendadas para usar aserciones en las pruebas? (s. f.). Recuperado 23 de marzo de 2025, de https://es.linkedin.com/advice/0/what-best-practices-using-assertions-testing-6uxje?lang=es
+
 {/* TODO: Bibliografías por revisar
 ## Fundamentos generales de las aserciones  
-- Por ejemplo, una aserción típica comprueba que el resultado obtenido iguale al esperado, y si no, interrumpe la ejecución de la prueba. Las aserciones son útiles no solo para probar, sino también para depurar y **documentar las suposiciones y expectativas** sobre el código ([Procedimientos recomendados para usar aserciones en pruebas de código](https://www.linkedin.com/advice/0/what-best-practices-using-assertions-testing-6uxje?lang=es#:~:text=Las%20aserciones%20son%20instrucciones%20que,c%C3%B3mo%20escribirlas%20y%20c%C3%B3mo%20manejarlas)). Es importante notar que las aserciones se deben usar para verificar **condiciones internas que siempre deberían cumplirse** (invariantes de código), y no para el manejo de errores externos; por ejemplo, no se recomienda usar `assert` para validar entradas de usuario, ya que su objetivo es marcar errores lógicos del programador y puede deshabilitarse en producción ([Pruebas en Python | Aserciones | Fundamentos de Programación | LabEx](https://labex.io/es/tutorials/python-python-testing-essentials-132735#:~:text=assert%20isinstance,un%20int)). Un uso extensivo de aserciones está asociado al enfoque de *Diseño por Contrato*, donde se especifican pre y post-condiciones mediante aserciones para garantizar la corrección del programa ([Pruebas en Python | Aserciones | Fundamentos de Programación | LabEx](https://labex.io/es/tutorials/python-python-testing-essentials-132735#:~:text=Tambi%C3%A9n%20conocida%20como%20Dise%C3%B1o%20por,para%20los%20componentes%20del%20software)). *(Recursos: Artículo colaborativo en LinkedIn, gratuito, introductorio ([Procedimientos recomendados para usar aserciones en pruebas de código](https://www.linkedin.com/advice/0/what-best-practices-using-assertions-testing-6uxje?lang=es#:~:text=Las%20aserciones%20son%20instrucciones%20que,c%C3%B3mo%20escribirlas%20y%20c%C3%B3mo%20manejarlas)); Tutorial de LabEx sobre pruebas en Python, gratis, básico/práctico ([Pruebas en Python | Aserciones | Fundamentos de Programación | LabEx](https://labex.io/es/tutorials/python-python-testing-essentials-132735#:~:text=assert%20isinstance,un%20int)) ([Pruebas en Python | Aserciones | Fundamentos de Programación | LabEx](https://labex.io/es/tutorials/python-python-testing-essentials-132735#:~:text=Tambi%C3%A9n%20conocida%20como%20Dise%C3%B1o%20por,para%20los%20componentes%20del%20software)).)*  
+Es importante notar que las aserciones se deben usar para verificar **condiciones internas que siempre deberían cumplirse** (invariantes de código), y no para el manejo de errores externos; por ejemplo, no se recomienda usar `assert` para validar entradas de usuario, ya que su objetivo es marcar errores lógicos del programador y puede deshabilitarse en producción ([Pruebas en Python | Aserciones | Fundamentos de Programación | LabEx](https://labex.io/es/tutorials/python-python-testing-essentials-132735#:~:text=assert%20isinstance,un%20int)). Un uso extensivo de aserciones está asociado al enfoque de *Diseño por Contrato*, donde se especifican pre y post-condiciones mediante aserciones para garantizar la corrección del programa ([Pruebas en Python | Aserciones | Fundamentos de Programación | LabEx](https://labex.io/es/tutorials/python-python-testing-essentials-132735#:~:text=Tambi%C3%A9n%20conocida%20como%20Dise%C3%B1o%20por,para%20los%20componentes%20del%20software)). *(Recursos: Artículo colaborativo en LinkedIn, gratuito, introductorio ([Procedimientos recomendados para usar aserciones en pruebas de código](https://www.linkedin.com/advice/0/what-best-practices-using-assertions-testing-6uxje?lang=es#:~:text=Las%20aserciones%20son%20instrucciones%20que,c%C3%B3mo%20escribirlas%20y%20c%C3%B3mo%20manejarlas)); Tutorial de LabEx sobre pruebas en Python, gratis, básico/práctico ([Pruebas en Python | Aserciones | Fundamentos de Programación | LabEx](https://labex.io/es/tutorials/python-python-testing-essentials-132735#:~:text=assert%20isinstance,un%20int)) ([Pruebas en Python | Aserciones | Fundamentos de Programación | LabEx](https://labex.io/es/tutorials/python-python-testing-essentials-132735#:~:text=Tambi%C3%A9n%20conocida%20como%20Dise%C3%B1o%20por,para%20los%20componentes%20del%20software)).)*  
 
 - **Importancia de las aserciones en pruebas automatizadas (inglés)** – Las aserciones son consideradas *“una de las técnicas automatizadas más útiles”* para chequear el comportamiento de un programa ([](https://www.idt.mdu.se/ecbs2023/pre-prints/paper_2356.pdf#:~:text=,rendered%20119%20papers%20on%20assertions)). Al incluir aserciones en las pruebas, éstas **se ejecutan de forma automática** y verifican condiciones esperadas sin intervención manual. Esto mejora la **precisión y rapidez de las pruebas** ([What is Assertion Testing? Ensuring Quality and Accuracy](https://www.functionize.com/automated-testing/assertion#:~:text=Assertion%20is%20a%20key%20concept,including%20speeding%20up%20the%20testing)). En palabras de un artículo técnico reciente, *“Assertion is a key concept in functional testing”*, ya que permiten declarar el resultado esperado de una prueba y hacerla fallar automáticamente si el comportamiento real no coincide ([What is Assertion Testing? Ensuring Quality and Accuracy](https://www.functionize.com/automated-testing/assertion#:~:text=Assertion%20is%20a%20key%20concept,including%20speeding%20up%20the%20testing)). Además, existen distintos tipos de aserciones: por ejemplo, las llamadas **aserciones simples** validan una sola condición booleana, mientras que **aserciones compuestas** pueden verificar múltiples condiciones a la vez; también se distinguen **aserciones duras** (hard) de **aserciones blandas** (soft), donde las primeras detienen inmediatamente la ejecución ante un fallo, mientras que las soft permiten continuar ejecutando otras verificaciones y reportar múltiples fallos a la vez ([What is Assertion Testing? Ensuring Quality and Accuracy](https://www.functionize.com/automated-testing/assertion#:~:text=,even%20if%20some%20conditions%20fail)). *(Recursos: Blog técnico de Functionize, gratuito, nivel introductorio-conceptual ([What is Assertion Testing? Ensuring Quality and Accuracy](https://www.functionize.com/automated-testing/assertion#:~:text=Assertion%20is%20a%20key%20concept,including%20speeding%20up%20the%20testing)) ([What is Assertion Testing? Ensuring Quality and Accuracy](https://www.functionize.com/automated-testing/assertion#:~:text=,even%20if%20some%20conditions%20fail)); Artículo de investigación “A Literature Survey of Assertions in Software Testing” (Taromirad & Runeson 2023), *open access*, avanzado y conceptual ([](https://www.idt.mdu.se/ecbs2023/pre-prints/paper_2356.pdf#:~:text=,rendered%20119%20papers%20on%20assertions)).)*  
 
