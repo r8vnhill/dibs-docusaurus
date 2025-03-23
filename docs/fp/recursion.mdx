@@ -1,8 +1,21 @@
 ---
 title: Recursión
 ---
-
-import ReadingTime from '@site/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
 
@@ -10,20 +23,20 @@ La **recursión** ocurre cuando una función se llama a sí misma durante su eje
 
 La recursión es especialmente útil para abordar problemas que pueden ser naturalmente expresados de esta manera, como la suma de los elementos de una lista, la generación de secuencias, o el cálculo del factorial de un número.
 
-## Ejemplo de Recursión
+## 🌀 Ejemplo de Recursión
 
 El **factorial** de un número positivo $n$ (denotado como $n!$) se define como el producto de todos los enteros positivos menores o iguales a $n$. Se puede definir recursivamente de la siguiente manera:
 
 ```kotlin
 // highlight-next-line
 fun factorial(n: Int) = if (n == 0) {
-    1
+    1L
 } else {
-    n * factorial(n - 1)
+    n.toLong() * factorial(n - 1)
 }
 ```
 
-:::danger
+:::danger[Error]
 
 Type checking has run into a recursive problem. Easiest workaround: specify types of your declarations explicitly.
 
@@ -33,8 +46,116 @@ Para evitar esto, es necesario **especificar explícitamente el tipo de retorno*
 
 ```kotlin
 fun factorial(n: Int): Long = if (n == 0) {
-    1
+    1L
 } else {
-    n * factorial(n - 1)
+    n.toLong() * factorial(n - 1)
 }
 ```
+
+<details>
+    <summary>Recursión por la cola</summary>
+
+    La **recursión por la cola** (*tail recursion*) es un tipo especial de recursión donde la llamada recursiva es la **última operación** que realiza la función. Esto permite al compilador optimizar la llamada y **reutilizar el stack frame**, evitando desbordamientos de pila incluso en recursiones profundas.
+
+    Kotlin puede optimizar estas funciones si se usa la palabra clave `tailrec`:
+
+    ```kotlin
+    tailrec fun factorial(n: Int, acc: Long = 1): Long = if (n == 0) {
+        acc
+    } else {
+        factorial(n - 1, acc * n)
+    }
+    ```
+
+    <Explanation>
+        En este ejemplo, la función `factorial` utiliza un parámetro acumulador (`acc`) para mantener el resultado parcial. A diferencia de la versión recursiva tradicional, **no hay operaciones pendientes después de la llamada recursiva**: el valor de retorno es directamente el resultado de `factorial(...)`.
+
+        Gracias a esto, Kotlin puede aplicar una **optimización de recursión por la cola**, reemplazando la llamada recursiva por una iteración bajo el capó. Esto significa que puedes calcular factoriales muy grandes sin preocuparte por un desbordamiento de pila, algo que sí podría ocurrir con la versión recursiva tradicional.
+
+        La palabra clave `tailrec` le dice explícitamente al compilador que intente aplicar esta optimización. Si la llamada recursiva no está en posición de cola, el compilador emitirá un error.
+    </Explanation>
+
+    <ProCons>
+        <Pros>
+            - **Prevención de desbordamiento de pila**: Gracias a la optimización, se puede usar recursión sin agotar la pila incluso en casos de recursión profunda.
+            - **Código expresivo y declarativo**: Permite escribir lógica de forma recursiva (y por lo tanto natural en algunos problemas) sin sacrificar eficiencia.
+            - **Equivalencia a bucles**: En funciones optimizadas con `tailrec`, el rendimiento es comparable al de una estructura iterativa, pero con mayor claridad en algunos algoritmos.
+            - **Apoyo del compilador**: El uso de `tailrec` es validado en tiempo de compilación, lo que evita errores sutiles si no se cumple la posición de cola.
+        </Pros>
+        <Cons>
+            - **Requiere reescritura con acumuladores**: Muchas funciones deben rediseñarse para mover la recursión al final, lo que puede dificultar la legibilidad o alejarse de la definición matemática original.
+            - **Limitado a una única llamada recursiva en posición de cola**: Si hay múltiples llamadas o lógica adicional tras la recursión, no se puede optimizar con `tailrec`.
+            - **Solo funciona en funciones directas**: `tailrec` no se puede aplicar si la llamada recursiva ocurre dentro de una lambda o expresión anidada.
+            - **No es aplicable en todos los algoritmos**: Algunos problemas no pueden modelarse naturalmente con recursión por la cola (por ejemplo, recorridos de árboles que requieren backtracking).
+        </Cons>
+    </ProCons>
+</details>
+
+<details>
+    <summary>
+        Recursión profunda con `DeepRecursiveFunction`
+    </summary>
+
+    En Kotlin, incluso con optimizaciones como `tailrec`, las llamadas recursivas que **no son en posición de cola** pueden provocar errores de desbordamiento de pila (*StackOverflowError*) si la profundidad de recursión es muy alta.
+
+    Para manejar estos casos, Kotlin ofrece `DeepRecursiveFunction`, una herramienta de la librería estándar que **simula la recursión mediante trampolines**, evitando el crecimiento de la pila.
+
+    Aquí tienes un ejemplo de cómo reescribir la función factorial para soportar recursión profunda:
+
+    ```kotlin
+    import kotlin.coroutines.*
+
+    val deepFactorial = DeepRecursiveFunction<Int, Long> { n ->
+        if (n == 0) 1L
+        else n * callRecursive(n - 1)
+    }
+
+    fun factorial(n: Int): Long = deepFactorial(n)
+    ```
+
+    <Explanation>
+        `DeepRecursiveFunction` permite definir funciones recursivas que no dependen de la pila de llamadas del sistema. Internamente, utiliza trampolines (una técnica basada en continuations) para ejecutar las llamadas de forma segura, incluso con decenas de miles de niveles de profundidad.
+
+        En el ejemplo, `callRecursive(n - 1)` reemplaza la llamada directa a la función, delegando el control a un manejador interno que mantiene la recursión en una estructura controlada. Esto evita errores por desbordamiento de pila, lo que lo hace especialmente útil en algoritmos complejos como recorridos de árboles, parsers, o funciones numéricas intensivas.
+    </Explanation>
+
+    <ProCons>
+        <Pros>
+            - **Evita el desbordamiento de pila**: Permite ejecutar funciones con recursión no en posición de cola a profundidades que normalmente provocarían errores.
+            - **Compatible con cualquier estructura recursiva**: A diferencia de `tailrec`, puede usarse con algoritmos que requieren múltiples llamadas recursivas o lógica después de la llamada.
+            - **Ideal para problemas complejos**: Es útil en recorridos de árboles, evaluadores de expresiones, parsers, y otros algoritmos que exigen mucha profundidad o flexibilidad en la recursión.
+            - **Integrado en la librería estándar**: No requiere dependencias externas, y su uso está bien documentado en Kotlin.
+        </Pros>
+        <Cons>
+            - **Sintaxis más verbosa**: Requiere definir funciones como valores (`val`) usando lambdas con receptores, lo cual puede dificultar la legibilidad para personas nuevas en Kotlin.
+            - **Requiere `callRecursive` en lugar de llamadas normales**: El código se aleja de la notación recursiva tradicional, lo que puede dificultar la traducción directa desde definiciones matemáticas.
+            - **Menor rendimiento que `tailrec` o bucles**: Aunque evita el desbordamiento, su mecanismo basado en trampolines y continuations puede ser menos eficiente en comparación con optimizaciones en tiempo de compilación.
+            - **Menor adopción**: Es una característica más avanzada y menos conocida, por lo que puede generar dudas en equipos sin experiencia previa con recursión profunda o programación funcional.
+        </Cons>
+    </ProCons>
+</details>
+
+## 🎯 Conclusiones
+
+La recursión es una herramienta expresiva y elegante para resolver problemas que se descomponen naturalmente en subproblemas. Ya sea en su forma clásica, en versiones optimizadas con `tailrec`, o en enfoques más avanzados como `DeepRecursiveFunction`, Kotlin ofrece diversas formas de aplicarla con seguridad y eficiencia.
+
+Dominar estos distintos enfoques permite no solo escribir código más claro, sino también adaptarse a las restricciones del sistema, como el límite de profundidad de la pila. Así, la elección de una u otra técnica no depende solo de la estética o de la tradición matemática, sino también de los requerimientos prácticos del problema y del contexto de ejecución.
+
+### 🔑 Puntos clave
+
+- La **recursión tradicional** es simple y directa, pero puede provocar errores de pila si no se maneja con cuidado.
+- La **recursión por la cola** (`tailrec`) permite optimización automática del compilador, pero requiere que la llamada recursiva sea la última operación.
+- La **recursión profunda** con `DeepRecursiveFunction` es ideal para algoritmos complejos que no pueden expresarse en forma de cola, evitando desbordamientos mediante trampolines.
+- Elegir entre estas formas implica evaluar **legibilidad, eficiencia, profundidad esperada** y **compatibilidad con el compilador**.
+
+### 🧰 ¿Qué nos llevamos?
+
+Comprender los diferentes estilos de recursión en Kotlin nos permite tomar decisiones más informadas al diseñar soluciones. En lugar de evitar la recursión por miedo al desbordamiento o por prejuicios sobre el rendimiento, podemos optar por el enfoque que mejor se adapte al problema.
+
+Además, estas herramientas amplían nuestra capacidad para implementar algoritmos expresivos, correctos y seguros, manteniendo el equilibrio entre claridad, elegancia y eficiencia. En el desarrollo de bibliotecas —donde la robustez y la reutilización son clave— entender las alternativas recursivas nos da una base sólida para construir soluciones escalables y bien documentadas.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+📚 Recursion, corecursion, and memoization. (2019). En P.-Y. Saumont, The Joy of Kotlin. Manning Publications Co. LLC.
