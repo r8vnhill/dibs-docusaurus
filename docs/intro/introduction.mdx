@@ -1,8 +1,22 @@
 ---
 title: Introducción al desarrollo de bibliotecas de software
 ---
-import References from "../../src/components/ReferencesComponent";
-import ReadingTime from '../../src/components/ReadingTime';
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
 
@@ -34,11 +48,24 @@ Una API bien diseñada debe proporcionar una **abstracción clara y efectiva** d
 ✔️ **Propósito claro** → Cada función, clase y variable debe estar bien definida.  
 ✔️ **Consistencia** → Los nombres y estructuras deben ser uniformes para facilitar su uso.  
 
-🔹 **Ejemplo (Kotlin)**:  
+🔹 **Ejemplo (kotlinx-datetime)**:
+
 ```kotlin
-fun calculateTax(amount: Double): Double { /* ... */ }
+val now: Instant = Clock.System.now()
+val localDateTime = now.toLocalDateTime(TimeZone.UTC)
 ```
-📌 **Buena práctica**: Un nombre descriptivo deja claro su propósito sin necesidad de documentación adicional.  
+
+<Explanation>
+    - `Clock.System.now()` modela de forma explícita el concepto de "tiempo actual" desde un reloj del sistema.
+    - `toLocalDateTime` deja claro que estamos convirtiendo un `Instant` a una fecha local, y exige que se indique la `TimeZone`, lo que evita ambigüedad.
+    - La API evita nombres genéricos como `convert` o `getTime`, y utiliza nombres que **describen con precisión la transformación o propósito**.
+</Explanation>
+
+:::tip Resultado
+
+Esta API modela el dominio del tiempo y las zonas horarias de forma clara y predecible, lo que facilita su uso correcto y evita errores comunes como la omisión de zonas horarias.
+
+:::
 
 #### 🔒 2. Ocultar Detalles de Implementación  
 
@@ -48,51 +75,74 @@ Una API debe **esconder los detalles internos**, permitiendo modificaciones sin 
 ✔️ **Interfaz clara** → Permite interactuar con la API sin conocer su implementación interna.  
 ✔️ **Separación de preocupaciones** → Divide la API en módulos bien definidos.  
 
-🔹 **Ejemplo (Java - Encapsulación con `private` y `package-private`)**:
-```java
-public class Database {
+🔹 **Ejemplo real: [Ktor (Kotlin)](https://github.com/ktorio/ktor)**
 
-    private final Connection connection;
+```kotlin
+val client = HttpClient()
+val response: HttpResponse = client.get("https://lufia-api.example.com/ancient-cave/floor/20")
 
-    private Database() {
-        this.connection = connectToDatabase();
-    }
-
-    public ResultSet query(String sql) throws SQLException {
-        return connection.createStatement().executeQuery(sql);
-    }
-
-    public static Database create() {
-        return new Database();
-    }
-}
+println(response.status)
+println(response.bodyAsText())
 ```
-📌 **Buena práctica**:
-- **`private final Connection connection;`** oculta la conexión.
-- **El constructor privado** obliga a usar `Database.create()` para instancias controladas.
-- **El usuario solo puede llamar `query()`**, sin preocuparse por cómo funciona la conexión.
 
-#### ⚖️ 3. Diseño Basado en la Simplicidad  
+<Explanation>
+    Este ejemplo demuestra cómo Ktor aplica el principio de ocultar detalles de implementación:
 
-Una API debe ser **lo más pequeña posible** para facilitar su mantenimiento y comprensión.  
+    - **Encapsulación**: Clases como `HttpClient`, `HttpResponse` o `HttpRequestBuilder` exponen una interfaz limpia. Internamente, Ktor utiliza múltiples módulos y clases con `internal` o `private` para proteger su lógica de serialización, construcción de solicitudes, manejo de errores, etc.
+    - **Interfaz clara**: El usuario interactúa con funciones como `get()` o `bodyAsText()` sin necesidad de conocer cómo se gestiona la conexión, el parseo del cuerpo o los encabezados HTTP.
+    - **Separación de preocupaciones**: Ktor divide su funcionalidad en módulos (`client-core`, `client-json`, `client-logging`, etc.). Cada uno cumple una función específica y puede ser intercambiado o desactivado sin modificar el resto de la API pública.
+</Explanation>
 
-✔️ **Simplicidad** → Reduce el número de elementos públicos.  
-✔️ **Evita duplicación (DRY)** → No repitas funcionalidades.  
-✔️ **Principio de responsabilidad única** → Cada componente debe tener **una única responsabilidad**.  
+:::tip Resultado
 
-🔹 **Ejemplo (JavaScript con Lodash)**:  
-```javascript
-import _ from 'lodash';
+Ktor permite construir clientes HTTP modulares con una interfaz sencilla, mientras oculta detalles como la serialización, el manejo de errores o la infraestructura de conexión. Puedes pedir los datos del *Ancient Cave* sin saber si fueron obtenidos por sockets, corutinas o magia de Artea.
 
-const users = [{ name: "Ana" }, { name: "Luis" }];
-const names = _.map(users, "name");
+:::
 
-console.log(names); // ["Ana", "Luis"]
-```
-📌 **Buena práctica**: Reutiliza funciones existentes (`_.map()`) en lugar de escribir lógica redundante.  
+#### ⚖️ 3. Diseño Basado en la Simplicidad
 
 > *"Cada elemento público en tu API es una promesa: una promesa de que soportarás esa funcionalidad por toda la vida de la API."*  
 > — *Reddy, 2011*  
+
+Una API debe ser **lo más pequeña posible** para facilitar su mantenimiento y comprensión.
+
+✔️ **Simplicidad** → Reduce el número de elementos públicos.  
+✔️ **Evita duplicación (DRY)** → No repitas funcionalidades.  
+✔️ **Principio de responsabilidad única** → Cada componente debe tener **una única responsabilidad**.
+
+🔹 **Ejemplo real: [Lodash (JavaScript)](https://github.com/lodash/lodash)**
+
+¡Claro! Aquí tienes el ejemplo adaptado con datos del universo de **Durarara!!**, manteniendo la claridad del ejemplo original y alineado con los principios de simplicidad, no duplicación y responsabilidad única:
+
+```javascript
+import _ from 'lodash';
+
+const characters = [
+  { name: "Celty", alias: "The Headless Rider" },
+  { name: "Shizuo", alias: "The Strongest Man in Ikebukuro" },
+  { name: "Izaya", alias: "Information Broker" }
+];
+
+const names = _.map(characters, "name");
+
+console.log(names); // ["Celty", "Shizuo", "Izaya"]
+```
+
+<Explanation>
+
+Este ejemplo refleja cómo Lodash promueve un diseño basado en la simplicidad:
+
+- **Simplicidad**: `_.map()` permite extraer un campo con solo pasar el nombre de la propiedad, sin necesidad de definir una función personalizada para cada caso.
+- **No duplicación (DRY)**: Evita que cada extracción de nombres se haga con lógica repetida como `characters.map(c => c.name)`, promoviendo reutilización.
+- **Responsabilidad única**: `_.map()` solo transforma cada elemento de la colección, delegando cualquier otra transformación o filtrado a funciones distintas como `_.filter`, `_.pick` o `_.sortBy`.
+
+</Explanation>
+
+:::tip Resultado
+
+Lodash mantiene una API minimalista, coherente y reutilizable. Sus funciones hacen exactamente una cosa y la hacen bien — siguiendo el espíritu de *menos es más*.
+
+:::
 
 #### 🛠️ 4. Fácil de Usar y Difícil de Usar Incorrectamente  
 

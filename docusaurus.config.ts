@@ -43,6 +43,7 @@ const config: Config = {
                     sidebarPath: './sidebars.ts',
                     remarkPlugins: [remarkMath],
                     rehypePlugins: [rehypeKatex],
+                    showLastUpdateTime: true, // enable last updated data
                 },
                 theme: {
                     customCss: './src/css/custom.css',

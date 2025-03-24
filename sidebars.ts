@@ -13,6 +13,10 @@ const sidebars: SidebarsConfig = {
         {
             label: 'Unidad 1: Introducción',
             type: 'category',
+            link: {
+                type: 'doc',
+                id: 'intro/presentation',
+            },
             items: [
                 'intro/introduction',
                 'intro/clean',
