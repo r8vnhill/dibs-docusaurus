@@ -48,7 +48,7 @@ Una API bien diseñada debe proporcionar una **abstracción clara y efectiva** d
 ✔️ **Propósito claro** → Cada función, clase y variable debe estar bien definida.  
 ✔️ **Consistencia** → Los nombres y estructuras deben ser uniformes para facilitar su uso.  
 
-🔹 **Ejemplo (kotlinx-datetime)**:
+🔹 **Ejemplo real: [kotlinx-datetime (Kotlin)](https://github.com/Kotlin/kotlinx-datetime)**
 
 ```kotlin
 val now: Instant = Clock.System.now()
@@ -112,8 +112,6 @@ Una API debe ser **lo más pequeña posible** para facilitar su mantenimiento y 
 
 🔹 **Ejemplo real: [Lodash (JavaScript)](https://github.com/lodash/lodash)**
 
-¡Claro! Aquí tienes el ejemplo adaptado con datos del universo de **Durarara!!**, manteniendo la claridad del ejemplo original y alineado con los principios de simplicidad, no duplicación y responsabilidad única:
-
 ```javascript
 import _ from 'lodash';
 
@@ -150,32 +148,73 @@ Lodash mantiene una API minimalista, coherente y reutilizable. Sus funciones hac
 ✔️ **Difícil de usar mal** → Diseñada para prevenir errores comunes.  
 ✔️ **Evita abreviaciones y siglas confusas** → Usa nombres descriptivos y estándar.  
 
-🔹 **Ejemplo (Kotlin)**:  
-```kotlin
-fun sendEmail(to: String, subject: String, body: String) { /* ... */ }
+🔹 **Ejemplo real: [Datetime (Python)](https://docs.python.org/3/library/datetime.html)**
+
+```python
+from datetime import datetime, timedelta
+
+now = datetime.now()
+tomorrow = now + timedelta(days=1)
+
+print(f"Hoy es {now.date()} y mañana será {tomorrow.date()}")
 ```
-📌 **Mala práctica**:  
-```kotlin
-fun sndMl(addr: String, subj: String, txt: String) { /* ??? */ }
-```
-📌 **Buena práctica**: Usa nombres claros como `sendEmail()` en lugar de `sndMl()`.  
+
+<Explanation>
+
+La biblioteca estándar `datetime` de Python es un gran ejemplo de API bien diseñada:
+
+- ✅ **Intuitiva**: Los nombres como `datetime.now()`, `timedelta`, y `date()` son autodescriptivos.  
+- 🔒 **Difícil de usar mal**: No puedes sumar dos fechas arbitrariamente. Solo puedes operar con tipos compatibles (`datetime + timedelta`), lo cual previene errores lógicos comunes.  
+- 📚 **Consistencia semántica**: Todos los nombres están bien definidos y siguen una lógica uniforme; no hay siglas innecesarias ni convenciones poco claras.
+
+</Explanation>
+
+:::tip Resultado
+
+El diseño de `datetime` hace que trabajar con fechas y tiempos en Python sea directo y seguro. Gracias a su claridad y restricciones de tipos, es difícil cometer errores comunes como sumar dos fechas directamente o usar unidades inconsistentes.
+
+:::
 
 #### 🔗 5. Cohesión Alta y Bajo Acoplamiento  
 
 ✔️ **Alta cohesión** → Un módulo debe centrarse en **una sola tarea**.  
-✔️ **Bajo acoplamiento** → Los componentes deben poder cambiar sin afectar a otros.  
+✔️ **Bajo acoplamiento** → Los componentes deben poder cambiar sin afectar a otros.
 
-🔹 **Ejemplo (Kotlin - Separación de Módulos)**:  
-```kotlin
-class AuthService {
-    fun login(user: String, pass: String): Boolean { /* ... */ }
+🔹 **Ejemplo real: [`serde`](https://serde.rs/), la biblioteca de serialización en Rust**
+
+```rust
+use serde::{Serialize, Deserialize};
+use serde_json;
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Character {
+    name: String,
+    level: u32,
 }
 
-class UserProfile {
-    fun loadProfile(user: String): User { /* ... */ }
+fn main() {
+    let json = r#"{"name":"Maxim","level":99}"#;
+    let c: Character = serde_json::from_str(json).unwrap();
+    println!("{:?}", c);
 }
 ```
-📌 **Buena práctica**: `AuthService` gestiona autenticación, mientras `UserProfile` maneja perfiles.  
+
+<Explanation>
+
+La arquitectura de `serde` ejemplifica bien los principios de diseño:
+
+- ✅ **Alta cohesión**:  
+  El núcleo (`serde`) se enfoca exclusivamente en definir las abstracciones de serialización/deserialización. Otros crates (como `serde_json`, `serde_yaml`, `serde_cbor`) implementan esos conceptos para distintos formatos, sin mezclar responsabilidades.
+- 🔌 **Bajo acoplamiento**:  
+  Puedes cambiar de `serde_json` a `serde_yaml` sin modificar tu modelo de datos. Incluso puedes definir tus propios serializadores si necesitas un formato personalizado. La lógica de negocio y los datos están desacoplados de la lógica de formato.
+
+</Explanation>
+
+:::tip Resultado
+
+El diseño modular de `serde` permite que sea adoptada ampliamente sin arrastrar dependencias innecesarias. Esta separación clara de responsabilidades ha convertido a `serde` en una de las bibliotecas más usadas y respetadas del ecosistema Rust.
+
+:::
 
 #### 🔍 6. Estabilidad, Documentación y Pruebas  
 
@@ -345,40 +384,36 @@ fun divide(a: Int, b: Int): Either<String, Int> =
 println(divide(4, 2))  // Output: Right(2)
 ```
 
-## 📌 Conclusiones
+## 🎯 Conclusiones
 
-El desarrollo de bibliotecas de software es un componente esencial en la creación de herramientas reutilizables y eficientes. A lo largo de este artículo, exploramos los principios clave para diseñar **APIs efectivas**, asegurando que sean intuitivas, flexibles y fáciles de mantener.  
+Diseñar bibliotecas de software va mucho más allá de simplemente escribir funciones reutilizables: implica construir herramientas que otras personas usarán y en las que confiarán. Una buena biblioteca ofrece una API clara, coherente y segura que **reduce la complejidad** del desarrollo, **promueve la reutilización** y **facilita el mantenimiento** del código.
 
-### 🚀 Puntos Clave
+Hemos visto cómo una buena API:
 
-1. **Las bibliotecas facilitan la reutilización de código y la modularidad**, evitando la duplicación innecesaria y mejorando la productividad.  
-2. **Una API bien diseñada debe ser clara, coherente y difícil de usar incorrectamente**, siguiendo principios como encapsulación, cohesión y bajo acoplamiento.  
-3. **La simplicidad es clave**: una API debe ser lo más pequeña posible, exponiendo solo las funcionalidades esenciales sin introducir complejidad innecesaria.  
-4. **Ocultar detalles internos mejora la mantenibilidad**: una API debe proporcionar una interfaz estable y separar las preocupaciones para evitar dependencias rígidas.  
-5. **Las pruebas y la documentación son esenciales**: una API debe estar respaldada por **pruebas automatizadas** y contar con documentación clara que incluya ejemplos de uso.  
-6. **Las bibliotecas populares como NumPy, Lodash, Guava y Arrow demuestran estos principios en la práctica**, mostrando cómo se pueden aplicar en diferentes lenguajes de programación.  
+- abstrae correctamente el problema que resuelve,  
+- oculta detalles innecesarios,  
+- mantiene su interfaz simple y coherente,  
+- está diseñada para evitar mal uso,  
+- está bien estructurada internamente (alta cohesión, bajo acoplamiento),  
+- y cuenta con estabilidad, documentación y pruebas adecuadas.
 
-### 🏆 **Reflexión Final**  
+### 🔑 Puntos clave
 
-El diseño de bibliotecas de software va más allá de simplemente escribir código reutilizable. Implica tomar decisiones cuidadosas sobre la **estructura, la API expuesta y la experiencia de quienes la usan**. Aplicando estos principios, podemos desarrollar bibliotecas **eficientes, confiables y escalables**, que no solo resuelvan problemas técnicos, sino que también sean adoptadas y valoradas por la comunidad.  
+- Una biblioteca es tanto una herramienta técnica como una interfaz para otras personas. Su diseño debe enfocarse en la **experiencia de quien la usa**.  
+- Las decisiones de diseño impactan directamente en la **seguridad, mantenibilidad y adopción** de la biblioteca.  
+- Aplicar principios como **encapsulación, simplicidad, cohesión** y **versionado cuidadoso** mejora significativamente la calidad del software.
 
-Siguiendo estas buenas prácticas, puedes construir **bibliotecas robustas y mantenibles**, asegurando que sean herramientas útiles a largo plazo.
+### 🧰 ¿Qué nos llevamos?
 
-<References references={[
-    {
-        "title": "Introduction",
-        "bookTitle": "API Design for C++",
-        "pages": "1–24",
-        "location": "Amsterdam Heidelberg",
-        "year": "2011",
-        "type": "book"
-    },
-    {
-        "title": "Qualities",
-        "bookTitle": "API Design for C++",
-        "pages": "25–80",
-        "location": "Amsterdam Heidelberg",
-        "year": "2011",
-        "type": "book"
-    },
-]}/>
+Diseñar bibliotecas no es solo un ejercicio técnico: es una forma de comunicación. Cada función pública, cada nombre de parámetro, cada estructura expuesta es una invitación a que otra persona confíe en tu código. Al aplicar principios como claridad, simplicidad, encapsulación y pruebas, no solo estás resolviendo un problema, estás construyendo herramientas que perdurarán y crecerán junto con quienes las usan.
+
+Lo más valioso que puedes llevarte de esta unidad es que una buena biblioteca no se mide solo por lo que hace, sino por **cómo hace sentir a quien la utiliza**: segura, guiada y capaz.
+
+Crear bibliotecas es crear comunidad. Y eso, en sí mismo, es un acto de generosidad.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- 📚 Introduction. (2024). En M. Reddy, API design for C++ (Second edition, pp. 1–24). Morgan Kaufmann.
+- 📚 Qualities. (2024). En M. Reddy, API design for C++ (Second edition, pp. 25–80). Morgan Kaufmann.
