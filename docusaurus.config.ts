@@ -5,9 +5,9 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
 const config: Config = {
-    title: 'DIBS',
+    title: '📚 DIBS',
     tagline: 'Diseño e Implementación de Bibliotecas de Software',
-    favicon: 'img/favicon.ico',
+    favicon: 'img/online-library.ico',
 
     // Set the production url of your site here
     url: 'https://dibs.pages.dev',
@@ -59,7 +59,7 @@ const config: Config = {
             title: 'DIBS',
             logo: {
                 alt: 'My Site Logo',
-                src: 'img/logo.svg',
+                src: 'img/online-library.png',
             },
             items: [
                 {
