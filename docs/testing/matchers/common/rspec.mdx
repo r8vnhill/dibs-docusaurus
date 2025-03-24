@@ -15,111 +15,311 @@ import GithubRepoLink from '@site/src/components/GithubRepoLink'
 import { LanguageCard } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="" />
 
-**RSpec** es un framework de testing para Ruby que sigue el paradigma de Desarrollo Orientado por Comportamiento (BDD). Los matchers en RSpec se utilizan junto con el método `expect` para establecer expectativas sobre el código que se está probando.
+RSpec es uno de los frameworks de pruebas más populares en el ecosistema Ruby, y una de sus fortalezas más destacadas es la expresividad de sus *matchers*: construcciones que permiten definir con claridad y precisión lo que esperamos que ocurra en el código bajo prueba.
+
+En esta lección, revisaremos los matchers más comunes que ofrece RSpec, cómo se utilizan para construir expectativas legibles y directas, y qué diferencias existen con otros frameworks como Kotest en Kotlin. También discutiremos sus ventajas y limitaciones desde la perspectiva del diseño de bibliotecas y herramientas reutilizables.
 
 ## Ejemplos Comunes de Matchers en RSpec
 
-- **Igualdad**: Verifica si un valor es igual a otro.
+### Igualdad y Desigualdad con `eq`
 
-  ```ruby
-  expect(result).to eq(42)
-  ```
+El matcher `eq` en RSpec verifica si dos valores son **iguales estructuralmente**. Esto significa que compara los contenidos mediante el método `==`, no su identidad de objeto (`equal?`). Por lo tanto, dos objetos distintos pueden ser considerados iguales si su contenido lo es.
 
-- **Desigualdad**: Verifica que dos valores no sean iguales.
+#### 💡 Ejemplo contextualizado
 
-  ```ruby
-  expect(result).not_to eq(0)
-  ```
+Supongamos que estás desarrollando una biblioteca para manejar configuraciones de usuario. Una de las funciones devuelve un objeto con la configuración por defecto. Queremos asegurarnos de que esa función construya el contenido correctamente, sin preocuparnos por si es la misma instancia:
 
-- **No Nulo**: Asegura que un valor no es `nil`.
+<BoxedTabs>
+  <TabItem label={"Código esencial"} value={"Código esencial"}>
+  
+  ````ruby showLineNumbers
+  expect(default_config).to eq(UserConfig.new)
+  ````
 
-  ```ruby
-  expect(result).not_to be_nil
-  ```
+  </TabItem>
+  <TabItem label={"Código completo"} value={"Código completo"}>
 
-- **Contenido en Cadenas**: Verifica que una cadena contiene otra subcadena.
+  ````ruby showLineNumbers
+  require_relative 'user_config'
 
-  ```ruby
-  expect(string).to include("world")
-  ```
+  RSpec.describe "Default configuration" do
+    it "returns a config with 'light' theme and notifications enabled" do
+      expect(default_config).to eq(UserConfig.new)
+    end
+  end
+  ````
 
-- **Empieza con**: Verifica que una cadena comienza con un prefijo específico.
+  ````ruby showLineNumbers
+  class UserConfig
+    attr_reader :theme, :notifications_enabled
 
-  ```ruby
-  expect(string).to start_with("Hello")
-  ```
+    def initialize(theme: "light", notifications_enabled: true)
+      @theme = theme
+      @notifications_enabled = notifications_enabled
+    end
 
-## Encadenar Matchers en RSpec
+    def ==(other)
+      other.is_a?(UserConfig) &&
+        other.theme == theme &&
+        other.notifications_enabled == notifications_enabled
+    end
+  end
 
-En RSpec, las expectativas se pueden expresar en sentencias separadas para el mismo objeto, pero no es común encadenar múltiples matchers en una sola expresión como en Kotest.
+  def default_config
+    UserConfig.new
+  end
+  ````
+
+  </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    Esta prueba verifica que `default_config` devuelva una instancia con los valores por defecto esperados. Aunque se trata de dos objetos distintos, la prueba pasa porque `eq` utiliza el método `==`, y en este caso hemos definido que dos configuraciones son iguales si tienen el mismo `theme` y `notifications_enabled`.
+
+    Esto es especialmente útil al diseñar bibliotecas, ya que permite verificar el **contenido** esperado sin acoplarse a la identidad exacta de la instancia.
+</Explanation>
+
+#### ❌ Desigualdad
+
+Si lo que deseas es comprobar que **dos valores no son iguales estructuralmente**, puedes usar el matcher `not_to` (o `to_not`):
 
 ```ruby
-expect(result).not_to be_nil
-expect(result).to be > 10
-expect(result).to be < 50
+expect(test_config).not_to eq(default_config)
 ```
 
-Para cadenas:
+Esto asegura que, aunque ambos objetos sean del mismo tipo, sus contenidos no son equivalentes según la definición de `==`.
+
+<Explanation>
+    - `expect(x).to eq(y)` → verifica que `x == y`
+    - `expect(x).not_to eq(y)` → verifica que `x != y`
+
+    Ambas formas respetan el método `==` definido en la clase. Esto significa que puedes adaptar qué se considera "igual" para cada tipo de objeto según tus necesidades.
+</Explanation>
+
+:::tip[Igualdad referencial]
+
+Si necesitas comprobar que dos objetos son **exactamente la misma instancia** (es decir, ocupan el mismo lugar en memoria), puedes usar:
 
 ```ruby
-expect(string).to start_with("Hello")
-expect(string).to include("world")
-expect(string).to end_with("!")
+expect(a).to equal(b)
 ```
 
-Aunque cada expectativa está en una línea separada, RSpec permite una lectura fluida y clara de las condiciones que se están verificando.
+Este matcher **no usa `==`**, sino `equal?`, que compara identidad.
 
-## Comparación final
+:::
 
-| **Característica**                | **Kotest**                                                                                                                     | **RSpec**                                                                                                                   |
-|-----------------------------------|---------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| **Encadenamiento de matchers**     | Soporta el encadenamiento fluido de matchers en una sola expresión, mejorando la legibilidad de las pruebas.                     | No se permite el encadenamiento de matchers en una misma línea; cada verificación se realiza en líneas separadas.            |
-| **Expresividad del lenguaje**      | Kotlin proporciona una sintaxis moderna y concisa, y Kotest lo aprovecha para crear tests altamente legibles y eficientes.      | Ruby permite una sintaxis cercana al lenguaje natural, haciendo que las pruebas en RSpec sean claras y fáciles de entender.  |
-| **Capacidad de personalización**   | Soporta matchers personalizados, pero con menos flexibilidad comparado con Ruby debido a las restricciones del tipado estático. | Gracias a la metaprogramación en Ruby, RSpec permite una personalización avanzada de matchers de manera sencilla.            |
-| **Tipado estático vs dinámico**    | Kotest se beneficia del tipado estático de Kotlin, ofreciendo seguridad en tiempo de compilación y reduciendo errores en runtime.| Ruby es dinámico, permitiendo mayor flexibilidad, pero sacrificando la detección de errores en tiempo de ejecución.          |
-| **Asincronía y concurrencia**      | Soporta pruebas con coroutines de Kotlin, lo que permite manejar pruebas asincrónicas de manera eficiente.                      | Ruby soporta concurrencia, pero no tiene un equivalente directo a las coroutines de Kotlin, limitando las pruebas asincrónicas.|
+### Nulidad
 
-### Beneficios y limitaciones
+En RSpec, puedes verificar si un valor es `nil` (nulo) usando los matchers `be_nil` y `not_to be_nil`.
 
-<ProCons>
-  <Pros>
-    - **Expresividad**: **RSpec** permite escribir pruebas de manera muy cercana al lenguaje natural, lo que facilita la lectura y entendimiento del código de prueba. Su sintaxis, basada en el paradigma de desarrollo orientado por comportamiento (BDD), ayuda a definir claramente las expectativas del código.
-    - **Personalización avanzada**: Gracias a la metaprogramación de **Ruby**, **RSpec** permite crear fácilmente matchers personalizados y adaptar el framework a las necesidades específicas del proyecto. Esto otorga una gran flexibilidad para validar casos únicos o comportamientos no estándar.
-    - **Flexibilidad dinámica**: Al ser Ruby un lenguaje dinámico, **RSpec** permite una mayor flexibilidad en tiempo de ejecución. Esto hace que sea muy fácil modificar el comportamiento de las pruebas o cambiar cómo se manejan ciertas condiciones sin restricciones de tipado estático.
-  </Pros>
-  <Cons>
-    - **Rendimiento**: Al estar basado en **Ruby**, un lenguaje interpretado, **RSpec** puede ser más lento en contextos de pruebas a gran escala o en sistemas con muchas pruebas concurrentes. Esto puede afectar el tiempo de ejecución de los test suites grandes comparado con frameworks basados en lenguajes más rápidos como Kotlin.
-    - **Sin encadenamiento de matchers**: A diferencia de frameworks como **Kotest**, **RSpec** no permite encadenar múltiples matchers en una sola línea, lo que puede hacer que las pruebas se alarguen y se tornen menos compactas cuando se necesitan múltiples validaciones sobre el mismo objeto.
-    - **Falta de seguridad en tiempo de compilación**: Debido a la naturaleza dinámica de Ruby, **RSpec** no ofrece la seguridad en tiempo de compilación que se encuentra en lenguajes con tipado estático como Kotlin. Esto significa que algunos errores sólo se detectarán en tiempo de ejecución, lo que puede ser un inconveniente en proyectos grandes o críticos.
-    - **Soporte limitado para asincronía**: Aunque Ruby ofrece soporte para concurrencia, no tiene un mecanismo nativo como las coroutines en **Kotlin**, lo que hace que las pruebas asincrónicas y concurrentes sean menos eficientes y más difíciles de manejar en **RSpec**.
-  </Cons>
-</ProCons>
+Esto es especialmente útil al construir bibliotecas que retornan valores opcionales o que permiten estados vacíos como parte de su diseño. Asegurar la presencia o ausencia de un valor es una parte fundamental del control de flujo y la validación de resultados.
 
-## ¿Qué aprendimos?
+#### 💡 Ejemplo contextualizado
 
-En esta lección, hemos comparado los **matchers** comunes en **RSpec** y **Kotest**, explorando cómo se utilizan ambos frameworks para validar expectativas en pruebas. También vimos las principales diferencias entre el encadenamiento de matchers, el tipado estático versus dinámico, y cómo el paradigma de desarrollo orientado por comportamiento (BDD) influye en la estructura de los tests en **RSpec**.
+Supongamos que estás desarrollando una biblioteca que consulta configuraciones opcionales de usuario. Si no existe una configuración específica, tu función debe retornar `nil`:
 
-### Puntos clave:
+<BoxedTabs>
+  <TabItem label="Código esencial" value="Código esencial">
+    ````ruby showLineNumbers
+    expect(get_config("color_theme")).to be_nil
+    ````
+  </TabItem>
+  <TabItem label="Código completo" value="Código completo">
+    ````ruby showLineNumbers
+    require_relative 'user_settings'
 
-- **Expresividad**: **RSpec** destaca por su sintaxis natural y clara, mientras que **Kotest** ofrece una sintaxis más concisa y eficiente gracias al tipado estático de **Kotlin**.
-- **Personalización**: **RSpec** permite una gran flexibilidad a través de la metaprogramación de **Ruby**, facilitando la creación de matchers personalizados.
-- **Encadenamiento**: **Kotest** permite encadenar matchers en una sola línea, mientras que **RSpec** separa las expectativas, lo que puede hacer que las pruebas sean más largas pero también más explícitas.
-- **Rendimiento**: **RSpec** puede ser menos eficiente en sistemas con muchas pruebas debido a la naturaleza interpretada de **Ruby**.
+    RSpec.describe UserSettings do
+        it "returns nil for unknown configuration keys" do
+            settings = UserSettings.new
+            expect(settings.get_config("color_theme")).to be_nil
+        end
+    end
+    ````
 
----
+    ````ruby showLineNumbers
+    class UserSettings
+        def initialize(data = {})
+            @data = data
+        end
 
-<References references={[
-    {
-        title: "Exploring RSpec Expectations",
-        bookTitle: "Effective testing with RSpec 3: Build Ruby apps with confidence",
-        publisher: "The Pragmatic Bookshelf",
-        pages: "169–185",
-        year: "2017",
-        author: "M. Marston & I. Dees",
-        type: "book",
-    },
-]}/>
+        def get_config(key)
+            @data[key]
+        end
+    end
+    ````
+  </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    Este test verifica que la función `get_config` retorna `nil` cuando se consulta una clave que no ha sido definida. Esto es útil para APIs que permiten valores opcionales, y nos ayuda a validar su comportamiento en escenarios comunes como configuraciones faltantes, respuestas vacías, o estados iniciales.
+</Explanation>
+
+#### ✅ Para verificar que un valor no sea nulo
+
+También puedes validar explícitamente que un resultado **no sea** `nil` usando `not_to be_nil`:
+
+```ruby
+expect(user.name).not_to be_nil
+```
+
+Esto es útil en validaciones donde se espera que el resultado esté siempre presente, por ejemplo, después de una carga exitosa o una conversión válida.
+
+<Explanation>
+    - `be_nil` verifica si un valor es exactamente `nil`.  
+    - `not_to be_nil` comprueba que existe algún valor distinto de `nil`—sin importar cuál.
+</Explanation>
+
+### Contenido en cadenas
+
+RSpec ofrece varios *matchers* para trabajar con **cadenas de texto**, permitiendo verificar desde contenido parcial hasta coincidencias más específicas como prefijos o sufijos. Esto es muy útil en bibliotecas que generan mensajes, encabezados, logs o formatos estructurados.
+
+#### 🔍 Matchers disponibles
+
+- `include(substring)`  
+  Verifica que la cadena contenga una subcadena específica.
+
+- `start_with(prefix)`  
+  Verifica que la cadena comience con un prefijo determinado.
+
+- `end_with(suffix)`  
+  Verifica que la cadena termine con un sufijo específico.
+
+#### 💡 Ejemplo contextualizado
+
+Supongamos que estás desarrollando una biblioteca que genera mensajes de log. Cada mensaje debe comenzar con un nivel de severidad (`[INFO]`, `[WARN]`, etc.), incluir un texto principal, y terminar con un identificador de evento:
+
+<BoxedTabs>
+    <TabItem label="Código esencial" value="Código esencial">
+        ````ruby showLineNumbers
+        expect(log).to start_with("[WARN]")
+        expect(log).to include("Bloody New Year's Eve")
+        expect(log).to end_with("#friend-001")
+        ````
+    </TabItem>
+    <TabItem label="Código completo" value="Código completo">
+
+        ````ruby showLineNumbers
+        def generate_log(message, level = "INFO", event_id = nil)
+            "[#{level}] #{message}#{event_id ? " ##{event_id}" : ""}"
+        end
+        ````
+
+        ```ruby showLineNumbers
+        require_relative 'log_generator'
+
+        RSpec.describe "Log format" do
+            it "includes level, message and event ID" do
+                log = generate_log("Bloody New Year's Eve was triggered", "WARN", "friend-001")
+
+                expect(log).to start_with("[WARN]")
+                expect(log).to include("Bloody New Year's Eve")
+                expect(log).to end_with("#friend-001")
+            end
+        end
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    Este test valida que un mensaje de log generado por la biblioteca incluya tres elementos fundamentales:
+
+    - Un **nivel de alerta** (`[WARN]`), necesario para categorizar la gravedad del evento.
+    - Una **descripción textual** del evento (`"Bloody New Year's Eve"`).
+    - Un **identificador de evento** (`#friend-001`).
+
+    Este tipo de test sería útil en una biblioteca que formatea registros de auditoría o trazabilidad de eventos críticos en sistemas complejos.
+</Explanation>
+
+### 🧬 Matchers de tipo y clase
+
+En RSpec, puedes verificar si un objeto es de cierto tipo o clase usando los matchers `be_a`, `be_an`, `be_instance_of` y `be_kind_of`. Esto es especialmente útil cuando estás desarrollando una biblioteca y quieres asegurarte de que tus funciones devuelvan objetos del tipo correcto o compatible.
+
+#### `be_a` / `be_an`
+
+Verifican si un objeto **es una instancia de una clase o de una subclase**.
+
+```ruby
+expect(user).to be_a(User)
+expect(token).to be_an(String)
+```
+
+#### `be_instance_of`
+
+Verifica si un objeto es **exactamente de una clase**, sin permitir subclases.
+
+```ruby
+expect(user).to be_instance_of(User) # Falla si `user` es de una subclase como `AdminUser`
+```
+
+#### `be_kind_of`
+
+Alias de `be_a` / `be_an`, útil cuando se trabaja con jerarquías de clases o módulos incluidos.
+
+#### 📌 Ejemplo
+
+Supongamos que estás desarrollando una biblioteca para procesar comandos CLI. Cada comando debe devolver un resultado que implementa una interfaz común (`CommandResult`), pero también puedes tener subtipos para representar distintos casos.
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```ruby showLineNumbers
+        result = CommandProcessor.run("version")
+
+        expect(result).to be_a(CommandResult)
+        expect(result).to be_instance_of(SuccessResult)
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```ruby showLineNumbers
+        require_relative 'command_processor'
+
+        RSpec.describe CommandProcessor do
+            it "returns a success result that is a kind of CommandResult" do
+                result = CommandProcessor.run("version")
+
+                expect(result).to be_a(CommandResult)
+                expect(result).to be_instance_of(SuccessResult)
+            end
+        end
+        ```
+
+        ```ruby showLineNumbers
+        # Define the shared interface
+        class CommandResult
+            attr_reader :message
+
+            def initialize(message)
+                @message = message
+            end
+        end
+
+        # Subtipo para resultados exitosos
+        class SuccessResult < CommandResult
+        end
+
+        # Procesador de comandos
+        module CommandProcessor
+            def self.run(command)
+                case command
+                when "version"
+                    SuccessResult.new("Library CLI v1.2.0")
+                else
+                    raise "Unknown command"
+                end
+            end
+        end
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    Este test verifica dos cosas:
+    - Que `run("version")` devuelve un objeto compatible con `CommandResult` (`be_a`) — útil si otras clases heredan de él.
+    - Que el tipo **exacto** del resultado sea `SuccessResult` (`be_instance_of`) — útil para distinguir variantes específicas de resultado.
+
+    Este enfoque es común en bibliotecas que definen jerarquías de tipos para representar distintos estados o resultados, y permite mantener un diseño extensible sin sacrificar la precisión de las pruebas.
+</Explanation>
