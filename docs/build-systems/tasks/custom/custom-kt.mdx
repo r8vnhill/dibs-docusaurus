@@ -11,25 +11,44 @@ import Solution from "@site/src/components/exercise/Solution";
 import Hint from "@site/src/components/exercise/Hint";
 import { LanguageCard } from "@site/src/components/cards/LanguageCard"
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import Explanation from '@site/src/components/admonitions/Explanation'
 
 <ReadingTime/>
 <GithubRepoLink user={"r8vnhill"} repo={"echo-app-kt"}/>
 
-Gradle no solo ofrece tareas predefinidas, sino que también permite definir **tareas personalizadas** para realizar acciones específicas dentro de tu proyecto. Estas tareas pueden variar en complejidad y se definen en los archivos `build.gradle.kts` o en otros archivos `*.gradle.kts`.
+Gradle no se limita a tareas predefinidas como `build` o `test`; también nos permite definir nuestras **propias tareas** para automatizar procesos específicos de nuestro proyecto. Esto es especialmente útil cuando trabajamos en bibliotecas o aplicaciones complejas que requieren pasos adicionales como:
 
-Para definir tareas personalizadas, podemos hacerlo en el módulo `convention-plugins`, dentro de un archivo como `playground.gradle.kts`. Utilizamos la función `tasks.register` para especificar el nombre y las acciones a ejecutar. Aquí tienes un ejemplo básico:
+- Generar documentación.
+- Analizar el tamaño del build.
+- Transformar o copiar archivos.
+- Automatizar flujos de integración.
 
-```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
-tasks.register("greet") {
+Crear tareas personalizadas con Kotlin DSL no solo mejora la **claridad del proceso de build**, sino que también permite estructurar el proyecto de manera más modular, reutilizable y alineada con principios de diseño como el de **abierto/cerrado**.
+
+En esta lección aprenderemos a:
+
+- Crear tareas personalizadas simples y complejas.
+- Usar acciones como `doFirst` y `doLast` para definir comportamientos en distintos momentos del ciclo de vida.
+- Configurar dependencias entre tareas para controlar el orden de ejecución.
+- Basar nuevas tareas en tareas preexistentes como `Copy` para extender funcionalidad sin duplicar lógica.
+
+Con estas herramientas, podrás adaptar el proceso de construcción a las necesidades de tu proyecto de forma elegante y controlada.
+
+## 📋 Creando Tareas Personalizadas en Gradle
+
+Supongamos que queremos crear una tarea simbólica que **inicie el viaje del Príncipe**. Podemos comenzar con un saludo personalizado:
+
+```kotlin showLineNumbers title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+tasks.register("greetPrince") {
     group = "Playground"
-    description = "Prints a greeting message"
-    println("Hello, Gradle!")
+    description = "Greets the Prince of Persia before his next mission"
+    println("The sands of time are calling, Prince...")
 }
 ```
 
 Para que esta tarea se ejecute en el proyecto principal, debes aplicar el plugin correspondiente en el archivo `build.gradle.kts` del módulo principal:
 
-```kotlin title="build.gradle.kts"
+```kotlin showLineNumbers title="build.gradle.kts"
 plugins {
     id("jvm.conventions")
     id("playground")
@@ -37,68 +56,98 @@ plugins {
 // ...
 ```
 
-Ahora puedes ejecutar la tarea con `./gradlew greet` y verás el mensaje impreso en la consola.
+Ahora puedes ejecutar la tarea con `./gradlew greetPrince` y verás cómo el mensaje anticipa la misión del Príncipe en tu consola.
 
-<Exercise title={"Diferencia entre tasks.register y tasks.create"}>
+### 🧪 Ejercicio: Diferencia entre `tasks.register` y `tasks.create`
+
+<Exercise>
     Cambia la definición de la tarea de `tasks.register` a `tasks.create` en el archivo `playground.gradle.kts`. ¿Qué sucede ahora si ejecutas `./gradlew build` en el proyecto? ¿Por qué?
 
     <Solution>
-        Al ejecutar `./gradlew build`, se imprimirá el mensaje "Hello, Gradle!" a pesar de que no se haya llamado explícitamente a la tarea `greet`. El motivo es que al usar `tasks.create`, la tarea `greet` se configura y ejecuta su bloque de configuración inmediatamente durante la fase de configuración del build de Gradle.
+        Al ejecutar `./gradlew build`, se imprimirá el mensaje `"The sands of time are calling, Prince..."` incluso si no ejecutamos explícitamente la tarea `greetPrince`.
 
-        Esto significa que cualquier código dentro del bloque `{ ... }` de la tarea, como `println("Hello, Gradle!")`, se ejecuta en ese momento, independientemente de si la tarea `greet` se ejecuta o no durante la fase de ejecución.
+        Esto ocurre porque al usar `tasks.create`, la tarea se configura y ejecuta su bloque inmediatamente durante la **fase de configuración** del build de Gradle. Es decir, cualquier instrucción dentro del bloque `{ ... }`, como `println(...)`, se ejecuta en ese momento, independientemente de si la tarea se invoca o no más adelante.
 
-        Por lo tanto, el mensaje se imprime al ejecutar cualquier tarea del proyecto, incluyendo `./gradlew build`, porque la fase de configuración siempre se ejecuta antes de la fase de ejecución en Gradle.
+        En cambio, con `tasks.register`, la tarea se registra para una **configuración diferida**, y su bloque solo se ejecuta si la tarea es requerida durante la **fase de ejecución**. Esto evita trabajo innecesario y mejora el rendimiento.
 
-        En contraste, cuando usas `tasks.register`, la tarea se registra para una configuración diferida. El bloque de configuración no se ejecuta hasta que la tarea es requerida para su ejecución. Esto mejora el rendimiento al evitar configurar tareas que no se utilizan. Por eso, con `tasks.register`, el mensaje "Hello, Gradle!" no se imprime al ejecutar `./gradlew build`, a menos que la tarea `greet` sea llamada explícitamente.
+        Por eso, con `tasks.register`, el mensaje no aparece al ejecutar `./gradlew build`, a menos que se llame directamente a `greetPrince`.
+
+        Esta diferencia es clave para mantener builds eficientes y predecibles.
     </Solution>
 </Exercise>
 
-## Acciones en Gradle
+## ⚙️ Acciones en Gradle
 
-Nuestra implementación tiene un problema sutil, pero importante: el mensaje se imprime durante la configuración de Gradle, no durante la ejecución de la tarea. Para corregir esto, necesitamos usar **acciones**.
+En nuestra implementación inicial, notamos un detalle importante: el mensaje se imprime durante la **fase de configuración** de Gradle, incluso si la tarea no se ejecuta. Esto no es lo que queremos. Para corregirlo, necesitamos definir **acciones** que se ejecuten en el momento adecuado del ciclo de vida de la tarea.
 
-Las **acciones** son bloques de código que puedes agregar a una tarea para definir comportamientos específicos en momentos determinados durante su ciclo de vida. Las acciones más comunes son:
+Las **acciones** son bloques de código que definen **qué ocurre cuando la tarea se ejecuta**. Las más comunes son:
 
-- **`doFirst`**: Se ejecuta **antes** de cualquier otra acción configurada.
-- **`doLast`**: Se ejecuta **después** de todas las demás acciones configuradas.
+- 🔹 **`doFirst { ... }`:** Ejecuta el bloque **antes** de cualquier otra acción asociada a la tarea.
+- 🔸 **`doLast { ... }`:** Ejecuta el bloque **después** de todas las demás acciones.
 
-## Ejemplo: Calculando la Secuencia de Fibonacci
+Estas acciones se ejecutan únicamente si la tarea realmente se corre, lo que evita efectos colaterales en otras tareas y mejora la claridad del build.
 
-Supongamos que queremos crear una tarea que calcule la secuencia de Fibonacci. Usaremos las acciones `doFirst` y `doLast` para estructurar las operaciones:
+Un ejemplo simple:
 
-```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
-tasks.register("fib") {
+```kotlin showLineNumbers title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+tasks.register("greetPrince") {
     group = "Playground"
-    description = "Calculates the Fibonacci sequence up to the 10th number"
-
-    var first = 0
-    var second = 1
-
-    doFirst {
-        repeat(10) {
-            println(first)
-            second += first
-            first = second - first
-        }
-    }
-
+    description = "Greets the Prince of Persia before his next mission"
     doLast {
-        println("\nThe 10th Fibonacci number is: $first")
+        println("The sands of time are calling, Prince...")
     }
 }
 ```
 
-### ¿Qué está sucediendo aquí?
+Así, el mensaje se imprimirá solo cuando ejecutes `./gradlew hello`, y no antes.
 
-1. **`doFirst`**: Calcula los primeros 10 números de la secuencia de Fibonacci y los imprime.
-2. **`doLast`**: Imprime el décimo número de la secuencia al final.
+### 🧮 Ejemplo: Calculando la Secuencia de Fibonacci
 
-### Resultado
+Supongamos que queremos crear una tarea que calcule la secuencia de Fibonacci. Usaremos las acciones `doFirst` y `doLast` para estructurar las operaciones:
 
-Cuando ejecutas esta tarea con `./gradlew fib`, verás la siguiente salida:
+```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+tasks.register("printFibonacciSequence") {
+    group = "Playground"
+    description = "Prints the first 10 Fibonacci numbers and highlights the last one"
+
+    val sequence = mutableListOf<Int>()
+
+    doFirst {
+        var first = 0
+        var second = 1
+        repeat(10) {
+            sequence.add(first)
+            val temp = first + second
+            first = second
+            second = temp
+        }
+
+        sequence.forEach(::println)
+    }
+
+    doLast {
+        println("\nThe 10th Fibonacci number is: ${sequence.last()}")
+    }
+}
+```
+
+<Explanation>
+    En esta tarea, usamos `doFirst` para construir e imprimir los primeros 10 números de la secuencia de Fibonacci.
+    La lógica de cálculo se ejecuta antes de cualquier otra acción configurada, lo cual es ideal para preparar datos.
+
+    Luego, en `doLast`, imprimimos el décimo número destacándolo por separado. Esto permite separar el procesamiento
+    de los datos de su presentación final, haciendo la tarea más clara y fácil de mantener.
+
+    Esta estructura es útil cuando necesitas preparar y reutilizar información dentro de la misma tarea, y quieres que
+    la salida final tenga un contexto más destacado o resumido.
+</Explanation>
+
+#### 🎯 Resultado esperado
+
+Cuando ejecutas esta tarea con `./gradlew printFibonacciSequence`, verás la siguiente salida:
 
 ```plaintext
-> Task :fib
+> Task :printFibonacciSequence
 0
 1
 1
@@ -109,16 +158,37 @@ Cuando ejecutas esta tarea con `./gradlew fib`, verás la siguiente salida:
 13
 21
 34
-The 10th Fibonacci number is: 55
+
+The 10th Fibonacci number is: 34
 ```
 
-## Dependencias entre Tareas
+:::tip ¿Cuándo usar `doFirst` y `doLast`?
 
-En Gradle, es común que ciertas tareas dependan de otras. Para esto, puedes usar el método `dependsOn`. Por ejemplo, si queremos que la tarea `fib` dependa de una tarea `message`, podemos hacerlo así:
+- Usa **`doLast`** cuando quieras agregar lógica que **ocurra al final de la tarea**, como mostrar un resultado, guardar un archivo, o imprimir un resumen. Es el más común y recomendado por defecto.
+- Usa **`doFirst`** si necesitas ejecutar algo **antes de cualquier otra acción** asociada a la tarea, como configurar variables, verificar condiciones previas, o limpiar algún estado.
+- Usa **ambos** si tu tarea requiere lógica **antes y después** de una acción principal. Por ejemplo:
+    ```kotlin showLineNumbers
+    tasks.register("prepareBattle") {
+        doFirst {
+            println("Sharpening sword...")
+        }
+        doLast {
+            println("The Prince is ready for battle!")
+        }
+    }
+    ```
 
-```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+Esto te permite estructurar la tarea como una mini rutina con un inicio, desarrollo y cierre claros.
+
+:::
+
+## 🔗 Dependencias entre Tareas
+
+En Gradle, es común que ciertas tareas dependan de otras. Para esto, puedes usar el método `dependsOn`. Por ejemplo, si queremos que la tarea `printFibonacciSequence` dependa de una tarea `message`, podemos hacerlo así:
+
+```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts" showLineNumbers
 // ...
-tasks.register("message") {
+tasks.register("announceFibonacci") {
     group = "Playground"
     description = "Prints a message before calculating the Fibonacci sequence"
     doFirst {
@@ -126,25 +196,26 @@ tasks.register("message") {
     }
 }
 
-// highlight-next-line
-tasks.named("fib") {
-    dependsOn("message")
+tasks.named("printFibonacciSequence") {
+    dependsOn("announceFibonacci")
 }
 ```
 
-Aquí noten que hemos usado `tasks.named("fib")` en lugar de `tasks.register("fib")` para obtener la tarea `fib` ya definida y agregarle la dependencia, eso nos permite extender las funcionalidades de la tarea sin modificar su definición original, lo que se alinea con el principio **open-closed** del diseño de software.
+Aquí noten que hemos usado `tasks.named("printFibonacciSequence")` en lugar de `tasks.register("printFibonacciSequence")` para obtener la tarea `printFibonacciSequence` ya definida y agregarle la dependencia, eso nos permite extender las funcionalidades de la tarea sin modificar su definición original, lo que se alinea con el principio **open-closed** del diseño de software.
 
 :::info Open-closed Principle
+
 El **Principio de Abierto/Cerrado** (Open-closed Principle) es un principio de diseño de software que establece que las entidades de software (clases, módulos, funciones, etc.) deben estar abiertas para la extensión, pero cerradas para la modificación. Esto se traduce en que se deberían poder extender las funcionalidades de una entidad sin modificar su código fuente.
+
 :::
 
-Esto hace que `message` se ejecute antes de `fib`, y el resultado en la consola será algo como:
+Esto hace que `announceFibonacci` se ejecute antes de `printFibonacciSequence`, y el resultado en la consola será algo como:
 
 ```plaintext
-> Task :message
+> Task :announceFibonacci
 Calculating the Fibonacci sequence...
 
-> Task :fib
+> Task :printFibonacciSequence
 0
 1
 1
@@ -155,10 +226,13 @@ Calculating the Fibonacci sequence...
 13
 21
 34
-The 10th Fibonacci number is: 55
+
+The 10th Fibonacci number is: 34
 ```
 
-<Exercise title={"Contar el tamaño del proyecto compilado"}>
+## 📏 Ejercicio: Contar el tamaño del proyecto compilado
+
+<Exercise>
     Implementa una tarea personalizada que cuente el tamaño de los archivos compilados de tu proyecto.
 
     <Hint hints={[
@@ -174,55 +248,38 @@ The 10th Fibonacci number is: 55
     ]} />
 
     <Solution>
-        ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
-        tasks.register("countCompiledSize") {
-            group = "build"
-            description = "Counts the size of the compiled classes"
-            dependsOn("compileKotlin")
-
-            doLast {
-                val files = fileTree("app/build/classes/kotlin/main").files +
-                    fileTree("lib/build/classes/kotlin/main").files
-                var size = 0L
-                for (file in files) {
-                    size += file.length()
-                }
-                println("The total size of the compiled classes is $size bytes")
-            }
-        }
-        ```
-    </Solution>
-
-    <Solution title={"mejorada"}>
-        <BoxedTabs groupId={"gradle"}>
-            <TabItem value="Kotlin DSL" label="Kotlin DSL">
-            ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
-            tasks.register("countCompiledSize") {
-                group = "build"
-                description = "Counts the size of the compiled classes"
-                dependsOn("compileKotlin")
-
-                doLast {
-                    val files = fileTree("app/build/classes/kotlin/main").files +
-                        fileTree("lib/build/classes/kotlin/main").files
-                    val size = files.sumOf { it.length() }
-                    println("The total size of the compiled classes is $size bytes")
-                }
-            }
-            ```
-            </TabItem>
-            <TabItem value="Groovy DSL" label="Groovy DSL">
-                ```groovy title="convention-plugins/playground.gradle"
-                tasks.register('countCompiledSize') {
-                    group = 'build'
-                    description = 'Counts the size of the compiled classes'
-                    dependsOn 'compileKotlin'
+        <BoxedTabs>
+            <TabItem value="Implementación iterativa" label="Implementación iterativa">
+                ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+                tasks.register("countCompiledSize") {
+                    group = "build"
+                    description = "Counts the size of the compiled classes"
+                    dependsOn("compileKotlin")
 
                     doLast {
-                        def files = fileTree('app/build/classes/kotlin/main').files +
-                                fileTree('lib/build/classes/kotlin/main').files
-                        def size = files.sum { it.length() }
-                        println "The total size of the compiled classes is ${size} bytes"
+                        val files = fileTree("app/build/classes/kotlin/main").files +
+                            fileTree("lib/build/classes/kotlin/main").files
+                        var size = 0L
+                        for (file in files) {
+                            size += file.length()
+                        }
+                        println("The total size of the compiled classes is $size bytes")
+                    }
+                }
+                ```
+            </TabItem>
+            <TabItem value="Implementación funcional" label="Implementación funcional">
+                ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+                tasks.register("countCompiledSize") {
+                    group = "build"
+                    description = "Counts the size of the compiled classes"
+                    dependsOn("compileKotlin")
+
+                    doLast {
+                        val files = fileTree("app/build/classes/kotlin/main").files +
+                            fileTree("lib/build/classes/kotlin/main").files
+                        val size = files.sumOf { it.length() }
+                        println("The total size of the compiled classes is $size bytes")
                     }
                 }
                 ```
@@ -231,39 +288,68 @@ The 10th Fibonacci number is: 55
     </Solution>
 </Exercise>
 
-## Tareas Basadas en Otras Tareas
+## 🧱 Tareas Basadas en Otras Tareas
 
-Otra forma de crear tareas personalizadas en Gradle es basándolas en tareas existentes. Esto es útil si quieres
-extender o agregar funcionalidades a una tarea predefinida. Por ejemplo, si queremos crear una tarea que copie los
-archivos compilados a un directorio específico después de la compilación, podemos usar la tarea `Copy` y configurarla
-para que dependa de `compileKotlin`.
+Otra forma de crear tareas personalizadas en Gradle es basándolas en tareas existentes. Esto es útil si quieres extender o agregar funcionalidades a una tarea predefinida, como `Copy`, sin duplicar su lógica.
+
+Por ejemplo, si queremos crear una tarea que copie los archivos compilados de varios módulos a un directorio específico después de la compilación, podemos hacer lo siguiente:
 
 ```kotlin title="convention-plugins/src/main/kotlin/playground.gradle.kts"
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
 tasks.register<Copy>("copyCompiledClasses") {
     group = "build"
-    description = "Copy the compiled classes to a specific directory"
+    description = "Copies compiled classes from all modules into a timestamped output directory"
     dependsOn("compileKotlin")
-    from("app/build/classes/kotlin/main")
-    into("compiled-classes")
+
+    val modules = listOf("app", "lib")
+    val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
+
+    from(modules.map { "$it/build/classes/kotlin/main" })
+    into("compiled-classes-$timestamp")
 }
 ```
 
-Esta tarea copiará los archivos compilados al directorio `compiled-classes` después de que se haya completado la compilación.
+<Explanation>
+    Esta tarea utiliza la clase predefinida `Copy` de Gradle, lo que le permite heredar toda su funcionalidad sin necesidad de implementar el comportamiento desde cero. Lo interesante aquí es cómo la tarea se adapta dinámicamente:
 
-## ¿Qué aprendimos?
+    - **Modularidad**: Se define una lista de módulos (`app`, `lib`) desde los que se copiarán los archivos compilados. Si el proyecto crece, puedes agregar más módulos fácilmente a esta lista.
+    - **Organización por timestamp**: El uso de un timestamp (`yyyyMMdd-HHmmss`) asegura que cada ejecución de la tarea genere una carpeta única. Esto evita sobrescribir resultados anteriores y facilita comparar builds o mantener registros históricos.
+    - **Dependencia explícita**: Con `dependsOn("compileKotlin")`, nos aseguramos de que los archivos ya estén compilados antes de copiarlos, respetando el flujo natural del proceso de construcción.
 
-En esta lección, aprendimos a crear **tareas personalizadas** en Gradle usando **Kotlin DSL** y **Groovy DSL**, optimizando y estructurando el proceso de build.
+    Este patrón es muy útil en tareas como generación de artefactos, backups de builds, distribución de resultados o preparación de entornos de prueba.
+</Explanation>
 
-### Puntos clave
+### ✅ Resultado esperado
 
-1. **Definición de tareas**: Usamos `tasks.register` para configurar tareas con ejecución diferida, mejorando el rendimiento comparado con `tasks.create`.
-2. **Acciones (`doFirst`, `doLast`)**: Utilizamos acciones para estructurar las operaciones antes y después de la ejecución de una tarea.
-3. **Dependencias**: Configuramos tareas para depender de otras usando `dependsOn`, asegurando un flujo de trabajo secuencial.
-4. **Extensión de tareas predefinidas**: Reutilizamos tareas como `Copy` para personalizar acciones sin duplicar código.
+Luego de ejecutar:
 
----
+```
+./gradlew copyCompiledClasses
+```
 
-Esto nos permite automatizar y personalizar el build eficientemente, adaptando el flujo a las necesidades del proyecto.
+Verás una carpeta como `compiled-classes-20250325-135809` en la raíz del proyecto, conteniendo los archivos compilados.
+
+## 🎯 Conclusiones
+
+Crear tareas personalizadas en Gradle es una habilidad esencial para construir procesos de build claros, modulares y alineados con las necesidades específicas de tu proyecto. A través de esta lección exploramos cómo definir tareas desde cero, cómo controlar su comportamiento con acciones, cómo componer flujos de tareas usando dependencias, y cómo reutilizar tareas existentes para evitar duplicación de lógica.
+
+Ya sea que estés desarrollando una aplicación o una biblioteca reutilizable, dominar estas herramientas te permite automatizar tareas repetitivas, estructurar tu proceso de compilación de forma clara y mantener tu código alineado con principios de diseño robustos.
+
+### 🔑 Puntos clave
+
+- **`tasks.register` vs `tasks.create`**: Prefiere `register` para obtener configuración diferida y evitar ejecuciones innecesarias.
+- **Acciones (`doFirst` / `doLast`)**: Úsalas para definir lógica que se ejecuta solo cuando la tarea se invoca.
+- **Dependencias (`dependsOn`)**: Permiten encadenar tareas y controlar su orden de ejecución.
+- **Reutilización de tareas (`Copy`)**: Permite extender comportamientos existentes con mínima configuración adicional.
+
+### 🧰 ¿Qué nos llevamos?
+
+Gradle no es solo una herramienta para compilar y empaquetar código; también es un entorno de automatización altamente expresivo. Al aprender a definir tareas personalizadas, no solo ganamos control sobre el proceso de build, sino que también moldeamos el proyecto a nuestras necesidades concretas, de forma clara, reutilizable y alineada con buenas prácticas.
+
+Cada tarea que escribimos se convierte en una pieza más del lenguaje de construcción de nuestro software. Y como vimos, incluso algo tan simple como saludar al Príncipe puede ser el punto de partida para construir rutinas complejas, mantenibles y potentes. Con estas bases, estás listx para seguir explorando cómo extender aún más las capacidades de Gradle, con tareas dinámicas, parametrizadas o incluso plugins propios.
+
 
 <div className="language-card-container">
     <LanguageCard
@@ -273,22 +359,8 @@ Esto nos permite automatizar y personalizar el build eficientemente, adaptando e
     />
 </div>
 
-<References references={[
-    {
-        title: "4. Build Script Essentials",
-        bookTitle: "Gradle in Action",
-        pages: "75–104",
-        location: "Shelter Island, NY",
-        publisher: "Manning",
-        year: "2014",
-        type: "book",
-        author: 'Muschko, Benjamin and Dockter, Hans',
-    },
-    {
-        title: "Using Tasks",
-        siteOrAuthor: "Gradle",
-        url: "https://docs.gradle.org/current/userguide/tutorial_using_tasks.html",
-        accessedDate: "10 de septiembre de 2024",
-        type: "web"
-    }
-]}/>
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- 🌐 Understanding Tasks. (s. f.). Recuperado 25 de marzo de 2025, de https://docs.gradle.org/current/userguide/more_about_tasks.html
