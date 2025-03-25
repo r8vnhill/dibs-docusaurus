@@ -20,183 +20,135 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="scala-dibs" />
+Luego de haber explorado las **expresiones infijas en Kotlin**, su sintaxis y sus restricciones, es natural preguntarse cómo se comporta esta idea en otros lenguajes que también promueven la expresividad y la composición fluida de código. En esta lección, veremos cómo Scala —un lenguaje fuertemente influenciado por la programación funcional y orientada a construir DSLs— adopta y extiende el concepto de expresiones infijas con mucha más libertad que Kotlin.
 
-Las **expresiones infijas** permiten escribir funciones de manera más legible y fluida, eliminando la necesidad de paréntesis o puntos. En Scala, este concepto ha evolucionado entre **Scala 2** y **Scala 3**, con cambios en la forma en que se manejan los métodos infijos y los operadores personalizados.
+En particular, compararemos las capacidades de ambos lenguajes y pondremos atención a una serie de diferencias clave:
 
-### ✅ Sintaxis de Expresiones Infijas
+- En Scala, **no es necesario marcar una función como infija**: cualquier método con un solo argumento puede usarse como tal.
+- Se permite utilizar **símbolos arbitrarios** como nombre de método, lo que posibilita la creación de operadores personalizados.
+- No hay restricciones en cuanto al número de parámetros o el uso de valores por defecto para que una función pueda invocarse en forma infija.
+- Scala permite **encadenar múltiples operaciones infijas sin paréntesis adicionales**, lo que facilita la escritura de código fluido en DSLs.
 
-<BoxedTabs>
-    <TabItem value="Scala 3" label="Scala 3">
-    </TabItem>
-    <TabItem value="Scala 2" label="Scala 2">
-    </TabItem>
-</BoxedTabs>
+Estas diferencias hacen que Scala sea un lenguaje más permisivo —y también más propenso a abusos— en lo que respecta al uso de expresiones infijas. A lo largo de esta lección, veremos ejemplos comparativos que ilustran lo que **sí puedes hacer en Scala pero no en Kotlin**, y discutiremos cuándo esta expresividad adicional es útil y cuándo puede jugar en contra de la claridad del código.
 
-En **Scala 2**, cualquier método con un único parámetro puede ser utilizado como infijo.
+### ✅ ¿Qué se puede hacer en Scala?
 
-```scala
-class Persona(val nombre: String) {
-  def saluda(a: Persona): String = s"Hola, ${a.nombre}, soy $nombre"
-}
+Scala permite que **cualquier método con un solo parámetro** sea invocado en forma infija, sin necesidad de declarar el método como `infix` (palabra clave que **no existe** en Scala). Esto incluye tanto métodos miembros como métodos de extensión (usando `implicit class` o `extension` en Scala 3).
 
-val juan = new Persona("Juan")
-val ana = new Persona("Ana")
+#### 🧩 Ejemplo 1: Método miembro como infijo en una biblioteca de IA
 
-println(juan saluda ana)  // "Hola, Ana, soy Juan"
-```
-
-En este caso, `saluda` se invoca sin paréntesis ni punto, permitiendo un código más expresivo.
-
-### 🚀 Expresiones Infijas en Scala 3
-
-En **Scala 3**, el uso de expresiones infijas está **restringido a métodos marcados explícitamente como `infix`**.
+Supongamos que estás desarrollando una biblioteca de simulación para juegos o entornos de inteligencia artificial, y deseas ofrecer una API expresiva para modelar interacciones entre entidades. Una de esas entidades podría ser un `Robot`, que puede realizar acciones sobre un objetivo.
 
 ```scala
-class Persona(val nombre: String) {
-  infix def saluda(a: Persona): String = s"Hola, ${a.nombre}, soy $nombre"
+class Robot(val name: String) {
+  def attacks(target: String): String = s"$name attacks $target"
 }
 
-val juan = new Persona("Juan")
-val ana = new Persona("Ana")
+val robot = new Robot("HAL9000")
 
-println(juan saluda ana)  // "Hola, Ana, soy Juan"
+// Llamada tradicional
+robot.attacks("Dave")
+
+// Llamada infija
+robot attacks "Dave"
 ```
 
-El modificador `infix` **no es obligatorio**, pero su uso es recomendado para hacer explícito que el método debe ser usado de manera infija.
+Al exponer el método `attacks` en forma infija, permites que el usuario de tu biblioteca escriba código **más declarativo y legible**, como si se tratara de un lenguaje específico del dominio (DSL). Esto resulta particularmente útil en bibliotecas diseñadas para scripting de comportamientos o simulaciones, donde la claridad de la intención es clave.
+
+> ✅ En Scala, **no necesitas usar una palabra clave especial** para habilitar la notación infija.  
+> 🟣 Esto contrasta con Kotlin, donde solo funciones declaradas explícitamente como `infix` pueden usarse de esta forma.
+
+Este patrón también se puede aplicar a bibliotecas de validación, motores de reglas o generadores de pruebas, donde los métodos infijos hacen que las reglas se lean como frases naturales:
+
+```scala
+"username" shouldBeValid
+user mustHave "email"
+order totalShouldBeGreaterThan 100
+``` 
+
+Así, Scala permite a quienes diseñan bibliotecas ofrecer APIs que **no solo funcionan bien, sino que también se leen bien**, un objetivo esencial en herramientas orientadas a usuarios técnicos y no técnicos por igual.
+
+#### Ejemplo 2: Métodos definidos en objetos o como extensiones
+
+```scala
+extension (username: String)
+  def shouldHaveMinimumLength(length: Int): Boolean =
+    username.length >= length
+
+// Uso infijo
+"leif" shouldHaveMinimumLength 4
+```
+
+> 🟢 Esta capacidad de extender tipos existentes con métodos infijos es muy similar a Kotlin, pero en Scala no hay restricciones como “solo un parámetro y sin valores por defecto” para usarse en notación infija.
 
 ---
 
-## 🔍 Diferencias Clave entre Scala 2 y Scala 3
+### 🚫 ¿Qué NO se puede hacer en Kotlin pero SÍ en Scala?
 
-| Característica               | Scala 2                          | Scala 3                              |
-|-----------------------------|--------------------------------|--------------------------------|
-| **Métodos infijos**         | Cualquier método con 1 parámetro | Requiere la anotación `infix` (opcional pero recomendado) |
-| **Uso en clases**           | Implícito en cualquier método de una clase | Se recomienda marcar con `infix` |
-| **Expresiones ambiguas**    | Permitidas sin restricciones | Pueden generar advertencias si no están marcadas con `infix` |
-| **Precedencia**             | Similar a operadores estándar | No ha cambiado en Scala 3 |
+Scala permite incluso usar **cualquier símbolo como nombre de método**, lo que permite definir operadores personalizados con **nombres simbólicos**:
+
+#### Ejemplo 3: Operador personalizado con símbolo
+
+```scala
+class Vector2(val x: Int, val y: Int) {
+  def +(other: Vector2): Vector2 =
+    new Vector2(x + other.x, y + other.y)
+}
+
+val a = new Vector2(1, 2)
+val b = new Vector2(3, 4)
+
+val c = a + b // Usando operador + como infijo
+```
+
+> ⛔ En Kotlin, solo se pueden sobrecargar un conjunto limitado de operadores predefinidos (`+`, `*`, `==`, etc.) mediante palabras clave (`operator fun`).  
+> ✅ En Scala, **puedes definir cualquier operador simbólico** como infijo, lo cual no es posible en Kotlin.
 
 ---
 
-## 📌 **Expresiones Infijas con Operadores Personalizados**
+### ⚖️ Precedencia de operadores en Scala
 
-En **Scala 2**, cualquier método puede ser infijo, incluyendo aquellos que usan caracteres especiales como `+`, `*`, etc.
-
-```scala
-class Vector2D(val x: Int, val y: Int) {
-  def +(other: Vector2D): Vector2D = new Vector2D(this.x + other.x, this.y + other.y)
-}
-
-val v1 = new Vector2D(1, 2)
-val v2 = new Vector2D(3, 4)
-
-val v3 = v1 + v2  // Vector(4, 6)
-```
-
-En **Scala 3**, esto sigue siendo válido, pero se recomienda marcar los operadores con `infix`.
+Al igual que en Kotlin, **la precedencia puede causar ambigüedad** en expresiones infijas. Pero en Scala, la precedencia está determinada por **el primer carácter del nombre del método**. Por ejemplo:
 
 ```scala
-class Vector2D(val x: Int, val y: Int) {
-  infix def +(other: Vector2D): Vector2D = new Vector2D(this.x + other.x, this.y + other.y)
-}
-
-val v1 = new Vector2D(1, 2)
-val v2 = new Vector2D(3, 4)
-
-val v3 = v1 + v2  // Vector(4, 6)
+val result = 1 + 2 * 3 // * tiene mayor precedencia que +
 ```
 
-El beneficio de usar `infix` en Scala 3 es que el compilador emite advertencias si el método se usa de una manera no esperada.
+> ⚠️ Si defines un método simbólico con un carácter poco convencional (como `?:` o `!!`), podría tener una precedencia confusa para quien lee el código. En Kotlin, no puedes crear nombres de función como símbolos arbitrarios, por lo que este problema no se presenta.
 
 ---
 
-## ⚠️ Ambigüedades y Precedencia  
+### ✨ Expresiones más expresivas con múltiples operadores
 
-En ambos casos, las expresiones infijas pueden generar ambigüedades cuando se combinan con operadores estándar.
-
-```scala
-class Number(val value: Int) {
-  infix def doubleAdd(other: Number): Number = new Number(this.value + other.value * 2)
-}
-
-val a = new Number(2)
-val b = new Number(3)
-
-val result = a doubleAdd b + b  // Ambiguo: ¿(a doubleAdd b) + b o a doubleAdd (b + b)?
-```
-
-Para evitar confusión, **Scala recomienda usar paréntesis explícitos**.
+En Scala puedes combinar infijos en cadena, lo cual puede hacer el código más legible en algunos casos:
 
 ```scala
-val result1 = (a doubleAdd b) + b
-val result2 = a doubleAdd (b + b)
+val result = "username" shouldHaveMinimumLength 5 shouldBe true
 ```
+
+> Esto es posible gracias a que las funciones pueden devolver cualquier tipo (incluyendo el objeto original), permitiendo **encadenamiento fluido**. Este estilo es común en librerías como ScalaTest o Specs2, similares a Kotest.
 
 ---
 
-## 🏆 **Caso de estudio: Expresiones Infijas en Librerías de Pruebas**
+## 📌 Conclusión Comparativa
 
-Un uso común de las expresiones infijas en Scala es en **frameworks de pruebas**, como **ScalaTest** y **MUnit**, donde ayudan a escribir **assertions** más legibles y expresivas.
-
-```scala
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
-
-class ExampleSpec extends AnyFlatSpec with Matchers {
-  "Una lista" should "contener elementos esperados" in {
-    List(1, 2, 3) should contain(2)
-  }
-}
-```
-
-El uso de `should contain` como una expresión infija mejora la claridad y legibilidad del test.
-
-En **Scala 3**, `should` y otros operadores personalizados pueden beneficiarse de la anotación `infix`:
-
-```scala
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
-
-class ExampleSpec extends AnyFlatSpec with Matchers {
-  infix def esMayorQue(x: Int, y: Int): Boolean = x > y
-
-  "Comparaciones" should "ser más legibles" in {
-    (10 esMayorQue 5) shouldBe true
-  }
-}
-```
-
----
-
-## 📊 **Beneficios y Limitaciones**
+| Característica                              | Kotlin                        | Scala                            |
+|--------------------------------------------|-------------------------------|----------------------------------|
+| ¿Requiere palabra clave para infijo?       | ✅ `infix`                    | ❌ No                            |
+| ¿Permite símbolos como nombres de métodos? | ❌ No                         | ✅ Sí                            |
+| ¿Puede ser cualquier método?               | ❌ Solo miembro o extensión   | ✅ Cualquier método              |
+| ¿Permite más de un parámetro?              | ❌ No                         | ✅ Sí                            |
+| ¿Permite métodos infijos definidos globalmente? | ❌ No                     | ✅ Con `extension` u `implicit` |
+| ¿Encadenamiento fluido natural?            | ✅ Con retorno de `this`      | ✅ Muy común                     |
 
 <ProCons>
-    <Pros>
-        - **Mayor legibilidad**: Las expresiones infijas hacen que el código sea más intuitivo y fácil de leer, especialmente en DSLs y librerías de pruebas.
-        - **Compatibilidad con librerías de pruebas**: Frameworks como **ScalaTest** aprovechan las expresiones infijas para hacer los tests más expresivos.
-        - **Ideal para operadores personalizados**: Facilitan la creación de operadores que se comportan como los operadores estándar.
-    </Pros>
-    <Cons>
-        - **Ambigüedades en precedencia**: Sin paréntesis, algunas expresiones pueden ser difíciles de interpretar.
-        - **Restricciones en Scala 3**: La necesidad de usar `infix` puede hacer que algunas migraciones desde Scala 2 requieran cambios.
-    </Cons>
+<Pros>
+- Scala permite un uso **más libre y expresivo** de notación infija.
+- Es posible definir **operadores personalizados simbólicos**, como `<<<`, `:::` o `-->`.
+- Las expresiones infijas no tienen restricciones en número de parámetros.
+</Pros>
+<Cons>
+- La **mayor flexibilidad puede generar ambigüedad o abuso**, haciendo el código más difícil de leer si no se sigue una convención clara.
+- Las **reglas de precedencia simbólica** pueden ser confusas para personas nuevas en Scala.
+</Cons>
 </ProCons>
-
----
-
-## 📌 **Conclusiones**  
-
-Las **expresiones infijas** en Scala han evolucionado con **Scala 3**, introduciendo el modificador `infix` para mejorar la claridad y evitar ambigüedades. Aunque su uso sigue siendo opcional, se recomienda para garantizar una sintaxis más predecible y evitar advertencias del compilador.
-
-### 🔑 **Puntos clave**  
-
-1. **Expresividad y legibilidad mejorada**  
-   - En ambos casos, las expresiones infijas permiten escribir código más natural y menos cargado de paréntesis.
-   - Scala 3 introduce `infix` para indicar explícitamente qué métodos pueden usarse de manera infija.
-2. **Uso en librerías de pruebas**  
-   - Frameworks como **ScalaTest** y **MUnit** utilizan expresiones infijas para hacer los tests más declarativos.
-3. **Precedencia y ambigüedad**  
-   - Se recomienda **usar paréntesis** en expresiones complejas para evitar confusión.
-
-### ✅ **Reflexión final**  
-
-Las expresiones infijas son una herramienta poderosa para mejorar la claridad del código en Scala, pero deben usarse con criterio. Scala 3 introduce restricciones que hacen el código más predecible, asegurando que el uso de infijos sea más controlado y claro para quien desarrolla.
