@@ -1,5 +1,5 @@
 ---
-title: Matchers comunes
+title: Matchers predefinidos
 ---
 import ReadingTime from '@site/src/components/ReadingTime'
 import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
@@ -19,15 +19,100 @@ import {
     RSpecCard
 } from "/src/components/cards/LanguageCard";
 import Tooltip from '@site/src/components/Tooltip';
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime/>
 <GithubRepoLink user={"r8vnhill"} repo={"assertions-kt"}/>
 
-Los **Matchers** en Kotest te permiten verificar condiciones de manera expresiva y legible, como si un valor es igual, no nulo, o si una cadena contiene un texto. Kotest ofrece más de
-<Tooltip text={<>Mediante la bibliotecas como <code>kotest-assertions-core</code> o <code>kotest-assertions-json</code></>} highlight={true}><span>**350 matchers**</span></Tooltip>
-que cubren una amplia variedad de validaciones y te permite encadenar varios matchers para mejorar la legibilidad.
+Los *matchers* son el corazón de las pruebas expresivas en **Kotest**. Permiten escribir afirmaciones legibles y declarativas, enfocadas más en el *qué* esperamos del valor evaluado que en el *cómo* lo verificamos. Gracias a su sintaxis fluida, los matchers ayudan a que los tests se lean como descripciones naturales del comportamiento esperado.
 
-### Ejemplos Comunes de Matchers en Kotest:
+En esta lección conocerás cómo usar los **matchers predefinidos** que ofrece Kotest: desde validaciones simples como comprobar igualdad o nulidad, hasta expresiones más sofisticadas encadenadas. También verás cómo esta forma de testear no solo mejora la claridad del código, sino que facilita la detección de errores y hace que tus pruebas se comuniquen mejor con otras personas.
+
+Kotest incluye cientos de matchers especializados para trabajar con tipos como listas, cadenas, fechas, JSON, e incluso excepciones. Aprender a dominarlos es clave para escribir tests más concisos, expresivos y mantenibles.
+
+## Ejemplos Comunes de Matchers en Kotest
+
+### Igualdad y Desigualdad
+
+El matcher `shouldBe` en Kotest verifica si dos valores son **iguales estructuralmente**, es decir, si `a == b`. Esto significa que no compara identidad de objetos (`===`), sino su **contenido lógico** tal como lo define el método `equals()`.
+
+#### 💡 Ejemplo contextualizado
+
+Imaginemos que estás desarrollando una biblioteca para manejar configuraciones de usuario. Tienes una función que devuelve una configuración por defecto, y quieres asegurarte de que su contenido sea el correcto, **sin importar si es la misma instancia**:
+
+<BoxedTabs>
+  <TabItem label={"Código esencial"} value={"Código esencial"}>
+  
+  ```kotlin showLineNumbers
+  defaultConfig() shouldBe UserConfig()
+  ```
+  
+  </TabItem>
+  <TabItem label={"Código completo"} value={"Código completo"}>
+  
+  ```kotlin showLineNumbers title="src/test/kotlin/UserConfigTest.kt"
+  package com.github.username.config
+
+  import io.kotest.core.spec.style.FreeSpec
+  import io.kotest.matchers.shouldBe
+
+  class UserConfigTest : FreeSpec({
+      "default config should match expected content" {
+          defaultConfig() shouldBe UserConfig()
+      }
+  })
+  ```
+
+  ```kotlin showLineNumbers title="src/main/kotlin/UserConfig.kt"
+  package com.github.username.config
+
+  class UserConfig(
+      val theme: String = "light",
+      val notificationsEnabled: Boolean = true
+  )
+
+  fun defaultConfig() = UserConfig()
+  ```
+  
+  </TabItem>
+</BoxedTabs>
+
+<Explanation>
+  En esta prueba verificamos que `defaultConfig()` devuelva una instancia que **tenga el mismo contenido** que la instancia creada directamente con `UserConfig()`.  
+  Gracias a que `UserConfig` es una `data class`, Kotlin implementa automáticamente `equals()` para comparar los campos.
+
+  Esta forma de comparar objetos es útil al diseñar bibliotecas, ya que permite testear el **contenido esperado** sin depender de referencias exactas.
+</Explanation>
+
+#### ❌ Desigualdad
+
+Si deseas comprobar que **dos valores no son iguales estructuralmente**, puedes usar el matcher `shouldNotBe`:
+
+```kotlin
+testConfig shouldNotBe defaultConfig()
+```
+
+Esto asegura que los contenidos no son equivalentes según `equals()`.
+
+<Explanation>
+  - `a shouldBe b` → verifica que `a == b`
+  - `a shouldNotBe b` → verifica que `a != b`
+
+  Ambas expresiones se basan en `equals()`. Si necesitas redefinir lo que significa "igualdad" para una clase, puedes sobreescribir `equals()` o usar una `data class`, como en este ejemplo.
+</Explanation>
+
+:::tip[Igualdad referencial]
+
+Si necesitas verificar que **dos referencias apuntan al mismo objeto en memoria**, puedes usar `shouldBeSameInstanceAs`:
+
+```kotlin
+a shouldBeSameInstanceAs b
+```
+
+Este matcher compara identidad referencial (`===`), no contenido lógico.
+
+:::
+
 
 - **Igualdad**: Verifica si un valor es igual a otro.
     ```kotlin
