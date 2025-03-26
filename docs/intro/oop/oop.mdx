@@ -7,37 +7,79 @@ import References from "@site/src/components/ReferencesComponent";
 import TabItem from "@theme/TabItem";
 import Tabs from "@theme/Tabs";
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import Explanation from '@site/src/components/admonitions/Explanation'
 
 <ReadingTime/>
 
+La **Programación Orientada a Objetos (OOP)** es un paradigma de desarrollo que modela el software en torno a **entidades que combinan datos y comportamiento**, comúnmente llamadas *objetos*. Estas entidades encapsulan su estado interno y exponen operaciones que permiten interactuar con ese estado.
+
+En este enfoque, estructuramos nuestro código mediante conceptos como:
+
+- **Clases**, que actúan como planos o plantillas que definen qué datos y comportamientos tendrá una entidad.
+- **Instancias**, que son representaciones concretas de una clase, cada una con su propio estado.
+- **Interfaces**, que definen contratos de comportamiento sin proporcionar una implementación completa.
+- **Herencia**, que permite reutilizar o extender comportamientos definidos en otras clases o interfaces.
+- **Encapsulación**, que protege los detalles internos de una entidad, exponiendo solo lo necesario.
+- **Polimorfismo**, que permite tratar distintas implementaciones de manera uniforme.
+
+En Kotlin, la OOP se expresa de manera moderna y concisa. El lenguaje introduce mecanismos como `data class`, `object` y `interface` con implementación, que permiten diseñar sistemas modulares y expresivos, equilibrando claridad y flexibilidad.
+
+---
+
+Esta lección introduce los pilares fundamentales de OOP en Kotlin, mediante ejemplos prácticos y contextualizados. Aprenderás a definir clases, instanciar estructuras, extender comportamientos, encapsular lógica y construir jerarquías de tipos reutilizables. Estos conceptos serán esenciales tanto para crear aplicaciones como para diseñar bibliotecas bien estructuradas.
+
 ## Singleton
 
-En Kotlin, los **singleton** se definen con la palabra clave `object`, lo que crea una única instancia de la clase, sin necesidad de instanciarla múltiples veces.
+En Kotlin, los **singleton** se definen con la palabra clave `object`, lo que garantiza que solo exista una única instancia, sin necesidad de crearla explícitamente.
 
 <BoxedTabs>
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```kotlin showLineNumbers
-        object MySingleton {
-            var name = "Singleton"
-            fun greet() = "Hello, $name"
+        object InfernoCop {
+            var mood = "calm"
+
+            fun speak() = when (mood) {
+                "calm" -> "Justice will be served."
+                "angry" -> "BURNING JUSTICE!!!"
+                else -> "..."
+            }
         }
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
         ```kotlin showLineNumbers
-        object MySingleton {
-            var name = "Singleton"
-            fun greet() = "Hello, $name"
+        object InfernoCop {
+            var mood = "calm"
+
+            fun speak() = when (mood) {
+                "calm" -> "Justice will be served."
+                "angry" -> "BURNING JUSTICE!!!"
+                else -> "..."
+            }
         }
 
         fun main() {
-            println(MySingleton.greet())    // Hello, Singleton
-            MySingleton.name = "Deku"
-            println(MySingleton.greet())    // Hello, Deku
+            println(InfernoCop.speak())    // Justice will be served.
+            InfernoCop.mood = "angry"
+            println(InfernoCop.speak())    // BURNING JUSTICE!!!
         }
         ```
     </TabItem>
 </BoxedTabs>
+
+<Explanation>
+    En este ejemplo, `InfernoCop` es un **singleton** que representa al legendario justiciero de *Inferno Cop*. Usando `object`, definimos una única instancia compartida en todo el programa.
+
+    Al cambiar el valor de `mood`, su comportamiento también cambia, lo que refleja su estado global y persistente. No es necesario instanciarlo ni invocar un constructor: simplemente usamos `InfernoCop.speak()`.
+
+    Esto ilustra cómo los singleton pueden encapsular comportamiento **y estado mutable global**, aunque este tipo de diseño debe usarse con precaución en contextos reales. 🔥
+</Explanation>
+
+:::warning Uso de estado mutable
+
+Aunque es posible declarar propiedades mutables en un `object`, es recomendable evitarlo cuando el singleton se usa en entornos concurrentes o compartidos, ya que puede generar [condiciones de carrera](https://es.wikipedia.org/wiki/Condici%C3%B3n_de_carrera). En esos casos, se sugiere mantener el estado inmutable o sincronizado adecuadamente.
+
+:::
 
 ## Clases
 
@@ -47,135 +89,236 @@ Una **clase** es un plano que define las propiedades y comportamientos de los ob
     <TabItem label={"Código esencial"} value={"Código esencial"}>
         ```kotlin showLineNumbers
         class Person(val name: String) {
-            fun greet() = "Hello, $name"
+            fun greet() = "It's a strange world, $name."
         }
         ```
     </TabItem>
     <TabItem label={"Código completo"} value={"Código completo"}>
         ```kotlin showLineNumbers
         class Person(val name: String) {
-            fun greet() = "Hello, $name"
+            fun greet() = "It's a strange world, $name."
         }
 
         fun main() {
-            val deku = Person("Deku")
-            println(deku.greet())    // Hello, Deku
-            val bakugo = Person("Bakugo")
-            println(bakugo.greet())  // Hello, Bakugo
+            val jeffrey = Person("Jeffrey")
+            println(jeffrey.greet())    // It's a strange world, Jeffrey.
+            val frank = Person("Frank")
+            println(frank.greet())      // It's a strange world, Frank.
         }
         ```
     </TabItem>
 </BoxedTabs>
 
-## Interfaces
+<Explanation>
+    En este ejemplo, `Person` es una **clase** que modela personajes inspirados en *Blue Velvet*. Cada instancia de `Person` tiene un nombre distinto, y la función `greet()` genera un saludo que evoca una de las frases más memorables de la película: *"It's a strange world."*
 
-Las **interfaces** definen contratos de comportamiento. Solo declaran funciones o propiedades sin implementar lógica. Las clases que implementan una interfaz deben proporcionar las implementaciones.
+    A diferencia de un `object`, aquí se crean múltiples instancias de `Person`, cada una con su propio estado. Esto demuestra cómo las clases permiten representar diferentes objetos con la misma estructura pero con datos particulares, una idea central en la **Programación Orientada a Objetos**.
+
+    :::tip Instanciación sin `new`
+
+    A diferencia de lenguajes como Java o C#, Kotlin **no utiliza la palabra clave `new`** para crear objetos. Simplemente se llama al constructor como si fuera una función, lo que contribuye a una sintaxis más limpia y concisa.
+
+    :::
+</Explanation>
+
+## 🐺 Interfaces
+
+Las **interfaces** definen contratos de comportamiento. Por lo general, declaran funciones o propiedades sin implementación, aunque en Kotlin pueden incluir implementaciones predeterminadas. Las clases que implementan una interfaz deben proveer las implementaciones necesarias.
 
 <BoxedTabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers
-        interface Greeter {
-            fun greet(): String
-        }
+  <TabItem label={"Código esencial"} value={"Código esencial"}>
+  
+  ```kotlin showLineNumbers
+  interface Fighter {
+      fun fight(): String
+  }
 
-        interface Walker {
-            fun walk(): String
-        }
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers
-        interface Greeter {
-            fun greet(): String
-        }
+  interface Alchemist {
+      fun brewPotion(): String
+  }
+  
+  class Witcher(val name: String) : Fighter, Alchemist {
+      override fun fight() = "$name swings a silver sword!"
+      override fun brewPotion() = "$name brews a Cat potion..."
+  }
+  ```
 
-        interface Walker {
-            fun walk(): String
-        }
+  </TabItem>
+  <TabItem label={"Código completo"} value={"Código completo"}>
+  
+  ```kotlin showLineNumbers
+  interface Fighter {
+      fun fight(): String
+  }
 
-        class Person(val name: String) : Greeter, Walker {
-            override fun greet() = "Hello, $name"
-            override fun walk() = "Walking..."
-        }
+  interface Alchemist {
+      fun brewPotion(): String
+  }
 
-        fun main() {
-            val deku = Person("Deku")
-            println(deku.greet())    // Hello, Deku
-            println(deku.walk())     // Walking...
-        }
-        ```
-    </TabItem>
+  class Witcher(val name: String) : Fighter, Alchemist {
+      override fun fight() = "$name swings a silver sword!"
+      override fun brewPotion() = "$name brews a Cat potion..."
+  }
+
+  fun main() {
+      val geralt = Witcher("Geralt")
+      val lambert = Witcher("Lambert")
+      
+      println(geralt.fight())      // Geralt swings a silver sword!
+      println(geralt.brewPotion()) // Geralt brews a Cat potion...
+
+      println(lambert.fight())     // Lambert swings a silver sword!
+      println(lambert.brewPotion())// Lambert brews a Cat potion...
+  }
+  ```
+
+  </TabItem>
 </BoxedTabs>
 
-:::info Herencia con ``:``
+<Explanation>
+    En este ejemplo, la clase `Witcher` implementa dos interfaces: `Fighter` y `Alchemist`, que representan comportamientos comunes de un brujo. Cada instancia de `Witcher` tiene su propio `name` y puede **pelear** y **preparar pociones**.
 
-En Kotlin, la herencia se define con el operador `:`. Por ejemplo, `class Person : Greeter, Walker` indica que la clase `Person` hereda de las interfaces `Greeter` y `Walker`.
+    Las interfaces permiten que distintos tipos de personajes —**no solo brujos**— compartan comportamientos como combate o alquimia **sin estar acoplados jerárquicamente**. Por ejemplo, **Ciri** no es una `Witcher`, pero puede implementar `Fighter` y `Alchemist` porque es una guerrera y alquimista:
 
-:::
+    ```kotlin
+    object Ciri : Fighter, Alchemist {
+        override fun fight() = "Ciri uses her sword!"
+        override fun brewPotion() = "Ciri brews a potion..."
+    }
+    ```
+
+    De este modo, Ciri puede participar en las mismas interacciones que un Witcher en cuanto a combate, sin necesidad de heredar de la clase `Witcher`.
+
+    :::tip Implementación múltiple
+
+    Kotlin usa el operador `:` seguido de una lista separada por comas para indicar que una clase implementa múltiples interfaces:
+
+    ```kotlin
+    class X : Interface1, Interface2
+    ```
+
+    :::
+</Explanation>
 
 <details>
     <summary>Interfaces con implementaciones predeterminadas</summary>
 
-    En Kotlin, las interfaces pueden incluir implementaciones predeterminadas para algunos de sus métodos, lo que permite que las clases que las implementan no tengan que sobrescribir todos los métodos. Esto es útil para proporcionar comportamientos comunes sin obligar a todas las clases a implementarlos manualmente.
+    En Kotlin, las interfaces pueden incluir **implementaciones predeterminadas** para algunos de sus métodos. Esto permite que las clases que las implementan **no estén obligadas a sobrescribir todos los métodos**, lo que resulta útil para definir comportamientos comunes sin duplicar lógica.
 
-    Sin embargo, el uso de implementaciones predeterminadas introduce cierta complejidad en la jerarquía de clases. Un ejemplo común es el **problema del diamante**, que ocurre cuando una clase implementa dos interfaces que contienen métodos con la misma firma pero con implementaciones distintas. Kotlin resuelve este conflicto exigiendo a quien desarrolla que sobrescriba el método conflictivo y defina explícitamente cuál de las implementaciones debe usarse.
+    Sin embargo, este poder adicional también introduce cierta complejidad en la jerarquía de clases. Un ejemplo clásico es el **problema del diamante**, que ocurre cuando una clase implementa dos interfaces que definen un método con la misma firma pero con implementaciones distintas. Kotlin resuelve este conflicto exigiendo a la persona que desarrolla que sobrescriba explícitamente el método conflictivo y defina cuál de las implementaciones debe usarse, o bien proporcione una nueva.
 
-    A lo largo del curso, profundizaremos en estos conceptos. Por ahora, nos enfocaremos en interfaces con métodos abstractos para simplificar la comprensión.
+    A lo largo del curso, profundizaremos en estos aspectos más avanzados. Por ahora, nos enfocaremos en **interfaces con métodos abstractos**, lo que facilita la comprensión de los conceptos fundamentales sin distracciones innecesarias.
 </details>
 
 ## Clases Abstractas
 
-Las **clases abstractas** pueden tener funciones implementadas o no, y no pueden ser instanciadas directamente. Sirven como base para otras clases que deben implementar sus miembros abstractos.
+Las clases abstractas pueden contener funciones con o sin implementación. No pueden ser instanciadas directamente y están pensadas para ser extendidas por otras clases. Sirven como base para otras clases que deben implementar sus miembros abstractos.
 
 <BoxedTabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers
-        abstract class AbstractAnimal {
-            abstract fun sound(): String
-            fun walk() = "Walking..."
-        }
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers
-        abstract class AbstractAnimal {
-            abstract fun sound(): String
-            fun walk() = "Walking..."
-        }
+  <TabItem label={"Código esencial"} value={"Código esencial"}>
+    ```kotlin showLineNumbers
+    abstract class AbstractDragon {
+        abstract fun breathesFire(): String
+        fun fly() = "Soaring over Westeros..."
+    }
+    ```
+  </TabItem>
+  <TabItem label={"Código completo"} value={"Código completo"}>
+    ```kotlin showLineNumbers
+    abstract class AbstractDragon {
+        abstract fun breathesFire(): String
+        fun fly() = "Soaring over Westeros..."
+    }
 
-        class Dog : AbstractAnimal() {
-            override fun sound() = "Woof"
-        }
+    class TargaryenDragon(val name: String) : AbstractDragon() {
+        override fun breathesFire() = "$name breathes fire with fury!"
+    }
 
-        fun main() {
-            val dog = Dog()
-            println(dog.sound())    // Woof
-            println(dog.walk())     // Walking...
-        }
-        ```
-    </TabItem>
+    fun main() {
+        val viserion = TargaryenDragon("Viserion")
+        println(viserion.breathesFire())  // Viserion breathes fire with fury!
+        println(viserion.fly())           // Soaring over Westeros...
+    }
+    ```
+  </TabItem>
 </BoxedTabs>
 
-Recordemos que es una buena práctica utilizar el prefijo ``Abstract`` para las clases abstractas.
+<Explanation>
+    En este ejemplo, `AbstractDragon` define el comportamiento común de todos los dragones, como volar (`fly()`), pero deja la acción de lanzar fuego como una función abstracta (`breathesFire()`).
 
-:::info Herencia
-En Kotlin, una clase solo puede heredar de una única clase, pero puede implementar múltiples interfaces.
+    La clase `TargaryenDragon` extiende de `AbstractDragon` y puede representar múltiples instancias como *Viserion*, *Rhaegal* o *Drogon*, cada una con su propio nombre. Esto permite reutilizar el comportamiento común y especializar el comportamiento de cada instancia.
+
+    :::tip Diferencias de sintaxis entre Kotlin y Scala
+
+    En Kotlin, toda función abstracta debe marcarse explícitamente con la palabra clave `abstract`. Esto contrasta con lenguajes como Scala, donde una función sin cuerpo dentro de una clase abstracta se considera abstracta **implícitamente**, sin necesidad del modificador.
+
+    ```scala title="Scala"
+    abstract class AbstractDragon {
+        def breathesFire: String  // abstracta aunque no esté marcada
+        def fly(): String = "Soaring..."
+    }
+    ```
+
+    En Kotlin, esto mismo debe escribirse así:
+
+    ```kotlin title="Kotlin"
+    abstract class AbstractDragon {
+        abstract fun breathesFire(): String  // obligatorio marcarla
+        fun fly() = "Soaring..."
+    }
+    ```
+
+    :::
+</Explanation>
+
+:::note Convención
+
+En Kotlin, no es obligatorio usar el prefijo `Abstract`, pero es una **buena práctica** cuando se quiere dejar claro que la clase no puede ser instanciada directamente.
+
 :::
 
 ## Encapsulación
 
-La **encapsulación** es el principio que protege los datos internos de una clase, restringiendo su acceso desde fuera. Esto se logra controlando la visibilidad de los atributos y métodos de una clase, permitiendo que solo ciertos elementos sean accesibles. En Kotlin, la encapsulación se implementa usando **modificadores de acceso**.
+La **encapsulación** es el principio que protege los datos internos de una clase, evitando que puedan ser modificados o accedidos de forma indebida desde el exterior. Esto permite mantener la coherencia del estado interno, reducir el acoplamiento y facilitar el mantenimiento del software. En Kotlin, la encapsulación se implementa usando **modificadores de acceso**.
 
 ### Modificadores de Acceso en Kotlin
 
-1. **`public`** (por defecto): Accesible desde cualquier parte del código. Si no se especifica un modificador, se considera `public`. En el caso de bibliotecas de software esto significa que es accesible desde cualquier parte del código de la biblioteca y desde cualquier código que use la biblioteca.
-2. **`private`**: Solo accesible dentro de la clase donde se define.
-3. **`protected`**: Accesible dentro de la clase y sus subclases.
-4. **`internal`**: Accesible dentro del mismo módulo. Veremos más sobre módulos en las unidades futuras.
+1. **`public`** (por defecto): Accesible desde cualquier parte del código. Si no se especifica un modificador, se considera `public`. En bibliotecas de software, esto implica que un miembro `public` es accesible tanto desde el propio código de la biblioteca como desde cualquier código externo que la utilice.
+2. **`private`**: Solo accesible dentro del cuerpo de la clase o archivo donde se define. **No es accesible desde subclases ni desde otras clases del mismo archivo.**
+3. **`protected`**: Accesible desde la clase donde se define y desde cualquier subclase, incluso si están en otros archivos.
+4. **`internal`**: Accesible desde cualquier archivo del mismo módulo. Esto es útil para compartir código entre clases sin exponerlo fuera del módulo. Más adelante veremos qué es un módulo en Kotlin.
+
+### Ejemplo
+
+```kotlin showLineNumbers
+abstract class AbstractJoestar(private val stand: String) {
+    protected fun revealStandName(): String = "My Stand is $stand!"
+}
+
+object Jotaro : AbstractJoestar("Star Platinum") {
+    fun introduceStand(): String = revealStandName()
+}
+
+fun main() {
+    println(Jotaro.introduceStand())  // My Stand is Star Platinum!
+
+    // Error: cannot access 'stand': it is private in 'Joestar'
+    // println(Jotaro.stand)
+
+    // Error: cannot call 'revealStandName()': it is protected in 'Joestar'
+    // println(Jotaro.revealStandName())
+}
+```
+
+<Explanation>
+    En este ejemplo, la clase `AbstractJoestar` tiene un campo `stand` marcado como `private`, lo que significa que **no puede ser accedido directamente desde fuera de la clase**. Además, tiene una función `revealStandName()` marcada como `protected`, lo que permite que **solo las subclases** como `Jotaro` puedan usarla.
+
+    De este modo, protegemos los detalles internos del personaje y damos acceso solo a lo que es relevante para quien extiende la clase.
+</Explanation>
 
 :::warning Package-Private
 
-En Kotlin no existe el concepto de **package-private** como en Java o Scala. Esta decisión de diseño se tomó porque la privacidad a nivel de paquete puede ser riesgosa, ya que cualquier usuarix de nuestras bibliotecas puede acceder a los miembros marcados como **package-private** si define un paquete con el mismo nombre, haciéndolas "equivalentes" a `public`.
+En Kotlin no existe el concepto de **package-private** como en Java o Scala. Esta decisión se tomó para evitar ambigüedades: en estos lenguajes, es posible que una clase externa acceda a miembros *supuestamente privados* si está en el mismo paquete, lo cual puede romper la encapsulación. Kotlin opta por no incluir esta opción para fomentar una separación más segura.
 
 :::
 
