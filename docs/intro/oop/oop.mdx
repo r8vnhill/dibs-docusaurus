@@ -28,7 +28,7 @@ En Kotlin, la OOP se expresa de manera moderna y concisa. El lenguaje introduce 
 
 Esta lección introduce los pilares fundamentales de OOP en Kotlin, mediante ejemplos prácticos y contextualizados. Aprenderás a definir clases, instanciar estructuras, extender comportamientos, encapsular lógica y construir jerarquías de tipos reutilizables. Estos conceptos serán esenciales tanto para crear aplicaciones como para diseñar bibliotecas bien estructuradas.
 
-## Singleton
+## 👤 Singleton
 
 En Kotlin, los **singleton** se definen con la palabra clave `object`, lo que garantiza que solo exista una única instancia, sin necesidad de crearla explícitamente.
 
@@ -81,7 +81,7 @@ Aunque es posible declarar propiedades mutables en un `object`, es recomendable 
 
 :::
 
-## Clases
+## 🧑‍🤝‍🧑 Clases
 
 Una **clase** es un plano que define las propiedades y comportamientos de los objetos. Se puede instanciar múltiples veces.
 
@@ -210,7 +210,7 @@ Las **interfaces** definen contratos de comportamiento. Por lo general, declaran
     A lo largo del curso, profundizaremos en estos aspectos más avanzados. Por ahora, nos enfocaremos en **interfaces con métodos abstractos**, lo que facilita la comprensión de los conceptos fundamentales sin distracciones innecesarias.
 </details>
 
-## Clases Abstractas
+## 🐲 Clases Abstractas
 
 Las clases abstractas pueden contener funciones con o sin implementación. No pueden ser instanciadas directamente y están pensadas para ser extendidas por otras clases. Sirven como base para otras clases que deben implementar sus miembros abstractos.
 
@@ -277,18 +277,18 @@ En Kotlin, no es obligatorio usar el prefijo `Abstract`, pero es una **buena pr�
 
 :::
 
-## Encapsulación
+## 🔒 Encapsulación
 
 La **encapsulación** es el principio que protege los datos internos de una clase, evitando que puedan ser modificados o accedidos de forma indebida desde el exterior. Esto permite mantener la coherencia del estado interno, reducir el acoplamiento y facilitar el mantenimiento del software. En Kotlin, la encapsulación se implementa usando **modificadores de acceso**.
 
-### Modificadores de Acceso en Kotlin
+### 🛡️ Modificadores de Acceso en Kotlin
 
 1. **`public`** (por defecto): Accesible desde cualquier parte del código. Si no se especifica un modificador, se considera `public`. En bibliotecas de software, esto implica que un miembro `public` es accesible tanto desde el propio código de la biblioteca como desde cualquier código externo que la utilice.
 2. **`private`**: Solo accesible dentro del cuerpo de la clase o archivo donde se define. **No es accesible desde subclases ni desde otras clases del mismo archivo.**
 3. **`protected`**: Accesible desde la clase donde se define y desde cualquier subclase, incluso si están en otros archivos.
 4. **`internal`**: Accesible desde cualquier archivo del mismo módulo. Esto es útil para compartir código entre clases sin exponerlo fuera del módulo. Más adelante veremos qué es un módulo en Kotlin.
 
-### Ejemplo
+### 💫 Ejemplo
 
 ```kotlin showLineNumbers
 abstract class AbstractJoestar(private val stand: String) {
@@ -322,19 +322,24 @@ En Kotlin no existe el concepto de **package-private** como en Java o Scala. Est
 
 :::
 
-## Constructores Primarios y Secundarios en Kotlin
+## 🏗️ Constructores Primarios y Secundarios en Kotlin
 
-Kotlin permite definir **constructores primarios** y **constructores secundarios** para las clases.
+Kotlin ofrece dos formas de inicializar clases: **constructores primarios**, que se definen junto al encabezado de la clase, y **constructores secundarios**, que permiten más flexibilidad cuando se requieren múltiples formas de construir un objeto.
 
-### Constructor Primario
-El **constructor primario** se define en la cabecera de la clase y puede inicializar propiedades directamente.
+### 🧱 Constructor Primario
+
+El **constructor primario** se declara directamente en la cabecera de la clase y permite inicializar propiedades de forma concisa.
 
 ```kotlin showLineNumbers
 class Person(val name: String, var age: Int)
 ```
 
-- Se define dentro de la cabecera de la clase.
-- No contiene lógica adicional, pero puede usar bloques de inicialización (`init`) si se necesita.
+- Ideal cuando deseas declarar e inicializar propiedades de manera directa.
+- No permite incluir directamente lógica adicional, pero puedes usar un bloque `init` para ejecutar instrucciones extra al momento de construir la instancia.
+
+#### 🔍 Uso de `init`
+
+Si necesitas validar o ejecutar lógica durante la construcción, puedes usar un bloque `init`:
 
 ```kotlin showLineNumbers
 class Person(val name: String, var age: Int) {
@@ -344,15 +349,23 @@ class Person(val name: String, var age: Int) {
 }
 ```
 
-:::info ``require``
+Este bloque se ejecuta inmediatamente después de que se evalúan los parámetros del constructor primario.
 
-La función `require` verifica una condición y lanza una excepción de tipo `IllegalArgumentException` si no se cumple. Es útil para validar argumentos de funciones y constructores. Notemos que la sintaxis es ``require(condition) { "message" }``.
+:::note `require` vs `check` vs `error`
+
+Estas funciones permiten validar condiciones y lanzar excepciones de forma concisa, pero su uso recomendado depende del contexto:
+
+- `require: (Boolean, () -> Any) -> Unit`: se usa para validar **argumentos** de una función. Lanza una `IllegalArgumentException` si la condición no se cumple.
+- `check: (Boolean, () -> Any) -> Unit`: se usa para validar **el estado interno** del programa. Lanza una `IllegalStateException` si la condición no se cumple.
+- `error: (Any) -> Unit`: lanza **incondicionalmente** una `IllegalStateException`. Es útil para marcar rutas de ejecución que no deberían ocurrir.
+
+Usar la función adecuada según el contexto mejora la legibilidad del código y facilita el diagnóstico de errores.
 
 :::
 
-### Constructor Secundario
+### 🛠️ Constructor Secundario
 
-Un **constructor secundario** se define dentro del cuerpo de la clase, permitiendo lógica adicional. Se llama al constructor primario usando `this`.
+Un **constructor secundario** se define dentro del cuerpo de la clase y permite incluir lógica adicional. Se invoca al constructor primario mediante `this(...)`.
 
 ```kotlin showLineNumbers
 class Person(val name: String) {
@@ -364,13 +377,17 @@ class Person(val name: String) {
 }
 ```
 
-Los constructores secundarios son útiles cuando necesitas diferentes formas de inicializar una clase.
+Los constructores secundarios son útiles cuando necesitas más de una forma de construir la instancia, por ejemplo:
+
+- Al interoperar con Java (donde los parámetros por defecto no están disponibles).
+- Cuando necesitas delegar a otro constructor con lógica adicional.
+- En algunos patrones con herencia.
 
 :::tip Parámetros por defecto
 
-En gran parte de los casos, los constructores secundarios no son necesarios gracias a los **parámetros por defecto** en Kotlin. Los parámetros por defecto permiten definir valores predeterminados para los parámetros de un constructor, evitando la necesidad de múltiples constructores.
+En la mayoría de los casos, los constructores secundarios no son necesarios gracias a los **parámetros por defecto** en Kotlin. Esta característica permite definir valores opcionales para los argumentos, eliminando la necesidad de múltiples constructores.
 
-De esta forma, el ejemplo anterior se puede simplificar a:
+Gracias a esta característica, el ejemplo anterior se puede simplificar a:
 
 ```kotlin showLineNumbers
 class Person(val name: String, var age: Int = 0)
@@ -378,24 +395,26 @@ class Person(val name: String, var age: Int = 0)
 
 :::
 
-## ¿Qué aprendimos?
+## 🎯 Conclusiones
 
-En esta lección, exploramos los conceptos fundamentales de la **Programación Orientada a Objetos (OOP)** en **Kotlin**.
+A lo largo de esta lección, exploramos los pilares fundamentales de la Programación Orientada a Objetos (OOP) en Kotlin. Vimos cómo este paradigma permite estructurar el software en torno a entidades que agrupan estado y comportamiento, facilitando la construcción de sistemas **modulares, reutilizables y comprensibles**.
 
-### Puntos clave
+Estudiamos cómo definir **clases** e **interfaces**, la diferencia entre **singleton** e **instancias múltiples**, el rol de las **clases abstractas** como plantillas de comportamiento, y cómo aplicar **encapsulación** para proteger la lógica interna. También aprendimos a utilizar **constructores primarios y secundarios**, y cómo Kotlin ofrece mecanismos modernos y expresivos para inicializar objetos.
 
-1. **Singletons**: Definidos con la palabra clave `object`, los singleton son instancias únicas de una clase que no necesitan ser instanciadas múltiples veces.
-2. **Clases**: Las clases permiten definir propiedades y comportamientos de objetos. Se pueden instanciar tantas veces como sea necesario.
-3. **Interfaces**: Definen contratos de comportamiento que las clases deben implementar. Kotlin permite interfaces con implementaciones predeterminadas, lo que resuelve problemas como el **problema del diamante**.
-4. **Clases Abstractas**: Actúan como plantillas para otras clases, pueden tener miembros implementados o no, pero no pueden ser instanciadas directamente.
-5. **Encapsulación**: Es el principio de proteger los datos internos de una clase. Se implementa usando modificadores de acceso como `private`, `protected`, `internal`, y `public`.
-6. **Constructores**: Kotlin permite constructores primarios y secundarios. Los constructores primarios permiten inicializar las propiedades de la clase de manera concisa, mientras que los secundarios ofrecen más flexibilidad en la inicialización.
+### 🔑 Puntos clave
 
-Además, vimos cómo los **parámetros por defecto** permiten evitar constructores secundarios en muchos casos, simplificando el diseño de las clases.
+- Los **objetos** encapsulan datos y operaciones que actúan sobre ellos, promoviendo coherencia y organización.
+- Las **clases** permiten representar múltiples instancias con comportamiento común y estado personalizado.
+- Las **interfaces** definen contratos de comportamiento reutilizable, promoviendo el **polimorfismo** y la separación de responsabilidades.
+- Las **clases abstractas** permiten compartir implementación parcial y forzar a las subclases a definir comportamientos específicos.
+- La **encapsulación** protege el estado interno de una clase mediante modificadores de acceso, lo que contribuye a reducir el acoplamiento y mejorar la mantenibilidad.
+- Kotlin ofrece una sintaxis concisa y moderna para expresar los conceptos clásicos de la OOP, con un enfoque que favorece la claridad y la seguridad.
 
----
+### 🧰 ¿Qué nos llevamos?
 
-Con estas bases, puedes comenzar a estructurar tu código de manera eficiente utilizando los principios de la OOP, mejorando la modularidad, legibilidad y mantenimiento de tus proyectos en Kotlin.
+Dominar los fundamentos de la Programación Orientada a Objetos es clave para construir software bien estructurado. En Kotlin, este dominio se traduce en **modelar conceptos del dominio con precisión**, reducir ambigüedades, y establecer relaciones claras entre componentes.
+
+Estos principios no solo te permitirán escribir mejores aplicaciones, sino también diseñar **librerías reutilizables** que expresen claramente su propósito, sean fáciles de usar y mantengan bajo acoplamiento con el resto del sistema.
 
 <div className="language-card-container">
     <CSharpCard link='/docs/intro/oop/csharp'/>
@@ -403,44 +422,8 @@ Con estas bases, puedes comenzar a estructurar tu código de manera eficiente ut
     <SwiftCard link='/docs/intro/oop/swift'/>
 </div>
 
-<References references={[
-    {
-        title: "Classes, objects, and interfaces",
-        bookTitle: "Kotlin in action",
-        pages: "67–102",
-        location: "Shelter Island, NY",
-        publisher: "Manning Publications Co",
-        year: "2017",
-        type: "book",
-        author: 'Dmitry Jemerov, Svetlana Isakova',
-    },
-]} additionalReferences={[
-    {
-        accessedDate: '23 de septiembre de 2024',
-        siteOrAuthor: 'Kotlin Help',
-        title: 'Object Declarations and Expressions | Kotlin',
-        type: 'web',
-        url: 'https://kotlinlang.org/docs/object-declarations.html'
-    },
-    {
-        accessedDate: '23 de septiembre de 2024',
-        siteOrAuthor: 'Kotlin Help',
-        title: 'Classes | Kotlin',
-        type: 'web',
-        url: 'https://kotlinlang.org/docs/classes.html'
-    },
-    {
-        accessedDate: '23 de septiembre de 2024',
-        siteOrAuthor: 'Kotlin Help',
-        title: 'Interfaces | Kotlin',
-        type: 'web',
-        url: 'https://kotlinlang.org/docs/interfaces.html'
-    },
-    {
-        accessedDate: '23 de septiembre de 2024',
-        siteOrAuthor: 'Kotlin Help',
-        title: 'Visibility Modifiers | Kotlin',
-        type: 'web',
-        url: 'https://kotlinlang.org/docs/visibility-modifiers.html'
-    },
-]} />
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- 🌐 Equipo de capacitación de Google Developers. (2023, diciembre 20). Usa clases y objetos en Kotlin. Android Developers. https://developer.android.com/codelabs/basic-android-kotlin-compose-classes-and-objects?hl=es-419
