@@ -258,3 +258,11 @@ export const PytestCard = ({ link }) => {
     link={link}
   />
 }
+
+export const PdmCard = ({ link }) => {
+  return <LanguageCard
+    logoSrc="https://daobook.github.io/pdm/assets/logo.svg"
+    language="Python: PDM"
+    link={link}
+  />
+}
