@@ -7,7 +7,9 @@ Primero definiremos una tarea reutilizable para esta unidad, no te dejes intimid
 <BoxedTabs>
     <TabItem label={"Parte 1"} value={"Parte 1"}>
         ```kotlin showLineNumbers
-        abstract class ModuleSetupTask : DefaultTask() {
+        abstract class ModuleSetupTask @Inject constructor(
+            private val layout: ProjectLayout
+        ) : DefaultTask() {
             init {
                 group = "setup"
             }
@@ -15,11 +17,23 @@ Primero definiremos una tarea reutilizable para esta unidad, no te dejes intimid
         ```
 
         <Explanation>
-            Creamos una tarea abstracta que extiende de `DefaultTask` y le asignamos un grupo llamado `setup`. Esta tarea servirá como base para las tareas de configuración de módulos en el proyecto.
+            Esta clase define una tarea personalizada que hereda de `DefaultTask`, como es habitual en Gradle.
+
+            Justo después del nombre de la clase, aparece una sección que empieza con `@Inject constructor(...)`. Esto indica que la tarea necesita ciertos datos para funcionar, y que **Gradle se encargará de proporcionarlos automáticamente**. A esto se le llama *inyección de dependencias*.
+
+            En este caso, lo que Gradle entrega es una instancia de [ProjectLayout](https://docs.gradle.org/current/javadoc/org/gradle/api/file/ProjectLayout.html), un objeto que ofrece una forma segura de acceder a carpetas y archivos dentro del proyecto.
+
+            Usar `ProjectLayout` en lugar de acceder directamente con `project.file(...)` es importante porque mejora la compatibilidad con el _configuration cache_, una característica de Gradle que permite acelerar las compilaciones.
+
+            Finalmente, la línea `group = "setup"` simplemente indica que esta tarea forma parte del grupo de tareas de configuración, lo cual ayuda a organizarla mejor cuando se listan las tareas con `gradle tasks`.
         </Explanation>
     </TabItem>
     <TabItem label={"Parte 2"} value={"Parte 2"}>
         ```kotlin showLineNumbers
+        private val capturedProjectName: String = project.name
+
+        private val capturedGroup: String = project.rootProject.group.toString()
+
         @get:Input
         abstract val module: Property<String>
 
@@ -32,23 +46,31 @@ Primero definiremos una tarea reutilizable para esta unidad, no te dejes intimid
             get() = baseDir.resolve("src/test/kotlin")
 
         private val baseDir: File
-            get() = project.file(module.get().replace(":", "/"))
+            get() = layout.projectDirectory.file(module.get().replace(":", "/")).asFile
         ```
 
         <Explanation>
-            Agregamos propiedades para el nombre del módulo, los directorios `main` y `test` del módulo, y el directorio base del módulo. Estas propiedades son necesarias para configurar los módulos en el proyecto.
+            Esta sección define las propiedades que la tarea necesita para generar la estructura de un submódulo:
 
-            - `@get:Input` indica que la propiedad `module` es de entrada para la tarea, lo que significa que el valor de esta propiedad puede ser configurado desde fuera de la tarea.
-            - `@get:Internal` indica que las propiedades `main` y `test` son internas a la tarea y no deben ser configuradas desde fuera de la tarea.
+            - `capturedProjectName` y `capturedGroup` almacenan el nombre del proyecto actual y del grupo raíz, respectivamente. Estos valores se capturan en el momento en que se crea la instancia de la tarea, lo cual es importante porque acceder directamente a `project.*` en tiempo de ejecución es incompatible con el _configuration cache_ de Gradle. Al capturarlos de forma anticipada, evitamos errores futuros y mejoramos la compatibilidad.
+            - `module` es una propiedad de entrada (`@get:Input`). Esto significa que su valor puede cambiar entre ejecuciones, y Gradle debe tenerlo en cuenta al decidir si necesita volver a ejecutar la tarea.
+            - `main` y `test` son rutas internas calculadas que apuntan a los directorios `src/main/kotlin` y `src/test/kotlin` dentro del módulo. Se marcan con `@get:Internal` porque su valor depende de otras propiedades (`module`) y **no necesitan ser consideradas directamente por Gradle como entradas externas** al momento de evaluar si la tarea puede ser cacheada.
+            - `baseDir` calcula el directorio raíz del módulo a partir de `module` y del layout del proyecto. Se accede usando `layout.projectDirectory`, una forma segura y declarativa de trabajar con rutas en Gradle moderna, evitando los métodos imperativos como `project.file(...)`.
+
+            En conjunto, esta configuración busca asegurar compatibilidad con el _configuration cache_ y mantener un diseño declarativo y limpio de la tarea.
         </Explanation>
     </TabItem>
     <TabItem label={"Parte 3"} value={"Parte 3"}>
         ```kotlin showLineNumbers
         private fun createSettingsFile() {
-            val settingsFile = project.file("settings.gradle.kts")
+            val settingsFile: File = layout.projectDirectory.file("settings.gradle.kts").asFile
             if (!settingsFile.exists()) {
-                settingsFile.writeText("rootProject.name = \"${project.name}\"\n")
-                settingsFile.writeText("include(\"${module.get()}\")")
+                settingsFile.writeText(
+                    """
+                    rootProject.name = "$capturedProjectName"
+                    include("${module.get()}")
+                    """.trimIndent()
+                )
             } else if (module.get() !in settingsFile.readText()) {
                 settingsFile.appendText("\ninclude(\"${module.get()}\")")
             }
@@ -57,7 +79,18 @@ Primero definiremos una tarea reutilizable para esta unidad, no te dejes intimid
         ```
 
         <Explanation>
-            Creamos una función privada `createSettingsFile` que se encarga de agregar el módulo al archivo de configuración `settings.gradle.kts`. Si el archivo no existe, se crea con el nombre del proyecto y se incluye el módulo. Si el módulo ya está incluido en el archivo, se agrega al final del archivo.
+            Esta función agrega el nuevo módulo al archivo `settings.gradle.kts`, que Gradle usa para registrar todos los subproyectos del build.
+
+            Primero se obtiene una referencia segura al archivo de configuración usando `layout.projectDirectory.file(...)`, que es la forma recomendada en tareas compatibles con el _configuration cache_.
+
+            Luego, se evalúan dos casos:
+
+            - Si el archivo no existe, se crea con el nombre del proyecto (`rootProject.name`) y el `include(...)` correspondiente al nuevo módulo.
+            - Si el archivo ya existe pero aún no incluye el nuevo módulo, se agrega la línea `include(...)` al final.
+
+            El valor `module.get()` se refiere al nombre del módulo proporcionado como entrada a la tarea. Al final, se imprime un mensaje indicando que el módulo fue agregado al archivo.
+
+            Esta lógica garantiza que el módulo será reconocido por Gradle la próxima vez que se ejecute el build.
         </Explanation>
     </TabItem>
     <TabItem label={"Parte 4"} value={"Parte 4"}>
@@ -94,14 +127,13 @@ Primero definiremos una tarea reutilizable para esta unidad, no te dejes intimid
         ```kotlin showLineNumbers
         fun createFiles(packageName: String, vararg files: Pair<File, String>) {
             files.forEach { (dir, name) ->
-                val group = project.rootProject.group.toString()
-                val packageDir = dir.resolve("$group/$packageName".replace(".", "/"))
+                val packageDir = dir.resolve("$capturedGroup/$packageName".replace(".", "/"))
                 val file = packageDir.resolve(name)
                 if (file.exists()) {
                     printError("The file $name already exists")
                 } else {
                     packageDir.mkdirs()
-                    file.writeText("package $group.$packageName\n\n")
+                    file.writeText("package $capturedGroup.$packageName\n\n")
                     println("The file $name was created successfully")
                 }
             }
@@ -109,7 +141,15 @@ Primero definiremos una tarea reutilizable para esta unidad, no te dejes intimid
         ```
 
         <Explanation>
-            Creamos una función `createFiles` que se encarga de crear archivos en un directorio específico. La función recibe el nombre del paquete y una lista de pares de archivos y nombres. Para cada par, se crea un directorio con el nombre del paquete y se escribe un archivo con el nombre y el contenido del paquete. Si el archivo ya existe, se imprime un mensaje de error. Si el archivo se crea correctamente, se imprime un mensaje de éxito.
+            Esta función crea uno o más archivos de Kotlin dentro de un paquete específico, organizándolos según la convención de directorios basada en el nombre del grupo (`capturedGroup`) y el nombre del paquete recibido como argumento.
+
+            Para cada par `(dir, name)`:
+
+            - Se construye el path final resolviendo el directorio base `dir` con la estructura del paquete (`capturedGroup.packageName`), reemplazando los puntos por barras para reflejar la estructura de carpetas.
+            - Si el archivo ya existe, se imprime un mensaje de error.
+            - Si no existe, se crean los directorios necesarios (`mkdirs()`) y se escribe un archivo con una declaración `package` adecuada en la primera línea.
+
+            Esto es útil para generar archivos fuente organizados automáticamente dentro de la estructura estándar de Kotlin.
         </Explanation>
     </TabItem>
     <TabItem label={"Parte 7"} value={"Parte 7"}>
@@ -131,15 +171,25 @@ Primero definiremos una tarea reutilizable para esta unidad, no te dejes intimid
         package tasks
 
         import org.gradle.api.DefaultTask
+        import org.gradle.api.file.ProjectLayout
         import org.gradle.api.provider.Property
         import org.gradle.api.tasks.Input
         import org.gradle.api.tasks.Internal
         import org.gradle.api.tasks.TaskAction
         import java.io.File
+        import javax.inject.Inject
 
         private val printError: (String) -> Unit = System.err::println
 
-        abstract class ModuleSetupTask : DefaultTask() {
+        abstract class ModuleSetupTask @Inject constructor(
+            private val layout: ProjectLayout
+        ) : DefaultTask() {
+
+            // Aquí guardamos el nombre del proyecto de forma inmutable
+            // en tiempo de configuración, para NO llamarlo en tiempo de ejecución.
+            private val capturedProjectName: String = project.name
+
+            private val capturedGroup: String = project.rootProject.group.toString()
 
             @get:Input
             abstract val module: Property<String>
@@ -153,7 +203,7 @@ Primero definiremos una tarea reutilizable para esta unidad, no te dejes intimid
                 get() = baseDir.resolve("src/test/kotlin")
 
             private val baseDir: File
-                get() = project.file(module.get().replace(":", "/"))
+                get() = layout.projectDirectory.file(module.get().replace(":", "/")).asFile
 
             init {
                 group = "setup"
@@ -167,16 +217,19 @@ Primero definiremos una tarea reutilizable para esta unidad, no te dejes intimid
             }
 
             private fun createSettingsFile() {
-                val settingsFile = project.file("settings.gradle.kts")
+                val settingsFile: File = layout.projectDirectory.file("settings.gradle.kts").asFile
                 if (!settingsFile.exists()) {
-                    settingsFile.writeText("rootProject.name = \"${project.name}\"\n")
-                    settingsFile.writeText("include(\"${module.get()}\")")
+                    settingsFile.writeText(
+                        """
+                        rootProject.name = "$capturedProjectName"
+                        include("${module.get()}")
+                        """.trimIndent()
+                    )
                 } else if (module.get() !in settingsFile.readText()) {
                     settingsFile.appendText("\ninclude(\"${module.get()}\")")
                 }
                 println("The module ${module.get()} was added to the settings file")
             }
-
 
             private fun createModuleDirectory() = baseDir.run {
                 when {
@@ -196,17 +249,20 @@ Primero definiremos una tarea reutilizable para esta unidad, no te dejes intimid
 
             fun createFiles(packageName: String, vararg files: Pair<File, String>) {
                 files.forEach { (dir, name) ->
-                    val group = project.rootProject.group.toString()
-                    val packageDir = dir.resolve("$group/$packageName".replace(".", "/"))
+                    val packageDir = dir.resolve("$capturedGroup/$packageName".replace(".", "/"))
                     val file = packageDir.resolve(name)
                     if (file.exists()) {
                         printError("The file $name already exists")
                     } else {
                         packageDir.mkdirs()
-                        file.writeText("package $group.$packageName\n\n")
+                        file.writeText("package $capturedGroup.$packageName\n\n")
                         println("The file $name was created successfully")
                     }
                 }
+            }
+
+            private fun printError(message: String) {
+                logger.error(message)
             }
         }
         ```
