@@ -1,49 +1,243 @@
 ---
-title: "Tarea 2 - Build Systems: Tareas"
+title: "Tarea 2 - Build Systems"
 ---
 
-### P1 [3 pts] Creación de una Tarea Personalizada en Gradle
+Imagina que trabajas en una empresa de desarrollo de software que desea construir una plataforma para monitorear el clima en distintas ciudades. El equipo ha decidido comenzar con una prueba de concepto enfocada en Santiago, Chile, utilizando la API pública de [Open-Meteo](https://open-meteo.com/).
 
-En el desarrollo de software, es común dejar comentarios `TODO` en el código para recordar tareas pendientes o mejoras futuras. Sin embargo, estos comentarios pueden acumularse y ser olvidados, afectando la calidad y mantenibilidad del código.
+Como parte del equipo, se te ha asignado la responsabilidad de:
 
-Como parte de la mejora continua, deseas crear una tarea personalizada en Gradle que:
+- Diseñar la estructura inicial del proyecto con una buena separación de responsabilidades.
+- Implementar dos aplicaciones simples que consulten y muestren el clima actual, una en grados Celsius y otra en Fahrenheit.
+- Encapsular la lógica compartida en una biblioteca reutilizable.
+- Automatizar parte del flujo de desarrollo mediante tareas y plugins de Gradle que analicen el código en busca de problemas comunes o malas prácticas.
 
-- Analiza los archivos fuente de tu proyecto, incluyendo archivos ```.kt``` y ```.kts```.
-- Cuenta el número de comentarios `TODO` en cada archivo. Un comentario `TODO` es cualquier línea que cumpla la expresión regular ``"""\s//\s*TODO.*""".toRegex()``.
-- Genera un reporte en un archivo que liste los archivos que contienen comentarios `TODO` y el número de ocurrencias en cada uno.
-- La construcción debe fallar si el número total de comentarios `TODO` supera un umbral definido.
+Este ejercicio simula un entorno de trabajo real donde se espera que combines habilidades técnicas (Kotlin, Gradle, modularización) con buenas prácticas de diseño de proyectos mantenibles y extensibles.
 
-El formato de salida del reporte debe ser similar al siguiente ejemplo:
+::::note Dependencias entre partes
+
+Esta tarea está dividida en tres partes:
+
+- **P1** es independiente y puede resolverse por separado. Su objetivo es practicar la estructura de proyectos multi-módulo y la reutilización de código entre aplicaciones.
+- **P2** introduce una tarea personalizada de Gradle para análisis de código.
+- **P3** extiende la lógica de P2 encapsulándola en un plugin configurable. Por tanto, **P3 depende directamente de lo implementado en P2**.
+
+:::tip
+
+Puedes comenzar con **P1** o con **P2**, según te resulte más cómodo. Sin embargo, para completar P3 necesitas tener una solución funcional de P2.
+
+:::
+
+::::
+
+## P1 [2 pts] – Proyecto Multi-Módulo con Lógica Compartida
+
+Construirás un proyecto Gradle multi-módulo utilizando Kotlin DSL. El objetivo es reutilizar código entre dos pequeñas aplicaciones que consultan el clima actual en Santiago, Chile, usando la API pública de Open-Meteo.
+
+### Requisitos
+
+1. **Inicializa** un proyecto Gradle multi-módulo con Kotlin DSL.
+2. Crea tres módulos:
+   - `lib`: biblioteca compartida que encapsula la lógica común.
+   - `app-celsius`: aplicación que muestra el clima de Santiago en grados Celsius.
+   - `app-fahrenheit`: aplicación que muestra el clima de Santiago en grados Fahrenheit.
+3. Usa el plugin [`application`](https://docs.gradle.org/current/userguide/application_plugin.html) en cada app para facilitar su ejecución.
+4. En `settings.gradle.kts`, registra todos los módulos y define el nombre del proyecto.
+5. Centraliza las versiones y dependencias utilizando un archivo `libs.versions.toml` o un bloque común.
+6. Incluye las dependencias necesarias para cada módulo en su respectivo `build.gradle.kts`.
+7. Separa correctamente la lógica en sus módulos correspondientes, de acuerdo a la lógica de negocios y aplicación.
+
+### API sugerida
+
+Consulta el clima actual en Santiago mediante la siguiente URL:
 
 ```
-src\main\kotlin\cl\ravenhill\userdb\UpdateUser.kt: 5
-src\main\kotlin\cl\ravenhill\userdb\DeleteUser.kt: 2
+https://api.open-meteo.com/v1/forecast?latitude=-33.45&longitude=-70.66&current=temperature_2m&temperature_unit=celsius
 ```
 
-_Hints:_
-- _Asegúrate de manejar archivos inexistentes (`FileNotFoundException`) o problemas de lectura/escritura (``IOException``)._
-- _Proporciona mensajes de error claros y útiles._
-- _Puedes utilizar la anotación `@get:InputFiles` para especificar una colección de archivos de entrada. Por ejemplo:_
+### Recomendación: OkHttp + org.json
+
+[OkHttp](https://central.sonatype.com/artifact/com.squareup.okhttp3/okhttp) es una biblioteca moderna para realizar peticiones HTTP. Puedes combinarla con [`org.json`](https://central.sonatype.com/artifact/org.json/json), una biblioteca liviana que permite analizar respuestas JSON sin anotaciones ni configuración especial.
+
+Eres libre de usar cualquier otra biblioteca si lo prefieres, mientras hagas la configuración apropiada con Gradle.
+
+#### Ejemplo: consultar un usuario con JSONPlaceholder
+
 ```kotlin
-@get:InputFiles   // Indica que sourceFiles es un conjunto de archivos de entrada.
-@get:PathSensitive(PathSensitivity.RELATIVE)  // Especifica que la ruta de los archivos es relativa.
-abstract val sourceFiles: ConfigurableFileCollection
-  ```
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
 
-### P2 [3 pts] Registro y Configuración de la Tarea en Gradle
+val client = OkHttpClient()
 
-Registra una tarea personalizada llamada `generateTodoReport` en cada submódulo de tu proyecto y agrega una dependencia a estas tareas en la tarea `check` del módulo raíz.
+fun getUsername(userId: Int): String {
+    val url = "https://jsonplaceholder.typicode.com/users/$userId"
 
-_Hints:_
-- _Puedes configurar `sourceFiles` con un conjunto de archivos, como en el siguiente ejemplo:
-  ```kotlin
-  sourceFiles.setFrom(fileTree("src") {
-      include("**/*.kt", "**/*.kts")  // Incluye archivos .kt y .kts en el árbol de archivos.
-  })
-    ```
+    val request = Request.Builder().url(url).build()
+    val response = client.newCall(request).execute()
 
-### c) [0.5 pts] Bonus: Comentarios configurables
+    if (!response.isSuccessful) error("Request failed with code: ${response.code}")
 
-Añade la posibilidad de configurar la tarea para especificar una lista de tipos de comentarios a buscar (por ejemplo, `TODO`, `FIXME`, `HACK`, etc.).
+    val body = response.body?.string() ?: error("Empty response body")
+    val json = JSONObject(body)
 
-_Hint: para definir los tipos de comentarios como un input de la tarea, puedes utilizar una propiedad de tipo `ListProperty<String>` y asignarla con ``commentTypes.set(mutableListOf("TODO", "FIXME"))``._
+    // Extraemos el nombre de usuario del campo "username"
+    return json.getString("username")
+}
+```
+
+:::tip ¿Qué debes aprender de esto?
+
+- Puedes construir URLs manualmente como `https://.../recurso?id=valor`.
+- Las respuestas se acceden como objetos `JSONObject`, donde usas:
+  - `getString("clave")`, `getInt("clave")`, `getDouble("clave")` según el tipo.
+  - `getJSONObject("clave")` para acceder a objetos anidados.
+- Puedes usar este patrón para adaptarlo fácilmente a **otras APIs**, como la de Open-Meteo.
+
+:::
+
+### Ejemplo de ejecución esperada (app-celsius):
+
+```
+The current temperature in Santiago is 22.1°C
+```
+
+### Ejemplo de ejecución esperada (app-fahrenheit):
+
+```
+The current temperature in Santiago is 71.8°F
+```
+
+### Cómo ejecutar tus aplicaciones
+
+Para probar cada módulo de aplicación (`app-celsius` y `app-fahrenheit`), debes configurar el plugin `application` en sus respectivos archivos `build.gradle.kts`.
+
+Asegúrate de definir la clase principal con:
+
+```kotlin
+application {
+    mainClass.set("tu.paquete.PrincipalKt")
+}
+```
+
+> Reemplaza `tu.paquete.PrincipalKt` por el nombre completo de la clase que contiene tu función `fun main`.
+
+Luego, puedes ejecutar la app desde la raíz del proyecto con:
+
+```bash
+./gradlew :app-celsius:run
+./gradlew :app-fahrenheit:run
+```
+
+Esto compilará y ejecutará la aplicación correspondiente.
+
+## P2 [2 pts] – Tarea de Gradle
+
+Crea una **tarea personalizada** que realice un análisis básico del código fuente. Esta tarea debe inspeccionar recursivamente todos los archivos `.kt` dentro de un directorio y generar un informe con:
+
+- Comentarios `TODO` o líneas sospechosas (`FIXME`, `HACK`, etc.), detectadas mediante expresiones regulares configurables.
+- Cantidad de funciones declaradas por archivo.
+
+::::tip Hint
+
+Para encontrar coincidencias puedes usar [`Regex.findAll`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.text/-regex/find-all.html):
+
+```kotlin
+val regex = todoRegex.get().toRegex()
+val lines = file.readLines()
+val matches = mutableListOf<Pair<Int, String>>()
+
+for (i in lines.indices) {
+    val line = lines[i]
+    if (regex.findAll(line).any()) {
+        matches.add(i to line)
+    }
+}
+```
+
+Esto te da una lista con número de línea y contenido donde se encontraron coincidencias.
+
+:::note
+
+La secuencia que retorna `findAll()` se puede convertir a lista con `.toList()` o filtrar con `.any()`.
+
+:::
+
+::::
+
+### Parámetros esperados
+
+- `todoRegex: String`: expresión regular para detectar `TODO`s.
+- `suspiciousRegex: String`: expresión regular para `FIXME`, `HACK`, etc.
+- `sourceDir: File`: directorio raíz a analizar.
+- `reportFile: File`: archivo donde se escribirá el informe.
+
+### Ejemplo de uso
+
+```kotlin
+tasks.register<AnalyzeSourcesTask>("analyzeSources") {
+    todoRegex.set("TODO")
+    suspiciousRegex.set("FIXME|HACK")
+    sourceDir.set(file("src/main/kotlin"))
+    reportFile.set(file("build/reports/analysis-report.txt"))
+}
+```
+
+### Ejemplo de salida esperada
+
+```
+File: UserService.kt
+  - Function count: 5
+  - TODO found at line 42: // TODO: refactor this logic
+
+File: AuthValidator.kt
+  - Function count: 2
+  - Suspicious line at line 17: // FIXME: this is a hack
+```
+
+## P3 [2 pts] – Plugin Avanzado
+
+Encapsula la lógica de análisis en un **plugin Gradle reutilizable**.
+
+### Objetivo
+
+Implementar un plugin que:
+
+- Registre automáticamente una tarea de análisis en los proyectos que lo apliquen.
+- Exponga una extensión con propiedades configurables:
+  - `maxTodoAllowed`: máximo número de `TODO`s permitidos.
+  - `enableRegexCheck`: activa/desactiva los chequeos con expresiones regulares.
+- Adapte su comportamiento según la configuración. Si el número de `TODO`s supera el umbral, la tarea debe fallar.
+
+### Requisitos
+
+- Implementa la clase `CodeAnalysisPlugin`.
+- Define una extensión (`CodeAnalysisExtension`) con propiedades configurables.
+- La tarea debe:
+  - Emitir un informe con los datos recolectados.
+  - Lanzar un `GradleException` si el número de `TODO`s excede el umbral.
+
+### Ejemplo de configuración
+
+```kotlin
+codeAnalysis {
+    maxTodoAllowed.set(5)
+    enableRegexCheck.set(true)
+}
+```
+
+### Ejemplo de salida
+
+```
+File: UserService.kt
+  - Function count: 5
+  - TODO found at line 42: // TODO: refactor this logic
+  - TODO found at line 57: // TODO: add logging
+
+File: AuthValidator.kt
+  - Function count: 2
+  - Suspicious line at line 17: // FIXME: this is a hack
+
+Summary:
+  - Total TODOs found: 3
+  - Max allowed: 2 ❌
+```
