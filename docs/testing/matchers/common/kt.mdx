@@ -44,36 +44,59 @@ Imaginemos que estás desarrollando una biblioteca para manejar configuraciones 
   <TabItem label={"Código esencial"} value={"Código esencial"}>
   
   ```kotlin showLineNumbers
-  defaultConfig() shouldBe UserConfig()
+  defaultConfig shouldBe UserConfig()
   ```
   
   </TabItem>
   <TabItem label={"Código completo"} value={"Código completo"}>
   
-  ```kotlin showLineNumbers title="src/test/kotlin/UserConfigTest.kt"
-  package com.github.username.config
+  ```kotlin showLineNumbers title="matchers/predef/src/main/kotlin/com/github/username/config/UserConfig.kt"
+    package com.github.username.config
 
-  import io.kotest.core.spec.style.FreeSpec
-  import io.kotest.matchers.shouldBe
+    import io.kotest.core.spec.style.FreeSpec
+    import io.kotest.matchers.shouldBe
 
-  class UserConfigTest : FreeSpec({
-      "default config should match expected content" {
-          defaultConfig() shouldBe UserConfig()
-      }
-  })
-  ```
+    class UserConfigTest : FreeSpec({
 
-  ```kotlin showLineNumbers title="src/main/kotlin/UserConfig.kt"
-  package com.github.username.config
+        "Given no custom configuration" - {
+            "When using the default configuration" - {
+                "Then it should match the expected default values" {
+                    defaultConfig shouldBe UserConfig()
+                }
+            }
+        }
+    })
+    ```
 
-  class UserConfig(
-      val theme: String = "light",
-      val notificationsEnabled: Boolean = true
-  )
+    ```kotlin showLineNumbers title="matchers/predef/src/test/kotlin/com/github/username/config/UserConfigTest.kt"
+    package com.github.username.config
 
-  fun defaultConfig() = UserConfig()
-  ```
-  
+    class UserConfig(
+        val theme: String = "light",
+        val notificationsEnabled: Boolean = true
+    ) {
+        override fun toString(): String = 
+            "UserConfig(theme='$theme', notificationsEnabled=$notificationsEnabled)"
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is UserConfig) return false
+
+            if (theme != other.theme) return false
+            if (notificationsEnabled != other.notificationsEnabled) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = theme.hashCode()
+            result = 31 * result + notificationsEnabled.hashCode()
+            return result
+        }
+    }
+
+    val defaultConfig get() = UserConfig()
+    ```
   </TabItem>
 </BoxedTabs>
 
