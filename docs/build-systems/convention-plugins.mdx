@@ -147,13 +147,9 @@ dependencyResolutionManagement {
     Es recomendable revisar periódicamente la documentación oficial de Gradle para estar al tanto del estado de las APIs utilizadas y ajustar el código en consecuencia a medida que evolucionan hacia versiones estables.
 </details>
 
-Tu sección está muy bien enfocada, pero puede beneficiarse de una redacción un poco más fluida, una explicación clara del propósito del archivo, y una descripción de por qué se usa `kotlin-dsl` y `libs.kotlin.gradle.plugin`.
-
 ### 🛠️ Crear el archivo de construcción
 
-Dentro de la carpeta `convention-plugins`, crea un archivo de construcción llamado `build.gradle.kts`. Este archivo define cómo se compilará y configurará el módulo de plugins de convención.
-
-A continuación, el contenido básico para iniciar el módulo:
+Dentro de la carpeta `convention-plugins`, crea un archivo de construcción llamado `build.gradle.kts`. Este archivo define cómo se compila y configura el módulo de plugins de convención.
 
 ```kotlin showLineNumbers title="convention-plugins/build.gradle.kts"
 plugins {
@@ -171,14 +167,52 @@ dependencies {
 ```
 
 <Explanation>
-    Este archivo `build.gradle.kts` define cómo se construye el módulo `convention-plugins`:
+    Para que los plugins de convención escritos con Kotlin DSL sean detectados correctamente por Gradle, es necesario aplicar el plugin `kotlin-dsl`.
 
-    - **[2]** `kotlin-dsl`: Aplica el plugin de Kotlin DSL, necesario para escribir scripts de Gradle en Kotlin y habilitar autocompletado y validación estática dentro de los archivos `.gradle.kts`.
-    - **[5–8]** `repositories`: Declara los repositorios desde los cuales se resolverán los plugins y dependencias que se utilicen en este módulo. Se incluyen `mavenCentral()` y `gradlePluginPortal()` por compatibilidad y disponibilidad.
-    - **[11]** `implementation(libs.kotlin.gradle.plugin)`: Agrega como dependencia el plugin de Gradle para Kotlin. Esta línea asume que el proyecto está utilizando un catálogo de versiones (`libs.versions.toml`) donde se encuentra declarada `kotlin.gradle.plugin`, lo cual permite mantener las versiones de dependencias centralizadas y consistentes.
+    - **[2]** `` `kotlin-dsl` ``: Se aplica el plugin usando *backticks* debido a que el nombre contiene un guion, lo que lo hace inválido como identificador normal en Kotlin. Este plugin habilita la escritura de scripts en Kotlin y permite que los plugins precompilados sean descubiertos automáticamente por el sistema de compilación.
+    - **[5–8]** `repositories`: Especifica de dónde se obtendrán las dependencias y plugins necesarios. Se utilizan `mavenCentral()` y `gradlePluginPortal()` por su amplio soporte.
+    - **[11]** `implementation(libs.kotlin.gradle.plugin)`: Agrega el plugin de Kotlin para Gradle como dependencia. Esta línea asume que el proyecto utiliza un catálogo de versiones (`libs.versions.toml`), lo cual permite gestionar versiones de forma centralizada y coherente.
 </Explanation>
 
-Tu sección está muy bien estructurada y clara. Solo haría **pequeñas mejoras de estilo y fluidez** para que la redacción sea más natural y didáctica, especialmente al introducir el concepto de convenciones y la progresión del ejemplo.
+<details>
+    <summary>
+        Backticks en el nombramiento de variables y funciones
+    </summary>
+
+    En Kotlin, los *backticks* (`` `...` ``) permiten declarar identificadores que normalmente no serían válidos, como aquellos que contienen guiones (`-`) o espacios.
+
+    Esto es especialmente útil en archivos `build.gradle.kts`, donde algunos plugins tienen nombres con guiones. Por ejemplo:
+
+    ```kotlin
+    plugins {
+        `kotlin-dsl` // válido gracias a los backticks
+    }
+    ```
+
+    Sin los *backticks*, `kotlin-dsl` no sería un identificador válido porque contiene un guion (`-`).
+
+    :::info ¿Por qué se usan?
+
+    Este mecanismo existe principalmente por compatibilidad con **Groovy**, el lenguaje original usado por Gradle. En Groovy, los nombres de plugins como `kotlin-dsl` se declaraban como cadenas:
+
+    ```groovy
+    plugins {
+        id "kotlin-dsl"
+    }
+    ```
+
+    Para mantener una sintaxis similar en Kotlin DSL, se permite el uso de backticks alrededor del nombre. Así, la migración y la legibilidad entre ambos DSLs es más natural.
+
+    :::
+
+    :::tip Buenas prácticas
+
+    - **Úsalos solo cuando sea necesario**: Los *backticks* deben reservarse para nombres que no serían válidos como identificadores normales.
+    - **Evita abusar de nombres arbitrarios**: Aunque Kotlin permite cualquier texto entre backticks, como `` `some weird name` ``, eso puede volver tu código menos mantenible.
+    - **Prefiere nombres válidos sin backticks** si es posible, para aprovechar el soporte completo de autocompletado y verificación estática.
+
+    :::
+</details>
 
 ## 🧪 Mi Primer Plugin
 
@@ -454,3 +488,7 @@ Adoptar este enfoque desde las primeras etapas de un proyecto contribuye a mante
 ### 🔥 Recomendadas
 
 - 🌐 Sharing build logic between subprojects Sample. (s. f.). Recuperado 27 de marzo de 2025, de https://docs.gradle.org/current/samples/sample_convention_plugins.html
+
+### 🔹 Adicionales
+
+- 📚 Build script essentials. (2014). En B. Muschko & H. Dockter, Gradle in action (pp. 75–104). Manning.
