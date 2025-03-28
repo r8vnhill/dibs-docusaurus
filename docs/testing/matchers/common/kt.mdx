@@ -41,110 +41,130 @@ El matcher `shouldBe` en Kotest verifica si dos valores son **iguales estructura
 Imaginemos que estás desarrollando una biblioteca para manejar configuraciones de usuario. Tienes una función que devuelve una configuración por defecto, y quieres asegurarte de que su contenido sea el correcto, **sin importar si es la misma instancia**:
 
 <BoxedTabs>
-  <TabItem label={"Código esencial"} value={"Código esencial"}>
-  
-  ```kotlin showLineNumbers
-  defaultConfig shouldBe UserConfig()
-  ```
-  
-  </TabItem>
-  <TabItem label={"Código completo"} value={"Código completo"}>
-  
-  ```kotlin showLineNumbers title="matchers/predef/src/main/kotlin/com/github/username/config/UserConfig.kt"
-    package com.github.username.config
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        defaultConfig shouldBe UserConfig()
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="matchers/predef/src/main/kotlin/com/github/username/config/UserConfig.kt"
+        package com.github.username.config
 
-    import io.kotest.core.spec.style.FreeSpec
-    import io.kotest.matchers.shouldBe
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
 
-    class UserConfigTest : FreeSpec({
+        class UserConfigTest : FreeSpec({
 
-        "Given no custom configuration" - {
-            "When using the default configuration" - {
-                "Then it should match the expected default values" {
-                    defaultConfig shouldBe UserConfig()
+            "Given no custom configuration" - {
+                "When using the default configuration" - {
+                    "Then it should match the expected default values" {
+                        defaultConfig shouldBe UserConfig()
+                    }
                 }
             }
+        })
+        ```
+
+        ```kotlin showLineNumbers title="matchers/predef/src/test/kotlin/com/github/username/config/UserConfigTest.kt"
+        package com.github.username.config
+
+        class UserConfig(
+            val theme: String = "light",
+            val notificationsEnabled: Boolean = true
+        ) {
+            override fun toString(): String = 
+                "UserConfig(theme='$theme', notificationsEnabled=$notificationsEnabled)"
+
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (other !is UserConfig) return false
+
+                if (theme != other.theme) return false
+                if (notificationsEnabled != other.notificationsEnabled) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = theme.hashCode()
+                result = 31 * result + notificationsEnabled.hashCode()
+                return result
+            }
         }
-    })
-    ```
 
-    ```kotlin showLineNumbers title="matchers/predef/src/test/kotlin/com/github/username/config/UserConfigTest.kt"
-    package com.github.username.config
-
-    class UserConfig(
-        val theme: String = "light",
-        val notificationsEnabled: Boolean = true
-    ) {
-        override fun toString(): String = 
-            "UserConfig(theme='$theme', notificationsEnabled=$notificationsEnabled)"
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (other !is UserConfig) return false
-
-            if (theme != other.theme) return false
-            if (notificationsEnabled != other.notificationsEnabled) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = theme.hashCode()
-            result = 31 * result + notificationsEnabled.hashCode()
-            return result
-        }
-    }
-
-    val defaultConfig get() = UserConfig()
-    ```
-  </TabItem>
+        val defaultConfig get() = UserConfig()
+        ```
+    </TabItem>
 </BoxedTabs>
 
 <Explanation>
-  En esta prueba verificamos que `defaultConfig()` devuelva una instancia que **tenga el mismo contenido** que la instancia creada directamente con `UserConfig()`.  
-  Gracias a que `UserConfig` es una `data class`, Kotlin implementa automáticamente `equals()` para comparar los campos.
+    El matcher `shouldBe` compara dos valores usando `==`, es decir, verifica que sean **estructuralmente iguales** según su método `equals()`.
 
-  Esta forma de comparar objetos es útil al diseñar bibliotecas, ya que permite testear el **contenido esperado** sin depender de referencias exactas.
+    En este caso, asegura que `defaultConfig` tenga el mismo contenido que una instancia por defecto de `UserConfig`. No importa si son la misma instancia, sino que representen la **misma configuración lógica**.
+
+    Si hay alguna diferencia en sus propiedades (como `theme` o `notificationsEnabled`), la prueba fallará indicando las discrepancias.
 </Explanation>
 
 #### ❌ Desigualdad
 
 Si deseas comprobar que **dos valores no son iguales estructuralmente**, puedes usar el matcher `shouldNotBe`:
 
-```kotlin
-testConfig shouldNotBe defaultConfig()
-```
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers
+        val testConfig = UserConfig(
+            theme = "dark",
+            notificationsEnabled = false
+        )
+        testConfig shouldNotBe defaultConfig
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="matchers/predef/src/test/kotlin/com/github/username/config/UserConfigTest.kt"
+        package com.github.username.config
 
-Esto asegura que los contenidos no son equivalentes según `equals()`.
+        import io.kotest.core.spec.style.FreeSpec
+        import io.kotest.matchers.shouldBe
+        import io.kotest.matchers.shouldNotBe
+
+        class UserConfigTest : FreeSpec({
+
+            "Given no custom configuration" - {
+                "When using the default configuration" - {
+                    "Then it should match the expected default values" {
+                        defaultConfig shouldBe UserConfig()
+                    }
+                }
+            }
+
+            "Given a custom configuration" - {
+                "When compared to the default configuration" - {
+                    "Then it should not match" {
+                        val testConfig = UserConfig(theme = "dark", notificationsEnabled = false)
+                        testConfig shouldNotBe defaultConfig
+                    }
+                }
+            }
+        })
+        ```
+    </TabItem>
+</BoxedTabs>
 
 <Explanation>
-  - `a shouldBe b` → verifica que `a == b`
-  - `a shouldNotBe b` → verifica que `a != b`
-
-  Ambas expresiones se basan en `equals()`. Si necesitas redefinir lo que significa "igualdad" para una clase, puedes sobreescribir `equals()` o usar una `data class`, como en este ejemplo.
+    El matcher `shouldNotBe` verifica que dos valores **no sean iguales estructuralmente**, es decir, que `a != b` según su implementación de `equals()`. La prueba falla si los objetos comparados tienen exactamente el mismo contenido.
 </Explanation>
 
 :::tip[Igualdad referencial]
 
-Si necesitas verificar que **dos referencias apuntan al mismo objeto en memoria**, puedes usar `shouldBeSameInstanceAs`:
+Usa `shouldBeSameInstanceAs` para comprobar que dos referencias apuntan al **mismo objeto en memoria** (`===`), y `shouldNotBeSameInstanceAs` para lo contrario (`!==`). A diferencia de `shouldBe`, estos matchers no comparan el contenido, sino la identidad de instancia.
 
 ```kotlin
 a shouldBeSameInstanceAs b
+a shouldNotBeSameInstanceAs c
 ```
-
-Este matcher compara identidad referencial (`===`), no contenido lógico.
 
 :::
 
-
-- **Igualdad**: Verifica si un valor es igual a otro.
-    ```kotlin
-    result shouldBe 42
-    ```
-- **Desigualdad**: Verifica que dos valores no sean iguales.
-    ```kotlin
-    result shouldNotBe 0
-    ```
 - **No Nulo**: Asegura que un valor no es nulo.
     ```kotlin
     result.shouldNotBeNull()
