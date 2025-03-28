@@ -1,0 +1,116 @@
+---
+title: Recolección de estadísticas en ScalaTest
+---
+
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="" />
+
+## 🧪 Ejemplo práctico: clasificando triángulos
+
+En Kotest, usamos `collect` para observar cuántos triángulos de cada tipo generábamos. Veamos cómo se hace algo equivalente en ScalaTest con ScalaCheck:
+
+```scala showLineNumbers
+import org.scalatest.propspec.AnyPropSpec
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import org.scalacheck.Gen
+import org.scalacheck.Prop.{forAll, collect, classify}
+
+class TriangleSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
+
+  case class Triangle(a: Int, b: Int, c: Int) {
+    def triangleType: String =
+      if (a == b && b == c) "Equilateral"
+      else if (a == b || b == c || a == c) "Isosceles"
+      else "Scalene"
+  }
+
+  val triangleGen: Gen[Triangle] = for {
+    a <- Gen.choose(1, 10)
+    b <- Gen.choose(1, 10)
+    c <- Gen.choose(1, 10)
+  } yield Triangle(a, b, c)
+
+  property("should generate all triangle types with balanced distribution") {
+    forAll(triangleGen) { triangle =>
+      val tpe = triangle.triangleType
+
+      classify(tpe == "Equilateral", "Equilateral") {
+        classify(tpe == "Isosceles", "Isosceles") {
+          classify(tpe == "Scalene", "Scalene") {
+            collect(tpe)(true)
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+### 📊 ¿Qué obtienes al correr esta prueba?
+
+ScalaCheck (a través de ScalaTest) imprime automáticamente estadísticas como:
+
+```
++ OK, passed 100 tests.
+> Collected test results:
+> Equilateral -> 31%
+> Isosceles   -> 46%
+> Scalene     -> 23%
+```
+
+Esto te permite identificar posibles sesgos en la generación de datos, de forma similar a lo que hicimos con `collect` en Kotest.
+
+---
+
+### 🧭 ¿Qué puedes hacer en ScalaTest + ScalaCheck que no en Kotest?
+
+ScalaTest + ScalaCheck ofrece funcionalidades **más expresivas** para clasificar y etiquetar datos:
+
+| Funcionalidad                                  | ¿Disponible en Kotest? | ¿Disponible en ScalaTest + ScalaCheck? |
+|-----------------------------------------------|-------------------------|----------------------------------------|
+| `collect` para registrar categorías            | ✅ Sí                   | ✅ Sí                                  |
+| `classify` para categorizar por condición      | ❌ No                   | ✅ Sí                                  |
+| `label` para agregar etiquetas múltiples       | ❌ No                   | ✅ Sí                                  |
+| Análisis combinado de etiquetas                | ❌ No                   | ✅ Sí                                  |
+
+En ScalaTest con ScalaCheck puedes, por ejemplo:
+
+```scala
+classify(condition1, "label1") {
+  classify(condition2, "label2") {
+    collect(someCategory)(true)
+  }
+}
+```
+
+Esto permite recolectar estadísticas condicionales y múltiples etiquetas al mismo tiempo, cosa que Kotest no soporta directamente.
+
+---
+
+## ✅ ¿Cuándo usar cada enfoque?
+
+| Si necesitas...                                        | Usa...                     |
+|--------------------------------------------------------|----------------------------|
+| Simplicidad y buena integración con Kotlin             | ✅ Kotest                  |
+| Clasificación condicional y múltiples etiquetas        | ✅ ScalaTest + ScalaCheck |
+| Recolección básica para detectar errores en generadores| ✅ Ambos                   |
+| Análisis detallado de casos límite o combinaciones     | ✅ ScalaTest + ScalaCheck |
