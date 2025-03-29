@@ -186,5 +186,5 @@ export const PdmCard = createCard(
 );
 export const NxCard = createCard(
   "https://miro.medium.com/v2/resize:fit:1048/0*tiFxxz3C6clSRAbf.png",
-  "JavaScript: Nx"
+  "JavaScript/TypeScript: Nx"
 );
