@@ -19,38 +19,43 @@ import RepoClone from '@site/src/components/admonitions/RepoClone'
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="" />
 
-Los punteros o referencias nulas, descritos por Tony Hoare como "[el error de mil millones de dólares](https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare/)", son una fuente común de errores en tiempo de ejecución. Este problema ocurre cuando una variable, que se espera que contenga una referencia a un objeto, en realidad contiene un valor nulo. Al intentar acceder a los métodos o propiedades de dicho objeto nulo, se producen fallos críticos.
+Los punteros o referencias nulas —descritos por Tony Hoare como "[el error de mil millones de dólares](https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare/)"— son una fuente común de errores en tiempo de ejecución. Este problema ocurre cuando una variable que se espera contenga una referencia válida, en realidad contiene un valor nulo. Al intentar acceder a sus métodos o propiedades, se producen fallos críticos.
 
-## Motivación
+En el contexto del desarrollo de **bibliotecas de software**, estos errores pueden ser aún más problemáticos: no solo afectan al código interno de la biblioteca, sino también a quienes la utilizan. Una biblioteca que no gestiona adecuadamente la nulabilidad puede propagar errores difíciles de diagnosticar y comprometer la estabilidad de múltiples proyectos.
 
-El manejo inadecuado de valores nulos es una causa importante de errores difíciles de detectar y que pueden comprometer la estabilidad y seguridad del software. En proyectos grandes, estos errores son aún más peligrosos y costosos de corregir. Por ello, es fundamental gestionar correctamente los valores nulos para asegurar la calidad y fiabilidad del software desde el inicio.
+## 🧭 Motivación
 
-## Enfoques en Diferentes Lenguajes
+El manejo inadecuado de valores nulos es una de las principales causas de errores en tiempo de ejecución, difíciles de detectar y potencialmente devastadores para la estabilidad y seguridad del software. En proyectos grandes, estos fallos son más frecuentes, más costosos de corregir y más difíciles de rastrear.
 
-- **Java**: En Java, las referencias nulas son comunes, lo que obliga a quien desarrolla a realizar verificaciones constantes para evitar errores, lo que lleva a código redundante y difícil de mantener. Las excepciones `NullPointerException` son frecuentes si no se manejan adecuadamente.
-- **Swift**: Swift utiliza el concepto de **opcionales** (`Optional`), que obligan a quien desarrolla a manejar explícitamente la posibilidad de que un valor sea nulo. Las variables opcionales se declaran con `?`, y para acceder a su valor de forma segura se usa el *unwrap* opcional o el operador `if let`.
-- **Scala**: Scala introduce el tipo `Option`, el cual obliga a quien desarrolla a manejar explícitamente la posibilidad de que no haya un valor (`None`). Sin embargo, no elimina por completo el riesgo de `NullPointerException`, ya que `Option` puede contener un valor nulo si no se maneja correctamente.
+Cuando se trata de desarrollar **bibliotecas de software**, el riesgo se amplifica: una mala gestión de la nulabilidad puede propagarse hacia todas las aplicaciones que dependen de ella. Por eso, gestionar correctamente los valores nulos no es solo una buena práctica, sino una necesidad para garantizar **la calidad, la previsibilidad y la fiabilidad de las APIs que ofrecemos a otras personas**.
+
+## 🌐 Enfoques en Diferentes Lenguajes
+
+- **Java**: Las referencias nulas son habituales y no existen garantías de seguridad en el sistema de tipos. Esto obliga a realizar verificaciones manuales frecuentes, lo que genera código redundante, propenso a errores y difícil de mantener. Las excepciones `NullPointerException` son comunes si no se manejan correctamente.
+- **Swift**: Introduce el concepto de **opcionales** (`Optional`), que deben declararse explícitamente con `?`. Para acceder de forma segura al valor, se requiere *unwrap* mediante `if let`, `guard let` o el uso de operadores seguros. Esto obliga a un manejo explícito y consciente de la nulabilidad, promoviendo APIs más seguras.
+- **Scala**: Utiliza el tipo `Option`, que representa la presencia (`Some`) o ausencia (`None`) de un valor. Aunque mejora la expresividad y evita muchos errores, no previene completamente el uso de `null`, ya que es posible encapsular valores nulos dentro de `Some(null)` si no se tiene cuidado.
+- **Rust**: El lenguaje no incluye el concepto de `null`. En su lugar, todo valor que podría estar ausente debe representarse explícitamente con el tipo `Option<T>`, que obliga a manejar ambos casos (`Some` y `None`) en tiempo de compilación. Al no permitir referencias nulas, Rust garantiza *null safety* a nivel del sistema de tipos, lo que elimina por completo la posibilidad de errores por acceso a valores nulos.
 
 <details>
     <summary>
         Un poco de historia: Self programming language
     </summary>
 
-    **Self**, un lenguaje de programación basado en prototipos, fue uno de los primeros lenguajes en abordar el problema de **void safety** (seguridad respecto a valores nulos). Sin embargo, no enfrentaba este problema con un enfoque rígido como en lenguajes posteriores (por ejemplo, con tipos anulables como en Kotlin o el sistema de contratos en Eiffel). En cambio, **Self** aplicaba una solución basada en el **envío de mensajes** y el comportamiento de los objetos.
+    **Self**, un lenguaje de programación basado en prototipos, fue uno de los primeros en enfrentar el problema de la **void safety** (seguridad frente a valores nulos), aunque con un enfoque muy distinto al de los lenguajes modernos. A diferencia de sistemas más estructurados —como los tipos anulables de Kotlin o los contratos de Eiffel—, **Self** abordaba este problema mediante el **envío dinámico de mensajes** y el comportamiento de los objetos, sin necesidad de comprobaciones explícitas o tipos especiales.
 
     #### ¿Cómo enfrentaba Self el problema de *void safety*?
 
-    1. **Todo es un objeto**: En **Self**, todo es un objeto, incluidos los valores que en otros lenguajes podrían ser nulos. Esto significa que no hay un concepto de "valor vacío" o "puntero nulo" directamente en el lenguaje, lo que evita muchos de los problemas asociados con los null pointers.
-    2. **Mensajes a objetos faltantes**: En lugar de causar un error o lanzar una excepción si un objeto esperado no está presente (como un null pointer), **Self** simplemente envía un **mensaje a un objeto faltante**. Este comportamiento es gestionado por el sistema dinámico de mensajes. Si un objeto no responde a un mensaje (método) porque no lo tiene, se puede definir un comportamiento predeterminado que el lenguaje maneja de manera dinámica.
-        - **Delegación dinámica**: Si un objeto no tiene un método específico, se podría delegar ese mensaje a otro objeto que lo maneje. Esto se parece a la forma en que en lenguajes modernos se utilizan estructuras como `Option` o `Result`, donde se delega la lógica dependiendo de la existencia o ausencia de un valor.
-    3. **El enfoque dinámico y flexible**: En lugar de tener que comprobar constantemente si un valor es nulo, el propio sistema de mensajes de Self se encargaba de "llenar el vacío". La ausencia de un objeto no se trataba como un error fatal que requería manejo explícito, sino que el lenguaje respondía de manera flexible y dinámica.
+    1. **Todo es un objeto**: En **Self**, absolutamente todo —incluidos los valores que en otros lenguajes podrían ser nulos— es un objeto. No existe el concepto de "valor vacío" o "puntero nulo" como tal, lo que elimina de raíz muchos de los problemas asociados a referencias nulas.
+    2. **Envío de mensajes a objetos ausentes**: Si un objeto esperado no está presente, **Self** no lanza un error ni una excepción. En su lugar, simplemente **envía un mensaje** al objeto ausente. Gracias a su sistema dinámico de envío de mensajes, si un objeto no responde a un mensaje, es posible definir un comportamiento predeterminado o redirigir el mensaje a otro objeto.
+        - **Delegación dinámica**: Cuando un objeto no implementa un determinado método, puede delegar ese mensaje a otro objeto que sí lo haga. Esta idea se asemeja a los mecanismos modernos como `Option` o `Result`, donde la lógica se deriva según la presencia o ausencia de un valor.
+    3. **Un enfoque flexible por diseño**: En vez de requerir verificaciones explícitas sobre la nulabilidad, el sistema de mensajes de Self asume la responsabilidad de gestionar ausencias. La falta de un objeto no se considera un error crítico, sino una situación que el lenguaje maneja de forma flexible y dinámica.
 
     #### Ejemplo de comparación
 
-    - En lenguajes como Java, la ausencia de un valor (nulo) resultaría en un **NullPointerException**.
-    - En **Self**, el sistema envía un mensaje de manera transparente y maneja la ausencia sin necesidad de comprobaciones explícitas por parte del programador.
+    - En lenguajes como **Java**, la ausencia de un valor (nulo) suele causar una excepción `NullPointerException`, a menos que se verifique manualmente antes de cada acceso.
+    - En **Self**, la ausencia de un valor no se trata como un error fatal: el sistema simplemente **envía un mensaje** al objeto (aunque esté ausente) y permite definir un comportamiento dinámico para manejar estos casos sin comprobaciones explícitas.
 
-    Este enfoque dinámico basado en el envío de mensajes fue una manera temprana de evitar muchos de los errores comunes asociados con valores nulos, aunque no ofrecía una solución tan estructurada o estricta como los sistemas de tipos modernos que garantizan *void safety* mediante la verificación en tiempo de compilación.
+    Este enfoque flexible y dinámico permitió evitar muchos errores comunes asociados a valores nulos, aunque no con la misma **rigurosidad estática** que ofrecen los sistemas de tipos modernos que garantizan *void safety* mediante verificación en tiempo de compilación.
 
     Aquí tienes un ejemplo de cómo **Self** manejaba el problema de **void safety** mediante el envío de mensajes y la delegación dinámica:
 
@@ -96,52 +101,72 @@ El manejo inadecuado de valores nulos es una causa importante de errores difíci
     handler manejarSaludo.  "Resultado: 'El objeto no respondió al mensaje.'"
     ```
 
-    #### Explicación
+    <Explanation>
+        Este ejemplo muestra cómo **Self** maneja la ausencia de objetos sin necesidad de estructuras de control explícitas como `if` o `null checks`.
 
-    1. **Definimos dos objetos**:
-        - `persona`, que tiene un atributo `nombre` y un método `saludar` que imprime un saludo.
-        - `sinNombre`, que no tiene un nombre definido explícitamente, pero tiene una respuesta predeterminada para el mensaje `nombre`.
-    2. **Envío de mensajes**: Cuando enviamos el mensaje `saludar` al objeto `persona` o `sinNombre`, Self se encarga de buscar el método correspondiente y ejecutarlo, sin que sea necesario preocuparse por valores nulos.
-    3. **Delegación dinámica**: Si `personaOMetodo` no está definido o es `nil`, Self no fallará con un "null pointer" error. En su lugar, podemos manejar ese error usando el mensaje `ifError:`, que es una forma de interceptar errores en el envío de mensajes.
-    4. **Error manejado dinámicamente**: Si intentamos enviar un mensaje a un objeto no existente o no definido (por ejemplo, `nil`), el sistema no falla, sino que nos permite manejar ese escenario de manera flexible, como en el caso final.
+        - **`persona`** define un objeto con una propiedad `nombre` y un método `saludar`, que imprime un saludo personalizado.
+        - **`sinNombre`** es otro objeto que también responde al mensaje `nombre`, pero con un valor por defecto.
+        - **`handler`** es un objeto que almacena una referencia (`personaOMetodo`) y delega la llamada al método `saludar`. Si la referencia no responde (por ejemplo, si es `nil`), Self ejecuta el bloque proporcionado a `ifError:` en lugar de lanzar una excepción.
 
-    #### Comparación
+        Este enfoque dinámico:
+        - Elimina errores por referencias nulas al permitir manejar fallas en tiempo de ejecución de forma controlada.
+        - Promueve un estilo de programación basado en mensajes y delegación, en lugar de verificaciones explícitas.
+        - Sirve como inspiración para estructuras modernas como `Option`, `Result`, o el operador seguro `?.` en Kotlin.
 
-    En lenguajes como Java o Kotlin, tendrías que comprobar explícitamente si un objeto es nulo antes de enviar un mensaje o llamar a un método. En **Self**, el sistema de mensajes se encarga de eso dinámicamente, y podemos definir comportamientos predeterminados para manejar casos donde un objeto o método no está disponible.
+        La clave está en que el **sistema de mensajes de Self trata la ausencia como parte del flujo normal del lenguaje**, no como una excepción.
+    </Explanation>
 </details>
 
-## Solución en Kotlin: Seguridad de Tipos frente a Nulos
+## 🛡️ Solución en Kotlin: Seguridad de Tipos frente a Nulos
 
-Kotlin introduce un sistema de tipos que diferencia entre referencias anulables y no anulables, evitando así la mayoría de los errores de `NullPointerException` en tiempo de ejecución.
+Kotlin implementa un sistema de tipos que distingue entre referencias anulables y no anulables, lo que permite prevenir en tiempo de compilación la mayoría de los errores por acceso a valores nulos, como el clásico `NullPointerException`.
 
-### Tipos anulables y no anulables
+Este enfoque no solo mejora la robustez del código, sino que también es especialmente útil al diseñar bibliotecas reutilizables, ya que obliga a quienes las usan a manejar explícitamente la nulabilidad esperada de cada valor.
 
-En Kotlin, las variables son no anulables por defecto, lo que significa que no pueden contener `null` a menos que se declare explícitamente con `?`:
+### 🧬 Tipos anulables y no anulables
+
+En Kotlin, las variables son **no anulables por defecto**, lo que significa que no pueden contener `null` a menos que se indique explícitamente con el modificador `?`. Esto introduce garantías de seguridad desde el sistema de tipos:
 
 ```kotlin
 var a: String = "Not null"
 var b: String? = "Maybe null"
-a = null // Error: a is not nullable
-b = null // Allowed: b is nullable
+
+a = null    // ❌ Error: 'a' is not nullable
+b = null    // ✅ Permitido: 'b' es nullable
 ```
 
-### Inferencia de tipos y nulabilidad
+<Explanation>
+    En este ejemplo:
 
-La inferencia de tipos en Kotlin también aplica a los valores anulables, siguiendo las mismas reglas:
+    - `a` tiene el tipo `String`, por lo que nunca puede almacenar `null`.
+    - `b` tiene el tipo `String?`, lo que indica que puede ser `String` o `null`.
+
+    Estas anotaciones explícitas permiten a Kotlin detectar posibles errores en tiempo de compilación y forzar a quien usa la biblioteca a tratar los casos anulables de forma segura.
+</Explanation>
+
+### 🧠 Inferencia de tipos y nulabilidad
+
+La inferencia de tipos en Kotlin también respeta la distinción entre tipos anulables y no anulables, aplicando las mismas reglas que con declaraciones explícitas:
 
 ```kotlin
-var c = "Hello" // Inferred type as String, not nullable
-c = null // Error: c is not nullable
+var c = "Hello" // Tipo inferido: String (no nullable)
+c = null        // ❌ Error: 'c' no puede ser null
 ```
 
-### Llamadas Seguras en Kotlin
+:::info Explicación
 
-Kotlin maneja las variables nulas de forma explícita, asegurando que no se acceda a métodos o propiedades sin verificar primero si son nulas. Si una variable puede ser nula, debes validar su estado antes de usarla:
+Kotlin infiere que `c` es de tipo `String` (no anulable) a partir del valor asignado. Como no se usó `?`, el compilador no permitirá asignarle `null` más adelante. Esto demuestra cómo la inferencia no compromete la seguridad frente a nulos.
+
+:::
+
+### 🛡 Llamadas Seguras en Kotlin
+
+Kotlin gestiona la nulabilidad de manera explícita, evitando accesos inseguros a métodos o propiedades. Si una variable puede ser nula, debes verificar su estado antes de usarla:
 
 ```kotlin
 val a: String? = TODO()
 if (a != null) {
-    println(a.length) // Acceso seguro
+    println(a.length) // ✅ Acceso seguro
 } else {
     println("a is null")
 }
@@ -149,45 +174,60 @@ if (a != null) {
 
 :::note Smart Casts
 
-Kotlin utiliza los [Smart Casts](https://kotlinlang.org/docs/typecasts.html#smart-casts) para permitir el acceso seguro a las propiedades de una variable tras verificar su nulabilidad.
+Kotlin emplea los [Smart Casts](https://kotlinlang.org/docs/typecasts.html#smart-casts) para convertir automáticamente una variable anulable a no anulable después de una verificación de nulabilidad.
 
-En el ejemplo anterior, después de verificar que `a` no es nulo, Kotlin automáticamente convierte `a` a un tipo no anulable (`String`) dentro del bloque `if`, permitiendo el acceso seguro a sus propiedades sin necesidad de una conversión explícita.
+En el ejemplo anterior, tras comprobar que `a` no es `null`, el compilador infiere que `a` es de tipo `String` dentro del bloque `if`, permitiendo el acceso seguro a sus propiedades sin necesidad de cast explícito.
 
 :::
 
-Para simplificar este proceso, puedes usar el **operador de llamada segura** (`?.`), que realiza la operación solo si la variable no es nula:
+Para simplificar este patrón, Kotlin ofrece el **operador de llamada segura** (`?.`), que solo accede a la propiedad si la variable no es `null`:
 
 ```kotlin
 println(a?.length)
 ```
 
 <Explanation>
-    Aquí, `a?.length` devolverá `null` si `a` es nulo, evitando errores en tiempo de ejecución.
+    `a?.length` devuelve `null` si `a` es nulo. De esta forma, se evita un posible `NullPointerException` sin necesidad de una verificación explícita.
 </Explanation>
 
-#### Función `let`
+#### 🔍 Función `let`
 
-La función `let` es útil para ejecutar un bloque de código solo cuando una variable no es nula. Este método toma la variable no nula y la pasa como argumento al bloque de código que se ejecuta dentro de `let`:
+La función `let` es útil para ejecutar un bloque de código **solo cuando una variable no es nula**. Este método toma el valor no nulo y lo pasa como argumento al bloque:
 
 ```kotlin
 a?.let { str -> println(str.length) }
 ```
 
 <Explanation>
-    En este caso, si `a` no es nulo, el valor de `a` es pasado al bloque como `str`. Dentro del bloque, puedes acceder a las propiedades y métodos de `a` de forma segura utilizando `str`. Si `a` es nulo, el bloque de código no se ejecuta y el programa continúa sin lanzar excepciones.
+    En este caso, si `a` no es nulo, su valor se pasa al bloque como `str`. Dentro del bloque, puedes acceder a `str` de forma segura.  
+    Si `a` es nulo, el bloque simplemente no se ejecuta.
 </Explanation>
 
-Esto hace que `let` sea una forma limpia y segura de manejar valores opcionales, evitando verificaciones manuales de nulabilidad y mejorando la legibilidad del código.
+Esto convierte a `let` en una herramienta concisa y segura para trabajar con valores opcionales, evitando verificaciones manuales y mejorando la legibilidad del código.
 
 :::note Variable implícita `it`
-En Kotlin, cuando se pasa un solo parámetro a una función lambda, puedes referirte a él de forma implícita como `it`. Esto es útil para reducir la verbosidad del código y hacerlo más legible.
 
-Por ejemplo, en `a?.let { println(it.length) }`, `it` representa el valor de `a` dentro del bloque de código de `let`, haciéndolo equivalente a `a?.let { str -> println(str.length) }`.
+Cuando se pasa un solo parámetro a una lambda en Kotlin, puedes usar la variable implícita `it` en lugar de nombrarla manualmente.
+
+Por ejemplo:
+
+```kotlin
+a?.let { println(it.length) }
+```
+
+Esto es equivalente a:
+
+```kotlin
+a?.let { str -> println(str.length) }
+```
+
+El uso de `it` reduce la verbosidad y hace el código más idiomático.
+
 :::
 
-### Operador Elvis
+### 🪙 Operador Elvis
 
-El operador Elvis (`?:`) ofrece una forma eficiente de manejar valores nulos, permitiendo retornar un valor por defecto cuando una expresión resulta nula:
+El operador **Elvis** (`?:`) proporciona una forma concisa de manejar valores nulos, al permitir **retornar un valor por defecto** cuando una expresión es `null`:
 
 ```kotlin
 val a: String? = TODO()
@@ -195,18 +235,34 @@ val l = a?.length ?: -1
 ```
 
 <Explanation>
-    En este caso, si `a` es nulo, `l` tomará el valor `-1`. De lo contrario, `l` será igual al largo de `a`.
+    En este ejemplo:
+
+    - Si `a` no es nulo, `a?.length` devuelve la longitud de la cadena, y ese valor se asigna a `l`.
+    - Si `a` es nulo, la expresión después del `?:` se evalúa y `l` toma el valor `-1`.
+
+    Este operador es muy útil para evitar estructuras condicionales innecesarias, haciendo que el código sea más conciso y expresivo.
 </Explanation>
 
+## 🧪 Ejercicio: Manejo seguro de cadenas opcionales
+
 <Exercise>
-    Crea una función `procesarCadenas: (List<String?>) -> Unit` que procese una lista de cadenas opcionales, imprimiendo el largo de cada cadena si no es nula, y convirtiendo el texto a mayúsculas si no es nulo. Si una cadena es nula, imprime `"Cadena no disponible"`.
+    Crea una función `procesarCadenas: (List<String?>) -> Unit` que reciba una lista de cadenas opcionales. Para cada elemento:
+
+    - Si la cadena no es nula, imprime su longitud y su valor en mayúsculas.
+    - Si la cadena es nula, imprime el mensaje `"Cadena no disponible"`.
     
+    <Hint hints={[
+        <>
+            Puedes usar la función <code>uppercase: String.() -&gt; String</code> para convertir cadenas a mayúsculas.
+        </>,
+    ]}/>
+
     <Solution>
         ```kotlin
         fun procesarCadenas(cadenas: List<String?>) {
             for (cadena in cadenas) {
                 cadena?.let {
-                    println("Largo de la cadena: $it")
+                    println("Largo de la cadena: ${it.length}")
                     println("Texto en mayúsculas: ${it.uppercase()}")
                 } ?: println("Cadena no disponible")
             }
@@ -220,20 +276,25 @@ val l = a?.length ?: -1
     </Solution>
 </Exercise>
 
+## 🎯 Conclusiones
 
-## ¿Qué aprendimos?
+A lo largo de esta lección, exploramos el concepto de **void-safety** y su importancia en el desarrollo de software —especialmente en la creación de bibliotecas reutilizables, donde el mal manejo de referencias nulas puede propagarse y afectar a múltiples aplicaciones.
 
-En esta lección, exploramos el concepto de **Void-Safety**, una estrategia esencial en la programación moderna para evitar los errores comunes de referencias nulas. Observamos cómo diferentes lenguajes y frameworks abordan este problema y cómo pueden garantizar la estabilidad y la seguridad en tiempo de ejecución. A continuación, destacamos los puntos clave:
+Vimos cómo distintos lenguajes han abordado este problema, desde enfoques dinámicos como el de **Self**, hasta soluciones modernas y seguras como las de **Rust** y **Kotlin**, que integran el control de nulabilidad en sus sistemas de tipos.
 
-### Puntos clave
+Kotlin, en particular, nos ofrece herramientas expresivas y seguras como tipos anulables, operadores seguros (`?.`, `?:`), y funciones como `let`, que nos permiten diseñar APIs robustas y fáciles de usar sin comprometer la seguridad.
 
-- **El error de las referencias nulas**: La presencia de valores nulos en lenguajes como Java y su manejo inadecuado pueden causar `NullPointerException`, lo que hace necesario un enfoque que asegure la estabilidad del código frente a valores nulos.
-- **Comparación entre lenguajes**: Diferentes lenguajes, como **Java**, **Scala**, **Swift** y **Self**, abordan el problema de manera única. Algunos como **Swift** y **Kotlin** implementan tipos anulables y no anulables, mientras que lenguajes como **Self** utilizan un enfoque basado en el envío de mensajes para manejar la ausencia de valores sin causar errores críticos.
-- **Kotlin y la seguridad frente a nulos**: Kotlin introduce un sistema de tipos que diferencia entre referencias anulables y no anulables, lo que elimina muchos de los problemas causados por los nulos en otros lenguajes. Los constructos como el **operador Elvis** (`?:`), las **llamadas seguras** (`?.`), y la función **let** son herramientas poderosas para manejar valores nulos de manera explícita y eficiente.
+### 🔑 Puntos clave
 
----
+- **Las referencias nulas son una fuente común de errores en tiempo de ejecución**, y evitarlas es una prioridad en el diseño de software seguro.
+- **Lenguajes como Swift, Scala, Rust y Kotlin han adoptado mecanismos distintos** para manejar la nulabilidad, obligando a que quien desarrolla reconozca y gestione explícitamente los valores opcionales.
+- **Kotlin garantiza la seguridad frente a nulos en tiempo de compilación**, evitando muchos errores comunes y facilitando el diseño de bibliotecas seguras y confiables.
 
-Este enfoque garantiza que el código no solo sea funcional, sino también seguro y robusto, protegiéndolo de una de las fuentes más comunes de errores en la programación.
+### 🧰 ¿Qué nos llevamos?
+
+El manejo explícito y seguro de valores nulos no es solo un detalle técnico, sino una decisión de diseño fundamental en la construcción de bibliotecas reutilizables. Herramientas como el sistema de tipos de Kotlin no solo nos ayudan a prevenir errores, sino que también **nos obligan a ser más precisos y honestos en nuestras APIs**: si algo puede ser nulo, debe declararse; si no, el sistema lo garantizará.
+
+Adoptar este enfoque no solo mejora la calidad de nuestro código, sino que **genera confianza** en quienes usan nuestras bibliotecas. Porque escribir código sin errores no basta: también debemos diseñarlo para que sea difícil usarlo mal.
 
 <div className="language-card-container">
     <CSharpCard link="/docs/intro/void/csharp"/>
@@ -242,29 +303,8 @@ Este enfoque garantiza que el código no solo sea funcional, sino también segur
     <SwiftCard link="/docs/intro/void/swift"/>
 </div>
 
-<References references={[
-    {
-        title: "6. The Kotlin type system",
-        bookTitle: "Kotlin in action",
-        pages: "133–170",
-        location: "Shelter Island, NY",
-        publisher: "Manning Publications Co",
-        year: "2017",
-        type: "book",
-        author: 'Dmitry Jemerov, Svetlana Isakova',
-    },
-    {
-        accessedDate: '22 de septiembre de 2024',
-        siteOrAuthor: 'Wikipedia',
-        title: 'Void Safety',
-        type: 'web',
-        url: 'https://en.wikipedia.org/w/index.php?title=Void_safety&oldid=1245392044',
-    },
-    {
-        accessedDate: '22 de septiembre de 2024',
-        siteOrAuthor: 'Kotlin Help',
-        title: 'Null Safety | Kotlin',
-        type: 'web',
-        url: 'https://kotlinlang.org/docs/null-safety.html',
-    },
-]}/>
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- 🌐 Null safety | Kotlin. (s. f.). Kotlin Help. Recuperado 29 de marzo de 2025, de https://kotlinlang.org/docs/null-safety.html
