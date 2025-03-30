@@ -8,149 +8,189 @@ import References from "/src/components/ReferencesComponent";
 import ReadingTime from "/src/components/ReadingTime";
 import { LanguageCard, JavaScriptCard } from "/src/components/cards/LanguageCard";
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import Explanation from '@site/src/components/admonitions/Explanation'
 
 <ReadingTime />
 
-En esta lección, nos enfocaremos en la **sintaxis** y particularidades de las excepciones en **Kotlin**. Si ya tienes experiencia con excepciones en otros lenguajes, encontrarás que el manejo de excepciones en Kotlin sigue patrones familiares, pero con algunas diferencias notables.
+En cualquier sistema software, los errores son inevitables: archivos que no existen, conexiones interrumpidas, datos malformados. Por eso, contar con un mecanismo robusto para capturar y manejar estos errores no es una opción, sino una necesidad. Las **excepciones** son una herramienta clave en ese proceso.
 
-## Lanzar Excepciones
+Kotlin, al igual que otros lenguajes de la JVM como Java o Scala, ofrece un sistema de manejo de excepciones familiar y poderoso, basado en las construcciones `throw`, `try-catch` y `finally`. Sin embargo, también aporta mejoras que promueven un estilo más conciso y expresivo, como su integración con funciones como `use` para liberar recursos de forma segura.
 
-Para **lanzar** una excepción en Kotlin, usamos la palabra clave `throw`. Esta parte es muy similar a otros lenguajes como Java o C#. Aquí tienes un ejemplo sencillo:
+En esta lección, aprenderás cómo lanzar, capturar y propagar excepciones en Kotlin, cómo utilizar bloques `finally`, y cómo aprovechar constructos modernos para escribir código más limpio y seguro. También analizaremos sus ventajas y desventajas, y cómo este enfoque se compara con alternativas en otros lenguajes.
+
+## 🚨 Lanzar Excepciones
+
+En Kotlin, puedes **lanzar** una excepción utilizando la palabra clave `throw`. Este mecanismo permite **interrumpir el flujo normal del programa** cuando se detecta una condición inválida o inesperada.
+
+Esto es especialmente importante al diseñar **bibliotecas de software**: lanzar una excepción en el momento adecuado permite señalar errores de uso, validar contratos y proteger la consistencia interna de las estructuras que expones. Por ejemplo, una biblioteca de gráficos podría lanzar una excepción si se intenta construir un triángulo con lados inválidos, o una de métricas si se intenta registrar un valor negativo donde no se permite.
+
+Además, es importante destacar que la expresión `throw` en Kotlin tiene el tipo especial [`Nothing`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-nothing/). Esto significa que **la función se interrumpe en el punto donde se lanza la excepción** y no continúa ejecutando el resto del cuerpo. El uso de `Nothing` también permite que el compilador entienda que esa rama nunca retorna, lo cual puede ayudar en la inferencia de tipos o validaciones de flujo.
 
 <BoxedTabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers
-        if (b == 0) {
-            throw IllegalArgumentException("Cannot divide by zero")
+  <TabItem label={"Código esencial"} value={"Código esencial"}>
+    ```kotlin showLineNumbers
+    fun normalizeAngle(degrees: Int): Int {
+        if (degrees !in 0..360) {
+            throw IllegalArgumentException("Angle must be between 0 and 360")
         }
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
+        return degrees
+    }
+    ```
+  </TabItem>
+  <TabItem label={"Ejemplo aplicado"} value={"Ejemplo aplicado"}>
+    ```kotlin showLineNumbers
+    fun normalizeAngle(degrees: Int): Int {
+        if (degrees !in 0..360) {
+            throw IllegalArgumentException("Angle must be between 0 and 360")
+        }
+        return degrees
+    }
+
+    fun main() {
+        println(normalizeAngle(45))   // 45
+        println(normalizeAngle(400))  // ❌ Lanza excepción
+    }
+    ```
+  </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    En este ejemplo, la función `normalizeAngle` podría formar parte de una biblioteca de utilidades geométricas.  
+    Lanzar una excepción permite evitar resultados incorrectos y ayuda a quien usa la biblioteca a detectar errores de uso rápidamente.
+
+    Dado que `throw` tiene tipo `Nothing`, el compilador sabe que no habrá un valor de retorno válido tras la línea que lanza la excepción, y el flujo de ejecución de la función se interrumpe inmediatamente.
+</Explanation>
+
+## 🛡️ Capturar Excepciones
+
+En Kotlin, puedes capturar y manejar errores en tiempo de ejecución utilizando una **expresión `try-catch`**. A diferencia de muchos lenguajes donde `try-catch` es una *declaración*, en Kotlin es una *expresión*: **produce un valor**, y por lo tanto puede asignarse o devolverse directamente.
+
+Esto es útil al construir **bibliotecas de software**, donde puedes encapsular errores dentro de funciones que devuelven un resultado neutral (`null`, un `Result`, etc.) en lugar de lanzar excepciones, permitiendo a quien usa tu biblioteca elegir cómo actuar ante fallos.
+
+:::note Recordatorio
+
+En Kotlin, una *expresión* es una construcción que **devuelve un valor**, como una operación matemática o una llamada a función.  
+Una *declaración*, en cambio, **realiza una acción** sin retornar un valor usable (como `val`, `while`, o `fun`).  
+Como `try-catch` es una expresión, puedes usarla directamente en una asignación o retorno.
+
+:::
+
+<BoxedTabs>
+  <TabItem label={"Código esencial"} value={"Código esencial"}>
+    ```kotlin showLineNumbers
+    fun calcularTasa(exitos: Int, intentos: Int): Double? = try {
+        exitos.toDouble() / intentos
+    } catch (e: ArithmeticException) {
+        println("Advertencia: división por cero")
+        null
+    }
+    ```
+  </TabItem>
+  <TabItem label={"Ejemplo aplicado"} value={"Ejemplo aplicado"}>
+    ```kotlin showLineNumbers
+    fun calcularTasa(exitos: Int, intentos: Int): Double? = try {
+        exitos.toDouble() / intentos
+    } catch (e: ArithmeticException) {
+        println("Advertencia: división por cero")
+        null
+    }
+
+    fun main() {
+        println(calcularTasa(7, 10))  // 0.7
+        println(calcularTasa(7, 0))   // null + advertencia
+    }
+    ```
+  </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    Esta función podría formar parte de una biblioteca de métricas.  
+    Usar `try-catch` como expresión permite devolver un valor directamente (`null` en caso de error), sin necesidad de estructuras adicionales ni múltiples retornos.  
+    Así, quien utilice tu biblioteca puede decidir si ignora, transforma o propaga el resultado nulo.
+</Explanation>
+
+### 🔁 Bloque `finally` y gestión de recursos
+
+El bloque `finally` es opcional y se ejecuta **siempre**, sin importar si una excepción fue lanzada o no. Es útil cuando necesitas **liberar recursos** (como archivos, sockets o conexiones) de forma segura, garantizando que el código de limpieza se ejecute pase lo que pase.
+
+Esto es especialmente relevante al diseñar **bibliotecas de software** que interactúan con recursos del sistema. Asegurarte de que los recursos se cierren correctamente evita fugas de memoria, archivos bloqueados y comportamientos inesperados en aplicaciones que usen tu biblioteca.
+
+<BoxedTabs>
+  <TabItem label="Código esencial" value="Código esencial">
+    ```kotlin showLineNumbers
+    try {
+        // Operaciones que pueden lanzar excepciones
+    } catch (e: Exception) {
+        // Captura de excepciones
+    } finally {
+        // Código que se ejecuta siempre
+    }
+    ```
+  </TabItem>
+  <TabItem label="Ejemplo aplicado" value="Ejemplo aplicado">
+    <BoxedTabs>
+      <TabItem label="Versión tradicional" value="Versión tradicional">
         ```kotlin showLineNumbers
-        fun divide(a: Int, b: Int): Int {
-            if (b == 0) {
-                throw IllegalArgumentException("Cannot divide by zero")
+        fun readFile(filePath: String) {
+            var fileReader: FileReader? = null
+            try {
+                val file = File(filePath)
+                fileReader = FileReader(file)
+                val content = fileReader.readText()
+                println("Contenido del archivo:\n$content")
+            } catch (e: IOException) {
+                println("Error al leer el archivo: ${e.message}")
+            } finally {
+                try {
+                    fileReader?.close()
+                    println("El archivo ha sido cerrado.")
+                } catch (e: IOException) {
+                    println("Error al cerrar el archivo: ${e.message}")
+                }
             }
-            return a / b
-        }
-
-        fun main() {
-            println(divide(10, 2))  // 5
-            println(divide(10, 0))   // Lanza una excepción
-            /* Output:
-            5
-            Exception in thread "main" java.lang.IllegalArgumentException: Cannot divide by zero
-                ...
-            */
         }
         ```
-    </TabItem>
+
+        <Explanation>
+            Esta función simula una operación común en bibliotecas que trabajan con archivos: abrir, leer y cerrar un recurso. El objetivo es garantizar que el archivo se cierre correctamente, **incluso si ocurre un error durante la lectura**.
+
+            - Se usa un bloque `try-catch` para capturar posibles excepciones al abrir o leer el archivo (por ejemplo, si el archivo no existe o no se puede acceder).
+            - El bloque `finally` se asegura de que el archivo se cierre, **independientemente de si hubo un error o no**.
+            - El `fileReader?.close()` está envuelto en su propio `try-catch` para capturar errores al cerrar el archivo, como si ya se hubiera cerrado o si hubo un error del sistema.
+
+            Esta técnica es común en bibliotecas que manejan recursos del sistema, ya que permite encapsular el comportamiento seguro de apertura y cierre de archivos, evitando que quien usa la biblioteca tenga que preocuparse por liberar manualmente los recursos.
+        </Explanation>
+      </TabItem>
+      <TabItem label="Versión idiomática" value="Versión idiomática">
+        ```kotlin showLineNumbers
+        fun readFile(filePath: String) = try {
+            FileReader(File(filePath)).use { fileReader ->
+                val content = fileReader.readText()
+                println("Contenido del archivo:\n$content")
+            }
+        } catch (e: IOException) {
+            println("Error al leer el archivo: ${e.message}")
+        }
+        ```
+
+        :::info Alternativa idiomática con `use`
+
+        En Kotlin, la función `use` garantiza que el recurso se cierre automáticamente al finalizar el bloque, incluso si ocurre una excepción.  
+        Es la forma recomendada de manejar recursos que implementan `Closeable`, y reduce la necesidad de `finally`.
+
+        :::
+      </TabItem>
+    </BoxedTabs>
+  </TabItem>
 </BoxedTabs>
 
-## Capturar Excepciones
+## 💥 Propagación de Excepciones
 
-Para capturar excepciones, utilizamos una **expresión** `try-catch`. El formato es similar a otros lenguajes, con algunas mejoras en la sintaxis:
+En Kotlin, si una excepción no se captura, esta se **propaga automáticamente** a la función llamante. Este comportamiento es similar al de lenguajes como Java o C#, pero con una diferencia importante: **Kotlin no tiene excepciones chequeadas**.
 
-<BoxedTabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers
-        fun safeDivide(a: Int, b: Int) = try {
-            a / b
-        } catch (e: ArithmeticException) {
-            println("Error: ${e.message}")
-            null
-        }
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        ```kotlin showLineNumbers
-        fun safeDivide(a: Int, b: Int) = try {
-            a / b
-        } catch (e: ArithmeticException) {
-            println("Error: ${e.message}")
-            null
-        }
+Esto significa que **no estás obligado a declarar las excepciones que una función puede lanzar**, aunque puedes hacerlo opcionalmente usando la anotación `@Throws`. Esto es especialmente útil cuando la función será llamada desde código Java, donde sí existen excepciones chequeadas.
 
-        fun main() {
-            println(safeDivide(10, 2))  // 5
-            println(safeDivide(10, 0))   // null
-            /* Output:
-            5
-            Error: / by zero
-            null
-            */
-        }
-        ```
-    </TabItem>
-</BoxedTabs>
-
-### Bloque `finally`
-
-El bloque `finally` es opcional y se ejecuta independientemente de si una excepción fue lanzada o no. Se usa típicamente para la limpieza de recursos.
-
-<BoxedTabs>
-    <TabItem label={"Código esencial"} value={"Código esencial"}>
-        ```kotlin showLineNumbers
-        try {
-            // Operaciones que pueden lanzar excepciones
-        } catch (e: Exception) {
-            // Captura de excepciones
-        } finally {
-            // Código que se ejecuta siempre
-        }
-        ```
-    </TabItem>
-    <TabItem label={"Código completo"} value={"Código completo"}>
-        <BoxedTabs>
-            <TabItem label={"Implementación"} value={"Implementación"}>
-                ```kotlin showLineNumbers
-                fun readFile(filePath: String) {
-                    var fileReader: FileReader? = null
-                    try {
-                        val file = File(filePath)
-                        fileReader = FileReader(file)
-                        val content = fileReader.readText()
-                        println("Contenido del archivo:\n$content")
-                    } catch (e: IOException) {
-                        println("Ocurrió un error al leer el archivo: ${e.message}")
-                    } finally {
-                        try {
-                            fileReader?.close()
-                            println("El archivo ha sido cerrado.")
-                        } catch (e: IOException) {
-                            println("Error al cerrar el archivo: ${e.message}")
-                        }
-                    }
-                }
-                ```
-            </TabItem>
-            <TabItem label={"Implementación (mejorada)"} value={"Implementación (mejorada)"}>
-                ```kotlin showLineNumbers
-                fun readFile(filePath: String) {
-                    try {
-                        FileReader(File(filePath)).use { fileReader ->
-                            val content = fileReader.readText()
-                            println("Contenido del archivo:\n$content")
-                        }
-                    } catch (e: IOException) {
-                        println("Ocurrió un error al leer el archivo: ${e.message}")
-                    }
-                }
-                ```
-
-                :::info Explicación de las mejoras
-
-                En la segunda implementación, se utiliza la función `use` para abrir el archivo y asegurarse de que se cierre automáticamente al salir del bloque `use`. Esto evita la necesidad de un bloque `finally` y simplifica el código.
-
-                :::
-            </TabItem>
-        </BoxedTabs>
-    </TabItem>
-</BoxedTabs>
-
-## Propagación de Excepciones
-
-Si no capturas una excepción, esta se propagará hacia la función llamante, lo cual es idéntico a otros lenguajes. Como no hay excepciones chequeadas en Kotlin, no es necesario declarar las excepciones que una función podría lanzar, pero se puede documentar en la firma de la función.
+En el contexto de bibliotecas de software, la propagación de excepciones puede ser útil para **dejar que la persona que usa la biblioteca decida cómo manejar los errores**, mientras tú te concentras en mantener la lógica clara y segura.
 
 ```kotlin showLineNumbers
 import java.io.File
@@ -168,12 +208,13 @@ fun main() {
     }
 }
 
-// Opcional: Documentación de excepciones
+// Documentación opcional de las excepciones lanzadas
 @Throws(FileNotFoundException::class, IOException::class)
 private fun readConfigFile(filePath: String) {
     if (!File(filePath).exists()) {
         throw FileNotFoundException("Configuration file not found: $filePath")
     }
+
     try {
         println("Configuration loaded successfully.")
     } catch (ex: IOException) {
@@ -182,12 +223,42 @@ private fun readConfigFile(filePath: String) {
 }
 ```
 
-## Excepciones Personalizadas
+<Explanation>
+    En este ejemplo, `readConfigFile` representa una función típica en una biblioteca que intenta cargar un archivo de configuración.
 
-Al igual que en otros lenguajes, puedes crear tus propias excepciones heredando de `Exception` o `RuntimeException`:
+    - Si el archivo no existe, se lanza una excepción `FileNotFoundException`.
+    - Si ocurre un error al leer el archivo, se lanza una `IOException`, posiblemente con la causa original.
+    - Gracias al uso de `@Throws`, quienes usen esta función desde Java pueden beneficiarse del sistema de chequeo de excepciones.
+    
+    Este patrón permite mantener la función enfocada en su propósito, dejando a quien la llama el control sobre cómo reaccionar ante los errores.
+</Explanation>
+
+## ⚠️ Excepciones Personalizadas
+
+Al desarrollar **bibliotecas de software**, a veces necesitas señalar errores que son **específicos de tu dominio**: validaciones de entrada, estados inválidos, violaciones de contrato, etc. Para estos casos, puedes definir **excepciones personalizadas** extendiendo `Exception` o `RuntimeException`.
 
 ```kotlin showLineNumbers
-class EdSheeranException(message: String) : Exception(message)
+class InvalidColorException(message: String) : IllegalArgumentException(message)
+
+fun parseHexColor(hex: String): Int {
+    if (!hex.matches(Regex("#[0-9A-Fa-f]{6}"))) {
+        throw InvalidColorException("Formato inválido para color: $hex")
+    }
+    return hex.removePrefix("#").toInt(16)
+}
+```
+
+<Explanation>
+    Esta función podría formar parte de una biblioteca de gráficos.  
+    En lugar de lanzar una excepción genérica, definimos `InvalidColorException` para **documentar explícitamente qué tipo de error ocurrió**, facilitando su manejo desde el código cliente.
+</Explanation>
+
+También puedes heredar de `RuntimeException` si planeas que tu biblioteca sea utilizada desde **Java** y no deseas que quienes la consumen estén obligados a capturar la excepción.  
+
+> En **Kotlin**, todas las excepciones son *unchecked*, así que no existe esta obligación, sin importar de qué clase heredes.
+
+```kotlin
+class EdSheeranException(message: String) : RuntimeException(message)
 
 fun validateAge(age: Int) {
     if (age >= 70) {
@@ -196,39 +267,47 @@ fun validateAge(age: Int) {
 }
 ```
 
-### Ventajas y Desventajas de las Excepciones
+<Explanation>
+    Aunque este ejemplo es humorístico, muestra cómo puedes **personalizar el mensaje de error y darle identidad a la excepción**, algo especialmente útil en bibliotecas que apuntan a dominios complejos.
+
+    Si tu biblioteca también será utilizada desde **Java**, heredar de `RuntimeException` evita que la excepción tenga que ser obligatoriamente capturada.
+</Explanation>
+
+### ✅ Beneficios / ❌ Limitaciones
 
 <ProCons>
     <Pros>
-        - **Manejo centralizado de errores**: Las excepciones permiten capturar y manejar errores en un solo lugar, lo que mejora la claridad y la organización del código. Esto es especialmente útil en aplicaciones grandes, donde la dispersión de manejo de errores en cada función puede ser ineficiente y difícil de mantener.
-        - **Separación de lógica**: Las excepciones separan la lógica principal del manejo de errores, haciendo que el flujo principal del programa sea más limpio y fácil de seguir.
-        - **Propagación automática**: En Kotlin y otros lenguajes similares, las excepciones no capturadas se propagan automáticamente, lo que permite delegar el manejo de errores a niveles superiores cuando sea apropiado, manteniendo la simplicidad en las funciones más pequeñas.
-        - **Flexibilidad con excepciones personalizadas**: La posibilidad de crear excepciones personalizadas permite definir tipos específicos de errores que pueden ser manejados de manera distinta, mejorando la semántica y facilitando el manejo específico de ciertos escenarios.
-        - **Integración con estructuras de recursos**: Kotlin ofrece características como la función `use`, que simplifica la gestión de recursos (como archivos) y asegura que los recursos se liberen correctamente, incluso en caso de error, sin necesidad de bloques `finally` explícitos.
+        - **Manejo centralizado de errores**: Las excepciones permiten capturar y manejar errores desde un único lugar, lo que mejora la claridad y la organización del código. Esto es especialmente valioso en aplicaciones grandes o bibliotecas reutilizables, donde repartir lógica de validación por todos lados puede volverse inmanejable.
+        - **Separación de preocupaciones**: Permiten aislar el flujo principal del manejo de errores, haciendo que el código sea más limpio, expresivo y fácil de seguir.
+        - **Propagación automática**: En Kotlin y otros lenguajes similares, las excepciones no capturadas se propagan automáticamente, lo que permite delegar el manejo de errores a capas superiores del sistema, simplificando funciones intermedias.
+        - **Flexibilidad con excepciones personalizadas**: Es posible crear tipos específicos de error para representar distintas fallas del dominio de la biblioteca (e.g. `GraphCycleException`, `EmptyConfigurationException`), mejorando la semántica de la API y facilitando la integración con otros sistemas.
+        - **Integración con gestión de recursos**: Kotlin ofrece funciones como `use`, que garantizan el cierre de recursos (archivos, conexiones, etc.) incluso ante errores, evitando fugas sin necesidad de escribir bloques `finally`.
     </Pros>
+
     <Cons>
-        - **Sobrecarga en el control de flujo**: En algunos casos, las excepciones pueden ser usadas indebidamente como un mecanismo de control de flujo, lo cual complica la comprensión y mantenimiento del código, además de impactar negativamente en el rendimiento.
-        - **Ausencia de excepciones chequeadas**: En Kotlin (a diferencia de Java), no existen excepciones chequeadas, lo que implica que los errores potenciales no son detectados en tiempo de compilación. Esto puede hacer que algunas excepciones pasen desapercibidas si no se documentan adecuadamente.
-        - **Coste en rendimiento**: Lanzar y capturar excepciones puede ser costoso en términos de rendimiento, especialmente en contextos donde se producen con frecuencia. Otros paradigmas, como el uso de monadas en lenguajes funcionales (e.g., Scala) o el manejo de errores basado en resultados (`Result` en Rust), suelen ser más eficientes.
-        - **Complejidad en la depuración**: En grandes aplicaciones, si las excepciones se manejan en niveles superiores y no se registran adecuadamente en los niveles inferiores, puede resultar difícil identificar el origen exacto del error.
+        - **Mal uso como control de flujo**: Utilizar excepciones para situaciones esperadas (como el fin de una búsqueda o una validación negativa) es un antipatrón que dificulta la lectura y puede afectar negativamente al rendimiento.
+        - **Ausencia de excepciones chequeadas**: A diferencia de Java, Kotlin no requiere declarar ni capturar excepciones. Aunque esto simplifica el código, también puede ocultar errores si no se documenta correctamente el comportamiento de las funciones.
+        - **Coste en rendimiento**: El mecanismo de lanzar y capturar excepciones no está optimizado para escenarios frecuentes. En bibliotecas de bajo nivel o con gran volumen de operaciones, puede ser preferible usar enfoques alternativos como `Result`, `Either`, o `Option`.
+        - **Dificultades en la trazabilidad**: Si las excepciones se capturan en capas superiores sin un adecuado registro en los niveles intermedios, puede resultar difícil rastrear su causa original, especialmente en entornos productivos.
+        - **Poca componibilidad**: A diferencia de los tipos que representan errores como valores (`Result`, `Option`, etc.), las excepciones son difíciles de combinar o transformar de forma funcional, lo que puede limitar su expresividad en ciertos estilos de diseño.
     </Cons>
 </ProCons>
 
-## ¿Qué Aprendimos?
+## 🎯 Conclusiones
 
-En esta lección, hemos explorado el manejo de excepciones en Kotlin, identificando sus similitudes y diferencias con otros lenguajes como Java y C#.
+El manejo de excepciones es una herramienta poderosa y necesaria en el desarrollo de bibliotecas de software. Kotlin ofrece un sistema expresivo y seguro que permite capturar errores, liberar recursos de forma confiable y propagar fallas cuando es necesario, sin complicar la lógica principal del programa. Al aprovechar funciones como `use`, excepciones personalizadas y la capacidad de tratar `try-catch` como expresión, podemos escribir código más claro, idiomático y robusto.
 
-### Puntos clave:
+### 🔑 Puntos clave
 
-1. **Lanzar y capturar excepciones**: Kotlin utiliza `throw` para lanzar excepciones y la expresión `try-catch` para capturarlas. Este mecanismo permite manejar errores de manera estructurada y evita la propagación de errores imprevistos en el código.
-2. **Uso de bloques `finally`**: Los bloques `finally` permiten garantizar la ejecución de código de limpieza, independientemente de si ocurre una excepción o no. Esto es útil para liberar recursos como archivos abiertos o conexiones.
-3. **Optimización con `use`**: La función de extensión `use` permite manejar recursos de manera segura y automática, asegurando que los recursos se cierren correctamente sin necesidad de un bloque `finally`.
-4. **Propagación de excepciones**: En Kotlin, las excepciones no capturadas se propagan automáticamente hacia la función llamante. Aunque Kotlin no maneja excepciones chequeadas como Java, es importante documentar claramente las excepciones que una función puede lanzar.
-5. **Excepciones personalizadas**: Kotlin permite la creación de excepciones personalizadas mediante la herencia de `Exception` o `RuntimeException`, lo que facilita el manejo de errores específicos y semánticamente significativos en el contexto de una aplicación.
+- Kotlin permite lanzar excepciones con `throw`, una expresión de tipo `Nothing` que interrumpe el flujo normal del programa.
+- El bloque `try-catch` en Kotlin es una expresión, lo que permite manejar errores de forma más fluida dentro de funciones.
+- El bloque `finally` garantiza que los recursos se liberen incluso cuando ocurren errores, y la función `use` lo reemplaza idiomáticamente.
+- Las excepciones en Kotlin no son chequeadas, lo cual simplifica el código pero requiere documentar cuidadosamente el comportamiento de las funciones.
+- Las excepciones personalizadas permiten expresar con claridad errores específicos del dominio de una biblioteca.
 
----
+### 🧰 ¿Qué nos llevamos?
 
-En resumen, el manejo de excepciones en Kotlin es poderoso y flexible, permitiendo un control robusto de errores. Sin embargo, es esencial utilizarlas de manera adecuada para mantener un equilibrio entre la claridad del código y la eficiencia.
+Diseñar bibliotecas implica prever errores y ofrecer mecanismos claros para que otras personas los manejen. Usar excepciones de forma controlada, sin abusar de ellas como flujo normal, permite mantener la integridad de la lógica y mejorar la experiencia de quienes integran nuestras bibliotecas. Siempre que sea posible, considera si una excepción es la mejor herramienta o si un tipo como `Result` o `Option` puede representar mejor un resultado alternativo.
 
 <div className="language-card-container">
     <LanguageCard
