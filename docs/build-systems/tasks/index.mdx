@@ -27,6 +27,58 @@ En muchos proyectos de software, surge la necesidad de ejecutar acciones automat
 
 Gradle incluye tareas predefinidas como `build` (para compilar el código), `test` (para ejecutar pruebas) y `clean` (para eliminar archivos generados). Además, permite definir tareas personalizadas para flujos de trabajo específicos.
 
+## 🏷️ Agrupar y documentar tareas
+
+Cuando creamos tareas personalizadas en Gradle, no basta con que funcionen correctamente: también es importante que otras personas —o incluso tú en el futuro— puedan **entender rápidamente qué hace cada tarea y cómo se relaciona con el resto del proyecto**.
+
+Gradle permite asignar a cada tarea una **categoría** y una **descripción**, que funcionan como una forma de **documentación inmediata y visible desde la línea de comandos**. Estas propiedades son clave para mantener un proyecto organizado, comprensible y fácil de explorar.
+
+### 📘 Propiedades de documentación de tareas
+
+Gradle permite documentar tareas mediante dos propiedades clave:
+
+- **`group`**: Define la categoría a la que pertenece la tarea. Al ejecutar `./gradlew tasks`, Gradle muestra las tareas agrupadas por su `group`, lo que facilita identificar tareas relacionadas.
+- **`description`**: Proporciona un resumen breve del propósito de la tarea. Esta descripción se muestra junto al nombre de la tarea en la lista de tareas disponibles y sirve como referencia rápida para su uso.
+
+Asignar estas propiedades es especialmente importante cuando defines tareas personalizadas, ya que ayuda a:
+
+- Identificar fácilmente su propósito dentro del flujo de construcción.
+- Comunicar su intención sin necesidad de revisar el código fuente.
+- Mejorar la experiencia de quienes usen tu biblioteca o herramienta.
+
+:::::tip Documenta tus tareas desde el principio
+
+Las propiedades `group` y `description` no solo mejoran la organización del proyecto, sino que también actúan como la **documentación mínima y accesible** de cada tarea.  
+Siempre que definas una tarea personalizada, **asigna ambas propiedades** para facilitar su descubrimiento y uso desde la línea de comandos.
+
+::::danger Nobody knows my name
+
+Una tarea solo aparecerá en el listado generado por `./gradlew tasks` si cumple al menos una de estas condiciones:
+
+- Tiene definida la propiedad `group`.
+- Es requerida (directa o indirectamente) por otra tarea.
+
+Si no se cumple ninguna de estas condiciones, Gradle **no la mostrará**, aunque esté correctamente definida y funcional.
+
+:::info Say. My. Name.
+
+Como regla general, **toda tarea personalizada debería tener un `group` y una `description`**. Esto garantiza su visibilidad y facilita la comprensión de su propósito en cualquier momento del proyecto.
+
+:::
+
+Si realmente necesitas ver todas las tareas definidas (incluso las sin `group` y sin dependencias), puedes ejecutar:
+
+```bash
+./gradlew tasks --all
+```
+
+Ten en cuenta que este comando puede mostrar una lista extensa y menos organizada, por lo que se recomienda utilizarlo solo cuando sea necesario.
+
+::::
+
+:::::
+
+
 ## ✅ Pros y Contras ⚠️
 
 <ProCons>
@@ -44,10 +96,44 @@ Gradle incluye tareas predefinidas como `build` (para compilar el código), `tes
    </Cons>
 </ProCons>
 
-## 🎯 Conclusiones  
+## 🧾 Resultados de ejecución de tareas
 
-Las **tareas en Gradle** permiten automatizar procesos clave en el desarrollo de software, como la compilación, ejecución de pruebas y generación de documentación. Su flexibilidad y modularidad facilitan la integración con otras herramientas y la personalización de flujos de trabajo según las necesidades del proyecto.  
+Cuando ejecutas una tarea en Gradle, su resultado se muestra en la consola con una etiqueta que indica qué ocurrió durante su ejecución. Estas **etiquetas de resultado** (*task outcomes*) te permiten entender si una tarea realmente hizo algo, si se reutilizó un resultado anterior o si fue omitida.
 
-Si bien su uso puede agregar cierta complejidad en proyectos grandes, su capacidad de reutilización y optimización las convierte en una herramienta esencial en la construcción de software eficiente y mantenible.  
+A continuación, se describen los posibles resultados que puede mostrar Gradle al ejecutar una tarea:
 
-En las próximas lecciones, profundizaremos en **cómo utilizar tareas predefinidas y cómo definir tareas personalizadas** para adaptar el flujo de trabajo a distintos escenarios.
+- **`EXECUTED`** *(o sin etiqueta)*: La tarea se ejecutó normalmente y completó sus acciones (como compilar, copiar archivos o generar artefactos).  
+- **`UP-TO-DATE`**: La tarea tenía entradas y salidas definidas, pero Gradle detectó que no hubo cambios, por lo que no fue necesario volver a ejecutarla.  
+- **`FROM-CACHE`**: Gradle recuperó las salidas de la tarea desde el *build cache* (memoria intermedia), en lugar de volver a ejecutarla.  
+- **`SKIPPED`**: La tarea fue omitida, ya sea porque fue excluida explícitamente en la línea de comandos, o porque una condición (`onlyIf`) evaluó como falsa.  
+- **`NO-SOURCE`**: La tarea se configuró con entradas y salidas, pero no encontró archivos de entrada (por ejemplo, no hay fuentes que compilar), por lo que no se ejecutó.  
+
+Estas etiquetas son esenciales para entender el comportamiento de Gradle durante la ejecución. Por ejemplo, si una tarea muestra `UP-TO-DATE` o `FROM-CACHE`, puedes estar seguro de que Gradle está aplicando estrategias de construcción incremental para ahorrar tiempo.
+
+## 🎯 Conclusiones
+
+Las **tareas en Gradle** son la base sobre la cual se automatizan todas las acciones del ciclo de construcción de un proyecto. Desde compilar y ejecutar pruebas, hasta generar documentación o publicar artefactos, cada paso puede modelarse como una tarea.
+
+Entender qué son, cómo se organizan y cómo se documentan es fundamental para aprovechar al máximo las capacidades de Gradle. No basta con que una tarea funcione: también debe ser **comprensible, reutilizable y visible**, tanto para ti como para otras personas que trabajen en el proyecto.
+
+Además, al ejecutar tareas, los resultados que Gradle muestra en la consola (`EXECUTED`, `UP-TO-DATE`, `SKIPPED`, etc.) ofrecen información clave para comprender qué sucedió y optimizar futuros ciclos de construcción.
+
+### 🔑 Puntos clave
+
+- Una **tarea** es una unidad de trabajo automatizada que puede compilar, probar, empaquetar o verificar tu proyecto.
+- Gradle incluye muchas tareas predefinidas, pero también permite crear tareas personalizadas para cubrir flujos específicos.
+- Las tareas pueden agruparse y documentarse mediante las propiedades `group` y `description`, lo que facilita su uso y descubrimiento.
+- No todas las tareas aparecen en la salida de `./gradlew tasks` a menos que tengan un `group` o sean invocadas por otra.
+- Gradle clasifica el resultado de cada tarea con una etiqueta (`EXECUTED`, `UP-TO-DATE`, etc.) que ayuda a entender su comportamiento.
+
+### 🧰 ¿Qué nos llevamos?
+
+A partir de esta lección, comprendemos el **rol central que tienen las tareas** en Gradle y su importancia como estructura para automatizar procesos dentro del proyecto. Aprendimos a **identificarlas, interpretarlas y documentarlas correctamente**, lo cual sienta una base sólida para construir flujos de trabajo más complejos.
+
+En las próximas lecciones nos enfocaremos en las **tareas predefinidas** más comunes como `build`, `check`, `test` y `clean`, y más adelante exploraremos cómo **definir nuestras propias tareas** personalizadas.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- 🌐 Understanding Tasks. (s. f.). Recuperado 25 de marzo de 2025, de https://docs.gradle.org/current/userguide/more_about_tasks.html
