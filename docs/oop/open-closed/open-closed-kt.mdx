@@ -1,5 +1,5 @@
 ---
-title: Clases abiertas y cerradas
+title: Clases abiertas y cerradas para herencia
 ---
 import ReadingTime from '@site/src/components/ReadingTime'
 import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
@@ -16,167 +16,218 @@ import { LanguageCard, JavaCard } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
 
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="object-oriented-programming-kt" />
 
-<details>
-    <summary>
-        Comencemos por crear un módulo para la lección...
-    </summary>
+<ModuleSetup module='open-closed' task='setupOpenClosedModule'>
+    ```kotlin showLineNumbers
+    import tasks.ModuleSetupTask
 
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            New-Item -Path 'open-closed' -ItemType 'directory'
-            '// Intentionally left blank' |
-                Out-File -FilePath 'open-closed/build.gradle.kts'
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            md open-closed
-            '// Intentionally left blank' > open-closed/build.gradle.kts
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            mkdir open-closed
-            echo '// Intentionally left blank' > open-closed/build.gradle.kts
-            ```
-        </TabItem>
-    </BoxedTabs>
+    tasks.register<ModuleSetupTask>("setupOpenClosedModule") {
+        group = "setup"
+        description = "Creates the necessary files for the lesson on open/closed classes."
+        module = "open-closed"
+        doLast {
+            createFiles(
+                "database",
+                main to "DatabaseConnection.kt",
+                main to "EncryptedDatabaseConnection.kt",
+            )
+        }
+    }
+    ```
+</ModuleSetup>
 
-    Recuerda agregar el nuevo módulo al archivo `settings.gradle.kts`.
-</details>
+Cuando diseñamos una biblioteca de software, debemos tomar decisiones conscientes sobre qué partes de nuestro código deberían poder extenderse y cuáles no. Permitir herencia sin restricciones puede facilitar la reutilización, pero también puede volver nuestro código más frágil y difícil de mantener, especialmente si otros proyectos dependen de nuestras clases base.
 
-## Problema de la base frágil
+Kotlin aborda este problema con una decisión de diseño simple pero poderosa: **las clases y métodos son cerrados por defecto**. Esto significa que no pueden ser heredados ni sobrescritos a menos que lo autoricemos explícitamente usando el modificador `open`. Este enfoque ayuda a prevenir errores comunes asociados con la herencia no controlada, promoviendo un diseño más robusto y seguro.
 
-Cuando desarrollamos una biblioteca de software, es crucial evitar cambios inesperados que puedan afectar negativamente a quienes consumen la API. El **Problema de la base frágil** surge cuando una clase base en la biblioteca cambia sin tener en cuenta las dependencias de sus subclases, lo que puede romper funcionalidades o generar errores. Este riesgo es especialmente alto en bibliotecas utilizadas por múltiples proyectos, donde cada actualización debe ser controlada cuidadosamente.
+En esta lección, veremos cómo aplicar esta idea en la práctica para **proteger la estabilidad de nuestras bibliotecas** sin sacrificar la extensibilidad cuando sea necesaria. Exploraremos el problema de la base frágil, aprenderemos a usar `open` de forma controlada, y discutiremos los beneficios y limitaciones de esta estrategia en el contexto del diseño de APIs.
 
-Joshua Bloch, en su libro *Effective Java*, ofrece una recomendación clave que también es aplicable al diseño de bibliotecas:
+## 🧨 Problema de la base frágil
 
-> "Design and document for inheritance or else prohibit it."
+Cuando desarrollamos una biblioteca de software, es crucial minimizar el riesgo de introducir cambios que afecten negativamente a quienes consumen la API. El **problema de la base frágil** ocurre cuando una clase base es modificada sin considerar las dependencias de sus subclases, lo que puede provocar errores o romper funcionalidades inesperadamente. Este riesgo es especialmente alto en bibliotecas utilizadas por múltiples proyectos, donde cada actualización debe ser cuidadosamente planificada y documentada.
 
-Al desarrollar bibliotecas, esta recomendación implica que deberías planificar explícitamente qué clases y métodos pueden ser extendidos o sobrescritos por lxs usuarixs de tu biblioteca, documentando cuidadosamente el comportamiento esperado. Si no puedes garantizar esto, lo mejor es evitar que ciertas clases y métodos sean heredados o sobrescritos.
+Joshua Bloch, en su libro *Effective Java*, ofrece una recomendación clave para el diseño de bibliotecas:
 
-## Clases abiertas y cerradas en kotlin
+> "Diseña y documenta pensando en la herencia, o de lo contrario, prohíbela."
 
-En Kotlin, las clases son cerradas de manera predeterminada, lo que es una gran ventaja para el diseño de bibliotecas. Esto significa que, a menos que explícitamente decidas que una clase o método puede ser sobrescrito, no habrá posibilidad de que lxs usuarixs modifiquen su comportamiento sin tu consentimiento.
+Esta idea sugiere que, al desarrollar una biblioteca, deberías **diseñar y documentar explícitamente** aquellas clases y métodos que se espera que sean heredados o sobrescritos por lxs usuarixs. Si no puedes garantizar un comportamiento predecible al extenderlos, lo más seguro es **prohibir su herencia**.
 
-### Ejemplo de uso
+Este enfoque está directamente alineado con el **principio Open/Closed**, que establece que *una clase debe estar abierta para extensión pero cerrada para modificación*. Es decir, deberíamos permitir que el comportamiento pueda extenderse sin tener que alterar el código fuente original. Para lograr esto de forma segura, es necesario definir con claridad qué partes de una clase pueden extenderse y cuáles deben permanecer estables.
 
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
+Al aplicar este principio, reducimos el riesgo de romper contratos implícitos con lxs usuarixs de nuestra biblioteca y favorecemos un diseño más robusto, mantenible y predecible.
 
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
+### 💥 Ejemplo de base frágil
 
-            ```powershell
-            $DatabaseMainDir = "open-closed\src\main\kotlin\$Group\database"
-            New-Item -Path "$DatabaseMainDir\DatabaseConnection.kt" `
-                -ItemType "file" -Force
-            New-Item -Path "$DatabaseMainDir\EncryptedDatabaseConnection.kt" `
-                -ItemType "file" -Force
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
+Supongamos que una biblioteca escrita en Scala define la siguiente clase:
 
-            ```powershell
-            $DatabaseMainDir = "open-closed\src\main\kotlin\$Group\database"
-            ni "$DatabaseMainDir\DatabaseConnection.kt" -i 'f' -f
-            ni "$DatabaseMainDir\EncryptedDatabaseConnection.kt" -i 'f' -f
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            GROUP='com/github/username'
-            ```
-                
-            ```bash
-            DATABASE_MAIN_DIR="open-closed/src/main/kotlin/$GROUP/database"
-            mkdir -p "$DATABASE_MAIN_DIR"
-            touch "$DATABASE_MAIN_DIR/DatabaseConnection.kt"
-            touch "$DATABASE_MAIN_DIR/EncryptedDatabaseConnection.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
+```scala showLineNumbers
+class Document:
+  def render(): String = "Rendering base document"
+```
 
-Supongamos que estás desarrollando una biblioteca para manejar **conexiones a bases de datos**. Tienes una clase base `DatabaseConnection` que define cómo abrir y cerrar una conexión, y quieres que otras clases especializadas puedan extenderla, pero limitando qué aspectos pueden ser modificados.
+Unx usuarix de la biblioteca decide extenderla:
+
+```scala showLineNumbers
+class Invoice extends Document:
+  override def render(): String = "Rendering invoice"
+```
+
+Más adelante, lxs autores de la biblioteca actualizan `Document` para agregar lógica interna importante:
+
+```scala showLineNumbers
+class Document:
+  def render(): String =
+    val header = renderHeader()
+    val body = renderBody()
+    s"$header\n$body"
+
+  protected def renderHeader(): String = "Header"
+  protected def renderBody(): String = "Body"
+```
+
+:::danger Lógica omitida inesperadamente
+
+La clase `Invoice` continúa sobrescribiendo `render()` sin enterarse de los cambios, **omitiendo por completo** la nueva lógica introducida por la biblioteca. Esto rompe expectativas, puede producir errores sutiles y hace que el comportamiento del sistema sea menos predecible.
+
+:::
+
+## 🧷 Clases abiertas y cerradas en Kotlin
+
+En Kotlin, las clases son **cerradas por defecto**, lo que representa una gran ventaja al diseñar bibliotecas. Esto significa que, a menos que marques explícitamente una clase o método como `open`, **no podrán ser heredados ni sobrescritos**. Así, se evita que lxs usuarixs modifiquen su comportamiento sin tu consentimiento, lo cual ayuda a proteger la integridad del código y prevenir el problema de la base frágil.
+
+### 📘 Ejemplo de uso
+
+Supongamos que estás desarrollando una biblioteca para manejar **conexiones a bases de datos**. Tienes una clase base `DatabaseConnection` que define cómo abrir y cerrar una conexión. Quieres permitir que otras clases especializadas puedan **personalizar ciertos aspectos del comportamiento**, pero sin comprometer la lógica crítica.
 
 #### Clase `DatabaseConnection` (abierta para herencia controlada)
 
 ```kotlin showLineNumbers title="open-closed/src/main/kotlin/com/github/username/database/DatabaseConnection.kt"
 package com.github.username.database
 
-// highlight-next-line
 open class DatabaseConnection(protected val url: String) {
+
     fun startConnection() = println("Connecting to $url")
-    // highlight-next-line
+
     open fun closeConnection() = println("Closing connection to $url")
 }
 ```
 
 <Explanation>
-    - La clase `DatabaseConnection` está marcada como `open`, lo que permite que las subclases personalicen su comportamiento.
-    - El método `closeConnection` es sobrescribible, pero `closeConnection` no lo es, ya que podría ser peligroso permitir que cualquier subclase modifique la forma en que se abre una conexión.
+    - **Clase abierta**: La clase `DatabaseConnection` está marcada como `open`, lo que permite que otras clases la hereden.
+    - **Control explícito sobre qué se puede sobrescribir**: Solo el método `closeConnection()` es `open`, permitiendo que las subclases cambien su implementación. El método `startConnection()` está cerrado, lo que protege la lógica de apertura de conexiones contra modificaciones accidentales o inseguras.
+    - **Diseño seguro**: Esta estrategia de herencia controlada permite extender funcionalidades sin poner en riesgo el comportamiento central de la clase base, una práctica esencial al diseñar bibliotecas robustas.
 </Explanation>
 
 #### Subclase especializada
 
-Ahora, tus usuarixs pueden extender esta clase y sobrescribir solo el método `closeConnection` si necesitan cerrar la conexión de una forma personalizada, mientras se garantiza que el método `openConnection` no puede ser modificado:
+Ahora, lxs usuarixs de tu biblioteca pueden extender la clase y sobrescribir únicamente el método `closeConnection` si necesitan cerrar la conexión de una forma personalizada, mientras se garantiza que el método `startConnection` **no puede ser modificado**:
 
 ```kotlin showLineNumbers title="open-closed/src/main/kotlin/com/github/username/database/EncryptedDatabaseConnection.kt"
 package com.github.username.database
 
 class EncryptedDatabaseConnection(url: String) : DatabaseConnection(url) {
-    // highlight-next-line
+
     override fun closeConnection() = println("Closing encrypted connection to $url")
 }
 ```
 
-Esto permite que la biblioteca sea flexible sin comprometer su integridad.
+<Explanation>
+    - La clase `EncryptedDatabaseConnection` hereda de `DatabaseConnection` e invoca el constructor de la clase base pasando el parámetro `url`.
+    - El método `closeConnection` se sobrescribe utilizando la palabra clave `override`, que en Kotlin es **obligatoria** para indicar que se está redefiniendo un método de una superclase.
+    - El método `startConnection`, al no estar marcado como `open`, **no puede ser sobrescrito**, lo que protege su implementación original.
+    - Este enfoque permite a lxs usuarixs personalizar el comportamiento deseado sin arriesgar la estabilidad de la clase base.
+</Explanation>
 
-## Beneficios y limitaciones
+Esto permite que la biblioteca sea flexible **sin comprometer su integridad**, ya que el comportamiento sensible se mantiene bajo control.
+
+:::note Herencia en clases abstractas
+
+En Kotlin, las clases y funciones abstractas son **abiertas por naturaleza**, lo que significa que **no es necesario marcarlas como `open`** para que puedan ser heredadas o sobrescritas. Esto tiene sentido, ya que su propósito es justamente servir de base para implementaciones concretas.  
+Por ejemplo:
+
+```kotlin
+abstract class Animal {
+    abstract fun speak()
+}
+```
+
+Aquí, `speak()` es automáticamente sobrescribible, y `Animal` se puede extender sin necesidad de agregar `open`.
+
+:::
+
+## 🧭 ¿Qué abrir y qué cerrar?
+
+Uno de los desafíos al diseñar bibliotecas es decidir **qué partes del código deben estar abiertas a la extensión** y **cuáles deben mantenerse cerradas** para proteger la lógica interna. Kotlin facilita esta tarea al exigir que la herencia sea explícita mediante el modificador `open`, pero la decisión sigue siendo responsabilidad de quien diseña la API.
+
+### 🔐 Mantener cerrado si...
+
+- La lógica **es crítica para la seguridad o consistencia interna** del sistema.
+- El método **no tiene un contrato claro de extensión** o su modificación puede romper invariantes.
+- Se espera que el comportamiento sea **estable y predecible en todas las implementaciones**.
+- El método ya es parte de una **secuencia de pasos controlada**, como en un patrón Template.
+
+### 🔓 Abrir si...
+
+- Quieres permitir que lxs usuarixs de la biblioteca **personalicen parte del comportamiento** sin duplicar código.
+- El método es **una extensión natural o prevista** del flujo lógico del sistema.
+- La documentación puede establecer con claridad **qué se espera del comportamiento sobrescrito**.
+- Existen **casos de uso múltiples o variables** que tu biblioteca no puede cubrir directamente.
+
+:::tip Regla práctica
+
+Si no puedes documentar fácilmente qué hace una subclase al sobrescribir un método, probablemente ese método debería mantenerse cerrado.
+
+:::
+
+Esta distinción te permite aplicar el **principio de mínimo privilegio** también en el diseño de clases: expón solo lo necesario, protege lo demás.
+
+### ✅ Beneficios / ❌ Limitaciones
 
 <ProCons>
-   <Pros>
-      - **Control de la herencia**: Las clases cerradas por defecto en Kotlin protegen el comportamiento de la clase base, evitando que cambios en la clase base afecten inesperadamente a las subclases. Esto es crucial en bibliotecas de software donde el comportamiento debe ser predecible y controlado.
-      - **Diseño consciente**: La necesidad de marcar explícitamente las clases y métodos como `open` fomenta un diseño más consciente. Lxs desarrolladorxs deben pensar detenidamente sobre qué aspectos de la clase deben ser extensibles, lo que resulta en una API más robusta.
-      - **Menor riesgo de errores**: Al restringir la herencia, se reduce el riesgo de errores que pueden surgir de cambios inesperados en el comportamiento de la clase base. Esto mejora la estabilidad y la confiabilidad del código.
-      - **Patrones de uso claros**: La documentación y el diseño para la herencia ayudan a lxs usuarixs de la biblioteca a entender cómo se espera que extiendan las clases, lo que facilita su uso y reduce la confusión.
-   </Pros>
-   <Cons>
-      - **Rigidez**: El enfoque de clases cerradas puede llevar a una mayor rigidez en el diseño, limitando la flexibilidad que algunxs desarrolladorxs pueden desear al extender el comportamiento de las clases. Esto puede ser un inconveniente en sistemas donde la adaptabilidad es crucial.
-      - **Limitaciones en la extensibilidad**: En algunos casos, el diseño puede no permitir extensiones necesarias que podrían ser útiles para usuarixs específicxs de la biblioteca. Esto puede requerir que se reevalúe la estructura de clases para satisfacer necesidades adicionales.
-   </Cons>
+    <Pros>
+        - **Control explícito de la herencia**: Las clases cerradas por defecto en Kotlin protegen el comportamiento de la clase base, evitando que cambios internos afecten de forma inesperada a subclases. Esto es especialmente útil en bibliotecas públicas, donde es fundamental mantener la compatibilidad.
+        - **Diseño consciente y predecible**: Al requerir el uso explícito de `open`, se obliga a lxs desarrolladorxs a pensar en cómo se espera que una clase sea utilizada y extendida. Esto fomenta la documentación y la previsión, reduciendo ambigüedades en el uso de la API.
+        - **Menor riesgo de errores sutiles**: Limitar la herencia reduce la posibilidad de que pequeñas modificaciones en una clase base generen errores complejos o difíciles de rastrear en subclases.
+        - **Facilita el mantenimiento**: Un diseño con herencia controlada es más fácil de mantener y refactorizar, ya que hay menos puntos de extensión que puedan romper la lógica interna del sistema.
+    </Pros>
+    <Cons>
+        - **Menor flexibilidad en sistemas abiertos**: En arquitecturas que requieren una extensibilidad dinámica, como plugins o frameworks altamente configurables, el enfoque cerrado puede entorpecer la personalización.
+        - **Sobrecarga inicial para usuarixs avanzadxs**: Quienes deseen extender el comportamiento de la biblioteca podrían encontrar limitaciones que los obliguen a copiar código o proponer cambios en la API.
+        - **Posible necesidad de rediseño**: En algunos casos, bloquear la herencia puede llevar a soluciones alternativas más complejas o a una reestructuración para lograr la extensibilidad deseada sin romper el encapsulamiento.
+    </Cons>
 </ProCons>
 
-## ¿Qué aprendimos?
+## 🎯 Conclusiones
 
-En esta lección, exploramos cómo Kotlin maneja el **problema de la base frágil** a través del concepto de clases abiertas y cerradas.
+Diseñar bibliotecas implica tomar decisiones cuidadosas sobre qué aspectos deben ser **extensibles** y cuáles deben permanecer **protegidos**. El **problema de la base frágil** nos recuerda que permitir herencia sin control puede generar errores sutiles, romper contratos con lxs usuarixs y dificultar el mantenimiento a largo plazo.
 
-### Puntos clave
+Kotlin ofrece una estrategia clara para evitar estos problemas: **cerrar las clases por defecto**. Este enfoque obliga a que la extensibilidad sea una **decisión deliberada**, usando el modificador `open` solo cuando hay una necesidad real y justificada. Esta práctica no solo protege la integridad del código, sino que también facilita la comprensión, el uso y la evolución de la API.
 
-- **Control de la herencia**: Las clases son cerradas por defecto en Kotlin, lo que significa que no pueden ser heredadas a menos que se marque explícitamente como `open`. Esto ayuda a prevenir herencias accidentales y protege el comportamiento de las clases base, lo que es fundamental en el contexto de bibliotecas de software.
-- **Diseño consciente y documentación**: Al requerir que lxs desarrolladorxs piensen cuidadosamente sobre qué clases y métodos permitir que sean heredados, Kotlin fomenta un diseño más consciente. Esto incluye documentar claramente las expectativas sobre cómo se deben extender las clases.
-- **Riesgo reducido de errores**: Al restringir la herencia, se minimiza el riesgo de errores causados por cambios inesperados en el comportamiento de las clases base. Esto contribuye a una mayor estabilidad y confiabilidad del código en bibliotecas utilizadas por múltiples proyectos.
-- **Flexibilidad controlada**: Aunque la flexibilidad es un aspecto importante en el diseño de software, Kotlin proporciona un equilibrio al permitir que las clases sean abiertas para herencia controlada, mientras limita qué aspectos pueden ser modificados. Esto permite a lxs desarrolladorxs extender el comportamiento cuando sea necesario, sin comprometer la integridad de la clase base.
-- **Manejo de la extensibilidad**: Es importante reconocer que, si bien las clases cerradas pueden introducir rigidez, también protegen el comportamiento de la biblioteca. En situaciones donde se necesita mayor flexibilidad, se puede optar por métodos abstractos o diseñar interfaces específicas que permitan extensiones controladas.
+En esta lección aprendimos a aplicar el principio **Open/Closed** de forma segura en Kotlin: mantener cerradas las clases por defecto, y abrir únicamente lo que tenga sentido extender. Esta estrategia equilibra la flexibilidad con la estabilidad, lo que es clave al construir bibliotecas reutilizables.
 
----
+### 🔑 Puntos clave
 
-En resumen, al aplicar el principio de clases abiertas y cerradas en Kotlin, lxs desarrolladorxs pueden crear bibliotecas de software más robustas, seguras y fáciles de mantener, minimizando los problemas asociados a la herencia y garantizando un comportamiento predecible en el código.
+1. **Kotlin cierra clases y métodos por defecto**, lo que evita herencias accidentales.
+2. **La herencia debe planearse y documentarse**, sobre todo en bibliotecas públicas.
+3. **El modificador `open` permite controlar de forma precisa qué puede extenderse**.
+4. **El principio Open/Closed** nos ayuda a extender el comportamiento sin modificar el código existente.
+5. **La herencia controlada mejora la mantenibilidad y la seguridad de nuestras APIs**.
 
+### 🧰 ¿Qué nos llevamos?
+
+La herencia es una herramienta poderosa, pero también una fuente común de errores si no se usa con cuidado. En esta lección vimos cómo Kotlin promueve un enfoque más seguro al **cerrar las clases por defecto**, forzándonos a pensar antes de permitir la extensión.
+
+Nos llevamos una estrategia clara:
+
+> Cerrar por defecto, abrir con intención.
+
+Este principio no solo protege nuestras bibliotecas de modificaciones inesperadas, sino que también da señales claras a quienes las usan sobre qué partes pueden extenderse y cómo hacerlo de forma segura.
+
+Diseñar para la extensión controlada no es una limitación, sino una invitación a pensar en **contratos estables**, **comportamientos previsibles** y **APIs que crecen sin romperse**. Es una forma de escribir código que cuida tanto a quienes lo consumen como a quienes lo mantienen.
 
 <div className="language-card-container">
     <LanguageCard
@@ -202,32 +253,8 @@ En resumen, al aplicar el principio de clases abiertas y cerradas en Kotlin, lxs
     />
 </div>
 
-<References references={[
-    {
-        accessedDate: '22 de septiembre de 2024',
-        siteOrAuthor: 'Wikipedia',
-        title: 'Fragile base class',
-        type: 'web',
-        url: 'https://en.wikipedia.org/w/index.php?title=Fragile_base_class&oldid=1197518970',
-    },
-    {
-        title: "4. Classes, objects, and interfaces",
-        bookTitle: "Kotlin in action",
-        pages: "67–102",
-        location: "Shelter Island, NY",
-        publisher: "Manning Publications Co",
-        year: "2017",
-        type: "book",
-        author: 'Dmitry Jemerov, Svetlana Isakova',
-    },
-    {
-        title: "4. Classes and Interfaces",
-        bookTitle: "Effective Java, Third edition.",
-        pages: "73–116",
-        location: "Boston",
-        publisher: "Addison-Wesley",
-        year: "2018",
-        type: "book",
-        author: 'Joshua Bloch',
-    }
-]}/>
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- 📚 Classes and Interfaces. (2018). En Joshua Bloch, Effective Java (Third edition, pp. 73–116). Addison-Wesley.
