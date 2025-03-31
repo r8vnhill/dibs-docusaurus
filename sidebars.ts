@@ -47,6 +47,7 @@ const sidebars: SidebarsConfig = {
                 id: 'build-systems/index',
             },
             items: [
+                'build-systems/introduction',
                 'build-systems/init/gradle',
                 'build-systems/convention-plugins',
                 'build-systems/global',
