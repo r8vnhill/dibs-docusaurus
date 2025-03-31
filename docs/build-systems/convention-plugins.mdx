@@ -147,6 +147,48 @@ dependencyResolutionManagement {
     Es recomendable revisar periódicamente la documentación oficial de Gradle para estar al tanto del estado de las APIs utilizadas y ajustar el código en consecuencia a medida que evolucionan hacia versiones estables.
 </details>
 
+## 📑 Catálogo de Versiones
+
+Aunque no es obligatorio, es una **buena práctica** centralizar las versiones de las dependencias de un proyecto utilizando un archivo `.toml`. Este enfoque garantiza consistencia en las versiones utilizadas en todo el proyecto, evitando problemas de incompatibilidad y facilitando el mantenimiento.
+
+El catálogo de versiones se organiza en cuatro secciones principales:
+
+- **Versions**: Especifica las versiones de las dependencias, permitiendo su reutilización en las secciones de bibliotecas y plugins.
+- **Libraries**: Define las bibliotecas necesarias para el proyecto, asociándolas con las versiones especificadas en la sección de versiones.
+- **Bundles**: Agrupa varias bibliotecas bajo un mismo nombre, facilitando la inclusión de conjuntos de dependencias relacionadas.
+- **Plugins**: Configura los plugins del proyecto, también vinculados a las versiones centralizadas.
+
+Este enfoque te ayuda a tener un control centralizado sobre las versiones, evitando la repetición de versiones en múltiples archivos y garantizando que todas las dependencias y componentes utilicen las mismas versiones.
+
+### Ejemplo de archivo `libs.versions.toml`:
+
+Definiremos un catálogo de versiones en un archivo `libs.versions.toml` para centralizar las versiones de las dependencias de nuestro proyecto:
+
+```toml title="gradle/libs.versions.toml" showLines
+[versions]
+kotlin = "2.1.10"
+echo = "1.0.0" # Versión de nuestro proyecto
+
+[libraries]
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+```
+
+<Explanation>
+    - La sección `[versions]` define las versiones que serán utilizadas en las dependencias. En este caso, se especifica la versión de Kotlin y una versión para nuestro proyecto (`echo`).
+    - En la sección `[libraries]`, definimos la biblioteca `kotlin-gradle-plugin` y vinculamos su versión a la referencia `kotlin` especificada anteriormente en la sección `[versions]`.
+</Explanation>
+
+:::note Nombre `libs.versions.toml`
+
+El nombre `libs.versions.toml` es solo una convención y puedes elegir cualquier nombre que refleje su propósito,
+incluso dividirlo en varios archivos si es necesario. En este curso utilizaremos esta convención de nombre, ya que es
+común en la comunidad de Gradle.
+
+:::
+
+Al usar esta estructura, cualquier actualización futura de la versión de Kotlin solo requiere modificar el archivo
+`libs.versions.toml` en un único lugar, manteniendo la consistencia en todo el proyecto.
+
 ### 🛠️ Crear el archivo de construcción
 
 Dentro de la carpeta `convention-plugins`, crea un archivo de construcción llamado `build.gradle.kts`. Este archivo define cómo se compila y configura el módulo de plugins de convención.
@@ -465,23 +507,23 @@ graph LR
 
 ## 🎯 Conclusiones
 
-A lo largo de esta sección, exploramos cómo crear un plugin de convenciones en Gradle para proyectos multi-módulo. Vimos cómo configurar un módulo especial dedicado a definir reglas comunes, cómo estructurar sus carpetas y archivos, y cómo aplicarlo fácilmente en los subproyectos.
+En esta lección aprendimos a crear y aplicar un **plugin de convenciones** en un proyecto Gradle con múltiples módulos. Exploramos cómo encapsular configuraciones comunes dentro de un módulo especializado, reutilizable y fácilmente mantenible.
 
-Este enfoque permite mantener la coherencia en el uso de herramientas como Kotlin, JDK, y librerías compartidas, al tiempo que reduce el esfuerzo de mantenimiento y mejora la escalabilidad del proyecto.
+Este enfoque no solo promueve la coherencia entre los subproyectos, sino que también reduce la repetición, centraliza las decisiones de configuración y facilita el crecimiento del proyecto a medida que evoluciona.
 
 ### 🔑 Puntos clave
 
-- Un **convention plugin** permite encapsular y reutilizar configuraciones comunes entre módulos.
-- Gradle permite incluir estos plugins mediante `includeBuild`, asegurando que se carguen antes que el resto del proyecto.
-- Utilizar un **catálogo de versiones centralizado** (`libs.versions.toml`) simplifica la gestión de dependencias.
-- La estructura de carpetas debe seguir el layout estándar de `src/main/kotlin`, incluso para los plugins.
-- Es posible verificar la aplicación de configuraciones con herramientas como `dependencies`, `grep`, o `Select-String`.
+- Un **plugin de convención** encapsula comportamientos, dependencias y configuraciones comunes que pueden aplicarse automáticamente en múltiples módulos.
+- La instrucción `includeBuild("convention-plugins")` permite que el módulo esté disponible desde el inicio del proceso de construcción.
+- La combinación de convenciones con un **catálogo de versiones (`libs.versions.toml`)** ayuda a mantener dependencias actualizadas, coherentes y fáciles de gestionar.
+- Gradle detecta automáticamente los plugins definidos en archivos como `jvm.conventions.gradle.kts` si se respeta la convención de nombres.
+- Verificar la aplicación del plugin asegura que el comportamiento esperado se esté aplicando en cada subproyecto.
 
 ### 🧰 ¿Qué nos llevamos?
 
-El uso de plugins de convención es una herramienta poderosa para mejorar la mantenibilidad de proyectos con múltiples módulos. Nos permite encapsular buenas prácticas, aplicar configuraciones consistentes de forma automática, y reducir la duplicación de código entre subproyectos.
+Adoptar plugins de convención desde las primeras etapas de un proyecto no es solo una cuestión de orden: es una decisión estratégica. Esta práctica convierte decisiones repetitivas en configuraciones automáticas, alivia la carga cognitiva de cada submódulo, y favorece una arquitectura escalable y profesional.
 
-Adoptar este enfoque desde las primeras etapas de un proyecto contribuye a mantener un entorno de desarrollo más ordenado, coherente y fácil de evolucionar.
+A medida que el proyecto crezca, contar con una base sólida y coherente en su configuración hará una gran diferencia, tanto para quienes lo mantienen como para quienes se incorporen más adelante.
 
 ## 📖 Referencias
 

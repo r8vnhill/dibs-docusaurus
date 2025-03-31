@@ -21,29 +21,27 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="echo-app-kt" />
 
-En esta sección, aprenderemos a definir configuraciones que se aplican a todos los submódulos de un proyecto Gradle.
-Estas configuraciones globales se gestionan a través del archivo `build.gradle.kts` ubicado en la raíz del proyecto.
-Por ahora, nos enfocaremos en definir el **grupo** y la **versión** del proyecto, dos elementos fundamentales en
-cualquier configuración de Gradle.
+Antes de continuar con tareas más avanzadas como la organización en módulos o la publicación de artefactos, es importante establecer una **configuración global clara y coherente** para el proyecto. Esto asegura que todos los submódulos compartan valores comunes, evita repeticiones y mejora el rendimiento general de Gradle.
 
-<Definition title="Grupo">
-    El **grupo** en Gradle es una cadena de texto que identifica de manera única a un proyecto. La convención más común
-    es usar un formato de dominio invertido (por ejemplo, `cl.ravenhill`) para evitar posibles conflictos con otros
-    proyectos. Este grupo se utiliza junto con el nombre del proyecto y su versión para generar el identificador único
-    del artefacto resultante.
-</Definition>
+En esta lección aprenderás a usar el archivo `gradle.properties` para definir propiedades reutilizables —como la cantidad de memoria asignada a la JVM, el uso de la caché de tareas o el identificador del grupo del proyecto— y a referenciar esas propiedades desde `build.gradle.kts`. Esta práctica es fundamental para mantener un proyecto limpio, mantenible y preparado para escalar.
 
-:::tip
-Si no posees un dominio web (como la mayoría de la gente), una buena alternativa es usar tu nombre de usuario de
-GitHub, como `com.github.username`.
+## 🆔 ¿Qué es el *grupo* del proyecto?
+
+El **grupo** en Gradle es una cadena que identifica de forma única a un proyecto dentro de un ecosistema de artefactos.  
+Por convención, se utiliza un **formato de dominio invertido** (por ejemplo, `cl.ravenhill`) para evitar colisiones con proyectos de otras personas u organizaciones.
+
+Este valor se combina con el nombre del proyecto y su versión para generar el **identificador completo del artefacto**, que se utiliza al publicarlo en un repositorio.
+
+:::tip ¿Y si no tengo un dominio?
+
+No necesitas tener un dominio propio. Una alternativa común es usar tu nombre de usuario de GitHub en el formato  
+`com.github.username`.
+
 :::
 
-## `gradle.properties`
+## 🧾 `gradle.properties`
 
-Para mantener las configuraciones globales de manera organizada y centralizada, crearemos un archivo llamado
-`gradle.properties` en la raíz del proyecto. Este archivo nos permite definir propiedades que pueden reutilizarse en
-todos los archivos de configuración, tanto para parámetros que se pasan a Gradle como para variables globales o de
-entorno.
+Para mantener las configuraciones globales de forma organizada y centralizada, crearemos un archivo llamado `gradle.properties` en la raíz del proyecto. Este archivo permite definir propiedades reutilizables en todos los archivos de configuración, tanto para parámetros de ejecución como para variables globales o de entorno.
 
 ```properties title="gradle.properties" showLineNumbers
 # Parámetros de la JVM
@@ -60,24 +58,22 @@ echo.group = cl.ravenhill
 ```
 
 <Explanation>
-    - **`org.gradle.jvmargs`**: Configura los argumentos de la JVM, asignando 4 GB de memoria máxima para Gradle y activando el [volcado de heap](https://es.wikipedia.org/wiki/Volcado_de_memoria) en caso de un error de memoria.
-    - **`org.gradle.caching`, `org.gradle.parallel`, `org.gradle.daemon`**: Estas propiedades habilitan diversas optimizaciones de Gradle, como la caché de construcción, la ejecución de tareas en paralelo y el uso del daemon de Gradle para mejorar el rendimiento.
-    - **`echo.group`**: Definimos una propiedad personalizada para el grupo del proyecto. Este valor se reutilizará en el archivo `build.gradle.kts` para establecer el identificador único del proyecto.
+    - **`org.gradle.jvmargs`**: Configura los argumentos de la JVM usados por Gradle. En este caso, asigna un máximo de 4 GB de memoria y habilita el [volcado de heap](https://es.wikipedia.org/wiki/Volcado_de_memoria) en caso de error de memoria.
+    - **`org.gradle.caching`, `org.gradle.parallel`, `org.gradle.daemon`**: Activan optimizaciones importantes como la caché de tareas, ejecución en paralelo y el uso de un daemon para mantener Gradle en memoria entre ejecuciones.
+    - **`echo.group`**: Propiedad personalizada que define el grupo del proyecto. Se reutiliza en `build.gradle.kts` para establecer un identificador único del artefacto.
 </Explanation>
 
-## `build.gradle.kts`
+## 📜 `build.gradle.kts`
 
-En el archivo `build.gradle.kts`, utilizamos las propiedades definidas en `gradle.properties` para configurar el grupo
-y la versión del proyecto. También aplicamos el plugin que gestionará las convenciones del proyecto.
-
+En el archivo `build.gradle.kts`, usamos las propiedades definidas en `gradle.properties` para establecer el **grupo** y la **versión** del proyecto. También aplicamos el plugin de convenciones que encapsula la configuración común para todos los módulos.
 
 ```kotlin title="build.gradle.kts" showLineNumbers
 plugins {
     id("jvm.conventions") // Aplica el plugin de convenciones para JVM
 }
 
-val projectGroup = extra["echo.group"] 
-    ?: error("La propiedad 'echo.group' no está definida.")
+val projectGroup = project.findProperty("echo.group")?.toString()
+    ?: error("The property 'echo.group' is not defined in gradle.properties")
 val projectVersion = libs.versions.echo.get()
 
 allprojects {
@@ -87,35 +83,34 @@ allprojects {
 ```
 
 <Explanation>
-    - **Cargar propiedades**: Usamos `extra["echo.group"]` para obtener el valor de `echo.group` definido en
-    `gradle.properties`. En caso de que esta propiedad no esté definida, lanzamos un error para evitar fallos
-    silenciosos.
-    - **Configurar el grupo y la versión**: Establecemos el **grupo** y la **versión** para todos los submódulos del
-    proyecto utilizando `allprojects`. El grupo se obtiene del archivo `gradle.properties`, mientras que la versión se
-    obtiene del archivo `libs.versions.toml`.
+    - **Aplicación del plugin de convenciones**: La línea `id("jvm.conventions")` aplica el plugin que contiene configuraciones comunes para proyectos basados en la JVM. Esto ayuda a centralizar y reutilizar comportamientos entre todos los módulos.
+    - **Obtener el grupo del proyecto**:  `project.findProperty("echo.group")?.toString()` para intentar obtener el valor de la propiedad `echo.group` definida en `gradle.properties`. Esta función devuelve `null` si la propiedad no está definida, por lo que añadimos `?: error(...)` para lanzar una excepción en caso de que falte. Esto permite realizar una **validación temprana** y evitar errores silenciosos durante la compilación.
+    - **Obtener la versión del proyecto**: Se utiliza `libs.versions.echo.get()` para extraer la versión del proyecto desde el catálogo de versiones (`libs.versions.toml`). Esto garantiza consistencia en todos los módulos que dependan de esta información.
+    - **Aplicar configuración a todos los subproyectos**: El bloque `allprojects { ... }` asegura que tanto el **grupo** como la **versión** definidos se apliquen a todos los submódulos del proyecto. Esto es especialmente útil en entornos multi-módulo para mantener una configuración coherente y centralizada.
 </Explanation>
 
-## ¿Qué aprendimos?
+## 🎯 Conclusiones
 
-En esta lección, exploramos cómo configurar propiedades globales en un proyecto Gradle utilizando el archivo `gradle.properties` y cómo estas propiedades pueden ser reutilizadas en el archivo `build.gradle.kts` para mantener la consistencia en la configuración de todos los submódulos de un proyecto. También vimos cómo aplicar optimizaciones de rendimiento a Gradle y cómo gestionar propiedades importantes como el **grupo** y la **versión** del proyecto.
+En esta lección exploramos cómo establecer configuraciones globales reutilizables en proyectos Gradle. Vimos cómo aprovechar `gradle.properties` para definir parámetros importantes como el grupo del proyecto, opciones de rendimiento y configuraciones de la JVM, y cómo referenciar esas propiedades desde `build.gradle.kts` para aplicarlas de forma centralizada.
 
-### Puntos clave
+Este enfoque no solo facilita el mantenimiento y la legibilidad del proyecto, sino que también ayuda a preparar una base sólida y coherente para escalar hacia proyectos con múltiples módulos y flujos de publicación automatizados.
 
-- **Definición del grupo**: El grupo del proyecto es un identificador único, comúnmente en formato de dominio invertido, que ayuda a evitar conflictos entre proyectos.
-- **Propiedades globales con `gradle.properties`**: Definir parámetros clave como la memoria de la JVM, optimizaciones de Gradle y propiedades personalizadas que pueden ser reutilizadas en todo el proyecto.
-- **Centralización de configuraciones**: Usar el archivo `build.gradle.kts` para aplicar de manera uniforme las configuraciones de grupo y versión a todos los submódulos.
-- **Optimización de Gradle**: Activamos configuraciones como la ejecución paralela, el uso del daemon y la caché de tareas para mejorar el rendimiento del proyecto.
+### 🔑 Puntos clave
 
----
+- **`gradle.properties`** permite definir propiedades globales reutilizables que pueden ser accedidas desde cualquier archivo de construcción del proyecto.
+- El **grupo del proyecto** se utiliza como parte del identificador del artefacto y suele seguir la convención de dominio invertido (`cl.ravenhill`, `com.github.usuario`).
+- Propiedades como `org.gradle.caching`, `org.gradle.parallel` y `org.gradle.daemon` mejoran significativamente el rendimiento de Gradle.
+- Es importante validar explícitamente la existencia de propiedades críticas con `findProperty(...) ?: error(...)`, para evitar errores silenciosos.
+- El uso de `allprojects { ... }` asegura que la configuración global se aplique a todos los submódulos del proyecto.
 
-Este enfoque centralizado y estructurado para gestionar configuraciones globales en Gradle no solo mejora la organización del proyecto, sino que también optimiza su rendimiento y asegura consistencia en todas las configuraciones.
+### 🧰 ¿Qué nos llevamos?
 
-<References references={[
-    {
-        accessedDate: '9 de septiembre de 2024',
-        siteOrAuthor: 'Gradle',
-        title: 'Configuring the Build Environment',
-        type: 'web',
-        url: 'https://docs.gradle.org/current/userguide/build_environment.html'
-    }
-]}/>
+Definir propiedades globales puede parecer un detalle menor al comienzo de un proyecto, pero es una decisión que rinde frutos a medida que este crece. Al centralizar configuraciones como el grupo del proyecto o los parámetros de ejecución de Gradle, no solo ganamos en claridad y orden, sino que sentamos las bases para construir un sistema más coherente, mantenible y fácil de escalar.
+
+Lo que aprendiste en esta sección no es solo una cuestión de sintaxis o archivos de configuración: es una manera de pensar en tu proyecto como un todo, donde cada módulo sigue reglas comunes, cada decisión de diseño se documenta en la estructura misma del proyecto, y donde la automatización empieza desde lo más básico. Esta forma de trabajar te permitirá abordar con más confianza los desafíos que vienen, como la modularización, el versionado o la publicación de artefactos.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- 🌐 Configuring the Build Environment. (s. f.). Recuperado 31 de marzo de 2025, de https://docs.gradle.org/current/userguide/build_environment.html
