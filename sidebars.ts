@@ -18,6 +18,7 @@ const sidebars: SidebarsConfig = {
                 id: 'intro/presentation',
             },
             items: [
+                'intro/Kotlin',
                 'intro/introduction',
                 'intro/clean',
                 'intro/documentation',
@@ -37,7 +38,39 @@ const sidebars: SidebarsConfig = {
                         'intro/exceptions/exceptions-kt',
                     ]
                 },
+                {
+                    type: 'category',
+                    label: 'Tipos de datos algebráicos',
+                    link: {
+                        type: 'doc',
+                        id: 'intro/algebraic-data-types/index',
+                    },
+                    items: [
+                        'fp/adt/product',
+                        {
+                            type: 'category',
+                            label: 'Tipos suma',
+                            link: {
+                                type: 'doc',
+                                id: 'fp/adt/sum/index',
+                            },
+                            items: [
+                                'fp/adt/sum/enums/kt',
+                                'fp/adt/sum/sealed/sealed',
+                            ],
+                        },
+                    ],
+                },
             ],
+        },
+        {
+            label: 'Unidad 2: Tipos',
+            type: 'category',
+            link: {
+                type: 'doc',
+                id: 'types/index',
+            },
+            items: [],
         },
         {
             label: 'Unidad 2: Build Systems',
@@ -188,29 +221,6 @@ const sidebars: SidebarsConfig = {
                 id: 'fp/index',
             },
             items: [
-                {
-                    type: 'category',
-                    label: 'Tipos de datos algebraicos',
-                    link: {
-                        type: 'doc',
-                        id: 'fp/adt/index',
-                    },
-                    items: [
-                        'fp/adt/product',
-                        {
-                            type: 'category',
-                            label: 'Tipos suma',
-                            link: {
-                                type: 'doc',
-                                id: 'fp/adt/sum/index',
-                            },
-                            items: [
-                                'fp/adt/sum/enums/kt',
-                                'fp/adt/sum/sealed/sealed',
-                            ],
-                        },
-                    ],
-                },
                 "fp/recursion",
                 "fp/hof",
                 'fp/lambdas/lambdas-kt',

@@ -18,63 +18,25 @@ import RepoClone from '@site/src/components/admonitions/RepoClone'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
-<GithubRepoLink user="r8vnhill" repo="" />
+<GithubRepoLink user="r8vnhill" repo="functional-programming-kt" />
 
-Las **enumeraciones** en lenguajes de programación son una forma común y directa de representar **tipos suma** concretos.
+En el contexto del diseño de bibliotecas de software, una de las herramientas más importantes para representar **estados, comandos o decisiones** es el uso de **tipos suma**. Ya hemos estudiado qué son estos tipos y cómo nos permiten modelar alternativas mutuamente excluyentes de forma segura.
 
-En muchos lenguajes, las enumeraciones permiten representar diferentes estados o condiciones de manera segura y manejable. Cada valor de una enumeración es un caso específico de una posible situación que puede ocurrir. En lugar de manejar estos casos con cadenas, números o booleanos, las **enumeraciones** aseguran que solo se utilicen valores válidos y conocidos, evitando errores comunes como malentendidos de sintaxis o valores inesperados.
+En esta lección, exploramos una de sus expresiones más directas y prácticas: las **enumeraciones**. Si bien los tipos suma pueden representarse con clases selladas para capturar estructuras más complejas, las enumeraciones son ideales cuando los casos posibles están completamente definidos de antemano y comparten una representación compacta.
 
-<details>
-    <summary>
-        Si quieres crear los archivos desde la terminal...
-    </summary>
+Desde el punto de vista de una biblioteca, utilizar enumeraciones no solo mejora la claridad del código, sino que también permite expresar restricciones con precisión: dejamos explícito que solo existen ciertos valores válidos, lo cual es útil tanto para el uso interno como para quien consume la API.
 
-    <BoxedTabs groupId={"os"}>
-        <TabItem value="Windows" label="Windows">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
-            
-            ```powershell showLineNumbers
-            $SumMainDir = "adt\src\main\kotlin\$Group\sum"
-            $EnumMainDir = "$SumMainDir\enums"
-            New-Item -Path $EnumMainDir -ItemType Directory -Force
-            "package $Group.sum.enums" -replace '\\', '.' | 
-                Out-File -FilePath "$EnumMainDir\DeliveryState.kt"
-            ```
-        </TabItem>
-        <TabItem value="Windows (corto)" label="Windows (corto)">
-            ```powershell
-            $Group = 'com\github\username'
-            ```
+Veremos cómo las enumeraciones en Kotlin permiten definir comportamientos personalizados para cada caso, cómo pueden extenderse con métodos o constructores, y cómo se integran naturalmente con expresiones `when` exhaustivas para reforzar la seguridad y la mantenibilidad del sistema.
 
-            ```powershell
-            $SumMainDir = "adt\src\main\kotlin\$Group\sum"
-            $EnumMainDir = "$SumMainDir\enums"
-            md $EnumMainDir
-            "package $Group.sum.enums" -replace '\\', '.' > ` 
-                "$EnumMainDir\DeliveryState.kt"
-            ```
-        </TabItem>
-        <TabItem value="Linux/Mac" label="Linux/Mac">
-            ```bash
-            GROUP=com/github/username
-            ```
+## ¿Qué son las enumeraciones?
 
-            ```bash
-            SUM_MAIN_DIR=adt/src/main/kotlin/$GROUP/sum
-            ENUM_MAIN_DIR=$SUM_MAIN_DIR/enums
-            mkdir -p $ENUM_MAIN_DIR
-            echo "package ${GROUP//\//.}.sum.enums" > \
-                "$ENUM_MAIN_DIR/DeliveryState.kt"
-            ```
-        </TabItem>
-    </BoxedTabs>
-</details>
+Las **enumeraciones** en lenguajes de programación son una forma concreta y directa de representar **tipos suma**, es decir, valores que pueden ser uno entre varios casos posibles y conocidos.
 
-Por ejemplo, consideremos una enumeración que define los posibles estados de un pedido:
+En el contexto del diseño de bibliotecas de software, las enumeraciones resultan especialmente útiles para **exponer conjuntos limitados de estados o variantes** que lxs usuarixs deben manejar de forma segura. En lugar de depender de cadenas o números mágicos, una enumeración garantiza que **solo se utilicen valores válidos y bien definidos**, lo que reduce errores, mejora la legibilidad y facilita el análisis estático del código.
 
-```kotlin showLineNumbers title="adt/src/main/kotlin/com/github/username/sum/enums/DeliveryState.kt"
+Imaginemos que estamos desarrollando una biblioteca para gestionar pedidos en una aplicación de e-commerce. Una parte de la API puede requerir que lxs usuarixs controlen los diferentes **estados por los que pasa un pedido**. En lugar de representar estos estados con strings como `"paid"` o `"shipped"`, podemos definir una enumeración que explicite todos los estados posibles:
+
+```kotlin showLineNumbers
 package com.github.username.sum.enums
 
 enum class DeliveryState {
@@ -83,7 +45,7 @@ enum class DeliveryState {
 ```
 
 <Explanation>
-Aquí, `DeliveryState` es una enumeración que representa los estados posibles de un pedido: `PENDING`, `PAID`, `SHIPPED`, `DELIVERED` y `CANCELLED`. Cada uno de estos valores es un caso específico de un estado de entrega y puede ser utilizado para modelar el ciclo de vida de un pedido. Al utilizar esta enumeración, se garantiza que solo se utilicen estados válidos y conocidos.
+    `DeliveryState` modela los estados válidos por los que puede transitar un pedido. Esta enumeración puede ser parte de la API pública de una biblioteca, y al usarla, se asegura que quienes la consumen trabajen con un conjunto finito y validado de opciones. Esto mejora la autocompletación en entornos de desarrollo, facilita la documentación, y permite que el compilador detecte fácilmente usos incorrectos o incompletos.
 </Explanation>
 
 ## Uso en un `when` exhaustivo

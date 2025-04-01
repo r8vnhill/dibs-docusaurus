@@ -1,0 +1,255 @@
+---
+title: Tipos de Datos Algebraicos
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+
+<ReadingTime />
+
+## 🧩 ¿Qué son los Tipos de Datos Algebraicos?
+
+Los **tipos de datos algebraicos** (Algebraic Data Types, o ADTs) son una forma de definir nuevos tipos combinando otros tipos más simples, siguiendo las reglas del álgebra: **suma** y **producto**.
+
+:::warning No deben confundirse con los *tipos de datos abstractos* (Abstract Data Types)
+
+Mientras que los ADTs algebraicos se refieren a cómo se *estructura* un tipo, los ADTs abstractos se enfocan en cómo se *comporta* un tipo (por ejemplo, una pila, una cola o un diccionario, definidos por sus operaciones).
+
+:::
+
+### 🧠 Desde la teoría…
+
+En álgebra, podemos componer conjuntos usando dos operaciones:
+
+- **Producto ($\times$)**: combina elementos de dos conjuntos para formar pares. Por ejemplo, si tienes un conjunto de colores $\{\text{Rojo}, \text{Verde}\}$ y un conjunto de tallas $\{ \mathbf{S}, \mathbf{M}, \mathbf{L} \}$, su producto contiene todas las combinaciones posibles, como $\left(\text{Rojo},\, \mathbf{S}\right)$, $\left( \text{Verde},\, \mathbf{L} \right)$, etc.
+- **Suma ($+$)**: representa una elección entre alternativas. Si tienes un conjunto de monedas $\{ \text{Peso}, \text{Euro} \}$ y uno de criptomonedas $\{ Bitcoin \}$, su suma representa un valor que puede ser una **moneda** o una **cripto**, pero no ambas a la vez.
+
+### 🔍 …hacia un ejemplo concreto
+
+Imagina que estás construyendo una biblioteca para manejar órdenes de compra. Quieres representar el **estado de una orden**.
+
+Una primera aproximación podría ser usar una cadena de texto para guardar estados como `"pending"`, `"shipped"`, `"cancelled"`… pero eso es propenso a errores: el código no puede validar fácilmente que todos los valores sean correctos.
+
+En cambio, puedes definir un tipo de datos que contenga solo los estados válidos. Este nuevo tipo sería un **tipo suma**, porque una orden puede estar en *uno entre varios estados posibles*, pero **no en más de uno al mismo tiempo**. Al definir estos estados de forma explícita, evitas valores inválidos y habilitas validaciones automáticas en tiempo de compilación.
+
+Del mismo modo, podrías querer representar la **dirección de entrega** de una orden como un conjunto de campos: calle, número, ciudad y país. Este es un **tipo producto**, porque todos esos campos se combinan para formar una dirección completa.
+
+## ✅ Beneficios / ❌ Limitaciones
+
+<ProCons>
+    <Pros>
+        - **Mayor seguridad en tiempo de compilación**: Los ADTs permiten que el compilador detecte errores de lógica relacionados con casos no manejados, gracias a la exhaustividad en estructuras como `when`.
+        - **Modelado explícito y expresivo**: Los tipos suma y producto te obligan a pensar en todos los casos posibles y a reflejarlos directamente en el tipo, lo que **documenta la lógica del dominio en el código**.
+        - **Evitan valores inválidos**: Al no depender de valores mágicos (como strings o enteros arbitrarios), reducen la posibilidad de errores por mal uso o errores tipográficos.
+        - **Facilitan el mantenimiento y la evolución**: Si agregas un nuevo caso a un tipo suma, el compilador señalará todos los lugares que deben actualizarse, lo que hace más segura la evolución de la API.
+        - **Integración natural con funciones puras**: Son ideales para ser combinados con funciones sin efectos secundarios, lo que facilita su uso en estilos funcionales y pruebas automatizadas.
+    </Pros>
+    <Cons>
+        - **Menor flexibilidad en contextos dinámicos**: En entornos donde los casos válidos se definen en tiempo de ejecución (por ejemplo, configuraciones externas), los ADTs pueden ser demasiado rígidos o requerir re-compilación para cada cambio.
+        - **Posible explosión de casos en dominios grandes**: Si el dominio tiene muchos estados, combinaciones o variantes, modelar todo con tipos algebraicos puede derivar en una gran cantidad de clases o ramas de código.
+        - **No siempre son intuitivos para quienes vienen de OOP puro**: Desarrolladorxs acostumbradxs a jerarquías de clases pueden tener una curva de aprendizaje al adoptar modelado basado en ADTs.
+        - **Requieren disciplina de diseño**: Usar ADTs de forma efectiva requiere un esfuerzo consciente por modelar el dominio correctamente desde el principio. Si no se hace bien, se puede caer en modelos rígidos o poco expresivos.
+    </Cons>
+</ProCons>
+
+## ✅ Entonces... ¿Todos los ADTs son suma, producto o una combinación?
+
+**Sí**. Por definición, los **tipos de datos algebraicos** se construyen usando operaciones de **suma**, **producto**, o una **combinación de ambas**.
+
+Esto abarca:
+
+- **Tipos producto puros**: estructuras que agrupan múltiples valores al mismo tiempo.  
+  Ejemplo: `data class Person(val name: String, val age: Int)`
+- **Tipos suma puros**: valores que pueden ser una de varias opciones posibles, pero nunca más de una a la vez.  
+  Ejemplo: `enum class Result { Success, Failure }`
+- **Tipos mixtos (suma de productos)**: estructuras donde cada alternativa (tipo suma) puede tener su propia combinación de campos (tipo producto).  
+  Ejemplo: una jerarquía sellada (`sealed class`) con varias subclases que tienen propiedades distintas.
+
+Perfecto. Aquí tienes ambas opciones para reforzar la idea visualmente: una **representación formal concisa** y un **diagrama con cajas** que se alinea con la forma en que suelen presentarse los ADTs.
+
+---
+
+### ✏️ Representación simbólica
+
+```text
+ADT ::= Suma
+      | Producto
+      | Suma(Productos)
+```
+
+- `Suma`: Un valor que puede ser **una de varias alternativas**.
+- `Producto`: Un valor que **contiene varios campos al mismo tiempo**.
+- `Suma(Productos)`: Alternativas que cada una contienen su propia estructura de campos.
+
+---
+
+### 📦 Diagrama visual
+
+```text
+                ┌────────────────────┐
+                │   Tipo de Datos    │
+                │   Algebraico (ADT) │
+                └─────────┬──────────┘
+                          │
+      ┌───────────────────┼────────────────────┐
+      │                   │                    │
+┌────────────┐     ┌────────────┐       ┌────────────────────┐
+│  Suma      │     │ Producto   │       │ Suma de Productos  │
+│ (Sum Type) │     │(Product...)│       │ (Mixto / Sealed...)│
+└────────────┘     └────────────┘       └────────────────────┘
+```
+
+---
+
+Si usás Mermaid para diagramas en tu sitio, también puedo darte una versión en código:
+
+````mdx
+```mermaid
+graph TD
+  ADT[Tipo de Datos Algebraico (ADT)]
+  ADT --> Sum[Suma]
+  ADT --> Prod[Producto]
+  ADT --> Mix[Suma de Productos]
+```
+````
+
+¿Querés que lo incluya ya integrado en el contenido de la lección?
+---
+
+## 🤔 ¿Puede haber algo más?
+
+Lo que puede causar confusión es que **algunas estructuras no parecen sumas ni productos a simple vista**, pero **internamente se modelan como tales**. Por ejemplo:
+
+### 📦 Otras formas relacionadas pero no ADTs estrictos
+
+1. **Tipos función (A → B)**: No son ADTs, pero son comunes en programación funcional. Tienen una semántica diferente (se consideran *exponenciales* en la analogía algebraica).
+2. **Tipos recursivos**: Como listas (`List<T>`) o árboles. Aunque parecen otra cosa, **se definen a partir de ADTs** recursivos:  
+   ```kotlin
+   sealed class List<out T> {
+       data class Cons<T>(val head: T, val tail: List<T>) : List<T>()
+       object Nil : List<Nothing>()
+   }
+   ```
+   Aquí hay una **suma (Cons o Nil)** y en `Cons` hay un **producto (head × tail)**.
+3. **Tipos unitarios y vacíos**:
+   - El tipo `Unit` es un producto "degenerado" de cero elementos (tiene un solo valor).
+   - El tipo `Nothing` puede verse como una suma vacía (no tiene valores posibles).
+4. **Tipos de opción**: como `Option<T>` o `Nullable<T>` también son **tipos suma**, típicamente `Some(value)` o `None`.
+
+---
+
+## 🎓 Conclusión
+
+Aunque a veces se vean envueltos en formas más complejas o abstractas, **todos los ADTs pueden descomponerse en combinaciones de tipos suma y producto**.
+
+Por eso, entender estas dos operaciones es **la base fundamental** para comprender cómo modelar datos en lenguajes funcionales y orientados a la seguridad en el diseño de tipos.
+
+Excelente pregunta 🤓
+
+En el mundo de los **tipos de datos algebraicos**, las operaciones de **suma** y **producto** tienen significados claros y bien establecidos:
+
+- **Suma** → unión disjunta (tipo que puede ser A *o* B).  
+- **Producto** → combinación (tipo que tiene A *y* B).  
+
+Pero… ¿qué pasa con la **resta** y la **división**? ¿Tienen sentido?  
+La respuesta es que **sí**, pero son más sutiles y menos comunes en el diseño práctico de tipos. Veamos:
+
+---
+
+## ➖ ¿Qué sería una "resta" de tipos?
+
+Formalmente, la resta se puede asociar con el concepto de **subtipado o restricción**.  
+En teoría de tipos, a veces se interpreta como:
+
+> **A − B** = todos los valores de A que no están en B
+
+Esto se parece a un *tipo excluyente*, o incluso al uso de tipos condicionales o filtros.
+
+En algunos lenguajes avanzados con tipos dependientes o refinados (como en **TypeScript**, **Idris** o **F\***), uno puede definir algo como:
+
+```typescript
+type WithoutCancelled<T extends DeliveryState> = Exclude<T, DeliveryState.CANCELLED>
+```
+
+Pero en la mayoría de los lenguajes convencionales (como Kotlin), no existe una forma directa de expresar "todos los valores de este tipo menos uno" sin usar validaciones a mano.
+
+---
+
+## ➗ ¿Qué sería una "división" de tipos?
+
+La **división de tipos** es aún más abstracta.  
+En la teoría de tipos categórica, se relaciona con los **tipos de funciones parciales**, **continuaciones** o **exponentes**.
+
+Si el producto corresponde a una tupla `(A, B)`, la división puede verse como:
+
+> **A ÷ B** ≈ una función que necesita un valor de tipo B para producir un valor de tipo A.  
+> Formalmente: `B → A`
+
+Esto se basa en una propiedad del álgebra de tipos:
+
+```text
+B → A ≅ A^B
+```
+
+Que es análoga a cómo los exponentes funcionan en álgebra tradicional, y esto se conoce como **exponenciación de tipos**.
+
+---
+
+## 🎓 En resumen
+
+| Operación | Interpretación en Tipos | Ejemplo             |
+|-----------|--------------------------|----------------------|
+| Suma      | Unión disjunta (OR)      | `sealed class Result<Success, Failure>` |
+| Producto  | Composición (AND)        | `data class Person(val name: String, val age: Int)` |
+| Resta     | Diferencia / Exclusión   | `Exclude<A, B>` en TypeScript, validaciones manuales |
+| División  | Función o dependencia    | `B → A`, tipos funcionales |
+
+---
+
+¿Te gustaría que incluyéramos un bloque como este en la lección para enriquecer la perspectiva teórica?
+-----------
+
+Los **tipos de datos algebraicos** (no confundir con tipos de datos abstractos) son una forma de construir tipos de datos complejos a partir de otros más simples, utilizando operaciones similares a las de la suma y el producto en álgebra. Son comunes en lenguajes que admiten programación funcional como Haskell, OCaml, Scala, Kotlin y Rust.
+
+Hay dos tipos principales:
+
+1. **Tipos Producto (Product Types):**
+    - Combina varios tipos en una sola estructura.
+    - Cada valor del tipo contiene un valor de cada uno de sus componentes.
+    - **Ejemplo sencillo:** Una estructura o registro.
+    - Imagina una `Persona` que tiene un `nombre` y una `edad`. Cada persona tiene ambos atributos.
+    - Se llaman "producto" porque el número total de posibles valores es el producto de los posibles valores de sus componentes.
+
+2. **Tipos Suma (Sum Types) o Tipos Unión:**
+    - Representa un valor que puede ser de uno entre varios tipos posibles.
+    - **Ejemplo sencillo:** Una enumeración o variante.
+    - Imagina un tipo `Forma` que puede ser un `Círculo` o un `Rectángulo`.
+    - Se llaman "suma" porque el número total de posibles valores es la suma de los posibles valores de cada opción.
+
+## **Formalización**
+
+Formalmente, los tipos de datos algebraicos se definen utilizando operaciones algebraicas de **suma** y **producto** sobre conjuntos de valores.
+
+1. **Tipo Producto $(A \times B)$:**
+    - Si tienes dos tipos $A$ y $B$, el tipo producto consiste en todas las combinaciones posibles de valores de $A$ y $B$.
+    - **Tamaño del tipo:** $|A| \times |B|$, donde $|A|$ es el número de posibles valores de $A$.
+    - **Matemáticamente:** Es el **producto cartesiano** de los conjuntos $A$ y $B$.
+    - **Ejemplo:**
+        - Si $A = \{true, false\}$ y $B = \{0, 1\}$, entonces $A \times B$ tiene 4 valores: $(true, 0)$, $(true, 1)$, $(false, 0)$, $(false, 1)$.
+
+2. **Tipo Suma $(A + B)$:**
+    - Combina tipos permitiendo que el valor sea de uno u otro tipo, pero no ambos a la vez.
+    - **Tamaño del tipo:** $|A| + |B|$.
+    - **Matemáticamente:** Es la **unión disjunta** de los conjuntos $A$ y $B$.
+    - **Ejemplo:**
+        - Si $A = \{0, 1\}$ y $B = \{\text{`a'}, \text{`b'}\}$, entonces $A + B$ tiene 4 valores: $0$, $1$, $\text{`a'}$, $\text{`b'}$.
