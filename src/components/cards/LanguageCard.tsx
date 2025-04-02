@@ -188,3 +188,7 @@ export const NxCard = createCard(
   "https://miro.medium.com/v2/resize:fit:1048/0*tiFxxz3C6clSRAbf.png",
   "JavaScript/TypeScript: Nx"
 );
+export const SbtCard = createCard(
+  "/img/sbt-logo.png",
+  "JVM: SBT"
+);

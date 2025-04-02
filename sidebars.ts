@@ -19,6 +19,7 @@ const sidebars: SidebarsConfig = {
             },
             items: [
                 'intro/Kotlin',
+                'intro/kotlin-language-basics',
                 'intro/introduction',
                 'intro/clean',
                 'intro/documentation',
@@ -30,7 +31,6 @@ const sidebars: SidebarsConfig = {
                         id: 'intro/Kotlin',
                     },
                     items: [
-                        'intro/basics',
                         'intro/types',
                         'intro/oop/oop',
                         'intro/properties/properties-kt',
