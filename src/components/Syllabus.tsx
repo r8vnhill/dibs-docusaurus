@@ -13,6 +13,8 @@ const sections: CourseSection[] = [
     title: "Introducción",
     contents: [
       "Fundamentos del lenguaje de programación",
+      "Null / Void safety",
+      "Option, Result y alternativas a null",
       "Introducción al desarrollo de bibliotecas de software",
       "Principios de código limpio y mantenible",
       "Principios de una buena documentación",
@@ -25,8 +27,6 @@ const sections: CourseSection[] = [
       "Tipos algebraicos: producto, suma, combinaciones",
       "Estructuras recursivas: listas, árboles, expresiones",
       "Tipos anónimos y estructurales",
-      "Null / Void safety",
-      "Option, Result y alternativas a null",
       "Diseño de funciones y APIs seguras",
     ],
   },
@@ -165,7 +165,7 @@ const Syllabus: React.FC = () => {
   const renderSection = useCallback(
     (section: CourseSection, index: number) => {
       const isVisible = !!visibleSections[index];
-  
+
       return (
         <li key={section.id ?? index} className={styles.syllabus__section}>
           <button
@@ -185,7 +185,6 @@ const Syllabus: React.FC = () => {
     },
     [visibleSections, toggleVisibility, renderLessonList]
   );
-  
 
   return (
     <section className="syllabus">
