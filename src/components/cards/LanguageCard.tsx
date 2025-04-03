@@ -192,3 +192,7 @@ export const SbtCard = createCard(
   "/img/sbt-logo.png",
   "JVM: SBT"
 );
+export const CabalCard = createCard(
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Haskell-Logo.svg/1200px-Haskell-Logo.svg.png",
+  "Haskell: Cabal"
+);
