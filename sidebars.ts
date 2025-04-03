@@ -19,6 +19,7 @@ const sidebars: SidebarsConfig = {
             },
             items: [
                 'intro/Kotlin',
+                'intro/functions-and-variables',
                 'intro/kotlin-language-basics',
                 'intro/introduction',
                 'intro/clean',
