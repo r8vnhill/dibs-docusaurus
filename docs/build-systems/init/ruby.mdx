@@ -5,6 +5,132 @@ import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 import TabItem from '@theme/TabItem'
 import Explanation from '@site/src/components/admonitions/Explanation'
 
+## 🧱 Paso -3: (Linux/macOS) Instalar dependencias recomendadas
+
+Antes de instalar Ruby con `rbenv`, es importante asegurarse de que tu sistema tenga todas las bibliotecas necesarias para compilarlo correctamente.
+
+<BoxedTabs groupId={"os"}>
+    <TabItem value="macOS" label="macOS">
+        ```bash
+        brew update && \
+        brew install \
+            autoconf \
+            bison \
+            openssl \
+            readline \
+            sqlite3 \
+            libyaml \
+            gdbm \
+            libffi
+        ```
+    </TabItem>
+    <TabItem value="Linux/macOS" label="Linux/macOS">
+        ```bash
+        sudo apt update && \
+        sudo apt upgrade -y && \
+        sudo apt install -y \
+            autoconf \
+            bison \
+            build-essential \
+            libssl-dev \
+            libreadline-dev \
+            zlib1g-dev \
+            libsqlite3-dev \
+            libyaml-dev \
+            libgdbm-dev \
+            libncurses5-dev \
+            libffi-dev \
+            libgmp-dev \
+            libdb-dev
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+
+Este paso instala las bibliotecas y herramientas necesarias para compilar e instalar Ruby desde código fuente usando `rbenv` y `ruby-build`.
+
+- **`autoconf`, `bison`**: Utilizadas durante la configuración del entorno de compilación de Ruby.
+- **Compiladores y herramientas básicas (`build-essential` en Linux)**: Incluyen `gcc`, `make`, etc.
+- **Bibliotecas de desarrollo**: Permiten compilar extensiones y módulos clave de Ruby:
+  - Cifrado y seguridad (OpenSSL)
+  - Lectura de línea (`readline`)
+  - Compresión (`zlib`)
+  - Base de datos (`sqlite3`, `gdbm`, `libdb`)
+  - Formato YAML (`libyaml`)
+  - Interacción con terminal (`ncurses`)
+  - Llamadas de C (`libffi`)
+  - Aritmética avanzada (`gmp`)
+
+Estas dependencias aseguran que la instalación de Ruby incluya soporte completo para sus funcionalidades estándar.
+
+</Explanation>
+
+## 🧰 Paso -2: (Linux/macOS) Instalar rbenv
+
+<BoxedTabs groupId={"os"}>
+    <TabItem value="macOS" label="macOS">
+        ```bash
+        brew install rbenv ruby-build
+        ```
+
+        <Explanation>
+            Instala tanto `rbenv` como `ruby-build` usando Homebrew en un solo comando.
+
+            - **`rbenv`**: Es una herramienta para gestionar múltiples versiones de Ruby en el mismo sistema, permitiéndote cambiar fácilmente entre ellas por proyecto o de forma global.
+            - **`ruby-build`**: Es un plugin de `rbenv` que permite compilar e instalar versiones específicas de Ruby.
+        </Explanation>
+    </TabItem>
+    <TabItem value="Linux" label="Linux">
+        ```bash
+        git clone https://github.com/rbenv/rbenv.git ~/.rbenv && \
+            export PATH="$HOME/.rbenv/bin:$PATH" && \
+            shell_name=$(basename "$SHELL") && \
+            profile_file="$HOME/.${shell_name}rc" && \
+            init_command="$(~/.rbenv/bin/rbenv init - $shell_name)" && \
+            echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> "$profile_file" && \
+            echo "eval \"\$($HOME/.rbenv/bin/rbenv init - $shell_name)\"" >> "$profile_file" && \
+            eval "$init_command" && \
+            git clone https://github.com/rbenv/ruby-build.git "$(rbenv root)"/plugins/ruby-build
+        ```
+
+        <Explanation>
+            - `git clone https://github.com/rbenv/rbenv.git ~/.rbenv`: Clona el repositorio de `rbenv` en el directorio `~/.rbenv`.
+            - `export PATH=...`: Añade el binario de `rbenv` al `PATH` actual, permitiendo usar `rbenv` inmediatamente en esta misma sesión.
+            - `shell_name=$(basename "$SHELL")`: Detecta el nombre del shell actual (`bash`, `zsh`, etc.) extrayéndolo del valor de `$SHELL`.
+            - `profile_file="$HOME/.${shell_name}rc"`: Construye la ruta al archivo de configuración del shell, como `~/.bashrc` o `~/.zshrc`.
+            - `init_command="$(~/.rbenv/bin/rbenv init - $shell_name)"`: Ejecuta `rbenv init` con la opción correcta para el shell actual y guarda el resultado (el código de inicialización que `rbenv` necesita) en una variable.
+            - `echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> "$profile_file"`: Agrega permanentemente al `PATH` la ruta a `rbenv` en el archivo de configuración del shell.
+            - `echo "eval \"\$($HOME/.rbenv/bin/rbenv init - $shell_name)\"" >> "$profile_file"`: Añade al archivo de configuración del shell el código necesario para inicializar `rbenv` automáticamente en futuras sesiones.
+            - `eval "$init_command"`: Aplica inmediatamente la inicialización de `rbenv` en la sesión actual para poder empezar a usarlo sin reiniciar la terminal.	
+            - `git clone https://github.com/rbenv/ruby-build.git "$(rbenv root)"/plugins/ruby-build`: Clona el plugin `ruby-build` dentro del directorio de plugins de `rbenv`, permitiendo instalar versiones específicas de Ruby.
+        </Explanation>
+    </TabItem>
+</BoxedTabs>
+
+### ✔️ Verificar que `rbenv` se instaló correctamente
+
+Para comprobar que `rbenv` está correctamente instalado y accesible desde la terminal, ejecuta:
+
+```bash
+rbenv
+```
+
+Deberías ver una salida similar a:
+
+```plaintext
+rbenv 1.3.2-2-gcd29bcc
+Usage: rbenv <command> [<args>...]
+
+Commands:
+   install     Install a Ruby version
+   versions    List installed Ruby versions
+   global      Set or show the global Ruby version
+   local       Set or show the local Ruby version
+```
+
+Esto indica que `rbenv` está funcionando correctamente.  
+
 ## 💎 Paso -1: Instalar Ruby
 
 **Ruby** es un lenguaje de programación dinámico, elegante y muy expresivo. En esta unidad lo utilizaremos junto con herramientas del ecosistema Ruby, como [Rake](https://ruby.github.io/rake/), para explorar cómo construir, organizar y automatizar tareas en proyectos de software, al igual que hicimos con Gradle.
@@ -17,17 +143,23 @@ A continuación, se presentan las instrucciones para instalar Ruby según tu sis
         scoop install ruby
         ```
     </TabItem>
-    <TabItem value="macOS" label="macOS">
+    <TabItem value="macOS/Linux" label="macOS/Linux">
         ```bash
-        brew install ruby
+        latest_ruby=$(rbenv install -l | grep -E '^\s*[0-9]+\.[0-9]+\.[0-9]+$' | tail -1 | tr -d ' ') && \
+            rbenv install "$latest_ruby" && \
+            rbenv global "$latest_ruby"
         ```
-    </TabItem>
-    <TabItem value="Linux" label="Linux (Debian/Ubuntu)">
-        ```bash
-        sudo apt update && \
-            sudo apt upgrade && \
-            sudo apt install ruby-full
-        ```
+
+        <Explanation>
+            Este bloque detecta e instala automáticamente la versión más reciente de Ruby (MRI) disponible a través de `rbenv`.
+
+            1. **`rbenv install -l`**: Lista todas las versiones de Ruby que pueden instalarse, incluyendo variantes como JRuby, TruffleRuby, etc.
+            2. **`grep -E '^\s*[0-9]+\.[0-9]+\.[0-9]+$'`**: Filtra únicamente las versiones estándar de Ruby (MRI), descartando otras implementaciones.
+            3. **`tail -1`**: Selecciona la última de esas versiones, que corresponde a la más reciente.
+            4. **`tr -d ' '`**: Elimina espacios en blanco sobrantes.
+            5. **`rbenv install "$latest_ruby"`**: Instala esa versión de Ruby.
+            6. **`rbenv global "$latest_ruby"`**: Configura esa versión como la predeterminada a nivel global en el sistema.
+        </Explanation>
     </TabItem>
 </BoxedTabs>
 
@@ -306,4 +438,114 @@ Esta es la estructura generada automáticamente por `bundler gem echo_app_ruby -
 
 :::
 
-{/* TODO: Hello, world */}
+## 🧃 Paso 8: Tu primer “Hello, World”
+
+Ahora que tenemos la estructura lista, vamos a ejecutar un clásico **Hello, World** desde la consola, pero con un giro literario inspirado en *A Clockwork Orange*.
+
+Primero, abre el archivo generado en `exe/echo_app_ruby` y reemplaza su contenido con lo siguiente:
+
+```ruby title="exe/echo_app_ruby"
+#!/usr/bin/env ruby
+require_relative "../lib/echo_app_ruby"
+
+puts "What's it going to be then, eh?"
+```
+
+<Explanation>
+    - **`#!/usr/bin/env ruby`**: Esta línea indica que el archivo debe ejecutarse usando Ruby. Es común en scripts para asegurar compatibilidad multiplataforma.
+    - **`require_relative "../lib/echo_app_ruby"`**: Carga el archivo principal de la gema desde la carpeta `lib`, preparándola para su uso. Aunque no lo usamos directamente aquí, mantiene una convención útil para futuras extensiones.
+    - **`puts "What's it going to be then, eh?"`**: Imprime un mensaje por consola. En este caso, el clásico inicio de capítulo de *A Clockwork Orange*, que usamos como homenaje y como señal de que tu aplicación ha nacido.
+</Explanation>
+
+Ahora que tenemos el archivo ejecutable listo, vamos a probar la aplicación en distintos sistemas operativos:
+
+<BoxedTabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        Para sistemas Windows, es necesario instalar el entorno de compilación MSYS2 antes de ejecutar la aplicación:
+
+        ```powershell
+        ridk install
+        ```
+
+        <Explanation>
+            Este comando lanza el instalador de MSYS2 incluido en RubyInstaller.  
+            Es necesario para compilar gemas nativas como aquellas usadas por Rails o Psych (YAML).
+        </Explanation>
+
+        Al ejecutarlo, verás una salida como esta:
+
+        ```plaintext
+        1 - MSYS2 base installation
+        2 - MSYS2 system update (optional)
+        3 - MSYS2 and MINGW development toolchain
+
+        Which components shall be installed? If unsure press ENTER [1,3]
+        ```
+
+        :::tip ¿Por qué seleccionar 1, 2 y 3?
+
+        Seleccionar todas las opciones (`1, 2, 3`) garantiza que:
+
+        - Se instale la base mínima de MSYS2.
+        - Se actualice el sistema MSYS2 (lo que evita errores de compilación).
+        - Se instale la toolchain necesaria para compilar gemas nativas.
+
+        Omitir alguna de ellas puede generar errores al instalar dependencias como `nokogiri` o `psych`.
+
+        :::
+
+        En sistemas UNIX, es común utilizar el script `bin/setup` para instalar las dependencias necesarias de un proyecto.  
+        En Windows, puedes lograr lo mismo definiendo una función en PowerShell que cumpla el mismo propósito. Para esto, crea el archivo `bin/setup.ps1` y añade el siguiente contenido:
+
+        ```powershell showLineNumbers title="bin/setup.ps1"
+        Set-StrictMode -Version Latest
+        $ErrorActionPreference = "Stop"
+        $VerbosePreference = "Continue"
+        $DebugPreference = "Continue"
+
+        Write-Verbose "Installing dependencies with Bundler..."
+        bundle install
+
+        # Aquí puedes agregar más pasos de configuración
+        Write-Verbose "Setup complete."
+        ```
+
+        <Explanation>
+            Este script en PowerShell replica el comportamiento típico del archivo `bin/setup` que se usa en sistemas UNIX.  
+            Su propósito es preparar el entorno del proyecto de forma automática y segura.
+
+            - **`Set-StrictMode -Version Latest`**: Activa reglas estrictas para evitar errores comunes y escribir código más robusto.
+            - **`$ErrorActionPreference = "Stop"`**: Hace que el script se detenga inmediatamente ante cualquier error.
+            - **`$VerbosePreference` y `$DebugPreference`**: Permiten mostrar mensajes detallados de lo que está ocurriendo, útil para depuración y transparencia.
+            - **`bundle install`**: Instala las dependencias definidas en el `Gemfile`, asegurando que el entorno tenga todo lo necesario para ejecutar el proyecto.
+            - Puedes extender este script con otros pasos como migraciones de base de datos, generación de archivos de entorno, chequeos de sistema, etc.
+
+            Guardar este contenido en `bin/setup.ps1` permite a usuarios de Windows inicializar el proyecto con un solo comando: `.\bin\setup.ps1`.
+        </Explanation>
+
+
+        Una vez creado el archivo `bin/setup.ps1`, puedes utilizarlo para preparar el entorno y luego ejecutar la aplicación con un solo comando:
+
+        ```powershell
+        bin\setup.ps1 && `
+            ruby exe\echo_app_ruby
+        ```
+    </TabItem>
+
+    <TabItem value="Linux/macOS" label="Linux/macOS">
+
+        ```bash
+        chmod +x exe/echo_app_ruby && \
+        ./bin/setup && \
+        ./exe/echo_app_ruby
+        ```
+
+        <Explanation>
+            1. **`chmod +x`** hace que el script Ruby sea ejecutable.
+            2. **`./bin/setup`** instala las dependencias necesarias usando Bundler (equivalente a la función PowerShell).
+            3. **`./exe/echo_app_ruby`** ejecuta la aplicación.
+        </Explanation>
+    </TabItem>
+</BoxedTabs>
+
+{/* TODO: Conclusiones, introducción, referencias */}

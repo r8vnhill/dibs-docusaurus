@@ -196,7 +196,7 @@ export const CabalCard = createCard(
   "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Haskell-Logo.svg/1200px-Haskell-Logo.svg.png",
   "Haskell: Cabal"
 );
-export const BundlerCard = createCard(
-  "https://shop.rubytogether.org/cdn/shop/products/bundler_sticker.png?v=1478058171",
-  "Ruby: Bundler"
+export const RubyCard = createCard(
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Ruby_logo.svg/240px-Ruby_logo.svg.png",
+  "Ruby"
 );
