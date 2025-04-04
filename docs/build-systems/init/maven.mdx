@@ -10,108 +10,185 @@ import TabItem from '@theme/TabItem'
 import Explanation from '@site/src/components/admonitions/Explanation'
 
 <ReadingTime/>
-<GitHubRepoLink repo={""} user={"r8vnhill"} />
+<GitHubRepoLink repo={"echo-app-maven"} user={"r8vnhill"} />
 
-Esta lección compara **Gradle** con **Maven**, otro sistema de construcción de proyectos ampliamente usado en Java y otros lenguajes JVM. Partiendo de que ya conoces cómo funciona Gradle, nos centraremos en entender las diferencias más importantes y en cómo realizar tareas equivalentes en Maven.
+## 🧱 Paso 0: Instalar Maven
 
-## 🚧 Inicialización de Proyecto con Maven  
-
-A diferencia de Gradle, en Maven la inicialización de un proyecto se realiza mediante **arquetipos (`archetype`)**, que son plantillas predefinidas que facilitan la creación de una estructura de proyecto estándar.
+Para instalar Maven, puedes usar un gestor de paquetes según tu sistema operativo:
 
 <BoxedTabs groupId={"os"}>
     <TabItem value="Windows" label="Windows">
         ```powershell
-        mvn archetype:generate `
-            "-DgroupId=com.github.username" `
-            "-DartifactId=echo-app-maven" `
-            "-DarchetypeArtifactId=maven-archetype-quickstart" `
-            "-DinteractiveMode=false"
+        scoop install maven
         ```
     </TabItem>
-    <TabItem value="Linux/Mac" label="Linux/Mac">
+    <TabItem value="macOS" label="macOS">
         ```bash
-        mvn archetype:generate \
-            -DgroupId=com.github.username \
-            -DartifactId=echo-app-maven \
-            -DarchetypeArtifactId=maven-archetype-quickstart \
-            -DinteractiveMode=false
+        brew install maven
+        ```
+    </TabItem>
+    <TabItem value="Linux" label="Linux">
+        ```bash
+        sdk install maven
+        ```
+    </TabItem>
+</BoxedTabs>
+
+### ✅ Verificar instalación
+
+Para comprobar que Maven se instaló correctamente, ejecuta el siguiente comando en tu terminal:
+
+```bash
+mvn --version
+```
+
+Si la instalación fue exitosa, deberías ver una salida similar a esta:
+
+```plaintext
+Apache Maven 3.9.9 (8e8579a9e76f7d015ee5ec7bfcdc97d260186937)
+Maven home: /path/to/maven
+Java version: 23, vendor: Azul Systems, Inc., runtime: /path/to/java
+Default locale: en_US, platform encoding: UTF-8
+OS name: "Windows 10", version: "10.0", arch: "amd64", family: "windows"
+```
+
+## 🛠️ Paso 1: Crear el proyecto base
+
+Ejecuta el siguiente comando para generar un nuevo proyecto Maven usando una plantilla básica:
+
+<BoxedTabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        mvn archetype:generate "-DarchetypeArtifactId=maven-archetype-quickstart"
+        ```
+    </TabItem>
+    <TabItem value="Linux/macOS" label="Linux/macOS">
+        ```bash
+        mvn archetype:generate -DarchetypeArtifactId=maven-archetype-quickstart
         ```
     </TabItem>
 </BoxedTabs>
 
 <Explanation>
-    - **`mvn archetype:generate`** → Comando para generar un nuevo proyecto Maven basado en un arquetipo.
-    - **`-DgroupId`** → Nombre del grupo o paquete base del proyecto (por convención, suele usar un dominio invertido).
-    - **`-DartifactId`** → Nombre del proyecto, que define el nombre del directorio y del artefacto generado.
-    - **`-DarchetypeArtifactId=maven-archetype-quickstart`** → Plantilla predeterminada para proyectos Java simples.
-    - **`-DinteractiveMode=false`** → Ejecuta el comando sin solicitar confirmaciones, generando el proyecto de inmediato.
+    - **`archetype:generate`**: Ejecuta el plugin de arquetipos de Maven, que permite generar proyectos a partir de plantillas.
+    - **`-DarchetypeArtifactId=maven-archetype-quickstart`**: Indica que queremos usar el arquetipo *quickstart*, una plantilla básica para proyectos Java con estructura estándar (`src/main/java` y `src/test/java`).
+    - Al ejecutar este comando, Maven te guiará con preguntas interactivas como el `groupId`, `artifactId` y `version`, para personalizar el nuevo proyecto.
 </Explanation>
 
-Este proceso creará la estructura básica del proyecto, incluyendo un archivo `pom.xml`, directorios para el código fuente y pruebas, y una clase de ejemplo lista para ejecutar.
+## ✏️ Paso 2: Definir el identificador del grupo (`groupId`)
+
+Durante la creación del proyecto, Maven te pedirá que ingreses un valor para la propiedad `groupId`. Verás algo como:
+
+```plaintext
+Define value for property 'groupId': com.github.username
+```
+
+<Explanation>
+    El **`groupId`** representa el nombre del grupo o la organización que desarrolla el proyecto. Suele seguir una convención similar al nombre de un paquete Java (por ejemplo, `com.miempresa.proyecto`). Este identificador se utilizará para distinguir tus artefactos en el repositorio Maven.
+</Explanation>
+
+## 🏷️ Paso 3: Definir el identificador del artefacto (`artifactId`)
+
+Maven solicitará ahora el valor de `artifactId`. Verás una línea como esta en la terminal:
+
+```plaintext
+Define value for property 'artifactId': echo-app-maven
+```
+
+<Explanation>
+    El **`artifactId`** define el nombre del módulo o proyecto. Este será el nombre del directorio que se creará y también el identificador del artefacto generado (por ejemplo, `echo-app-maven.jar`).  
+    Debe ser único dentro del grupo (`groupId`) y suele describir la función o propósito del proyecto.
+</Explanation>
+
+## 🧭 Paso 4: Definir la versión del proyecto (`version`)
+
+Durante el proceso de creación, Maven pedirá que definas la versión del proyecto:
+
+```plaintext
+Define value for property 'version' 1.0-SNAPSHOT: 1.0.0
+```
+
+<Explanation>
+    La propiedad **`version`** especifica la versión del artefacto que estás generando.  
+    - Por defecto, Maven sugiere `1.0-SNAPSHOT`, que indica una versión en desarrollo.
+    - En este caso, optamos por una versión **estable** (`1.0.0`), lo cual es útil cuando no necesitas trabajar con snapshots y quieres una numeración semántica clara para tus módulos.
+</Explanation>
+
+## 🧾 Paso 5: Definir el nombre del paquete base (`package`)
+
+Durante la configuración, Maven solicitará el nombre del paquete donde se generará el código fuente:
+
+```plaintext
+Define value for property 'package' com.github.username:
+```
+
+<Explanation>
+    La propiedad **`package`** define el **espacio de nombres** donde se ubicará tu código Java o Kotlin.  
+    - Maven sugiere usar el mismo valor que `groupId`, lo cual es una buena práctica para mantener consistencia.  
+    - Puedes aceptar el valor por defecto (`com.github.username`) o personalizarlo si prefieres una estructura distinta.
+
+    Este valor se reflejará en la carpeta generada (`src/main/java/com/github/username`) y en los `package` del código fuente.
+</Explanation>
+
+## ✔️ Paso 6: Confirmar la configuración del proyecto
+
+Una vez que hayas completado todos los campos, Maven mostrará un resumen con los valores que proporcionaste:
+
+```plaintext
+groupId: com.github.username  
+artifactId: echo-app-maven  
+version: 1.0.0  
+package: com.github.username  
+ Y:
+```
+
+<Explanation>
+    Este paso es una **confirmación final** antes de que Maven genere el proyecto.  
+    - Si estás de acuerdo con los valores, simplemente presiona `Enter` o escribe `Y` y presiona `Enter`.
+    - Si deseas corregir alguno, escribe `N` para volver atrás y modificar los campos.
+
+    Una vez confirmado, Maven creará la estructura del proyecto en una nueva carpeta llamada `echo-app-maven`.
+</Explanation>
 
 ## 🌳 Estructura de un Proyecto Maven
 
-La estructura básica generada por Maven es menos personalizable que Gradle, pero muy consistente en todos los proyectos:
-
 ```mermaid
-graph TD;
-    A[echo-app] -->|Archivo principal| B[pom.xml]
-    A --> C[src]
-    C --> D[main]
-    C --> E[test]
-    D --> F[java]
-    F --> G[App.java]
-    E --> H[java]
-    H --> I[AppTest.java]
+graph LR
+    %% Proyecto raíz
+    root["📂 echo-app-maven"]
+    root --> pom["📄 pom.xml"]
+    root --> srcFolder
+
+    %% Subgrafo: src
+    subgraph srcFolder["📂 src"]
+
+        %% Subgrafo: main
+        subgraph mainFolder["📂 main/java/com/github/username"]
+            app["📄 App.java"]
+        end
+
+        %% Subgrafo: test
+        subgraph testFolder["📂 test/java/com/github/username"]
+            appTest["📄 AppTest.java"]
+        end
+
+    end
 ```
 
-Mientras en Gradle la configuración es más flexible, Maven adopta esta estructura estándar y rígida por defecto, lo que simplifica la configuración pero limita la personalización.
+:::info Explicación de la estructura
 
-## 🚀 Ejecución de tareas en Maven
+Esta es la **estructura típica de un proyecto Maven** generado con el arquetipo `maven-archetype-quickstart`. Cada carpeta cumple un rol específico:
 
-Maven utiliza un enfoque basado en fases, distinto al sistema de tareas de Gradle. Las fases más comunes son:
+- **📂 `echo-app-maven`**: Es la carpeta raíz del proyecto. Contiene el archivo `pom.xml`, que define la configuración del proyecto, sus dependencias, plugins y estructura.
+    - **📄 `pom.xml`**: Archivo clave de Maven. Define el proyecto, sus metadatos y cómo debe compilarse. En proyectos multi-módulo, también coordina los módulos hijos.
+    - **📂 `src`**: Carpeta raíz del código fuente del proyecto.
+        - **📂 `main/java`**: Contiene el **código fuente principal** del proyecto. Aquí es donde se escriben las clases y funciones que conforman la lógica de la aplicación.
+            - El subpaquete `com/github/username` sigue la **convención de nombres de paquetes Java**, basada en el dominio invertido del desarrollador.
+        - **📂 `test/java`**: Contiene el **código de pruebas**. Se usa para implementar pruebas unitarias o de integración usando frameworks como JUnit.
+    - **📄 `App.java` y `AppTest.java`**: Archivos de ejemplo generados por el arquetipo. Representan la clase principal del proyecto y su prueba asociada.
 
-```bash
-mvn clean        # Limpia el proyecto
-mvn compile      # Compila el proyecto
-mvn test         # Ejecuta pruebas unitarias
-```
+Esta organización permite separar claramente el código de producción del código de pruebas, y sigue las buenas prácticas de desarrollo en Java y Maven.
 
-A diferencia de Gradle, no puedes definir nuevas tareas arbitrarias fácilmente. Maven es rígido respecto a las fases predefinidas.
+:::
 
-## 📌 **Conclusiones**  
-
-En esta lección, comparamos la inicialización y estructura de proyectos en **Maven** y **Gradle**, destacando las diferencias clave entre ambos enfoques.
-
-### **🔑 Puntos clave**  
-
-1. **Inicialización del proyecto**  
-   - Maven utiliza **arquetipos (`archetype`)** para generar una estructura estándar, mientras que Gradle permite mayor flexibilidad desde su configuración inicial.  
-   - El comando `mvn archetype:generate` crea un proyecto siguiendo una plantilla predefinida.  
-2. **Estructura del proyecto**  
-   - Maven tiene una **estructura fija** con directorios estándar (`src/main/java`, `src/test/java`), mientras que en Gradle esta estructura es más flexible.  
-   - En Maven, `pom.xml` es el único archivo de configuración, mientras que Gradle separa configuraciones en múltiples archivos (`build.gradle.kts`, `settings.gradle.kts`).  
-3. **Ejecución de tareas**  
-   - Maven usa **fases del ciclo de vida** (`clean`, `compile`, `test`), mientras que Gradle usa **tareas definidas por el usuario**.  
-   - En Gradle, se pueden agregar tareas personalizadas fácilmente, mientras que en Maven, todo debe encajar dentro de su modelo predefinido.  
-4. **Flexibilidad vs. Estandarización**  
-   - **Maven**: Estructura y convenciones estrictas → Facilita la integración con otros proyectos, pero limita la personalización.  
-   - **Gradle**: Mayor flexibilidad en la configuración y personalización, permitiendo definir tareas específicas para distintos proyectos.  
-
-### **🚀 Reflexión final**  
-
-La elección entre **Maven** y **Gradle** depende del nivel de control y flexibilidad que necesites:  
-- **Maven** es ideal para proyectos que prefieren una convención estándar sin necesidad de ajustes personalizados.  
-- **Gradle** es una mejor opción cuando necesitas definir tareas personalizadas, gestionar dependencias de manera más flexible o mejorar el rendimiento de compilación.  
-
-Ambas herramientas son ampliamente utilizadas en el ecosistema JVM, por lo que comprender sus diferencias te permitirá tomar decisiones informadas al desarrollar y administrar proyectos.
-
-<References references={[]} additionalReferences={[
-    {
-        title: "Gradle and Maven Comparison",
-        url: "https://gradle.org/maven-and-gradle/",
-        accessedDate: "20 de marzo de 2025",
-        type: "web",
-        // Último acceso: 20 de marzo de 2025
-    },
-]} />
+{/* TODO: Agregar paso hello-world; recuerda hacer cd */}
