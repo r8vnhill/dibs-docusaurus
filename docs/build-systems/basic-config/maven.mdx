@@ -15,21 +15,22 @@ import GithubRepoLink from '@site/src/components/GithubRepoLink'
 import { LanguageCard, PoetryCard } from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import RepoClone from '@site/src/components/admonitions/RepoClone'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="echo-app-maven" />
 
-Cuando trabajamos con **Maven** en proyectos que contienen múltiples módulos, es fundamental configurar correctamente el archivo `pom.xml` del proyecto raíz. Este archivo define la estructura general del proyecto, permitiendo organizar los módulos de forma clara y fomentar la reutilización del código.
+Cuando trabajamos con **Maven** en proyectos que contienen múltiples módulos, es fundamental configurar correctamente el archivo `pom.xml` del proyecto raíz. Este archivo define la estructura general del proyecto, facilita la organización de los módulos y promueve la reutilización del código.
 
-En esta lección exploraremos cómo configurar un proyecto multi-módulo en Maven, comprenderemos el rol de las **dependencias internas** entre módulos, y aprenderemos a gestionar versiones de manera centralizada mediante un **BOM (Bill of Materials)**.
+En esta lección aprenderás a configurar un proyecto **multi-módulo** en Maven, a comprender el rol de las **dependencias internas** entre módulos y a gestionar versiones de manera centralizada mediante un **BOM (Bill of Materials)**.
 
-Estas prácticas son clave para construir bibliotecas de software modulares, reutilizables y fáciles de mantener.
+Estas prácticas son fundamentales para crear bibliotecas de software modulares, mantenibles y reutilizables.
 
 ## 🛠️ `pom.xml` en proyectos multi-módulo
 
-El archivo `pom.xml` es el núcleo de la configuración en Maven. En un **proyecto multi-módulo**, el `pom.xml` del proyecto raíz se conoce como **POM padre**, y define la estructura general del proyecto. Los submódulos heredan su configuración, lo que permite un manejo centralizado y coherente.
+El archivo `pom.xml` es el núcleo de configuración de Maven. En un **proyecto multi-módulo**, el `pom.xml` ubicado en el directorio raíz actúa como **POM padre** y define la estructura general del proyecto. Este archivo permite centralizar configuraciones y coordinar los distintos submódulos, que heredan su configuración para mantener coherencia y reducir duplicación.
 
-En el caso de nuestro proyecto, comenzamos con un archivo `pom.xml` simple ubicado en el directorio raíz:
+En nuestro caso, comenzamos con un `pom.xml` sencillo en el directorio raíz:
 
 ```xml showLineNumbers title="pom.xml (proyecto raíz)"
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -41,7 +42,7 @@ En el caso de nuestro proyecto, comenzamos con un archivo `pom.xml` simple ubica
     <groupId>com.github.username</groupId>
     <artifactId>echo-app-maven</artifactId>
     <packaging>pom</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>echo-app-maven</name>
 
     <modules>
@@ -52,32 +53,55 @@ En el caso de nuestro proyecto, comenzamos con un archivo `pom.xml` simple ubica
 ```
 
 <Explanation>
-    - **`<packaging>pom</packaging>`** → Indica que este módulo actúa como contenedor y no genera un artefacto Java (como un `.jar` o `.war`) por sí solo.
-    - **`<modules>`** → Define la lista de submódulos del proyecto. Cada entrada debe coincidir con una carpeta relativa ubicada dentro del directorio raíz.
-    - **Herencia de configuración** → Los submódulos heredan configuraciones comunes del `pom.xml` principal, lo que reduce la duplicación y facilita el mantenimiento.
-    - **Compilación en cascada** → Al ejecutar `mvn install` desde el directorio raíz, Maven compila los submódulos en el orden declarado dentro de `<modules>`, respetando las dependencias entre ellos.
+    - **`<packaging>pom</packaging>`** → Indica que este módulo es un contenedor y no genera un artefacto como `.jar` o `.war`.
+    - **`<modules>`** → Lista los submódulos del proyecto. Cada entrada corresponde a un directorio relativo dentro del proyecto raíz.
+    - **Herencia de configuración** → Los submódulos heredan configuraciones comunes del POM principal, lo que simplifica la gestión y evita repeticiones.
+    - **Compilación en cascada** → Al ejecutar `mvn install` desde el directorio raíz, Maven compila los módulos en el orden indicado, respetando sus dependencias internas.
 </Explanation>
 
 ## 📂 Proyectos Multi-Módulo en Maven
 
-En proyectos grandes, concentrar todo el código en un único módulo puede volverse ineficiente, difícil de mantener y poco flexible. Dividir el código en múltiples módulos permite una mejor organización, favorece la reutilización y mejora la escalabilidad del proyecto.
+En proyectos de gran tamaño, concentrar todo el código en un único módulo puede volverse poco escalable, difícil de mantener y propenso a errores. Dividir el código en múltiples módulos permite una mejor organización, facilita la reutilización y mejora la mantenibilidad general del sistema.
 
-A diferencia de otros sistemas de construcción, Maven adopta un enfoque basado en estructura jerárquica:
+A diferencia de otros sistemas de construcción, Maven adopta un enfoque jerárquico y declarativo para estructurar proyectos:
 
-- **Cada módulo tiene su propio `pom.xml`**, donde puede declarar sus propias dependencias y configuraciones específicas.
-- **Los módulos heredan configuraciones del POM padre**, lo que promueve la coherencia y reduce duplicaciones, aunque pueden sobrescribir valores si lo necesitan.
+- **Cada módulo tiene su propio `pom.xml`**, donde define sus dependencias, configuraciones y artefactos de forma independiente.
+- **Los módulos heredan configuración del POM padre**, lo que fomenta la consistencia entre módulos y evita la repetición. Sin embargo, pueden sobrescribir o extender esa configuración si lo necesitan.
 
-### 📌 Estructura de un Proyecto Multi-Módulo en Maven
+### 🔍 Visión general de un proyecto multi-módulo
 
 ```mermaid
-graph TD;
-    root["📂 echo-app (root)"]
-    app["📂 app"]
-    lib["📂 lib"]
+graph TD
+    %% Nodo raíz del proyecto
+    subgraph root["📂 echo-app (raíz)"]
+        rootPom["🧩 pom.xml"]
+        
+        %% Submódulo app
+        subgraph appModule["📁 app"]
+            appPom["🧩 pom.xml"]
+            subgraph appSrc["📁 src"]
+                appMain["📁 main"]
+                appTest["📁 test"]
+            end
+        end
 
-    root --> app
-    root --> lib
-    app --> lib
+        %% Submódulo lib
+        subgraph libModule["📁 lib"]
+            libPom["🧩 pom.xml"]
+            subgraph libSrc["📁 src"]
+                libMain["📁 main"]
+                libTest["📁 test"]
+            end
+        end
+    end
+
+    %% Relaciones entre módulos
+    root --> rootPom
+    root --> appModule
+    root --> libModule
+    appPom -- hereda de --> rootPom
+    libPom -- hereda de --> rootPom
+    appPom -- depende de --> libPom
 ```
 
 :::info Estructura del Proyecto
@@ -100,7 +124,7 @@ Cada submódulo tiene su propio archivo `pom.xml`. Por ejemplo, el módulo `app`
     <parent>
         <groupId>com.github.username</groupId>
         <artifactId>echo-app-maven</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
 
     <artifactId>app</artifactId>
@@ -109,7 +133,7 @@ Cada submódulo tiene su propio archivo `pom.xml`. Por ejemplo, el módulo `app`
         <dependency>
             <groupId>com.github.username</groupId>
             <artifactId>lib</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
     </dependencies>
 </project>
@@ -127,74 +151,140 @@ Cada submódulo tiene su propio archivo `pom.xml`. Por ejemplo, el módulo `app`
 
 ## 🏗️ Gestión de Dependencias en Maven
 
-### 📦 Herencia vs. Dependencias en Multi-Módulo
+### 📦 Herencia vs. Dependencias en Proyectos Multi-Módulo
 
-En Maven, un **módulo puede heredar configuraciones comunes** desde el POM padre mediante la etiqueta `<parent>`, como versiones de plugins, propiedades globales o configuraciones de compilación. Sin embargo, cada módulo debe **declarar explícitamente sus dependencias funcionales** dentro del bloque `<dependencies>`.
+En Maven, un módulo puede **heredar configuraciones comunes** desde el POM raíz (POM padre) usando la etiqueta `<parent>`. Esto permite compartir elementos como versiones de plugins, propiedades globales, perfiles de compilación o configuración de repositorios.
 
-Esto es fundamental para mantener una **independencia clara entre módulos**, y asegurar que cada uno declare con precisión lo que necesita para compilarse y funcionar correctamente.
+Sin embargo, **esta herencia no incluye las dependencias funcionales**. Cada módulo debe declarar de forma **explícita** sus propias dependencias en la sección `<dependencies>`. Esto garantiza que cada módulo:
+
+- Exprese de forma precisa qué necesita para compilarse.
+- Se mantenga **modular y reutilizable**, sin acoplamientos implícitos.
+- Pueda ser compilado o probado de forma aislada si es necesario.
+
+Esta separación clara entre lo que se **hereda** (configuración común) y lo que se **declara** (dependencias funcionales) es esencial para mantener un diseño limpio, escalable y fácil de mantener en proyectos multi-módulo.
 
 ### 🔥 Bill of Materials (BOM)
 
-Maven permite gestionar versiones de dependencias de forma centralizada mediante un **BOM (Bill of Materials)**. Esto se logra a través del bloque `<dependencyManagement>`, que permite **definir versiones comunes sin repetirlas** en cada módulo del proyecto.
+En proyectos multi-módulo, mantener versiones consistentes entre dependencias puede ser un reto. Para resolverlo, Maven permite centralizar la gestión de versiones usando un **BOM (Bill of Materials)**, definido dentro del bloque `<dependencyManagement>` del `pom.xml` raíz.
 
-Este enfoque mejora la consistencia, reduce errores por versiones incompatibles y facilita el mantenimiento de grandes proyectos multi-módulo.
+Este enfoque tiene múltiples beneficios:
 
-Ejemplo de uso de un BOM en el `pom.xml` del proyecto raíz:
+- Asegura **coherencia de versiones** en todo el proyecto.
+- Evita la repetición de versiones en cada submódulo.
+- Reduce el riesgo de errores por versiones incompatibles.
 
-```xml showLineNumbers title="pom.xml (raíz)"
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         https://maven.apache.org/maven-v4_0_0.xsd">
-    <!-- ... -->
-    <dependencyManagement>
+#### 🧩 Ejemplo de BOM en el `pom.xml` raíz:
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```xml showLineNumbers title="pom.xml (raíz)"
+        <dependencyManagement>
+            <dependencies>
+                <dependency>
+                    <groupId>org.junit.jupiter</groupId>
+                    <artifactId>junit-jupiter-api</artifactId>
+                    <version>5.13.0-M2</version>
+                </dependency>
+            </dependencies>
+        </dependencyManagement>
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```xml showLineNumbers title="pom.xml (raíz)"
+        <project xmlns="http://maven.apache.org/POM/4.0.0"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                https://maven.apache.org/maven-v4_0_0.xsd">
+            <modelVersion>4.0.0</modelVersion>
+
+            <groupId>com.github.username</groupId>
+            <artifactId>echo-app-maven</artifactId>
+            <packaging>pom</packaging>
+            <version>1.0.0</version>
+            <name>echo-app-maven</name>
+
+            <modules>
+                <module>lib</module>
+                <module>app</module>
+            </modules>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter</artifactId>
+                        <version>5.13.0-M2</version>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+        </project>
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    - **`<dependencyManagement>`** define un conjunto de dependencias que podrán ser utilizadas por los submódulos sin necesidad de repetir versiones.
+        - Dentro de él, el bloque **`<dependencies>`** actúa como una lista contenedora.
+            - Cada entrada **`<dependency>`** especifica un artefacto y su versión.
+                - **Esto *no* agrega automáticamente esas dependencias a ningún módulo**, solo les ofrece una versión estándar para cuando las necesiten.
+</Explanation>
+
+#### ✅ Cómo se usa en un módulo:
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```xml showLineNumbers title="lib/pom.xml"
+        <parent>
+            <groupId>com.github.username</groupId>
+            <artifactId>echo-app-maven</artifactId>
+            <version>1.0.0</version>
+        </parent>
+        <!-- ... -->
         <dependencies>
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-api</artifactId>
-                <version>5.13.0-M2</version>
+                <artifactId>junit-jupiter</artifactId>
             </dependency>
         </dependencies>
-    </dependencyManagement>
-</project>
-```
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```xml showLineNumbers title="lib/pom.xml"
+        <project xmlns="http://maven.apache.org/POM/4.0.0"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+            <modelVersion>4.0.0</modelVersion>
+
+            <parent>
+                <groupId>com.github.username</groupId>
+                <artifactId>echo-app-maven</artifactId>
+                <version>1.0.0</version>
+            </parent>
+
+            <artifactId>lib</artifactId>
+
+            <dependencies>
+                <dependency>
+                    <groupId>org.junit.jupiter</groupId>
+                    <artifactId>junit-jupiter</artifactId>
+                </dependency>
+            </dependencies>
+        </project>
+        ```
+    </TabItem>
+</BoxedTabs>
 
 <Explanation>
-    - **`<dependencyManagement>`** define versiones comunes de dependencias que pueden ser utilizadas por cualquier módulo hijo.
-    - Esta sección no agrega automáticamente las dependencias al classpath, sino que **actúa como una "fuente de versiones"**: los módulos deben declarar explícitamente qué dependencias usan, pero sin necesidad de repetir la versión.
+    - El bloque `<parent>` le dice a Maven que este módulo (`lib`) hereda la configuración del proyecto raíz (`echo-app-maven`). Gracias a esto, accede al bloque `<dependencyManagement>` definido allí.
+    - En `<dependencies>`, el módulo declara qué bibliotecas necesita. En este caso, usamos `junit-jupiter`, pero **no indicamos su versión**.
+    - Maven buscará la versión correspondiente en el BOM del proyecto raíz. Esto garantiza consistencia entre módulos y evita repetir versiones.
+    - Si olvidaras el bloque `<parent>`, Maven no tendría acceso al `dependencyManagement` del padre, y fallaría al no encontrar la versión.
 </Explanation>
 
-Con esto, podemos **omitir la versión de la dependencia** en los módulos que la utilicen, ya que Maven **buscará la versión en el BOM** del proyecto padre:
+:::warning Omitir el bloque `<parent>`
 
-```xml showLineNumbers title="lib/pom.xml"
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+Si se omite el bloque `<parent>`, el módulo no podrá acceder al BOM, y Maven requerirá que la versión sea especificada manualmente.
 
-    <parent>
-        <groupId>com.github.username</groupId>
-        <artifactId>echo-app-maven</artifactId>
-        <version>1.0-SNAPSHOT</version>
-    </parent>
-
-    <artifactId>lib</artifactId>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <!-- La versión se hereda desde dependencyManagement -->
-        </dependency>
-    </dependencies>
-</project>
-```
-
-<Explanation>
-    - Al declarar el bloque `<parent>`, el módulo `lib` hereda la configuración del proyecto raíz, incluyendo el bloque `<dependencyManagement>`.
-    - Esto permite **usar la dependencia sin declarar su versión**, manteniendo la consistencia y evitando duplicación de información.
-    - Si se omite el bloque `<parent>`, Maven no podrá acceder al BOM del proyecto raíz y mostrará un error al compilar.
-</Explanation>
+:::
 
 ## 📊 Comparación entre Maven y Gradle en Proyectos Multi-Módulo
 
@@ -206,7 +296,6 @@ Con esto, podemos **omitir la versión de la dependencia** en los módulos que l
 | **Compilación incremental**  | No soporta compilación incremental de forma nativa                        | Soporta compilación incremental y paralela                                 |
 | **Flexibilidad**             | Convención sobre configuración; basado en XML rígido                     | Más flexible y expresivo; basado en un DSL declarativo                     |
 | **Ecosistema**               | Amplio soporte en entornos empresariales tradicionales                    | Preferido en proyectos modernos, móviles y de código abierto               |
-
 
 ### ✅ Beneficios / ❌ Limitaciones
 
