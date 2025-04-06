@@ -1,0 +1,327 @@
+---
+title: Ciclos y rangos
+---
+import Exercise from '@site/src/components/exercise/Exercise'
+import ReadingTime from '@site/src/components/ReadingTime'
+import Solution from '@site/src/components/exercise/Solution'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import Hint from '@site/src/components/exercise/Hint'
+import Explanation from '@site/src/components/admonitions/Explanation'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="intro-kt"/>
+
+Repetir acciones es una necesidad común en cualquier programa: desde mostrar una lista de elementos, hasta validar entradas o aplicar una función varias veces.  
+Pero **cómo** lo hacemos importa.
+
+En Kotlin, los ciclos están diseñados para ser **expresivos y seguros**. En esta lección exploraremos las principales formas de iterar: desde bucles `for`, `while` y `do-while`, hasta rangos y la función `repeat`.
+
+También aprenderemos a distinguir entre estructuras que **pueden recorrerse** y aquellas que solo **pueden compararse**, y veremos cómo Kotlin prioriza la legibilidad por sobre la flexibilidad descontrolada.
+
+## 🔁 Declaración `for`
+
+En Kotlin, `for` es una **declaración**, no una expresión.  
+Esto significa que no devuelve ningún valor: se usa **para ejecutar instrucciones** (como imprimir o modificar datos), **no para producir resultados**.
+
+<details>
+    <summary>🧠 ¿Y en otros lenguajes?</summary>
+
+    A diferencia de Kotlin, donde `for` es una **declaración** (no devuelve ningún valor), en otros lenguajes como **Scala**, **Haskell** o **Python**, existen formas de **componer operaciones en estructuras recorribles** que producen resultados.
+
+    #### 📦 Scala (`for` como expresión)
+
+    En Scala, los bucles `for` pueden generar nuevas colecciones usando `yield`:
+
+    ```scala
+    val doubled = for x <- List(1, 2, 3) 
+        yield x * 2
+    // Resultado: List(2, 4, 6)
+    ```
+
+    Esto se conoce como **for-comprehension** y combina map, flatMap y filter de forma declarativa.
+
+    #### 🔢 Haskell (`forM` monádico)
+
+    Haskell no tiene un bucle `for` en el mismo sentido, pero puedes recorrer estructuras con efectos usando funciones como `forM` del módulo `Control.Monad`:
+
+    ```haskell
+    import Control.Monad (forM)
+
+    forM [1..3] (\x -> return (x * 2))
+    -- Resultado (en una mónada pura): [2, 4, 6]
+    ```
+
+    `forM` invierte los argumentos de `mapM` para mayor legibilidad.
+
+    #### 🐍 Python (comprensiones de listas)
+
+    Aunque no es un `for` como tal, las list comprehensions permiten crear nuevas listas basadas en iteraciones:
+
+    ```python
+    [x * 2 for x in range(1, 4)]
+    # Resultado: [2, 4, 6]
+    ```
+
+    También existen **set comprehensions**, **dict comprehensions**, etc.
+
+    ---
+
+    En todos estos lenguajes, existen formas expresivas de recorrer estructuras **y devolver un valor al mismo tiempo**.  
+    En Kotlin, este papel lo cumplen funciones como `map`, `filter` o `fold`, mientras que `for` es una **declaración** destinada a producir efectos colaterales, como imprimir.
+</details>
+
+```kotlin title="Sintaxis básica de un bucle for"
+for (variable in rango) {
+    // cuerpo del ciclo
+}
+```
+
+Las llaves `{}` son opcionales si el cuerpo del ciclo tiene una sola línea, pero es recomendable usarlas para mejorar la legibilidad y evitar errores en el futuro.
+
+A continuación se muestran varios ejemplos válidos:
+
+```kotlin showLineNumbers title="Ejemplos de bucles for, omitimos las llaves {} para simplificar"
+for (i in 1..5) print(i)         // Imprime: 12345 (incluye 5)
+for (i in 5 downTo 1) print(i)   // Imprime: 54321 (cuenta hacia atrás)
+for (i in 1..5 step 2) print(i)  // Imprime: 135 (salta de 2 en 2)
+for (i in 1..<5) print(i)        // Imprime: 1234 (excluye el 5)
+for (i in 1 until 5) print(i)    // Equivalente a 1..<5
+```
+
+<Explanation>
+    - `1..5`: Crea un rango **cerrado**, que incluye el 5.
+    - `5 downTo 1`: Cuenta en reversa.
+    - `step`: Permite cambiar el tamaño del paso (por ejemplo, saltar de 2 en 2).
+    - `..<` y `until`: Crean un rango **semiabierto** que **excluye** el valor superior.
+</Explanation>
+
+También puedes usar rangos con otros tipos de datos, como caracteres:
+
+```kotlin showLineNumbers
+for (c in 'a'..'e') print(c)         // Imprime: abcde
+for (c in 'e' downTo 'a') print(c)   // Imprime: edcba
+```
+
+:::tip Rangos con más que números
+
+Los rangos en Kotlin no se limitan a enteros. Puedes crearlos con **cualquier tipo que implemente `Comparable`**, como `Char`, `String`, `Double`, entre otros.
+
+Esto permite escribir expresiones como:
+
+```kotlin
+'a'..'z'
+"Foo".."Foz"
+1.0..5.0
+```
+
+:::
+
+::::warning ¿Se pueden recorrer con `for`?
+
+No siempre.  
+Aunque muchos tipos pueden formar un rango, **no todos pueden recorrerse en un ciclo `for`**.
+
+Solo tipos como `Int`, `Long` y `Char` implementan lo necesario para que un rango sea también una **secuencia iterable**.  
+En cambio, rangos como `1.0..5.0` (`Double`) o `"Foo".."Foz"` (`String`) **no se pueden usar directamente en un `for`**, porque Kotlin no sabe cómo avanzar de un elemento al siguiente.
+
+:::note ¿Qué valor sigue?
+
+Piénsalo un momento:
+
+- ¿Cuál es el número que sigue después de `1.0`?  
+  ¿`1.1`, `1.01`, `1.000001`, `1 + 1e-100`…?
+- ¿Y qué `String` viene después de `"Foo"`?  
+  ¿`"Fop"`?, ¿`"Fooa"`?, ¿`"Fooq"`?
+
+Estas preguntas **no tienen una única respuesta posible**, por lo tanto Kotlin evita asumir una lógica arbitraria.
+
+:::
+
+Por eso es importante distinguir entre **crear un rango** y **recorrer un rango**.  
+**No todos los rangos son secuencias.**
+
+::::
+
+<details>
+    <summary>💡 ¿Y si quiero recorrer algo distinto?</summary>
+
+    Cualquier estructura que implemente [`Iterable`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-iterable/) puede recorrerse usando `for`.  
+    Esto incluye listas, conjuntos, mapas (usando `entries`), y muchas otras colecciones estándar.
+
+    ```kotlin showLineNumbers
+    val sins = listOf("Lust", "Gluttony", "Envy", "Greed", "Wrath", "Sloth", "Pride")
+    for (sin in sins) println("Homunculus: $sin")
+    ```
+
+    Este fragmento imprime los nombres de los siete homúnculos que representan los **pecados capitales** en *Fullmetal Alchemist*.
+
+    Este comportamiento es posible gracias al **patrón de iterador** (`Iterator`), que veremos más adelante en el curso.
+</details>
+
+## 📏 Verificar si un valor pertenece a un rango
+
+Puedes usar el operador `in` (y su negación `!in`) para saber si un valor está **dentro de un rango**. Este operador devuelve un valor `Boolean`, por lo que se puede usar en condiciones:
+
+```kotlin showLineNumbers
+if (x in 1..10) println("$x is in the range 1 to 10")
+if (x !in 20..30) println("$x is not in the range 20 to 30")
+```
+
+También es útil dentro de expresiones `when`:
+
+```kotlin showLineNumbers
+when (x) {
+    in 1..10 -> println("Está entre 1 y 10")
+    !in 100..200 -> println("Está fuera del rango 100 a 200")
+    else -> println("Caso no contemplado")
+}
+```
+
+Este operador también funciona con otros tipos comparables como caracteres o strings:
+
+```kotlin showLineNumbers
+if (c in 'a'..'z') println("$c es una letra minúscula")
+if (s in "Foo".."Foz") println("$s está entre Foo y Foz")
+```
+
+<details>
+    <summary>🔍 ¿Cómo funciona realmente el operador <code>in</code>?</summary>
+
+    Los operadores `in` y `!in` funcionan no solo con rangos, sino también con muchas estructuras estándar de Kotlin como listas, conjuntos y mapas.
+
+    ```kotlin
+    val songs = listOf("Perfect Day", "Walk on the Wild Side", "Satellite of Love")
+
+    if ("Perfect Day" in songs) {
+        println("🎵 Lou Reed is in the playlist.")
+    }
+    ```
+
+    Esto es posible porque estas colecciones implementan la función `contains`.  
+    El operador `in` es simplemente una forma más legible de escribir `songs.contains("Perfect Day")`.
+
+    :::tip ¿Y si yo quisiera usar `in` con mis propias clases?
+
+    Cualquier tipo que sobrecargue el operador `contains` puede usarse con `in` y `!in`.
+
+    Veremos cómo **sobrecargar operadores** más adelante en el curso. Por ahora, basta con saber que `in` es azúcar sintáctico sobre una función llamada `contains`.
+
+    :::
+</details>
+
+## 🔄 Declaración `while`
+
+En Kotlin, la declaración `while` permite repetir un bloque de código **mientras se cumpla una condición booleana**.  
+Existen dos variantes principales:
+
+```kotlin title="Bucle while"
+while (condición) {
+    // cuerpo del ciclo
+}
+```
+
+- Evalúa la condición **antes** de ejecutar el cuerpo.
+- Si la condición es falsa desde el inicio, el cuerpo **no se ejecuta**.
+
+```kotlin title="Bucle do-while"
+do {
+    // cuerpo del ciclo
+} while (condición)
+```
+
+- Ejecuta el cuerpo **al menos una vez**, y luego evalúa la condición.
+- Útil cuando necesitas realizar una acción inicial antes de verificar si se debe repetir.
+
+<Explanation>
+    Ambos estilos permiten repetir tareas de forma controlada:
+
+    - Usa `while` cuando **la condición debe cumplirse desde el inicio**.
+    - Usa `do-while` cuando **el cuerpo debe ejecutarse al menos una vez**, como cuando se pide una entrada de usuario o se simula un ciclo que siempre ocurre una primera vez.
+</Explanation>
+
+### 🌀 Ejemplo: Soñando dentro de un sueño
+
+```kotlin showLineNumbers
+var level = 0
+val maxLevel = 3
+
+do {
+    println("Entering dream level $level")
+    level++
+} while (level < maxLevel)
+
+println("¡Wake up!")
+```
+
+Este ciclo imprime los niveles de sueño como en *Inception*.  
+Se usa `do-while` porque **entramos al primer sueño sin preguntar**, y luego seguimos bajando hasta alcanzar el nivel deseado.
+
+## 🔂 Función `repeat`
+
+La función `repeat` es una forma concisa de ejecutar un bloque de código un número específico de veces. Su sintaxis es:
+
+```kotlin title="Sintaxis de repeat"
+repeat(n) {
+    // cuerpo del ciclo
+}
+```
+
+Como `repeat` es una **función** y no una declaración de control, también es una **expresión**.  
+Esto significa que puede usarse dentro de otras expresiones o incluso asignarse a una variable.  
+Sin embargo, **su valor de retorno es `Unit`**, por lo que en la práctica no suele ser útil como valor:
+
+```kotlin showLineNumbers
+repeat(3) {
+    println("¡Hello, World!")
+}
+```
+
+Este ejemplo imprimirá `"¡Hello, World!"` tres veces.
+
+<Explanation>
+    `repeat` se utiliza comúnmente para ejecutar un bloque un número fijo de veces cuando no necesitas un índice.  
+    Si sí necesitas un índice (como en `for (i in 0 until n)`), puedes usar la versión con parámetro:
+
+    ```kotlin
+    repeat(3) { i ->
+        println("Iteration $i")
+    }
+    ```
+</Explanation>
+
+## 🎯 Conclusiones
+
+Los ciclos son una herramienta fundamental en cualquier lenguaje de programación, y en Kotlin se presentan de forma concisa, segura y expresiva. En esta lección exploramos las distintas formas de repetir acciones, desde ciclos `for` sobre rangos hasta bucles controlados por condiciones y repeticiones fijas.
+
+También aprendimos a distinguir entre lo que se puede **crear** (como un rango) y lo que se puede **recorrer** (como una secuencia iterable), una diferencia clave que puede evitar errores en programas reales.
+
+### 🔑 Puntos clave
+
+- `for` en Kotlin es una **declaración**, no una expresión. No devuelve un valor.
+- Puedes recorrer rangos con `for` siempre que estos sean **iterables**, como los de `Int`, `Long` o `Char`.
+- Otros tipos como `Double` o `String` pueden formar rangos, pero **no siempre pueden recorrerse**.
+- El operador `in` permite verificar si un valor pertenece a un rango o a una colección.
+- Kotlin incluye dos variantes de ciclo condicional: `while` (evalúa antes) y `do-while` (evalúa después).
+- La función `repeat(n)` es una alternativa concisa para ejecutar un bloque un número fijo de veces.
+
+### 🧰 ¿Qué nos llevamos?
+
+Esta lección fue mucho más que un repaso de bucles: exploramos las distintas formas en que Kotlin nos permite **expresar repetición con claridad y propósito**.
+
+Aprendimos a usar `for`, `while`, `do-while`, `repeat`, y a distinguir entre **rangos recorribles** y aquellos que no lo son.  
+Pero sobre todo, entendimos que escribir ciclos no se trata de iterar por iterar, sino de **elegir la herramienta que mejor comunica la intención del código**.
+
+Esta forma de pensar —priorizar expresividad, claridad y diseño— será fundamental al construir bibliotecas.  
+Porque no basta con que algo funcione: debe ser **legible, predecible y reusable**.
+
+Y eso también se aprende desde los ciclos.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- 🌐 Ranges and progressions | Kotlin. (s. f.). Kotlin Help. Recuperado 5 de abril de 2025, de https://kotlinlang.org/docs/ranges.html
+
+### 🔹 Adicionales
+
+- 📚 Kotlin basics. (2017). En Dmitry Jemerov & Svetlana Isakova, Kotlin in action (pp. 17–43). Manning Publications Co.

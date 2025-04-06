@@ -21,6 +21,7 @@ const sidebars: SidebarsConfig = {
                 'intro/Kotlin',
                 'intro/functions-and-variables',
                 'intro/conditional-expressions',
+                'intro/cycles',
                 'intro/kotlin-language-basics',
                 'intro/introduction',
                 'intro/clean',
@@ -86,7 +87,7 @@ const sidebars: SidebarsConfig = {
                 'build-systems/init/gradle',
                 'build-systems/convention-plugins',
                 'build-systems/global',
-                'build-systems/basic-config/basic-config-gradle',
+                'build-systems/modular-design/basic-config-gradle',
                 'build-systems/app/my-app',
                 {
                     label: 'Tareas',
