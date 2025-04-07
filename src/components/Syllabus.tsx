@@ -10,23 +10,23 @@ type CourseSection = {
 // Course content organized by thematic units
 const sections: CourseSection[] = [
   {
-    title: "Introducción",
+    title: "Fundamentos de tipos y representaciones de datos",
     contents: [
       "Fundamentos del lenguaje de programación",
+      "Tipos algebraicos: producto, suma, combinaciones",
+      "Estructuras recursivas: listas, árboles, expresiones",
+      "Tipos anónimos y estructurales",
       "Null / Void safety",
       "Option, Result y alternativas a null",
-      "Introducción al desarrollo de bibliotecas de software",
-      "Principios de código limpio y mantenible",
-      "Principios de una buena documentación",
-      "Lógica de negocio vs lógica de aplicación",
     ],
   },
   {
     title: "Tipos y estructuras de datos",
     contents: [
-      "Tipos algebraicos: producto, suma, combinaciones",
-      "Estructuras recursivas: listas, árboles, expresiones",
-      "Tipos anónimos y estructurales",
+      "Introducción al desarrollo de bibliotecas de software",
+      "Principios de código limpio y mantenible",
+      "Principios de una buena documentación",
+      "Lógica de negocio vs lógica de aplicación",
       "Diseño de funciones y APIs seguras",
     ],
   },
