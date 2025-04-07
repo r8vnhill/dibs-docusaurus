@@ -32,7 +32,18 @@ const sidebars: SidebarsConfig = {
                         'intro/kotlin/main',
                     ]
                 },
-                'intro/introduction',
+                {
+                    label: 'Kotlin',
+                    type: 'category',
+                    link: {
+                        type: 'doc',
+                        id: 'intro/void-safety/void-safety-intro',
+                    },
+                    items: [
+                        
+                    ]
+                },
+                'intro/intro-libs-software',
                 'intro/clean',
                 'intro/documentation',
                 {

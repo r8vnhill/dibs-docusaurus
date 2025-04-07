@@ -1,0 +1,170 @@
+---
+title: Introducción a Void Safety
+sidebar_label: Void Safety
+---
+
+import ReadingTime from '@site/src/components/ReadingTime'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime />
+
+## 🚫 ¿Qué es "Void Safety"?
+
+Una de las causas más frecuentes de errores en aplicaciones es el uso incorrecto de valores *ausentes* o *nulos*. Este problema ocurre cuando una variable que se espera que contenga una referencia válida en realidad contiene `null`. Al intentar acceder a sus métodos o propiedades, se generan fallos críticos en tiempo de ejecución, como el temido **NullPointerException**.
+
+Este tipo de error es tan común que Tony Hoare, creador del `null` moderno, lo llamó “[el error de mil millones de dólares](https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare/)”.
+
+:::info ¿Por qué es importante la seguridad contra vacíos?
+
+**Void safety** —o *seguridad contra vacíos*— es una propiedad que ofrecen algunos lenguajes para prevenir que referencias nulas o vacías causen fallas en tiempo de ejecución. Esto se logra a través del sistema de tipos, forzando a que quien desarrolla maneje explícitamente los casos en los que un valor puede estar ausente.
+
+:::
+
+En el desarrollo de **bibliotecas de software**, estos errores pueden ser aún más críticos: no solo afectan al código interno, sino que también se propagan hacia quienes consumen la biblioteca. Una API que no gestiona adecuadamente la nulabilidad puede comprometer la estabilidad de múltiples proyectos y generar errores difíciles de diagnosticar.
+
+## 💡 Motivación
+
+El manejo inadecuado de valores *nulos* (o *vacíos*) es una de las causas más frecuentes de errores en tiempo de ejecución. Estos errores son difíciles de detectar, costosos de corregir y pueden comprometer la estabilidad de un sistema completo.
+
+Un ejemplo clásico en Scala:
+
+```scala showLineNumbers
+val name: String = null
+println(name.length) // 🔥 NullPointerException
+```
+
+Puedes probar este código en un compilador en línea, como [Scastie](https://scastie.scala-lang.org).
+
+Aquí, el programa compila sin advertencias, pero falla en tiempo de ejecución. No hay ninguna protección estática que impida acceder a `length` cuando `name` es `null`.
+
+Este riesgo se agrava en sistemas grandes. Y cuando se trata de **bibliotecas de software**, el impacto se multiplica: si una API permite valores nulos sin restricciones, los errores pueden propagarse a todas las aplicaciones que la utilizan.
+
+Por eso, gestionar correctamente la presencia (o ausencia) de valores no es solo una buena práctica: es una necesidad para garantizar **la calidad, previsibilidad y fiabilidad** del software que ofrecemos a otras personas.
+
+El objetivo de *void safety* es justamente ese: **prevenir accesos inválidos a valores vacíos antes de que el programa se ejecute**, ya sea usando el sistema de tipos, verificaciones explícitas o alternativas más seguras a `null`.
+
+<details>
+    <summary>
+        🧠 La teoría de `null` — objetos iniciales y terminales
+    </summary>
+
+    En teoría de categorías, se habla de **objetos iniciales** y **objetos terminales**:
+
+    - Un **objeto inicial** es uno que puede sustituir a cualquier otro valor, pero no puede ser inspeccionado ni utilizado directamente.
+    - Un **objeto terminal** es uno que puede ser el resultado de cualquier operación, pero no se le puede aplicar ninguna otra operación sin fallar.
+
+    `null` en Scala (como en Java) cumple **ambos roles a la vez**, y eso es parte del problema:
+
+    #### 🔄 Como objeto inicial
+
+    Puede asignarse a cualquier variable de tipo referencia:
+
+    ```scala
+    val name: String = null       // se espera un String
+    val items: List[String] = null // se espera una lista
+    ```
+
+    Esto permite que `null` entre al sistema en cualquier punto, incluso donde no tiene sentido.
+
+    #### 🧨 Como objeto terminal
+
+    Muchas funciones pueden devolver `null` si algo sale mal. Pero si olvidas comprobarlo, puedes provocar fallos:
+
+    ```scala
+    def findUsername(): String = null
+
+    val user = findUsername()
+    println(user.toUpperCase()) // 🔥 NullPointerException
+    ```
+
+    Este doble rol hace que `null` sea **peligroso**: se mueve libremente, pero su uso puede causar fallos si no se verifica constantemente.
+
+    #### 📌 ¿Por qué importa?
+
+    En el diseño de bibliotecas, permitir que `null` forme parte de nuestras APIs **obliga a quienes las usan a escribir código defensivo constantemente**. Esto contradice un principio esencial del diseño de software: *haz que lo fácil sea seguro*.
+
+    Por eso, lenguajes como Scala (cuando se usa `Option`), Kotlin, Swift o Rust han adoptado mecanismos que restringen o eliminan el uso libre de `null`, y promueven alternativas más seguras.
+</details>
+
+<details>
+    <summary>🔍 ¿En qué se diferencia `null` de `Unit`, `Nothing` o incluso `Any`?</summary>
+
+    Aunque `null` suele interpretarse como "no hay valor", su uso es ambiguo. Lenguajes con sistemas de tipos expresivos, como Scala o Kotlin, distinguen entre varios conceptos que en otros lenguajes tienden a confundirse bajo `null`.
+
+    | Concepto   | Propósito                                               | Diferencia clave                                              |
+    |------------|----------------------------------------------------------|--------------|
+    | `null`     | Representa ausencia de valor/referencia                  | Valor especial que puede colarse en casi cualquier tipo       |
+    | `Unit`     | Indica que una función no retorna un valor significativo|  Tiene un único valor `()`; representa “nada útil que devolver”|
+    | `Nothing`  | Representa una operación que nunca retorna               | Tipo sin instancias; útil para señales como errores o abortos |
+    | `Any`      | Súper tipo de todos los tipos de valor                   | Se puede recibir desde cualquier tipo — excepto `null`        |
+
+    #### 📌 Desde la teoría de tipos
+
+    Desde la teoría de tipos, podemos clasificar algunos valores especiales según su rol en el sistema de tipos:
+
+    - `Any` es un **tipo terminal**: cualquier valor puede convertirse en `Any`. Es el supertipo de todos los tipos, y se puede operar con él de forma segura (puedes hacer `.toString`, `.hashCode`, etc.).
+    - `Nothing` es un **tipo inicial**: representa una ausencia total de valor. No tiene instancias, pero puede usarse donde se espera cualquier tipo. Es útil para modelar errores o funciones que no retornan.
+    - `null`, en cambio, es un caso peculiar: **se comporta tanto como tipo inicial como tipo terminal**.
+
+    ##### 🔁 ¿Qué significa eso?
+
+    - Como **tipo inicial**, `null` puede ser asignado a cualquier referencia (`String`, `List`, `User`, etc.), actuando como un valor que “cabe en cualquier lado”.
+    - Como **tipo terminal**, `null` puede aparecer como resultado de cualquier operación fallida o incompleta, como una función que no encontró lo que buscaba.
+
+    Pero a diferencia de `Any`, que es seguro de usar, **`null` no es operativo**: cualquier intento de interactuar con él (llamar métodos, acceder a propiedades) produce un error en tiempo de ejecución. 
+
+    ##### ⚠️ El problema
+
+    Esto convierte a `null` en una especie de “**valor polimorfo ilegítimo**”: puede estar en cualquier lugar, pero no puede usarse de forma segura sin verificaciones adicionales.
+
+    Y eso es precisamente lo que lo hace **tan peligroso**: carece de semántica clara, puede infiltrarse en cualquier parte del sistema, y su uso inadvertido puede hacer que un programa falle sin previo aviso.
+
+
+    #### ✅ Ejemplo con `Unit`: operación sin valor relevante
+
+    ```scala
+    def log(msg: String): Unit =
+    println(s"[log] $msg")
+
+    val result = log("Inicio") // retorna (), no indica error
+    ```
+
+    #### 💥 Ejemplo con `Nothing`: aborta la ejecución
+
+    ```scala
+    def fail(): Nothing =
+    throw new Exception("Falló")
+
+    val x = fail() // esta línea nunca retorna
+    ```
+
+    Separar estos conceptos permite expresar **intenciones claras** y escribir código más seguro. `null`, en cambio, rompe esa claridad al actuar como un “comodín tóxico”.
+</details>
+
+## 🔍 ¿Qué abordaremos en esta subunidad?
+
+Esta subunidad está compuesta por dos lecciones breves pero importantes:
+
+1. **Null / Void safety en Kotlin**  
+   Explicaremos cómo Kotlin trata el `null`, qué operadores proporciona (`?.`, `?:`, `!!`, `let`) y cómo el compilador ayuda a evitar errores de nulidad.
+
+2. **Option, Result y alternativas a null**  
+   Exploraremos alternativas más expresivas al `null`, como `Option` y `Result`, que permiten modelar explícitamente la ausencia de valor o los posibles errores sin depender de valores nulos.
+
+<Explanation>
+    Esta subunidad es especialmente importante para quienes diseñan bibliotecas: una buena API no debe obligar a sus usuarixs a adivinar si algo puede ser `null`.  
+    Debe **hacerlo explícito**, ya sea usando el sistema de tipos del lenguaje o proporcionando estructuras más seguras.
+</Explanation>
+
+## 🎯 Objetivos de aprendizaje
+
+Al finalizar esta subunidad, deberías ser capaz de:
+
+- Identificar y evitar errores causados por referencias nulas.
+- Comprender cómo Kotlin implementa void safety a través de su sistema de tipos.
+- Elegir entre usar `null`, `Option`, `Result` u otras alternativas según el caso.
+- Diseñar APIs más seguras y expresivas, minimizando la posibilidad de errores en tiempo de ejecución.
+
+👉 Vamos a comenzar con la primera lección: **Null / Void safety en Kotlin**.
