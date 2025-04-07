@@ -32,20 +32,7 @@ const sidebars: SidebarsConfig = {
                         'intro/kotlin/main',
                     ]
                 },
-                {
-                    label: 'Kotlin',
-                    type: 'category',
-                    link: {
-                        type: 'doc',
-                        id: 'intro/void-safety/void-safety-intro',
-                    },
-                    items: [
-                        
-                    ]
-                },
-                'intro/intro-libs-software',
-                'intro/clean',
-                'intro/documentation',
+                
                 {
                     type: 'category',
                     label: 'Tipos de datos algebráicos',
@@ -69,6 +56,20 @@ const sidebars: SidebarsConfig = {
                         },
                     ],
                 },
+                {
+                    label: 'Void-safety',
+                    type: 'category',
+                    link: {
+                        type: 'doc',
+                        id: 'intro/void-safety/void-safety-intro',
+                    },
+                    items: [
+                        
+                    ]
+                },
+                'intro/intro-libs-software',
+                'intro/clean',
+                'intro/documentation',
             ],
         },
         {
