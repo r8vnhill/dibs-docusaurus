@@ -18,26 +18,23 @@ const sidebars: SidebarsConfig = {
                 id: 'intro/presentation',
             },
             items: [
-                'intro/Kotlin',
-                'intro/kotlin-language-basics',
-                'intro/introduction',
-                'intro/clean',
-                'intro/documentation',
                 {
-                    label: 'Introducción a Kotlin',
+                    label: 'Kotlin',
                     type: 'category',
                     link: {
                         type: 'doc',
-                        id: 'intro/Kotlin',
+                        id: 'intro/kotlin/intro-kotlin',
                     },
                     items: [
-                        'intro/types',
-                        'intro/oop/oop',
-                        'intro/properties/properties-kt',
-                        'intro/void/void-safety',
-                        'intro/exceptions/exceptions-kt',
+                        'intro/kotlin/functions-and-variables',
+                        'intro/kotlin/conditional-expressions',
+                        'intro/kotlin/cycles',
+                        'intro/kotlin/main',
                     ]
                 },
+                'intro/introduction',
+                'intro/clean',
+                'intro/documentation',
                 {
                     type: 'category',
                     label: 'Tipos de datos algebráicos',
@@ -84,7 +81,7 @@ const sidebars: SidebarsConfig = {
                 'build-systems/init/gradle',
                 'build-systems/convention-plugins',
                 'build-systems/global',
-                'build-systems/basic-config/basic-config-gradle',
+                'build-systems/modular-design/basic-config-gradle',
                 'build-systems/app/my-app',
                 {
                     label: 'Tareas',

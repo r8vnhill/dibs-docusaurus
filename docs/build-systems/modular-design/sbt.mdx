@@ -1,0 +1,178 @@
+---
+title: Estructurando Proyectos Multi-Módulo con sbt
+---
+
+import ReadingTime from '@site/src/components/ReadingTime'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import TabItem from '@theme/TabItem'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="echo-app-sbt" />
+
+Antes de que una biblioteca crezca, antes de agregar pruebas o automatizar tareas, es importante estructurar bien el proyecto. Si en la lección anterior aprendiste a crear un proyecto básico con sbt y a ejecutar tu primer programa en Scala 3, esta vez daremos un paso más allá: **separar tu aplicación en módulos**.
+
+En esta lección aprenderás a organizar un proyecto multi-módulo utilizando sbt, una práctica esencial para el desarrollo de bibliotecas reutilizables y aplicaciones escalables. A través de un ejemplo simple pero completo, veremos cómo:
+
+- Definir múltiples subproyectos (`lib` y `app`) dentro de un mismo `build.sbt`.
+- Compartir configuraciones comunes entre módulos.
+- Reutilizar lógica definida en un módulo desde otro.
+- Ejecutar un subproyecto específico desde la línea de comandos.
+
+Este enfoque modular te permitirá escribir código más limpio, reutilizable y fácil de mantener. Lo que empieza como un proyecto simple, puede convertirse en una base sólida para bibliotecas profesionales.  
+Vamos paso a paso hacia una arquitectura que escala.
+
+## 🧱 Paso 1: Declarar los módulos del proyecto
+
+Para transformar nuestro proyecto en una estructura multi-módulo, comenzamos por definir sus componentes principales dentro del archivo `build.sbt` raíz:
+
+```scala title="build.sbt"
+val scala3Version = "3.6.4"
+
+lazy val commonSettings = Seq(
+    scalaVersion := scala3Version
+)
+
+lazy val lib = project
+  .in(file("lib"))
+  .settings(commonSettings *)
+
+lazy val app = project
+  .in(file("app"))
+  .dependsOn(lib)
+  .settings(commonSettings *)
+```
+
+<Explanation>
+    En este paso transformamos nuestro proyecto en una **estructura multi-módulo**, lo que nos permite separar responsabilidades entre distintos componentes (por ejemplo, una biblioteca reutilizable y una aplicación principal).
+
+    - Primero definimos `scala3Version` como una variable para centralizar la versión del compilador.
+    - Luego creamos una lista llamada `commonSettings` que contiene configuraciones compartidas, como `scalaVersion`.
+    - A continuación declaramos dos módulos (`lib` y `app`) usando `lazy val`:
+        - `lib` se encuentra en el subdirectorio `lib/` y recibe las configuraciones comunes.
+        - `app` se encuentra en `app/`, también hereda las configuraciones comunes y depende explícitamente de `lib` usando `.dependsOn(lib)`.
+
+    Usamos **`lazy val`** porque `sbt` necesita construir la estructura del proyecto de forma perezosa (lazy): permite que las referencias entre proyectos (como `app.dependsOn(lib)`) se resuelvan sin problemas incluso si aún no se han evaluado por completo.  
+    Esto evita errores de orden de inicialización y permite que `sbt` maneje correctamente las dependencias entre módulos.
+</Explanation>
+
+Esta estructura modular es especialmente útil en proyectos de bibliotecas, ya que permite mantener el código reutilizable separado del código específico de una aplicación o herramienta.
+
+:::tip Limpieza de la estructura inicial
+
+Puedes eliminar el directorio `src/` que se creó automáticamente en la raíz del proyecto.  
+En una arquitectura multi-módulo como la que estamos construyendo, la lógica del programa y las pruebas estarán organizadas en subdirectorios específicos, como `lib/` y `app/`.
+
+Esto ayuda a evitar confusiones y asegura que todo el código esté correctamente encapsulado en sus respectivos módulos.
+
+:::
+
+
+## 📦 Paso 2: Crear un módulo de biblioteca
+
+Ahora que declaramos el subproyecto `lib`, podemos comenzar a escribir código reutilizable en su interior. A continuación, definimos una función simple que devolverá el mismo mensaje que recibe:
+
+```scala title="lib/src/main/scala/com/github/username/echo/echoMessage.scala" showLineNumbers
+package com.github.username
+package echo
+
+def echoMessage(message: String): String = message
+```
+
+<Explanation>
+    En este archivo definimos un **módulo reutilizable** que forma parte del subproyecto `lib`.
+
+    - El paquete base `com.github.username.echo` sigue la convención de dominios invertidos y refleja la ubicación física del archivo.
+    - La función `echoMessage` es una función pura que simplemente devuelve el mensaje recibido. Aunque es trivial, nos servirá como punto de partida para probar la integración entre módulos más adelante.
+
+    Este módulo no contiene lógica compleja, pero ilustra cómo empezar a construir una biblioteca **modular y reutilizable**.
+</Explanation>
+
+## 🚀 Paso 3: Crear el módulo de aplicación
+
+Ahora que tenemos una biblioteca reutilizable en `lib`, creamos el subproyecto `app`, encargado de ejecutar la lógica principal del programa. Esta aplicación imprimirá en consola los mensajes recibidos como argumentos, usando la función `echoMessage` definida previamente.
+
+```scala title="app/src/main/scala/com/github/username/echo/app.scala" showLineNumbers
+package com.github.username
+package echo
+
+@main def app(args: String*): Unit =
+  for arg <- args do
+    println(echoMessage(arg))
+```
+
+<Explanation>
+    Esta es la **aplicación principal** del proyecto. Su objetivo es consumir la biblioteca definida en el módulo `lib`.
+
+    - El `@main` marca el punto de entrada de la aplicación. Scala 3 permite declarar funciones de entrada sin necesidad de una clase o `object`.
+    - Recibimos argumentos de línea de comandos como un `String*` (varargs), y los recorremos con un bucle `for`.
+    - Cada argumento se imprime usando la función `echoMessage` que definimos en el módulo de biblioteca.
+</Explanation>
+
+Este ejemplo demuestra cómo integrar distintos módulos en un proyecto multi-módulo con sbt, separando claramente la lógica reutilizable de la lógica de ejecución.
+
+## 🧪 Paso 4: Ejecutar la aplicación
+
+Con ambos módulos ya configurados y conectados, podemos ejecutar nuestra aplicación `app` desde la raíz del proyecto para probar que la integración funciona correctamente.
+
+```bash
+sbt "app/run Alex Dim Nah Dim"
+```
+
+Deberías ver una salida como la siguiente:
+
+```plaintext
+Alex
+Dim
+Nah
+Dim
+```
+
+<Explanation>
+    En este paso utilizamos el comando `sbt` seguido de `"app/run"` para indicar que queremos ejecutar el módulo `app`.  
+    Pasamos como argumentos una serie de nombres inspirados en los personajes de *A Clockwork Orange*, que serán procesados por nuestra función `echoMessage`.
+
+    - `sbt` reconoce `"app/run"` como una instrucción para compilar y ejecutar el subproyecto `app`.
+    - Los argumentos posteriores (`Alex Dim Nah Dim`) son pasados directamente a la función `@main` que definimos en el archivo `app.scala`.
+    - Cada uno se imprime individualmente, demostrando que el programa funciona correctamente y que la comunicación entre módulos está activa.
+</Explanation>
+
+Este paso nos permite verificar no solo la funcionalidad del programa, sino también la correcta **organización del proyecto y resolución de dependencias** entre los módulos `app` y `lib`.
+
+## 🎯 Conclusiones
+
+Dividir un proyecto en múltiples módulos no solo ayuda a organizar mejor el código, sino que sienta las bases para desarrollar software más escalable, reutilizable y fácil de mantener.  
+En esta lección aprendimos a estructurar un proyecto multi-módulo en sbt, separando la lógica principal de una aplicación de consola (`app`) de una biblioteca reutilizable (`lib`), todo dentro de una configuración común y coherente.
+
+Además, exploramos cómo ejecutar la aplicación con argumentos personalizados, lo que nos permitió verificar la comunicación entre los módulos y tener un primer vistazo al diseño modular en acción.
+
+### 🔑 Puntos clave
+
+- sbt permite declarar múltiples subproyectos en un solo archivo `build.sbt`, usando `lazy val`.
+- Usar `commonSettings` ayuda a mantener consistencia entre módulos y facilita la configuración global.
+- El uso de `.dependsOn(...)` permite conectar módulos y compartir funcionalidades entre ellos.
+- Scala 3 permite definir funciones de entrada con `@main`, simplificando la estructura del programa.
+- Ejecutar un subproyecto requiere usar `"nombreModulo/run"` dentro del comando `sbt`.
+
+### 🧰 ¿Qué nos llevamos?
+
+Esta lección no solo nos enseñó cómo configurar un proyecto multi-módulo, sino por qué vale la pena hacerlo desde el comienzo.  
+Aprendimos a modularizar nuestra base de código para poder escalarla con claridad, separando responsabilidades y evitando acoplamientos innecesarios.
+
+Ahora contamos con una estructura sólida para:
+
+- Añadir más funcionalidades a la biblioteca (`lib`) sin afectar directamente la aplicación (`app`).
+- Reutilizar esa misma biblioteca en otros proyectos si lo necesitamos.
+- Incorporar más módulos en el futuro, como pruebas, documentación o herramientas internas.
+
+Empezamos con un simple "echo" y terminamos con una arquitectura preparada para crecer.  
+En el desarrollo de bibliotecas, esta capacidad de modularizar desde el principio es un paso esencial hacia proyectos profesionales, sostenibles y colaborativos.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- 🌐 sbt Reference Manual—Multi-project builds. (s. f.). Recuperado 5 de abril de 2025, de https://www.scala-sbt.org/1.x/docs/Multi-Project.html
+
+{/* ### 🔹 Adicionales */}

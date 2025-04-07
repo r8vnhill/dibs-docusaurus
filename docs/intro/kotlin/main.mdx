@@ -1,0 +1,172 @@
+---
+title: Punto de entrada
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoClone from '@site/src/components/admonitions/RepoClone'
+import AnimatedCodeExample from '@site/src/components/animations/AnimatedCode'
+
+<ReadingTime />
+
+Antes de construir bibliotecas reutilizables, necesitamos comprender cómo se ejecuta un programa en Kotlin. Aunque en este curso nos enfocaremos en el diseño de componentes modulares y reutilizables, saber cómo funciona el punto de entrada —la función `main`— es esencial para realizar pruebas rápidas, crear ejemplos ilustrativos y escribir pequeñas utilidades auxiliares.
+
+En esta lección exploraremos cómo se define y ejecuta un programa Kotlin desde la línea de comandos. Aprenderemos a imprimir mensajes en la consola, a recibir argumentos desde la terminal, y a usar Gradle para compilar y ejecutar nuestros programas.  
+Todo esto nos permitirá establecer una base sólida para experimentar con el lenguaje y documentar nuestras bibliotecas de forma interactiva.
+
+## 🚪 Función `main`
+
+La función `main` es el **punto de entrada** de cualquier programa ejecutable en Kotlin. A continuación, presentamos un ejemplo simple inspirado en una galaxia muy, muy lejana:
+
+```kotlin showLineNumbers title="app/src/main/kotlin/com/github/username/app.kt"
+package com.github.username
+
+fun main() {
+    val message = """
+        Hello there.
+        General Kenobi!
+        You are a bold one.
+    """.trimIndent()
+
+    println(message)
+}
+```
+
+<Explanation>
+    Este programa imprime un mensaje multilínea en la consola utilizando `println`.  
+    - **`message`** se define como un bloque de texto (string con triple comillas `"""`) que conserva los saltos de línea.  
+    - El método `trimIndent()` elimina cualquier indentación innecesaria al comienzo de cada línea.  
+    - Finalmente, `println(message)` imprime el mensaje completo seguido de un salto de línea.  
+    Es una forma elegante de mostrar texto multilínea en Kotlin, ideal para ejemplos, banners o diálogos épicos.
+</Explanation>
+
+Aunque el enfoque de este curso está en el **desarrollo de bibliotecas de software**, es importante comprender el rol de la función `main`, ya que nos servirá para construir ejemplos ilustrativos y ejecutar pequeños experimentos.  
+Su uso será menos frecuente a medida que adoptemos **pruebas automatizadas** como estrategia principal para verificar el comportamiento de nuestros componentes.
+
+<details>
+    <summary>`println` como expresión</summary>
+
+    En Kotlin, `println` es una función que retorna un valor de tipo `Unit`, lo que significa que puede usarse como **una expresión**, no solo como una instrucción.
+
+    Gracias a esto, podemos escribir la función `main` de forma más concisa utilizando la sintaxis de expresión única:
+
+    ```kotlin showLineNumbers
+    fun main() = println("Hello, World!")
+    ```
+
+    Aunque esta forma es perfectamente válida, **no es tan común** en la práctica para funciones `main`, ya que suele preferirse la forma tradicional con bloques explícitos. Aun así, es útil saber que esta sintaxis es posible y puede resultar conveniente para programas simples o ejemplos breves.
+</details>
+
+:::note `println` y `print`
+
+El nombre `println` proviene de *"print line"*, y su comportamiento refleja justamente eso: **imprime el texto seguido de un salto de línea**. En cambio, la función `print` **imprime el texto tal cual**, sin agregar un salto de línea al final. Esto las hace útiles en contextos distintos, según si deseas continuar la salida en la misma línea o en una nueva.
+
+Por ejemplo:
+
+```kotlin showLineNumbers
+for (i in 1..5) {
+    print(i) // Imprime: 12345
+    println(i) // Imprime: 1, 2, 3, 4, 5 (cada número en una nueva línea)
+}
+```
+
+Esto hace que `println("Texto")` sea equivalente a `print("Texto\n")`.
+
+:::
+
+## ▶️ Ejecutando el programa
+
+Para ejecutar la aplicación desde la terminal usando Gradle, puedes utilizar el siguiente comando:
+
+```bash
+./gradlew :app:run
+```
+
+La salida debería ser similar a esta:
+
+```plaintext
+> Task :app:run
+Hello there.
+General Kenobi!
+You are a bold one.
+```
+
+Este comando compila el proyecto (si es necesario) y ejecuta la función `main` definida en el módulo `app`.
+
+## 🧳 Función `main` con argumentos de línea de comandos
+
+La función `main` también puede recibir **argumentos externos** al momento de ejecutar el programa. Esto permite modificar su comportamiento según los valores proporcionados en la terminal.
+
+A continuación se muestra un ejemplo simple:
+
+```kotlin showLineNumbers
+fun main(args: Array<String>) {
+    println("Welcome to Fabletown, ${args.joinToString(" ")}!")
+}
+```
+
+<Explanation>
+    Este programa recibe argumentos desde la línea de comandos y los utiliza para personalizar el mensaje de bienvenida.
+
+    - **`args: Array<String>`** es el parámetro que recibe la función `main`. Contiene los valores que se pasan al ejecutar el programa desde la terminal.
+    - **`joinToString(" ")`** concatena todos los elementos del arreglo `args`, separándolos con un espacio. Esto permite capturar nombres completos u otros argumentos con varias palabras.
+    - Finalmente, **`println(...)`** imprime el saludo con los argumentos interpolados directamente dentro de la cadena de texto.
+
+    Esta forma de uso es más robusta que acceder solo a `args[0]`, ya que evita errores si se pasan múltiples palabras o si falta un argumento.
+</Explanation>
+
+### 🚀 ¿Cómo ejecutar este programa?
+
+Desde la raíz del proyecto, puedes pasar argumentos a la función `main` utilizando el plugin `application` de Gradle:
+
+```bash
+./gradlew :app:run --args="Snow White"
+```
+
+📦 **Salida esperada**:
+
+```plaintext
+> Task :app:run
+Welcome to Fabletown, Snow White!
+```
+
+## 🎯 Conclusiones
+
+En esta lección exploramos el **punto de entrada de los programas en Kotlin**: la función `main`. Vimos cómo se utiliza para ejecutar pequeños programas y cómo puede recibir argumentos desde la línea de comandos, lo que permite adaptar el comportamiento del programa en tiempo de ejecución.
+
+También repasamos funciones básicas como `print` y `println`, aprendimos a imprimir mensajes en la consola con formato e indentación, y comprendimos cómo ejecutar nuestra aplicación con Gradle, tanto con como sin argumentos.
+
+### 🔑 Puntos clave
+
+- La función `main` es el punto de partida para cualquier programa ejecutable en Kotlin.
+- `println` imprime texto con un salto de línea; `print` no.
+- Kotlin permite definir `main` como una **expresión única** cuando solo contiene una línea.
+- `main` puede recibir argumentos (`args: Array<String>`) desde la terminal.
+- Usar `joinToString(" ")` sobre `args` permite capturar múltiples palabras sin errores.
+- Podemos ejecutar la aplicación y pasarle argumentos usando `./gradlew :app:run --args="..."`.
+
+### 🧰 ¿Qué nos llevamos?
+
+Aunque el desarrollo de bibliotecas no gira en torno a la función `main`, entender cómo funcionan los **programas ejecutables**, cómo se imprime información, y cómo se reciben argumentos, **nos da herramientas clave para construir ejemplos, depurar código, o crear utilidades auxiliares**.
+
+Esta lección nos permitió poner en práctica muchos de los elementos básicos del lenguaje, como el manejo de strings, funciones y ejecución desde la terminal. A medida que avancemos, usaremos `main` con menos frecuencia, ya que adoptaremos **pruebas automatizadas** como método principal para validar nuestras bibliotecas. Sin embargo, todo lo aprendido aquí seguirá siendo útil para construir pequeños experimentos, utilidades de desarrollo y documentación ejecutable.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- 🌐 Hello world | Kotlin. (2025, enero 25). Kotlin Help. https://kotlinlang.org/docs/kotlin-tour-hello-world.html
+
+### 🔹 Adicionales
+
+- 📚 Hello, World! (2020). En Bruce Eckel & Svetlana Isakova, Atomic Kotlin (pp. 26–28). Leanpub.

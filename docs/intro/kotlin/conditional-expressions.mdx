@@ -1,0 +1,280 @@
+---
+title: Expresiones condicionales
+---
+import Exercise from '@site/src/components/exercise/Exercise'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import Solution from '@site/src/components/exercise/Solution'
+import ReadingTime from '@site/src/components/ReadingTime'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="intro-kt"/>
+
+Las estructuras condicionales son uno de los pilares del control de flujo en cualquier lenguaje de programación. Sin embargo, **Kotlin ofrece una mirada distinta y más expresiva**, al permitir que las condiciones —como `if` y `when`— sean no solo declaraciones, sino **expresiones** que devuelven valores.
+
+Este enfoque abre la puerta a un estilo más conciso, más declarativo y más alineado con la escritura de funciones puras y reutilizables. En esta lección, aprenderemos a **distinguir entre declaraciones y expresiones condicionales**, y a sacar provecho de la expresividad que ofrece Kotlin para construir funciones más limpias y mantenibles.
+
+Además, exploraremos el uso idiomático de `when`, una alternativa poderosa a múltiples `if` anidados, y discutiremos sus diferencias frente al *pattern matching* presente en otros lenguajes como Scala o Rust.
+
+## 🔀 Expresión `if`
+
+En Kotlin, `if` puede usarse como una **expresión** que retorna un valor, no solo como una declaración de control como en otros lenguajes imperativos.
+
+```kotlin showLineNumbers title="if como expresión (app/src/main/kotlin/cl/ravenhill/math/maxOf.kt)"
+fun maxOf(a: Int, b: Int) = if (a > b) a else b
+```
+
+Esta capacidad permite escribir funciones de forma más concisa y expresiva.
+
+También puedes usarlo como declaración cuando no necesitas que devuelva un valor:
+
+```kotlin showLineNumbers title="if como declaración (app/src/main/kotlin/cl/ravenhill/user/login.kt)"
+if (isLoggedIn) {
+    println("Welcome back!")
+} else {
+    println("Please sign in.")
+}
+```
+
+:::danger Sin `else`, no hay valor
+
+Cuando usas `if` como expresión, **debes incluir un bloque `else`**. Si no lo haces, el compilador no podrá inferir qué valor devolver.
+
+```kotlin
+val result = if (x > 0) "Positive" // ❌ Error: falta `else`
+```
+
+:::
+
+:::info Llaves en `if`: ¿cuándo son necesarias?
+
+- Si el bloque `if` o `else` contiene **más de una línea**, **las llaves `{}` son obligatorias**.
+- Si contiene **una sola expresión**, puedes omitirlas, aunque **es recomendable incluirlas** para mejorar la legibilidad y evitar errores sutiles al extender el código más adelante.
+- Cuando `if` se usa como **expresión** (es decir, devuelve un valor), **el bloque se reduce al valor de la última línea dentro de las llaves `{}`**.
+
+```kotlin
+val result = if (x > 0)
+    "positivo"
+else
+    "negativo"
+```
+
+Este bloque es una **expresión**: su valor será `"positivo"` o `"negativo"`, dependiendo de la condición. Si se usan llaves, **la última línea ejecutada dentro de cada rama será el valor de la expresión**:
+
+```kotlin
+val result = if (x > 0) {
+    println("Evaluando...")
+    "positivo"
+} else {
+    println("Evaluando...")
+    "negativo"
+}
+```
+
+:::
+
+## 🎛️ Expresión `when`
+
+La expresión `when` en Kotlin es una alternativa más concisa, segura y expresiva a múltiples estructuras `if-else if`. Además, **devuelve un valor**, lo que la convierte en una herramienta versátil para el control de flujo.
+
+```kotlin showLineNumbers title="when con argumento"
+when (status) {
+    200, 201, 204 -> "Success"
+    400 -> "Bad Request"
+    404 -> "Not Found"
+    500 -> "Internal Server Error"
+    "timeout" -> "The request timed out"
+    is Int -> "Unhandled status code: $status"
+    !is String -> "Unknown type"
+    else -> "Unhandled string: $status"
+}
+```
+
+<Explanation>
+    - **`when (status)`** evalúa el valor de `status` y lo compara contra distintos casos.
+    - **Se pueden agrupar múltiples valores** en una sola rama usando comas, como en `200, 201, 204 ->`.
+    - También permite **verificaciones de tipo** como `is Int` o `!is String`.
+    - **`else`** actúa como caso por defecto y es obligatorio si no se cubren todos los posibles valores.
+    - Al ser una **expresión**, `when` puede usarse directamente en asignaciones o como valor de retorno.
+</Explanation>
+
+<details>
+    <summary>Diferencias con <code>switch</code> en otros lenguajes</summary>
+
+    A diferencia de estructuras como `switch` en C, Java o JavaScript, **Kotlin no permite que la ejecución "caiga" (fall-through) a la siguiente rama**.  
+    **No es necesario usar `break`** para detener la ejecución tras una coincidencia.
+
+    Esto elimina una fuente común de errores, como se ve en este ejemplo en Java:
+
+    ```java title="Java"
+    switch (status) {
+        case 200:
+            System.out.println("Success");
+        case 400:
+            System.out.println("Bad Request");
+    }
+    ```
+
+    Si `status` es `200`, el programa imprimirá:
+
+    ```
+    Success
+    Bad Request
+    ```
+
+    Esto ocurre porque **sin `break`**, el control sigue ejecutando los siguientes casos, incluso si no coinciden.  
+    Este comportamiento se llama *fall-through*.
+
+    En Kotlin, esto no puede ocurrir:
+
+    ```kotlin title="Kotlin"
+    when (status) {
+        200 -> println("Success")
+        400 -> println("Bad Request")
+    }
+    ```
+
+    Si `status` es `200`, solo se imprimirá:
+
+    ```
+    Success
+    ```
+
+    Cada rama en `when` es **independiente y cerrada**, lo que hace que el flujo de control sea **más predecible, seguro y fácil de leer**.
+</details>
+
+:::tip También se puede usar sin argumento
+
+Puedes omitir el valor entre paréntesis para evaluar condiciones arbitrarias, similar a un bloque `if-else if`:
+
+```kotlin showLineNumbers title="when sin argumento (app/src/main/kotlin/cl/ravenhill/weather/temperature.kt)"
+when {
+    temperature < 0 -> "Below freezing"
+    temperature <= 15 -> "Cold"
+    temperature <= 25 -> "Mild"
+    temperature <= 35 -> "Warm"
+    else -> "Hot"
+}
+```
+
+:::
+
+:::info Uso de llaves `{}` en `when`
+
+En Kotlin, **las llaves `{}` dentro de una rama de `when` son necesarias** cuando se quiere ejecutar **más de una instrucción** en esa rama:
+
+```kotlin
+val message = when (code) {
+    404 -> {
+        println("Not Found")
+        logError(code)
+        "Not Found" // 👈 Esta es la expresión final, se devuelve como resultado
+    }
+    else -> "Unhandled"
+}
+```
+
+Si la rama contiene **solo una expresión**, puedes omitir las llaves:
+
+```kotlin
+val message = when (code) {
+    404 -> "Not Found" // ✅ sin llaves
+    else -> "Other"
+}
+```
+
+✅ **Cuando usas `when` como expresión**, la rama debe terminar en un valor:  
+- Si usas llaves, **la última línea** del bloque es la que se utiliza como resultado.  
+- Si no usas llaves, la expresión directamente se usa como resultado.
+
+Esto se aplica tanto si usas `when` como expresión (que retorna un valor), como si lo usas como bloque de control (sin valor de retorno).
+
+:::
+
+:::warning Diferencias con pattern matching real
+    
+Aunque `when` se parece al **pattern matching** de Scala o Rust, tiene algunas limitaciones:
+
+- No soporta destructuring directo (como `case (a, b)`).
+- No permite patrones anidados ni coincidencias estructurales complejas.
+- **Las condiciones tipo `case x if cond` existen**, pero son **experimentales** (requieren habilitar `-Xwhen-guards`) y no están activadas por defecto.
+    ```kotlin
+    // Requiere: -Xwhen-guards
+    when (animal) {
+        is Dog -> feedDog()
+        is Cat if !animal.mouseHunter -> feedCat()
+        else if animal.eatsPlants -> giveLettuce()
+        else -> println("Unknown animal")
+    }
+    ```
+
+:::
+
+### 🔁 Ejercicio: Reescribir usando `when`
+
+<Exercise>
+    Reescribe la función `login` utilizando una expresión `when`.
+
+    ```kotlin showLineNumbers
+    fun login(username: String, password: String): Boolean {
+        if (loginAttempts >= maxLoginAttempts) {
+            return false
+        }
+        if (isValidPassword(password)) {
+            loginAttempts = 0
+            return true
+        }
+        loginAttempts++
+        return false
+    }
+    ```
+
+    <Solution>
+        ```kotlin showLineNumbers
+        fun login(username: String, password: String): Boolean = when {
+            loginAttempts >= maxLoginAttempts -> false
+            isValidPassword(password) -> {
+                loginAttempts = 0
+                true
+            }
+            else -> {
+                loginAttempts++
+                false
+            }
+        }
+        ```
+    </Solution>
+</Exercise>
+
+## 🎯 Conclusiones
+
+Kotlin transforma estructuras condicionales clásicas como `if` y `switch` en expresiones versátiles que devuelven valores. Esto permite escribir código más expresivo, conciso y seguro, especialmente en funciones puras y construcciones declarativas.
+
+Tanto `if` como `when` pueden usarse como **expresiones** o **declaraciones**, pero cuando se usan como expresiones, **devuelven un valor** y se comportan de forma más predecible. Esta distinción es clave para comprender el estilo idiomático de Kotlin.
+
+### 🔑 Puntos clave
+
+- Kotlin permite usar `if` y `when` como **expresiones que devuelven un valor**, no solo como declaraciones de control.
+- Cuando `if` se usa como expresión, el bloque `else` es obligatorio.
+- En expresiones con llaves `{}`, el valor devuelto será el de **la última línea evaluada** del bloque.
+- La expresión `when` es una alternativa poderosa a múltiples `if-else if`, y admite comprobación de tipo, valores múltiples y evaluación sin argumento.
+- Las llaves son necesarias en `when` si se ejecutan **varias instrucciones** en una rama.
+- Aunque `when` se asemeja al **pattern matching**, no soporta patrones estructurales ni destructuring directo como en Scala o Rust.
+
+### 🧰 ¿Qué nos llevamos?
+
+Las expresiones condicionales en Kotlin nos invitan a repensar estructuras que en otros lenguajes suelen ser puramente imperativas. Aquí, `if` y `when` no solo controlan el flujo: también **producen valores**, lo que nos permite escribir funciones más limpias, más breves y más expresivas.
+
+Este cambio de perspectiva —ver las condiciones no solo como instrucciones, sino como **expresiones evaluables**— es una puerta de entrada a un estilo de programación más declarativo, más funcional, y más alineado con el diseño de bibliotecas reutilizables.
+
+Entender estas diferencias nos prepara para abordar con mayor claridad temas como lambdas, funciones puras y expresiones de control más complejas. A partir de ahora, podremos decidir con más intención cuándo usar una expresión, cuándo usar una declaración, y cómo escribir código que comunique mejor nuestras ideas.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- 🌐 Conditions and loops | Kotlin. (s. f.). Kotlin Help. Recuperado 5 de abril de 2025, de https://kotlinlang.org/docs/control-flow.html
+
+### 🔹 Adicionales
+
+- 📚 Kotlin basics. (2017). En Dmitry Jemerov & Svetlana Isakova, Kotlin in action (pp. 17–43). Manning Publications Co.
