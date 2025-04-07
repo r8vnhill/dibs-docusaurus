@@ -11,7 +11,7 @@ const sidebars: SidebarsConfig = {
             id: 'installation',
         },
         {
-            label: 'Unidad 1: Introducción',
+            label: 'Unidad 1: Fundamentos de tipos y representaciones de datos',
             type: 'category',
             link: {
                 type: 'doc',
