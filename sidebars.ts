@@ -38,7 +38,7 @@ const sidebars: SidebarsConfig = {
                     label: 'Tipos de datos algebráicos',
                     link: {
                         type: 'doc',
-                        id: 'intro/algebraic-data-types/index',
+                        id: 'intro/algebraic-data-types/adt-overview',
                     },
                     items: [
                         'fp/adt/product',
