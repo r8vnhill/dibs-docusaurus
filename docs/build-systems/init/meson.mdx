@@ -1,0 +1,154 @@
+---
+title: Creando un Proyecto Básico en C con Meson
+---
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import TabItem from '@theme/TabItem'
+
+## Paso -1: Instalar un compilador C moderno
+
+Para compilar código en C, necesitamos un compilador. En este curso usaremos **Clang**, un compilador moderno basado en el proyecto **LLVM**.
+
+[LLVM](https://llvm.org/) es una infraestructura de compilación modular y extensible. Proporciona herramientas para análisis, optimización y generación de código para distintos lenguajes de programación. Gracias a su diseño flexible, es ideal para desarrollar bibliotecas reutilizables y portables.
+
+[Clang](https://clang.llvm.org/) es el compilador de C, C++ y Objective-C desarrollado dentro de LLVM. Se destaca por:
+
+- Tener mensajes de error **claros y precisos**.
+- Ofrecer un excelente soporte **multiplataforma**.
+- Integrarse con herramientas modernas de análisis y construcción.
+
+A continuación, se muestran las instrucciones para instalar Clang según tu sistema operativo:
+
+<BoxedTabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        scoop install llvm
+        ```
+    </TabItem>
+    <TabItem value="macOS" label="macOS">
+        ```bash
+        xcode-select --install
+        ```
+    </TabItem>
+    <TabItem value="Linux" label="Linux">
+        ```bash
+        echo "🔄 Actualizando lista de paquetes..." && \
+        sudo apt update && \
+        echo "📦 Instalando Clang..." && \
+        sudo apt install -y clang
+        ```
+    </TabItem>
+</BoxedTabs>
+
+### ✅ Verificar la instalación
+
+```bash
+clang --version && clang++ --version
+```
+
+Esto asegura que tu entorno esté listo para compilar código C y C++ usando Clang. Meson detectará automáticamente `clang` como compilador, pero si quieres forzarlo, puedes indicarlo en un archivo de configuración personalizado (opcional, lo veremos más adelante).
+
+## Paso 0: Instalar Meson y Ninja
+
+[Meson](https://mesonbuild.com/) es un sistema de construcción moderno diseñado para ser **rápido**, **fácil de configurar** y **portátil**. Se enfoca en facilitar la creación de proyectos en C, C++, Rust y otros lenguajes compilados, promoviendo buenas prácticas y mantenibilidad.
+
+[Ninja](https://ninja-build.org/) es una herramienta de construcción de bajo nivel que **ejecuta las tareas** generadas por sistemas como Meson o CMake. Su principal ventaja es la **velocidad**: Ninja está optimizado para compilar solo lo estrictamente necesario.
+
+Usar Meson y Ninja en el desarrollo de bibliotecas permite:
+
+- Configurar proyectos de forma **declarativa**.
+- Automatizar la **compilación cruzada**.
+- Generar artefactos intermedios como **documentación o pruebas**.
+- Mantener una estructura de archivos **limpia y predecible**.
+
+<BoxedTabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        scoop install meson ninja
+        ```
+    </TabItem>
+    <TabItem value="Mac" label="Mac">
+        ```bash
+        brew install meson ninja
+        ```
+    </TabItem>
+    <TabItem value="Linux" label="Linux">
+        
+        ```bash
+        echo "🔄 Actualizando lista de paquetes..." && \
+        sudo apt update && \
+        echo "📦 Instalando Meson y Ninja..." && \
+        sudo apt install -y meson ninja-build
+        ```
+    </TabItem>
+</BoxedTabs>
+
+### ✅ Verificar la instalación
+
+```bash
+meson --version && ninja --version
+```
+
+## Paso 1: Crear la estructura inicial del proyecto
+
+Antes de escribir código, necesitamos una estructura mínima para que Meson pueda configurar y compilar el proyecto.
+
+Supongamos que queremos crear una aplicación `echo-app-meson-c` que imprima un mensaje en la consola.
+
+### 📁 Crear el directorio y archivos iniciales
+
+```bash
+mkdir hello && cd hello
+mkdir src
+touch meson.build src/hello.c src/meson.build
+```
+
+Tu estructura de archivos debe verse así:
+
+```
+hello/
+├── meson.build
+└── src/
+    ├── hello.c
+    └── meson.build
+```
+
+### 🧱 Archivo raíz `meson.build`
+
+El archivo raíz le dice a Meson que se trata de un proyecto, qué lenguaje usará y dónde están los archivos fuente:
+
+```meson
+project('hello', 'c')
+subdir('src')
+```
+
+### ⚙️ Archivo `src/meson.build`
+
+Aquí indicamos cómo construir nuestra biblioteca:
+
+```meson
+hello_sources = files('hello.c')
+libhello = library('hello', hello_sources,
+  install: true)
+```
+
+Este archivo:
+
+- Define los archivos fuente (`hello.c`).
+- Crea una biblioteca llamada `libhello`.
+- Indica que debe instalarse cuando ejecutemos `meson install`.
+
+### 🧪 Archivo `src/hello.c`
+
+Como ejemplo simple:
+
+```c
+#include <stdio.h>
+
+void say_hello(void) {
+    printf("Hello from Meson!\n");
+}
+```
+
+Con esto, tienes un proyecto de C funcional con una biblioteca lista para compilar.
+
+En el siguiente paso, aprenderemos a configurar el entorno de construcción y compilar el proyecto por primera vez con `meson setup` y `ninja`.

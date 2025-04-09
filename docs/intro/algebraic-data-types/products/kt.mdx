@@ -1,0 +1,267 @@
+---
+title: Tipos Producto
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import References from '@site/src/components/ReferencesComponent'
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import Exercise from '@site/src/components/exercise/Exercise'
+import Solution from '@site/src/components/exercise/Solution'
+import Hint from '@site/src/components/exercise/Hint'
+import Definition from '@site/src/components/Definition'
+import Corollary from '@site/src/components/Corollary'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import { LanguageCard } from '@site/src/components/cards/LanguageCard'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import ModuleSetup from '@site/src/components/cajitas/ModuleSetup'
+import Explanation from '@site/src/components/admonitions/Explanation'
+
+<ReadingTime />
+
+## 🧱 ¿Qué son los tipos producto?
+
+Los **tipos producto** son una de las construcciones fundamentales de los **tipos de datos algebraicos** (ADTs). Su nombre proviene del álgebra: si un tipo $A$ tiene $|A|$ valores posibles y otro tipo $B$ tiene $|B|$, entonces el tipo compuesto $A \times B$ puede representar $|A| \cdot |B|$ combinaciones. En programación, esto se traduce en estructuras que **agrupan múltiples valores simultáneamente**.
+
+Por ejemplo, para representar la posición de un personaje en un juego, podrías declarar dos variables:
+
+```kotlin
+val x = 10
+val y = 5
+```
+
+Pero nada garantiza que se usen juntas de manera coherente. Una mejor opción es combinarlas en un solo valor:
+
+```kotlin
+val position = Pair(10, 5)
+```
+
+Este `Pair` es un **tipo producto**: un valor que representa dos datos a la vez, con tipos potencialmente distintos.
+
+En Kotlin, puedes construir un `Pair` de dos formas equivalentes:
+
+```kotlin
+val pair1 = Pair(1, true)
+val pair2 = 1 to true
+```
+
+Ambas expresiones crean un `Pair<Int, Boolean>`, con un espacio total de representaciones igual a:
+
+$$
+|\text{Int} \times \text{Boolean}| = 2^{32} \cdot 2 = 2^{33}
+$$
+
+Los tipos producto no solo aportan claridad semántica, sino que **incrementan el espacio de representación** de forma multiplicativa. Son ideales para modelar coordenadas, rangos, dimensiones, configuraciones y cualquier estructura donde varios valores estén lógicamente conectados.
+
+## 📦 Representaciones básicas: `Triple` y tuplas
+
+Kotlin incluye tipos producto simples listos para usar, como `Pair<A, B>` y `Triple<A, B, C>`:
+
+```kotlin
+val dimensions = Triple(1920, 1080, 60)
+val resolution = "${dimensions.first}x${dimensions.second}@${dimensions.third}Hz"
+```
+
+Estos tipos son útiles para valores temporales o resultados intermedios. Sin embargo, **no son recomendables para estructuras con significado semántico claro**, ya que sus campos se acceden con nombres genéricos (`first`, `second`, `third`), lo que reduce la legibilidad del código.
+
+Aunque Kotlin no tiene un sistema general de tuplas como otros lenguajes funcionales, cualquier clase con múltiples propiedades puede actuar como una tupla nombrada. Incluso podrías anidar `Pair`s para simular tuplas más grandes:
+
+```kotlin
+val nested = Pair("A", Pair("B", "C"))  // equivalente a una triple tupla
+```
+
+Pero esta práctica se vuelve rápidamente ilegible. En su lugar, Kotlin ofrece una alternativa más robusta: **las clases y `data class`**, que permiten nombrar explícitamente cada campo y aprovechar funcionalidades como igualdad estructural, desestructuración y generación automática de métodos.
+
+## 🏗️ Clases comunes como tipos producto
+
+Además de estructuras como `Pair` y `Triple`, Kotlin permite definir **tipos producto personalizados** usando clases. Una clase con múltiples propiedades representa un tipo que contiene simultáneamente un valor por cada campo: esa es precisamente la definición de un **tipo producto**.
+
+Por ejemplo, para representar la posición de un personaje en un juego:
+
+```kotlin
+class Position(val x: Int, val y: Int)
+```
+
+Este tipo modela directamente el producto $ \text{Int} \times \text{Int} $, agrupando ambos valores en una sola entidad:
+
+```kotlin
+val pos = Position(10, 5)
+println(pos.x)  // 10
+println(pos.y)  // 5
+```
+
+::::tip Instanciación sin `new`
+
+En Kotlin, **no se utiliza la palabra clave `new`** para crear objetos. Basta con llamar al constructor como si fuera una función:
+
+```kotlin title="Kotlin"
+val hunter = DemonHunter("Dante", "Rebellion")
+```
+
+Esto hace que la sintaxis sea más limpia y coherente con la idea de que una clase también puede comportarse como una función.
+
+En contraste, lenguajes como **Java**, **C#** o **C++** requieren la palabra clave `new` para instanciar clases:
+
+```java title="Java"
+final var hunter = new DemonHunter("Dante", "Rebellion");
+```
+
+:::note `final var` en Java
+
+En Java, `var` permite **inferir el tipo** de la variable, mientras que `final` impide que la referencia sea **reasignada** después de su inicialización.  
+Esto es similar al uso de `val` en Kotlin, que también declara una **referencia inmutable**.
+
+Ten en cuenta que esta inmutabilidad **no es profunda**: si el objeto es mutable, su contenido aún puede cambiar.
+
+:::
+
+Este cambio puede parecer sutil, pero refleja el enfoque de Kotlin hacia una sintaxis más **concisa**, **expresiva** y **funcionalmente inspirada**, donde la creación de objetos no requiere ruido adicional como `new`.
+
+::::
+
+A diferencia de `Pair`, una clase permite **nombrar claramente los campos** y agregar **comportamiento adicional**:
+
+```kotlin
+class Position(val x: Int, val y: Int) {
+    fun isOrigin(): Boolean = x == 0 && y == 0
+}
+```
+
+Esto permite encapsular tanto datos como operaciones relevantes al dominio, mejorando la expresividad y mantenibilidad.
+
+## 🧱 Constructores primarios y secundarios
+
+Kotlin ofrece dos mecanismos para construir objetos: el **constructor primario** y los **constructores secundarios**. Ambos se pueden usar para inicializar tipos producto con distintos niveles de control.
+
+### 🔹 Constructor primario
+
+Se declara directamente junto al encabezado de la clase, ideal para inicializar propiedades de forma concisa:
+
+```kotlin showLineNumbers
+class Person(val name: String, var age: Int)
+```
+
+Cuando necesitas lógica adicional durante la construcción, puedes usar un bloque `init`:
+
+```kotlin showLineNumbers
+class Person(val name: String, var age: Int) {
+    init {
+        require(age >= 0) { "Age must be non-negative" }
+    }
+}
+```
+
+:::note `require`, `check` y `error`
+
+- `require(...)`: valida argumentos de entrada. Lanza `IllegalArgumentException`.
+- `check(...)`: valida el estado del objeto. Lanza `IllegalStateException`.
+- `error(...)`: lanza incondicionalmente un `IllegalStateException`.
+
+Utilizar la función adecuada mejora la claridad y precisión de los errores.
+
+:::
+
+### 🔹 Constructor secundario
+
+Los **constructores secundarios** permiten definir múltiples formas de crear una instancia. Se usan dentro del cuerpo de la clase y deben delegar al constructor primario con `this(...)`.
+
+```kotlin showLineNumbers
+class Person(val name: String) {
+    var age: Int = 0
+
+    constructor(name: String, age: Int) : this(name) {
+        this.age = age
+    }
+}
+```
+
+Son útiles cuando:
+
+- Se necesita interoperabilidad con Java.
+- Se requieren múltiples caminos de inicialización.
+- Se aplica herencia con lógica de construcción específica.
+
+:::tip Parámetros por defecto
+
+En Kotlin, los **parámetros por defecto** suelen eliminar la necesidad de constructores secundarios:
+
+```kotlin showLineNumbers
+class Person(val name: String, var age: Int = 0)
+```
+
+Esta versión es más idiomática y concisa.
+
+:::
+
+## 🧱 Representaciones semánticas: `data class`
+
+Cuando un tipo producto tiene **significado propio dentro del dominio del problema**, Kotlin ofrece una herramienta específica y expresiva: la `data class`. Estas clases están pensadas para modelar estructuras de datos donde lo importante son los **valores contenidos**, no su identidad u operaciones complejas.
+
+```kotlin title="Ejemplo básico"
+data class Position(val x: Int, val y: Int)
+
+val current = Position(10, 5)
+val next = current.copy(y = 6)
+```
+
+Esta clase `Position` representa el producto $\text{Int} \times \text{Int}$, pero con nombres explícitos y propósito claro, lo que mejora la **legibilidad**, **seguridad** y **mantenibilidad** del código.
+
+### ⚙️ ¿Qué ofrece una `data class`?
+
+Al declarar una clase con el modificador `data`, Kotlin genera automáticamente varias funciones útiles:
+
+- `equals()` y `hashCode()` → comparación estructural y soporte para estructuras como `Set` y `Map`.
+- `toString()` → representación legible que incluye nombre de clase y valores.
+- `copy()` → creación de una nueva instancia modificando uno o más campos.
+- `componentN()` → soporte para desestructuración.
+
+Esto permite representar tipos producto de forma concisa y segura, como en este ejemplo:
+
+```kotlin title="Modelo de datos"
+data class Person(val name: String, val age: Int)
+
+val original = Person("Trish", 30)
+val updated = original.copy(age = 31)
+println(updated) // Person(name=Trish, age=31)
+```
+
+### 🔍 Equivalencia con una clase común
+
+Para comprender cuánto trabajo ahorra una `data class`, aquí está la versión equivalente usando una clase normal:
+
+```kotlin
+class Person(val name: String, val age: Int) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+        other as Person
+        return name == other.name && age == other.age
+    }
+
+    override fun hashCode(): Int {
+        var result = name.hashCode()
+        result = 31 * result + age
+        return result
+    }
+
+    override fun toString() = "Person(name='$name', age=$age)"
+
+    fun copy(name: String = this.name, age: Int = this.age) = Person(name, age)
+
+    operator fun component1() = name
+    operator fun component2() = age
+}
+```
+
+Además de reducir el código, `data class` transmite inmediatamente la intención de que esa clase representa **un conjunto de datos inmutable por defecto**, y no una entidad con lógica compleja.
+
+### 🧠 Cuándo usar `data class`
+
+Usa `data class` siempre que necesites:
+
+- Representar **datos estructurados** con un significado claro.
+- Comparar instancias por contenido, no por identidad.
+- Aprovechar funciones como `copy` o la desestructuración de objetos.
+- Reducir el código repetitivo al modelar estructuras simples.
+
+En resumen, `data class` es la forma idiomática en Kotlin de declarar tipos producto **ricos en significado**, claros y reutilizables —una herramienta clave en el diseño de bibliotecas bien estructuradas.

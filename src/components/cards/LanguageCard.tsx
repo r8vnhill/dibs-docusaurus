@@ -200,3 +200,7 @@ export const RubyCard = createCard(
   "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Ruby_logo.svg/240px-Ruby_logo.svg.png",
   "Ruby"
 );
+export const MesonCard = createCard(
+  "https://slaptijack.com/images/logos/meson.png",
+  "Multilenguaje: Meson"
+)
