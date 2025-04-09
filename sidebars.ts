@@ -41,7 +41,7 @@ const sidebars: SidebarsConfig = {
                         id: 'intro/algebraic-data-types/index',
                     },
                     items: [
-                        'fp/adt/product',
+                        'intro/algebraic-data-types/product-types-overview/kt',
                         {
                             type: 'category',
                             label: 'Tipos suma',

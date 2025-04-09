@@ -113,12 +113,6 @@ Una **clase** es un plano que define las propiedades y comportamientos de los ob
     En este ejemplo, `Person` es una **clase** que modela personajes inspirados en *Blue Velvet*. Cada instancia de `Person` tiene un nombre distinto, y la función `greet()` genera un saludo que evoca una de las frases más memorables de la película: *"It's a strange world."*
 
     A diferencia de un `object`, aquí se crean múltiples instancias de `Person`, cada una con su propio estado. Esto demuestra cómo las clases permiten representar diferentes objetos con la misma estructura pero con datos particulares, una idea central en la **Programación Orientada a Objetos**.
-
-    :::tip Instanciación sin `new`
-
-    A diferencia de lenguajes como Java o C#, Kotlin **no utiliza la palabra clave `new`** para crear objetos. Simplemente se llama al constructor como si fuera una función, lo que contribuye a una sintaxis más limpia y concisa.
-
-    :::
 </Explanation>
 
 ## 🐺 Interfaces
@@ -319,79 +313,6 @@ fun main() {
 :::warning Package-Private
 
 En Kotlin no existe el concepto de **package-private** como en Java o Scala. Esta decisión se tomó para evitar ambigüedades: en estos lenguajes, es posible que una clase externa acceda a miembros *supuestamente privados* si está en el mismo paquete, lo cual puede romper la encapsulación. Kotlin opta por no incluir esta opción para fomentar una separación más segura.
-
-:::
-
-## 🏗️ Constructores Primarios y Secundarios en Kotlin
-
-Kotlin ofrece dos formas de inicializar clases: **constructores primarios**, que se definen junto al encabezado de la clase, y **constructores secundarios**, que permiten más flexibilidad cuando se requieren múltiples formas de construir un objeto.
-
-### 🧱 Constructor Primario
-
-El **constructor primario** se declara directamente en la cabecera de la clase y permite inicializar propiedades de forma concisa.
-
-```kotlin showLineNumbers
-class Person(val name: String, var age: Int)
-```
-
-- Ideal cuando deseas declarar e inicializar propiedades de manera directa.
-- No permite incluir directamente lógica adicional, pero puedes usar un bloque `init` para ejecutar instrucciones extra al momento de construir la instancia.
-
-#### 🔍 Uso de `init`
-
-Si necesitas validar o ejecutar lógica durante la construcción, puedes usar un bloque `init`:
-
-```kotlin showLineNumbers
-class Person(val name: String, var age: Int) {
-    init {
-        require(age >= 0) { "Age must be non-negative" }
-    }
-}
-```
-
-Este bloque se ejecuta inmediatamente después de que se evalúan los parámetros del constructor primario.
-
-:::note `require` vs `check` vs `error`
-
-Estas funciones permiten validar condiciones y lanzar excepciones de forma concisa, pero su uso recomendado depende del contexto:
-
-- `require: (Boolean, () -> Any) -> Unit`: se usa para validar **argumentos** de una función. Lanza una `IllegalArgumentException` si la condición no se cumple.
-- `check: (Boolean, () -> Any) -> Unit`: se usa para validar **el estado interno** del programa. Lanza una `IllegalStateException` si la condición no se cumple.
-- `error: (Any) -> Unit`: lanza **incondicionalmente** una `IllegalStateException`. Es útil para marcar rutas de ejecución que no deberían ocurrir.
-
-Usar la función adecuada según el contexto mejora la legibilidad del código y facilita el diagnóstico de errores.
-
-:::
-
-### 🛠️ Constructor Secundario
-
-Un **constructor secundario** se define dentro del cuerpo de la clase y permite incluir lógica adicional. Se invoca al constructor primario mediante `this(...)`.
-
-```kotlin showLineNumbers
-class Person(val name: String) {
-    var age: Int = 0
-
-    constructor(name: String, age: Int) : this(name) {
-        this.age = age
-    }
-}
-```
-
-Los constructores secundarios son útiles cuando necesitas más de una forma de construir la instancia, por ejemplo:
-
-- Al interoperar con Java (donde los parámetros por defecto no están disponibles).
-- Cuando necesitas delegar a otro constructor con lógica adicional.
-- En algunos patrones con herencia.
-
-:::tip Parámetros por defecto
-
-En la mayoría de los casos, los constructores secundarios no son necesarios gracias a los **parámetros por defecto** en Kotlin. Esta característica permite definir valores opcionales para los argumentos, eliminando la necesidad de múltiples constructores.
-
-Gracias a esta característica, el ejemplo anterior se puede simplificar a:
-
-```kotlin showLineNumbers
-class Person(val name: String, var age: Int = 0)
-```
 
 :::
 
