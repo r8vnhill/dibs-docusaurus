@@ -1,0 +1,162 @@
+---
+title: Tipos producto como clases
+sidebar_label: Clases
+---
+import ReadingTime from '@site/src/components/ReadingTime'
+
+<ReadingTime />
+
+En lecciones anteriores vimos que los **tipos producto** nos permiten representar múltiples valores de forma conjunta, y cómo estructuras como `Pair` y `Triple` ofrecen una solución rápida para ello. Sin embargo, estas opciones genéricas no son ideales cuando necesitamos expresar con claridad la intención de nuestros datos, especialmente al diseñar bibliotecas reutilizables.
+
+En esta lección aprenderemos cómo **las clases comunes en Kotlin** nos permiten definir tipos producto más expresivos, nombrando explícitamente cada campo y encapsulando operaciones relevantes. Veremos cómo se declaran, cómo funcionan los **constructores primarios y secundarios**, y por qué resultan esenciales para construir tipos que no solo agrupen datos, sino que **comuniquen propósito**.
+
+Este enfoque nos prepara para usar técnicas más avanzadas y idiomáticas, como las `data class`, que estudiaremos en la próxima lección.
+
+## 🏗️ Clases comunes como tipos producto
+
+Además de estructuras como `Pair` y `Triple`, Kotlin permite definir **tipos producto personalizados** usando clases. Una clase con múltiples propiedades representa un tipo que contiene simultáneamente un valor por cada campo: esa es precisamente la definición de un **tipo producto**.
+
+Por ejemplo, para representar la posición de un personaje en un juego:
+
+```kotlin
+class Position(val x: Int, val y: Int)
+```
+
+Este tipo modela directamente el producto $ \text{Int} \times \text{Int} $, agrupando ambos valores en una sola entidad:
+
+```kotlin
+val pos = Position(10, 5)
+println(pos.x)  // 10
+println(pos.y)  // 5
+```
+
+::::tip Instanciación sin `new`
+
+En Kotlin, **no se utiliza la palabra clave `new`** para crear objetos. Basta con llamar al constructor como si fuera una función:
+
+```kotlin title="Kotlin"
+val hunter = DemonHunter("Dante", "Rebellion")
+```
+
+Esto hace que la sintaxis sea más limpia y coherente con la idea de que una clase también puede comportarse como una función.
+
+En contraste, lenguajes como **Java**, **C#** o **C++** requieren la palabra clave `new` para instanciar clases:
+
+```java title="Java"
+final var hunter = new DemonHunter("Dante", "Rebellion");
+```
+
+:::note `final var` en Java
+
+En Java, `var` permite **inferir el tipo** de la variable, mientras que `final` impide que la referencia sea **reasignada** después de su inicialización.  
+Esto es similar al uso de `val` en Kotlin, que también declara una **referencia inmutable**.
+
+Ten en cuenta que esta inmutabilidad **no es profunda**: si el objeto es mutable, su contenido aún puede cambiar.
+
+:::
+
+Este cambio puede parecer sutil, pero refleja el enfoque de Kotlin hacia una sintaxis más **concisa**, **expresiva** y **funcionalmente inspirada**, donde la creación de objetos no requiere ruido adicional como `new`.
+
+::::
+
+A diferencia de `Pair`, una clase permite **nombrar claramente los campos** y agregar **comportamiento adicional**:
+
+```kotlin
+class Position(val x: Int, val y: Int) {
+    fun isOrigin(): Boolean = x == 0 && y == 0
+}
+```
+
+Esto permite encapsular tanto datos como operaciones relevantes al dominio, mejorando la expresividad y mantenibilidad.
+
+## 🧱 Constructores primarios y secundarios
+
+Kotlin ofrece dos mecanismos para construir objetos: el **constructor primario** y los **constructores secundarios**. Ambos se pueden usar para inicializar tipos producto con distintos niveles de control.
+
+### 🔹 Constructor primario
+
+Se declara directamente junto al encabezado de la clase, ideal para inicializar propiedades de forma concisa:
+
+```kotlin showLineNumbers
+class Person(val name: String, var age: Int)
+```
+
+Cuando necesitas lógica adicional durante la construcción, puedes usar un bloque `init`:
+
+```kotlin showLineNumbers
+class Person(val name: String, var age: Int) {
+    init {
+        require(age >= 0) { "Age must be non-negative" }
+    }
+}
+```
+
+:::note `require`, `check` y `error`
+
+- `require(...)`: valida argumentos de entrada. Lanza `IllegalArgumentException`.
+- `check(...)`: valida el estado del objeto. Lanza `IllegalStateException`.
+- `error(...)`: lanza incondicionalmente un `IllegalStateException`.
+
+Utilizar la función adecuada mejora la claridad y precisión de los errores.
+
+:::
+
+### 🔹 Constructor secundario
+
+Los **constructores secundarios** permiten definir múltiples formas de crear una instancia. Se usan dentro del cuerpo de la clase y deben delegar al constructor primario con `this(...)`.
+
+```kotlin showLineNumbers
+class Person(val name: String) {
+    var age: Int = 0
+
+    constructor(name: String, age: Int) : this(name) {
+        this.age = age
+    }
+}
+```
+
+Son útiles cuando:
+
+- Se necesita interoperabilidad con Java.
+- Se requieren múltiples caminos de inicialización.
+- Se aplica herencia con lógica de construcción específica.
+
+:::tip Parámetros por defecto
+
+En Kotlin, los **parámetros por defecto** suelen eliminar la necesidad de constructores secundarios:
+
+```kotlin showLineNumbers
+class Person(val name: String, var age: Int = 0)
+```
+
+Esta versión es más idiomática y concisa.
+
+:::
+
+## 🎯 Conclusiones
+
+A lo largo de esta lección exploramos cómo las **clases comunes** en Kotlin pueden representar tipos producto, es decir, estructuras que agrupan múltiples valores en una única unidad coherente. A diferencia de tipos genéricos como `Pair` o `Triple`, las clases permiten **nombrar cada campo**, **encapsular lógica relevante** y **estructurar el dominio del problema de forma clara y extensible**.
+
+También vimos cómo Kotlin facilita la construcción de estas clases mediante **constructores primarios** y **bloques `init`**, y ofrece mecanismos adicionales como **constructores secundarios** y **parámetros por defecto** para adaptarse a distintos escenarios.
+
+### 🔑 Puntos clave
+
+- Una **clase común** que declara varias propiedades representa un **tipo producto**: un valor que contiene simultáneamente un valor por cada campo.
+- Kotlin permite instanciar objetos sin usar `new`, lo que mejora la **concisión y legibilidad**.
+- El **constructor primario** es la forma idiomática de inicializar clases. Los **bloques `init`** permiten incluir validaciones o lógica adicional.
+- Los **constructores secundarios** son útiles en casos especiales, pero a menudo pueden reemplazarse por **parámetros con valores por defecto**.
+- Las clases permiten encapsular tanto datos como comportamiento, lo que no es posible con estructuras genéricas como `Pair`.
+
+### 🧰 ¿Qué nos llevamos?
+
+Entender cómo usar clases comunes como tipos producto es un paso esencial para construir **tipos seguros, expresivos y reutilizables** en Kotlin. Esta capacidad es especialmente importante en el diseño de bibliotecas, donde cada tipo que definimos forma parte del contrato con quienes las consumen.
+
+Al preferir clases con nombres significativos y estructuras claras, no solo escribimos mejor código: también **facilitamos su comprensión, prueba, documentación y evolución**. En las siguientes lecciones exploraremos cómo **las `data class` llevan estos principios aún más lejos**, automatizando la generación de comportamientos comunes como igualdad, copia y desestructuración.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- 🌐 Classes | Kotlin. (s. f.). Kotlin Help. Recuperado 9 de abril de 2025, de https://kotlinlang.org/docs/classes.html
+
+{/* ### 🔹 Adicionales */}
