@@ -3,6 +3,8 @@ title: Tipos producto como clases
 sidebar_label: Clases
 ---
 import ReadingTime from '@site/src/components/ReadingTime'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import TabItem from '@theme/TabItem'
 
 <ReadingTime />
 
@@ -71,19 +73,35 @@ Esto permite encapsular tanto datos como operaciones relevantes al dominio, mejo
 
 ## 🧱 Constructores primarios y secundarios
 
-Kotlin ofrece dos mecanismos para construir objetos: el **constructor primario** y los **constructores secundarios**. Ambos se pueden usar para inicializar tipos producto con distintos niveles de control.
+En Kotlin, una clase puede tener **un constructor primario** y **uno o más constructores secundarios**. El constructor primario se declara directamente en el encabezado de la clase, y es la forma idiomática de inicializar sus propiedades.
 
 ### 🔹 Constructor primario
 
-Se declara directamente junto al encabezado de la clase, ideal para inicializar propiedades de forma concisa:
+El constructor primario se escribe después del nombre de la clase. Si no contiene anotaciones ni modificadores de visibilidad, la palabra clave `constructor` puede omitirse:
 
-```kotlin showLineNumbers
+```kotlin
 class Person(val name: String, var age: Int)
 ```
 
-Cuando necesitas lógica adicional durante la construcción, puedes usar un bloque `init`:
+Si el constructor necesita una **anotación** (como `@Inject`) o un **modificador de visibilidad** (como `private`, `protected` o `internal`), entonces **es obligatorio usar la palabra clave `constructor`**:
 
-```kotlin showLineNumbers
+```kotlin
+class Person @Inject internal constructor(val name: String)
+```
+
+Esto es común cuando se utilizan frameworks de **inyección de dependencias** como [Dagger](https://dagger.dev/), [Koin](https://insert-koin.io/) o [Hilt](https://developer.android.com/training/dependency-injection/hilt-android), que requieren anotar los constructores para que el sistema pueda crearlos automáticamente.
+
+:::info `internal` en Kotlin
+
+El modificador `internal` restringe el uso del constructor a **dentro del mismo módulo**. Aunque aún no hemos visto qué es un módulo (lo exploraremos más adelante en la unidad sobre *build systems*), puedes pensar en él como una **unidad de compilación separada**, como una biblioteca o subproyecto.
+
+Este modificador es especialmente útil al diseñar bibliotecas: permite que una clase sea visible para quienes la usan, pero **controla desde dónde puede instanciarse**, evitando usos indebidos fuera del contexto esperado.
+
+:::
+
+Cuando se requiere ejecutar lógica adicional al crear la instancia, se utilizan **bloques `init`** dentro del cuerpo de la clase:
+
+```kotlin
 class Person(val name: String, var age: Int) {
     init {
         require(age >= 0) { "Age must be non-negative" }
@@ -91,19 +109,23 @@ class Person(val name: String, var age: Int) {
 }
 ```
 
+El bloque `init` se ejecuta justo después de la evaluación de los argumentos del constructor. Se pueden tener múltiples bloques `init`, y se ejecutan en orden de aparición.
+
 :::note `require`, `check` y `error`
 
-- `require(...)`: valida argumentos de entrada. Lanza `IllegalArgumentException`.
-- `check(...)`: valida el estado del objeto. Lanza `IllegalStateException`.
-- `error(...)`: lanza incondicionalmente un `IllegalStateException`.
+- `require(...)` valida argumentos de entrada. Lanza `IllegalArgumentException`.
+- `check(...)` valida el estado interno del objeto. Lanza `IllegalStateException`.
+- `error(...)` lanza incondicionalmente un `IllegalStateException`.
 
-Utilizar la función adecuada mejora la claridad y precisión de los errores.
+Estas funciones ayudan a capturar errores temprano con mensajes claros y específicos.
 
 :::
 
+En Kotlin, el encabezado de la clase **no puede contener código ejecutable**. Por eso, toda la lógica de inicialización debe colocarse en bloques `init`, lo cual favorece una estructura más limpia y clara.
+
 ### 🔹 Constructor secundario
 
-Los **constructores secundarios** permiten definir múltiples formas de crear una instancia. Se usan dentro del cuerpo de la clase y deben delegar al constructor primario con `this(...)`.
+Los **constructores secundarios** permiten definir múltiples formas de crear una instancia. Se usan dentro del cuerpo de la clase y deben **delegar obligatoriamente al constructor primario** utilizando `this(...)`:
 
 ```kotlin showLineNumbers
 class Person(val name: String) {
@@ -115,6 +137,8 @@ class Person(val name: String) {
 }
 ```
 
+Esta delegación debe hacerse **como parte de la cabecera del constructor**, no dentro de su cuerpo. Esto garantiza que **el constructor primario sea siempre invocado primero**, lo que elimina ambigüedades en la inicialización del objeto.
+
 Son útiles cuando:
 
 - Se necesita interoperabilidad con Java.
@@ -123,15 +147,111 @@ Son útiles cuando:
 
 :::tip Parámetros por defecto
 
-En Kotlin, los **parámetros por defecto** suelen eliminar la necesidad de constructores secundarios:
+En Kotlin, los **parámetros con valores por defecto** suelen eliminar la necesidad de constructores secundarios:
 
 ```kotlin showLineNumbers
 class Person(val name: String, var age: Int = 0)
 ```
 
-Esta versión es más idiomática y concisa.
+Esta versión es más idiomática, más concisa y más fácil de mantener.
 
 :::
+
+#### 🔍 Diferencia importante
+
+En lenguajes como **Java** y **Swift**, la llamada a otro constructor con `this(...)` (o su equivalente) es una **instrucción dentro del cuerpo del constructor**, no parte de su definición. En cambio, en Kotlin, la delegación al constructor primario **se declara en la cabecera del constructor secundario**, lo que **obliga a que ocurra primero**, sin excepciones.
+
+<details>
+    <summary>🔍 ¿Por qué importa esta diferencia?</summary>
+
+    En muchos lenguajes como **Java**, **Swift** o **Objective-C**, la delegación a otro constructor (`this(...)`, `self.init(...)`, etc.) se trata como **una instrucción dentro del cuerpo del constructor**, y aunque suele exigirse que ocurra primero, esa regla **no está reforzada por la sintaxis**.
+
+    Esto puede permitir que otras instrucciones se ejecuten antes de delegar correctamente, lo que en algunos lenguajes puede derivar en objetos mal inicializados.
+
+    #### 🧨 Ejemplo real: Objective-C
+
+    En **Objective-C**, la inicialización no está estrictamente controlada por la sintaxis. El siguiente código es **válido** y compila, pero puede generar errores si se accede a campos antes de inicializar `self` correctamente:
+
+    <BoxedTabs>
+        <TabItem label={"Código esencial"} value={"Código esencial"}>
+            ```objc showLineNumbers
+            - (instancetype)init {
+                NSLog(@"Antes de delegar: %@", self.name); // ⚠️ Acceso a propiedad antes de inicializar self
+                self = [self initWithName:@"Default"];
+                return self;
+            }
+            ```
+        </TabItem>
+        <TabItem label={"Código completo"} value={"Código completo"}>
+            ```objc showLineNumbers
+            #import <Foundation/Foundation.h>
+
+            @interface Person : NSObject
+            @property (nonatomic, strong) NSString *name;
+            - (instancetype)initWithName:(NSString *)name;
+            @end
+
+            @implementation Person
+
+            - (instancetype)init {
+                NSLog(@"Antes de delegar: %@", self.name); // ⚠️ Acceso a propiedad antes de inicializar self
+                self = [self initWithName:@"Default"];
+                return self;
+            }
+
+            - (instancetype)initWithName:(NSString *)name {
+                self = [super init];
+                if (self) {
+                    self.name = name;
+                }
+                return self;
+            }
+
+            @end
+
+            int main() {
+                Person *p = [[Person alloc] init];
+                return 0;
+            }
+            ```
+        </TabItem>
+    </BoxedTabs>
+    
+    Si `self` aún no ha sido inicializado, acceder a propiedades puede producir **comportamiento indefinido** o errores en tiempo de ejecución. A diferencia de Kotlin, no hay forma de prevenir esto en la sintaxis del lenguaje.
+
+    #### ✅ Kotlin lo previene desde la sintaxis
+
+    En Kotlin, **la delegación al constructor primario se declara en la cabecera**, antes de abrir las llaves del constructor secundario. Esto impide que cualquier lógica se ejecute antes de inicializar correctamente el objeto:
+
+    ```kotlin title="Kotlin – Seguro por diseño"
+    class Person(val name: String) {
+        var age: Int = 0
+
+        constructor(name: String, age: Int) : this(name) {
+            this.age = age
+        }
+    }
+    ```
+
+    🔐 Esto garantiza que el constructor primario **siempre se invoque primero**, evitando errores de inicialización.
+
+    #### 📚 Otros lenguajes con delegación flexible (y riesgos potenciales)
+
+    - **Objective-C**: se puede acceder a `self` antes de llamar a `init`, con consecuencias impredecibles.
+    - **Dart** (`factory constructors`): permiten ejecutar lógica libre antes de retornar una instancia.
+    - **Java** y **Swift**: imponen orden con verificación semántica, pero no mediante la sintaxis.
+
+    #### ✅ Comparación rápida
+
+    | Lenguaje       | ¿Delegación forzada por la sintaxis? | ¿Riesgo de inicialización incorrecta? |
+    | -------------- | ------------------------------------ | ------------------------------------- |
+    | Kotlin         | ✅ Sí (en cabecera)                  | ❌ Bajo                               |
+    | Java           | ❌ No (verificación semántica)       | ⚠️ Medio                              |
+    | Objective-C    | ❌ No                                | ⚠️ Alto                               |
+    | Dart (factory) | ❌ No                                | ⚠️ Medio                              |
+
+    Kotlin evita este tipo de errores al **incorporar la delegación en la sintaxis misma**, favoreciendo una inicialización **más segura, clara y robusta**, especialmente en bibliotecas reutilizables.
+</details>
 
 ## 🎯 Conclusiones
 
@@ -151,7 +271,13 @@ También vimos cómo Kotlin facilita la construcción de estas clases mediante *
 
 Entender cómo usar clases comunes como tipos producto es un paso esencial para construir **tipos seguros, expresivos y reutilizables** en Kotlin. Esta capacidad es especialmente importante en el diseño de bibliotecas, donde cada tipo que definimos forma parte del contrato con quienes las consumen.
 
-Al preferir clases con nombres significativos y estructuras claras, no solo escribimos mejor código: también **facilitamos su comprensión, prueba, documentación y evolución**. En las siguientes lecciones exploraremos cómo **las `data class` llevan estos principios aún más lejos**, automatizando la generación de comportamientos comunes como igualdad, copia y desestructuración.
+Esto no solo mejora la expresividad interna, sino que también **define contratos más claros para quienes consumen nuestras bibliotecas**, haciendo explícita la estructura y el propósito de los datos expuestos.
+
+A medida que una biblioteca crece, las clases con nombres semánticos y campos bien definidos **evitan ambigüedades, mejoran la legibilidad y facilitan cambios futuros**, a diferencia de las tuplas genéricas, que tienden a volverse opacas.
+
+Al dominar estas herramientas, no solo estás entendiendo cómo funciona Kotlin: estás aprendiendo a **modelar tu dominio de forma robusta y expresiva**, eligiendo representaciones que hacen explícitas las intenciones de tu código. Este principio —**que el código comunique su propósito**— es clave en el diseño de bibliotecas limpias, mantenibles y comprensibles para otrxs.
+
+Aprendiste a construir tus propios tipos producto desde cero. En la próxima lección, **descubrirás cómo Kotlin puede generar por ti muchos de los detalles repetitivos** mediante `data class`, llevándote aún más cerca de escribir código claro, conciso y expresivo.
 
 ## 📖 Referencias
 
@@ -159,4 +285,7 @@ Al preferir clases con nombres significativos y estructuras claras, no solo escr
 
 - 🌐 Classes | Kotlin. (s. f.). Kotlin Help. Recuperado 9 de abril de 2025, de https://kotlinlang.org/docs/classes.html
 
-{/* ### 🔹 Adicionales */}
+### 🔹 Adicionales
+
+- 📰 Vukovic, M. (2024, diciembre 26). Pairs and triples in Kotlin (and why you shouldn’t use them). Nutrient. https://www.nutrient.io/blog/pairs-and-triples-in-kotlin-and-why-you-shouldnt-use-them/
+
