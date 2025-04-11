@@ -14,113 +14,105 @@ import Explanation from '@site/src/components/admonitions/Explanation'
 <ReadingTime/>
 <GitHubRepoLink repo={"echo-app-nx"} user={"r8vnhill"} />
 
-Al igual que con Gradle, es importante partir con una buena base para estructurar proyectos TypeScript o JavaScript. En este caso, exploraremos cómo hacerlo con **Nx**, una herramienta de construcción monorepo diseñada para manejar múltiples aplicaciones y bibliotecas dentro de un solo repositorio, con un enfoque en productividad, escalabilidad y buenas prácticas.
+Al igual que con Gradle, es importante partir con una buena base para estructurar proyectos en **TypeScript** o **JavaScript**. En este caso, exploraremos cómo hacerlo con **Nx**, una herramienta de construcción para *monorepos* diseñada para gestionar múltiples aplicaciones y bibliotecas dentro de un solo repositorio, con énfasis en productividad, escalabilidad y buenas prácticas.
 
-En esta unidad crearemos un proyecto con Nx que contenga una biblioteca compartida y una aplicación de consola que la utilice.
-
-Buena observación. Si vas a utilizar `pnpm` para instalar y ejecutar **Nx**, no es estrictamente necesario usar `npx`, porque `pnpm dlx` cumple una función muy similar. Entonces, podrías simplificar la explicación sobre `npx` o incluso omitirla completamente si el flujo que enseñarás usa `pnpm` desde el inicio.
+En esta unidad, crearemos un proyecto con **Nx** que incluya una biblioteca compartida y una aplicación de consola que la consuma.
 
 ## 🧰 Paso -1: Instalar Node.js
 
 Antes de usar **Nx**, necesitas tener instalado **Node.js**, ya que es el entorno de ejecución necesario para las herramientas del ecosistema JavaScript/TypeScript (incluyendo `pnpm`, `npm` y `nx`).
 
 <BoxedTabs groupId={"os"}>
-  <TabItem value="Windows" label="Windows">
-    ```powershell
-    scoop install nodejs
-    ```
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        scoop install nodejs
+        ```
+    </TabItem>
+    <TabItem value="macOS" label="macOS">
+        ```bash
+        brew install node
+        ```
+    </TabItem>
+    <TabItem value="Linux" label="Linux">
+        ```bash
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash && \
+        source ~/.nvm/nvm.sh && \
+        nvm install --lts && \
+        nvm use --lts && \
+        nvm alias default 'lts/*'
+        ```
 
-    <Explanation>
-      Instala Node.js (y con ello también `npm`) usando Scoop, un gestor de paquetes para Windows. Una vez instalado, podrás usar herramientas como `pnpm`, `dlx` y `nx` desde la terminal.
-    </Explanation>
-  </TabItem>
+        <Explanation>
+            Este comando instala y configura **NVM** (Node Version Manager), una herramienta para gestionar múltiples versiones de Node.js:
 
-  <TabItem value="macOS" label="macOS">
-    ```bash
-    brew install node
-    ```
+            - `curl ... | bash`: Descarga e instala NVM.
+            - `source ~/.nvm/nvm.sh`: Habilita NVM en tu terminal actual.
+            - `nvm install --lts`: Instala la última versión LTS (Long Term Support) de Node.js.
+            - `nvm use --lts`: Activa esa versión.
+            - `nvm alias default 'lts/*'`: Establece esa versión como predeterminada.
 
-    <Explanation>
-      Instala Node.js en macOS usando Homebrew. Esto incluye automáticamente `npm`, que podrás usar para instalar `pnpm` y otras herramientas necesarias para el desarrollo con Nx.
-    </Explanation>
-  </TabItem>
-
-  <TabItem value="Linux" label="Linux">
-    ```bash
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | \
-      bash && \
-      source ~/.nvm/nvm.sh && \
-      nvm install --lts && \
-      nvm use --lts && \
-      nvm alias default 'lts/*'
-    ```
-
-    <Explanation>
-      Este comando instala y configura NVM (Node Version Manager), una herramienta para gestionar versiones de Node.js:
-
-      - `curl ... | bash`: Descarga e instala NVM.
-      - `source ~/.nvm/nvm.sh`: Habilita NVM en tu terminal actual.
-      - `nvm install --lts`: Instala la última versión LTS (Long Term Support) de Node.js.
-      - `nvm use --lts`: Activa esa versión.
-      - `nvm alias default 'lts/*'`: Define esa versión como predeterminada.
-
-      Una vez hecho esto, ya podrás usar `npm` para instalar `pnpm` y otras herramientas necesarias.
-    </Explanation>
-  </TabItem>
+            Una vez finalizado, ya podrás usar `npm` para instalar `pnpm` y otras herramientas necesarias.
+        </Explanation>
+    </TabItem>
 </BoxedTabs>
 
 ### ✅ Verifica que la instalación fue exitosa
 
-Asegúrate de que Node.js esté disponible ejecutando:
+Para confirmar que **Node.js** está correctamente instalado, ejecuta el siguiente comando:
 
 ```bash
 node --version
+# v23.9.0
 ```
 
-Si obtienes un número de versión, ¡ya estás listx para continuar!
+Si obtienes un número de versión como ese, ¡ya estás listx para continuar!
 
 ## 📦 Paso 0: Instalar `pnpm`
 
-[`pnpm`](https://pnpm.io) es un gestor de paquetes moderno para el ecosistema de Node.js. A diferencia de `npm` o `yarn`, utiliza una estructura basada en enlaces simbólicos que evita duplicar dependencias, lo que se traduce en instalaciones más rápidas y eficientes.
+[`pnpm`](https://pnpm.io) es un gestor de paquetes moderno para el ecosistema de Node.js. A diferencia de `npm` o `yarn`, utiliza una estructura basada en enlaces simbólicos que evita la duplicación de dependencias, lo que se traduce en instalaciones más rápidas y eficientes.
 
 Es especialmente útil en proyectos **monorepo**, como los que se construyen con Nx, porque:
 
 - 📂 Reduce significativamente el espacio ocupado en `node_modules`.
 - 🚀 Acelera la instalación de dependencias.
-- 🧰 Ofrece una alternativa a `npx` llamada `pnpm dlx`, ideal para ejecutar herramientas temporales como `create-nx-workspace` sin instalarlas globalmente.
+- 🧰 Proporciona `pnpm dlx`, una alternativa moderna a `npx`, ideal para ejecutar herramientas como `create-nx-workspace` sin necesidad de instalarlas globalmente.
+
+Para instalar `pnpm` globalmente:
 
 ```bash
 npm install -g pnpm
 ```
 
 <Explanation>
-    Instala `pnpm` globalmente usando `npm`. Esto te permitirá usar comandos como `pnpm dlx` para crear proyectos sin necesidad de instalaciones adicionales.
+    Este comando instala `pnpm` de forma global utilizando `npm`. Una vez instalado, podrás usar comandos como `pnpm install`, `pnpm dlx`, o `pnpm add` en cualquier proyecto.
 </Explanation>
 
 ### ✅ Verifica que la instalación fue exitosa
 
-Ejecuta el siguiente comando para verificar que `pnpm` se instaló correctamente:
+Ejecuta el siguiente comando para confirmar que `pnpm` está disponible:
 
 ```bash
 pnpm --version
 ```
 
-Si ves un número de versión, ¡todo está en orden!
+Si ves un número de versión (por ejemplo, `10.7.1`), ¡todo está en orden para continuar! 🎉
 
-## 🧱 Paso 1: Crear el Proyecto Base con Nx
+### 🧱 Paso 1: Crear el Proyecto Base con Nx
+
+Comenzaremos generando la estructura inicial del proyecto con **Nx**. Para ello, ejecuta el siguiente comando desde tu terminal:
 
 ```bash
 pnpm dlx create-nx-workspace@latest echo-app-nx
 ```
 
 <Explanation>
-    Ejecuta `create-nx-workspace` usando `pnpm dlx`, una alternativa moderna a `npx`.
+    Este comando crea un nuevo workspace utilizando la herramienta `create-nx-workspace`, ejecutada directamente desde el registro con `pnpm dlx`.
 
-    - `pnpm dlx`: Ejecuta un paquete directamente desde el registro, sin necesidad de instalarlo globalmente.
-    - `create-nx-workspace@latest`: Usa la última versión del generador de workspaces de Nx.
-    - `echo-app-nx`: Es el nombre del directorio que se creará y también el nombre del proyecto base.
+    - **`pnpm dlx`**: Ejecuta paquetes temporales sin necesidad de instalarlos globalmente (similar a `npx`, pero más eficiente).
+    - **`create-nx-workspace@latest`**: Obtiene la versión más reciente del generador oficial de Nx.
+    - **`echo-app-nx`**: Es el nombre del directorio que se creará, y por defecto también será el nombre del workspace.
 
-    Este comando descargará e iniciará el generador de Nx, te hará una serie de preguntas interactivas y creará la estructura inicial del proyecto.
+    Tras ejecutar el comando, Nx iniciará un asistente interactivo que te guiará para elegir el tipo de aplicación, lenguaje base, estilo de formato y otras opciones de configuración inicial.
 </Explanation>
 
 ## 🧩 Paso 2: Seleccionar la Pila Tecnológica
@@ -137,14 +129,16 @@ Durante la creación del workspace, Nx te preguntará qué tipo de **stack** des
 ```
 
 <Explanation>
-    La opción `None` configura un workspace vacío pero funcional, adecuado para gestionar múltiples proyectos TypeScript o JavaScript sin incluir frameworks específicos como React o Angular.
+    La opción `None` configura un **monorepo base** en TypeScript o JavaScript, sin agregar ningún framework específico como React, Angular o Node.
 
-    Elegir esta opción te permite tener control total sobre cómo y cuándo agregar tus aplicaciones y bibliotecas dentro del workspace, ideal para entender cómo funciona Nx desde sus fundamentos.
+    Esta elección es ideal si deseas tener control total sobre la organización de tus aplicaciones y bibliotecas, o si estás creando un proyecto desde cero que no depende aún de una pila en particular.
+
+    También es una excelente forma de aprender cómo funciona Nx en su forma más flexible y minimalista.
 </Explanation>
 
-## 🎨 Paso 3: Elegir un Formateador de Código
+## 🎨 Paso 3: Elegir un Formateador de Código (Prettier)
 
-Nx te preguntará si deseas incluir **Prettier** como herramienta de formateo automático del código fuente:
+Nx te preguntará si deseas incluir **Prettier** como herramienta de formateo automático del código fuente, ampliamente utilizada para mantener el código consistente mediante reglas automáticas de estilo como el espaciado, la indentación o el uso de comillas.
 
 ```text
 ? Would you like to use Prettier for code formatting?
@@ -153,10 +147,68 @@ Nx te preguntará si deseas incluir **Prettier** como herramienta de formateo au
 ```
 
 <Explanation>
-    Prettier es una herramienta ampliamente utilizada para mantener el código consistente, aplicando reglas automáticas de estilo (espaciado, indentación, uso de comillas, etc.).
+    Al elegir **Yes**, Nx incluirá automáticamente su configuración básica y un conjunto de comandos útiles para aplicarlo al proyecto. Esto resulta especialmente útil cuando varias personas colaboran en el mismo repositorio, ya que evita discusiones innecesarias sobre el estilo del código.
 
-    Al elegir **Yes**, Nx incluirá automáticamente su configuración básica y un conjunto de comandos útiles para aplicarlo al proyecto. Esto es especialmente útil cuando múltiples personas colaboran en el mismo repositorio.
+    Si eliges **No**, siempre puedes configurar Prettier (u otra herramienta) manualmente más adelante.
 </Explanation>
+
+<details>
+    <summary>📎 ¿Cómo se compara Prettier con ktlint?</summary>
+
+    | Característica                  | Prettier                                                                 | ktlint                                                      |
+    |--------------------------------|--------------------------------------------------------------------------|-------------------------------------------------------------|
+    | **Lenguajes compatibles**      | Multilenguaje (JS, TS, HTML, Markdown, etc.)                             | Solo Kotlin                                                 |
+    | **Reescritura del código**     | Reescribe el archivo completo siguiendo un estilo fijo                   | Más respetuoso con el estilo existente                      |
+    | **Análisis estático**          | No incluye                                                               | Sí, incluye algunas reglas de lint                          |
+    | **Proyectos multiplataforma**  | Ideal para unificar estilos en proyectos frontend y backend              | Más específico para proyectos solo-Kotlin                   |
+</details>
+
+<details>
+    <summary>▶️ ¿Cómo se ejecuta Prettier en un proyecto Nx?</summary>
+
+    Puedes verificar si tu código está correctamente formateado **sin modificarlo** usando:
+
+    ```bash
+    pnpm nx format:check
+    ```
+
+    Si hay archivos que no cumplen con las reglas de estilo, se mostrará una lista con los archivos afectados.
+
+    Para formatear automáticamente todos los archivos según la configuración de Prettier, ejecuta:
+
+    ```bash
+    pnpm nx format
+    ```
+
+    Este comando analiza los archivos del proyecto y aplica las reglas definidas.
+
+    :::tip ¿Tienes problemas al ejecutar los comandos?
+
+    Si ves un error como `Cannot find module '.../nx/bin/nx.js'`, es probable que las dependencias no estén correctamente instaladas. Para solucionarlo, ejecuta:
+
+    <BoxedTabs groupId={"os"}>
+        <TabItem value="Windows" label="Windows">
+            ```powershell
+            pnpm self-update && `
+            pnpm install && `
+            pnpm approve-builds
+            ```
+        </TabItem>
+        <TabItem value="Linux/macOS" label="Linux/macOS">
+            ```bash
+            pnpm self-update && \
+            pnpm install && \
+            pnpm approve-builds
+            ```
+        </TabItem>
+    </BoxedTabs>
+    
+
+    Esto actualizará `pnpm`, reinstalará las dependencias y te permitirá aprobar los scripts de instalación bloqueados.  
+    Durante `pnpm approve-builds`, se abrirá un selector interactivo: asegúrate de **seleccionar `@swc/core` y `esbuild`**, ya que son necesarios para el funcionamiento de Nx y Prettier.
+
+    :::
+</details>
 
 ## 🔁 Paso 4: Seleccionar un proveedor de CI (opcional)
 
@@ -175,12 +227,30 @@ Durante la configuración, Nx te preguntará si deseas configurar un proveedor d
 <Explanation>
     Para este ejercicio, selecciona **Do it later**.
 
-    Nx permite generar automáticamente archivos de configuración para varios proveedores de CI. Sin embargo, si estás empezando o quieres mantener tu proyecto simple, puedes omitir esta parte por ahora y agregarla más adelante cuando lo necesites.
+    Nx puede generar automáticamente los archivos de configuración necesarios para varios proveedores de CI, como GitHub Actions o GitLab CI/CD.
+
+    Si estás recién comenzando o prefieres mantener tu proyecto simple, puedes omitir esta parte por ahora y configurarla más adelante cuando lo necesites.
 </Explanation>
+
+<details>
+    <summary>🧠 ¿Qué es CI/CD?</summary>
+
+    **CI/CD** significa _Integración Continua_ (Continuous Integration) y _Entrega/Despliegue Continuo_ (Continuous Delivery/Deployment).
+
+    Estas prácticas consisten en automatizar pasos del ciclo de desarrollo, como:
+
+    - ejecutar pruebas automáticamente al hacer un commit,
+    - compilar el código,
+    - verificar que esté correctamente formateado,
+    - y eventualmente desplegarlo a producción.
+
+    Usar CI/CD ayuda a detectar errores antes, mantener calidad constante y reducir tareas manuales.  
+    Herramientas como **GitHub Actions** o **GitLab CI** permiten definir estos pasos como archivos `.yml` que se ejecutan automáticamente al hacer cambios en el repositorio.
+</details>
 
 ## ⚡ Paso 5: Habilitar caché remota (opcional)
 
-Durante la instalación, Nx ofrece la opción de habilitar **caché remota**, una funcionalidad que puede acelerar tus builds y tareas compartidas entre equipos:
+Durante la instalación, Nx ofrece la opción de habilitar una **caché remota**, una funcionalidad que puede acelerar tus builds y tareas cuando trabajas en equipo:
 
 ```text
 ? Would you like remote caching to make your build faster?
@@ -190,88 +260,114 @@ Durante la instalación, Nx ofrece la opción de habilitar **caché remota**, un
 ```
 
 <Explanation>
-    Seleccionar **Yes** habilita el caché remoto de Nx, que permite reutilizar resultados de compilación, pruebas y tareas en diferentes entornos o equipos de trabajo, lo cual mejora el rendimiento del proyecto en equipos colaborativos.
+    Seleccionar **Yes** habilita el caché remoto de Nx (no es gratis 💸), lo que permite reutilizar resultados de compilación, pruebas y tareas entre distintos entornos o integrantes de un equipo.
 
-    Para este curso o pruebas locales, puedes elegir **No** sin problema. Esta opción se puede cambiar más adelante si decides integrar Nx Cloud.
+    Esto puede mejorar significativamente el rendimiento del proyecto en entornos colaborativos, al evitar repetir tareas innecesarias.
+
+    Para este curso o para pruebas locales, puedes elegir **No** sin problema. Esta opción se puede cambiar más adelante si decides integrar **Nx Cloud**, el servicio que gestiona esta caché compartida.
+
+    📘 Para más información, puedes consultar la [documentación oficial de Nx Cloud](https://nx.dev/ci/features/remote-cache).
 </Explanation>
 
 ## 📁 Estructura del Proyecto Generado
 
 ```mermaid
 graph LR
-    root["📦 echo-app-nx/"]
+    subgraph Root ["📦 echo-app-nx/"]
+        direction LR
 
-    root --> vscode["🧩 .vscode/"]
-    root --> nxdir["⚙️ .nx/"]
-    root --> node_modules["📁 node_modules/"]
-    root --> packages["📁 packages/"]
-
-    root --> gitignore["📄 .gitignore"]
-    root --> npmrc["🧾 .npmrc"]
-    root --> prettierignore["📄 .prettierignore"]
-    root --> prettierrc["📝 .prettierrc"]
-    root --> nxjson["⚙️ nx.json"]
-    root --> packageJson["📦 package.json"]
-    root --> pnpmLock["🔒 pnpm-lock.yaml"]
-    root --> pnpmWorkspace["🗂️ pnpm-workspace.yaml"]
-    root --> readme["📘 README.md"]
-    root --> tsconfigBase["⚙️ tsconfig.base.json"]
-    root --> tsconfig["⚙️ tsconfig.json"]
+        gitignore["📄 .gitignore"]
+        npmrc["🧾 .npmrc"]
+        prettierignore["📄 .prettierignore"]
+        prettierrc["📝 .prettierrc"]
+        nxjson["⚙️ nx.json"]
+        packageJson["📦 package.json"]
+        pnpmLock["🔒 pnpm-lock.yaml"]
+        pnpmWorkspace["🗂️ pnpm-workspace.yaml"]
+        readme["📘 README.md"]
+        tsconfigBase["⚙️ tsconfig.base.json"]
+        tsconfig["⚙️ tsconfig.json"]
+        subgraph NxDir ["⚙️ .nx/"]
+            direction TB
+            nxdir["📁 caché de Nx"]
+        end
+        subgraph NodeModules ["📁 node_modules/"]
+            direction TB
+            node_modules["📦 paquetes instalados con pnpm"]
+        end
+        subgraph Packages ["📁 packages/"]
+            direction TB
+            packages["📦 aplicaciones y bibliotecas"]
+        end
+    end
 ```
 
 :::info Explicación de la Estructura
 
 - **📦 `echo-app-nx/`**: Carpeta raíz del proyecto.
-- **🧩 `.vscode/`**: Configuraciones específicas de VS Code.
-- **⚙️ `.nx/`**: Carpeta interna utilizada por Nx para almacenar información de tareas y resultados de análisis.
-- **📁 `node_modules/`**: Directorio que contiene todas las dependencias instaladas.
-- **📁 `packages/`**: Carpeta pensada para contener aplicaciones y bibliotecas creadas dentro del monorepo.
-
-- **📄 `.gitignore`**: Define qué archivos deben ser ignorados por Git.
-- **🧾 `.npmrc`**: Configuraciones específicas para `npm` o `pnpm`, como el registro o preferencias de instalación.
-- **📄 `.prettierignore`**: Archivos que Prettier debe ignorar al formatear.
-- **📝 `.prettierrc`**: Configuración del formateador de código Prettier.
-- **⚙️ `nx.json`**: Archivo principal de configuración de Nx (proyectos, tags, tareas, etc.).
-- **📦 `package.json`**: Archivo que define las dependencias y scripts del proyecto.
-- **🔒 `pnpm-lock.yaml`**: Archivo de bloqueo que asegura versiones exactas al instalar dependencias.
-- **🗂️ `pnpm-workspace.yaml`**: Define qué carpetas componen el monorepo (como `packages/`).
-- **📘 `README.md`**: Documento inicial con instrucciones o descripción del proyecto.
-- **⚙️ `tsconfig.base.json`**: Configuración base de TypeScript compartida por todos los proyectos del monorepo.
-- **⚙️ `tsconfig.json`**: Punto de entrada para la configuración de TypeScript, generalmente extiende la base.
+    - **⚙️ `.nx/`**: Carpeta interna utilizada por Nx para almacenar información de tareas, grafos de dependencias y resultados de análisis. Generalmente no necesitas modificarla.
+    - **📁 `node_modules/`**: Contiene todas las dependencias instaladas por `pnpm`. No debes modificar este directorio manualmente.
+    - **📁 `packages/`**: Carpeta pensada para contener las aplicaciones (`apps/`) y bibliotecas (`libs/`) que compondrán el monorepo.
+    - **📄 `.gitignore`**: Define qué archivos deben ser ignorados por Git.
+    - **🧾 `.npmrc`**: Configuraciones específicas para `npm` o `pnpm`, como el registro, opciones de instalación y caché.
+    - **📄 `.prettierignore`**: Define qué archivos Prettier debe ignorar al formatear.
+    - **📝 `.prettierrc`**: Archivo de configuración del formateador de código Prettier.
+    - **⚙️ `nx.json`**: Archivo de configuración principal de Nx. Define los proyectos, tags, tareas personalizadas y reglas generales.
+    - **📦 `package.json`**: Define las dependencias, scripts y metadatos del proyecto.
+    - **🔒 `pnpm-lock.yaml`**: Asegura que las versiones de las dependencias instaladas sean exactamente reproducibles.
+    - **🗂️ `pnpm-workspace.yaml`**: Indica qué carpetas forman parte del monorepo. En este caso, normalmente incluirá `packages/*`.
+    - **📘 `README.md`**: Documento inicial con instrucciones, descripción del proyecto o guías para colaboradores.
+    - **⚙️ `tsconfig.base.json`**: Configuración base de TypeScript, compartida por todos los proyectos del monorepo.
+    - **⚙️ `tsconfig.json`**: Archivo principal de TypeScript que suele extender `tsconfig.base.json`.
 
 :::
 
-## 🗣️ Paso 6: Crear una Aplicación
+## 🗣️ Paso 6: Crear tu primera aplicación
 
-Vamos a crear una pequeña aplicación de consola en TypeScript dentro de nuestro workspace que diga algo como:
+Vamos a crear una pequeña aplicación de consola (es decir, que se ejecuta desde la terminal) en TypeScript dentro de nuestro workspace, que diga algo como:
 
 > “Are you not entertained?!”
 
-Esta será nuestra primera aplicación dentro del monorepo, y servirá como una forma simple de verificar que todo está funcionando correctamente.
+Esta será nuestra primera aplicación dentro del monorepo y nos servirá para verificar que todo esté funcionando correctamente.
 
 ### 📦 Instalar Nx en el Proyecto
 
 Desde la raíz del proyecto `echo-app-nx` (recuerda hacer `cd echo-app-nx` si no lo has hecho), ejecuta los siguientes comandos:
 
-```bash
-pnpm add -D nx @nx/node
-pnpm approve-builds
-```
+<BoxedTabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        pnpm self-update `
+        && pnpm add --save-dev --workspace-root nx @nx/node `
+        && pnpm install `
+        && pnpm approve-builds
+        ```
+    </TabItem>
+    <TabItem value="Linux/macOS" label="Linux/macOS">
+        ```bash
+        pnpm self-update && \
+        pnpm add --save-dev --workspace-root nx @nx/node && \
+        pnpm install && \
+        pnpm approve-builds
+        ```
+    </TabItem>
+</BoxedTabs>
+
+Durante el proceso de instalación, verás un selector como este:
 
 ```text
 √ Choose which packages to build (Press <space> to select, <a> to toggle all, <i> to invert selection) · nx
-
 √ The next packages will now be built: nx.
 Do you approve? (y/N) · true
 ```
 
 <Explanation>
-    Este paso instala `nx` y el plugin `@nx/node`, necesario para crear aplicaciones en Node.js dentro del workspace.
+    Estos comandos actualizan `pnpm`, instalan Nx y el plugin para aplicaciones Node.js, luego reinstalan las dependencias y finalmente aprueban los scripts de construcción requeridos.
 
-    - `pnpm add -D nx @nx/node`: agrega Nx y su plugin para apps Node como dependencias de desarrollo.
-    - `pnpm approve-builds`: aprueba los paquetes que requieren construcción posterior a su instalación. Nx lo solicita para que funcione correctamente con `pnpm`.
+    - `pnpm add --save-dev --workspace-root nx @nx/node`: agrega Nx y su plugin para apps Node.js como dependencias de desarrollo en la raíz del monorepo.
+    - `pnpm approve-builds`: aprueba scripts post-instalación necesarios para paquetes como `@swc/core` o `esbuild`.
 
-    Este paso es **obligatorio** cuando usas `pnpm` con Nx, ya que la instalación puede requerir pasos de *postbuild* explícitos.
+    Este paso es obligatorio si usas `pnpm` con Nx, ya que algunas dependencias requieren pasos de compilación nativos.
 </Explanation>
 
 <details>
@@ -286,13 +382,13 @@ Do you approve? (y/N) · true
     Esto te permitirá ejecutar comandos como `nx build` o `nx serve` sin necesidad de anteponer `pnpm`.
 
     :::tip
-    
-    Sin embargo, usar la versión local garantiza que todas las personas del equipo estén usando la misma versión de Nx definida en el proyecto.
+
+    Sin embargo, usar la versión local garantiza que todas las personas del equipo estén utilizando la misma versión de Nx definida en el proyecto.
 
     :::
 </details>
 
-### 🛠️ Crear una aplicación llamada `arena`
+### 🛠️ Generar la aplicación `arena` en el monorepo
 
 ```bash
 pnpm nx g @nx/node:app arena --directory=packages/arena
@@ -301,14 +397,14 @@ pnpm nx g @nx/node:app arena --directory=packages/arena
 <Explanation>
     Este comando genera una nueva aplicación llamada `arena` dentro del directorio `packages/arena`, utilizando el generador de Nx para proyectos Node.js.
 
-    - `@nx/node:app`: Indica que se usará el generador para aplicaciones Node.js.
-    - `arena`: Es el nombre de la aplicación.
-    - `--directory=packages/arena`: Especifica la carpeta donde se ubicará la app (`packages/arena`).
+    - `"@nx/node:app"`: Usa el generador para aplicaciones Node.js.
+    - `"arena"`: Nombre de la aplicación.
+    - `"--directory=packages/arena"`: Especifica la carpeta de destino dentro del monorepo.
 </Explanation>
 
 ---
 
-Durante la ejecución, Nx te hará una serie de preguntas para personalizar tu aplicación:
+Durante la ejecución, Nx te hará algunas preguntas para configurar la nueva aplicación:
 
 ```text
 ? Which linter would you like to use? …
@@ -332,50 +428,63 @@ Durante la ejecución, Nx te hará una serie de preguntas para personalizar tu a
 ```
 
 <Explanation>
-    Nx te permite configurar herramientas opcionales para mejorar la calidad y mantenibilidad del proyecto:
+    Nx permite configurar herramientas opcionales para mejorar la calidad del código y facilitar el desarrollo:
 
-    - **Linter (`eslint`)**: Analiza tu código en busca de errores y aplica reglas de estilo. Seleccionar `eslint` es una buena práctica para mantener un estilo consistente.
-    - **Test runner (`jest`)**: Nx puede generar configuración para pruebas unitarias y de extremo a extremo (e2e) usando Jest. Para este proyecto, puedes elegir `jest` para unit tests y `none` para e2e si no los necesitas aún.
-    - **Framework**: Si planeas crear una API o servidor web, puedes elegir un framework como `express`. Para una app de consola, selecciona `none`.
+    - **Linter**:
+        - `eslint`: Analiza tu código en busca de errores y aplica reglas de estilo. Recomendado.
+        - `none`: Sin reglas automáticas.
+    - **Test runner**:
+        - `jest`: Permite crear pruebas unitarias o de extremo a extremo (e2e).
+        - `none`: Si no necesitas pruebas aún.
+    - **Framework**:
+        - `express`, `koa`, `nest`, etc.: Útiles para construir APIs.
+        - `none`: Ideal para apps de consola como la que estamos creando.
 
-    Estas opciones se pueden modificar más adelante, así que no te preocupes si cambias de idea.
+    Estas opciones se pueden modificar más adelante, así que no te preocupes si luego cambias de idea.
 </Explanation>
 
 <details>
     <summary>🔍 Comparación: ESLint vs. Detekt</summary>
 
-    Tanto **ESLint** como **Detekt** son herramientas de análisis estático, diseñadas para detectar errores, malas prácticas y estilos inconsistentes en el código.
+    Tanto **ESLint** como **Detekt** son herramientas de análisis estático diseñadas para detectar errores, malas prácticas y estilos inconsistentes en el código.
 
-    | Característica       | ESLint (JS/TS)                          | Detekt (Kotlin)                           |
-    |----------------------|-----------------------------------------|-------------------------------------------|
-    | Lenguaje objetivo    | JavaScript / TypeScript                 | Kotlin                                     |
-    | Configuración        | Archivos `.eslintrc`, `.eslint.config.mjs`, etc. | Archivos `detekt.yml`, `build.gradle.kts` |
-    | Integración          | Nx, Vite, Webpack, VSCode               | Gradle, IntelliJ, Android Studio          |
-    | Plugins              | Muy extensible (comunidad activa)       | Varios plugins disponibles                 |
-    | Reglas personalizadas| Sí                                      | Sí                                        |
-    | Autoformateo         | Opcional (usualmente junto a Prettier)  | Parcial (prefiere integración con `ktlint`) |
+    | Característica        | ESLint (JS/TS)                            | Detekt (Kotlin)                            |
+    |-----------------------|-------------------------------------------|--------------------------------------------|
+    | Lenguaje objetivo     | JavaScript / TypeScript                   | Kotlin                                     |
+    | Configuración         | `.eslintrc`, `.eslint.config.js`, etc.   | `detekt.yml`, `build.gradle.kts`           |
+    | Integración           | Nx, Vite, Webpack, VSCode                 | Gradle, IntelliJ, Android Studio           |
+    | Plugins               | Muy extensible (comunidad activa)         | Buena variedad de plugins                  |
+    | Reglas personalizadas | Sí                                        | Sí                                         |
+    | Autoformateo          | No (se complementa con Prettier)          | Parcial (se integra con `ktlint`)          |
 
-    **ESLint** se enfoca en la estructura del código y estilos comunes en el ecosistema JS/TS, mientras que **Detekt** apunta a detectar _code smells_, convenciones idiomáticas y problemas específicos del lenguaje Kotlin.
+    **ESLint** se enfoca en estilo y estructura del código en JS/TS, mientras que **Detekt** identifica _code smells_ y problemas idiomáticos en Kotlin.
+
+    📘 Más info: [https://eslint.org](https://eslint.org) | [https://detekt.dev](https://detekt.dev)
 </details>
 
 ### 📂 ¿Qué contiene la nueva aplicación?
 
 ```mermaid
 graph LR
-    root["📦 packages/arena-app/"]
+    subgraph Root ["📦 echo-app-nx/"]
+        direction LR
 
-    root --> src["📁 src/"]
-    src --> main["📄 main.ts"]
-    src --> assets["📁 assets/"]
-    assets --> gitkeep["📄 .gitkeep"]
+        eslint["⚙️ eslint.config.mjs"]
+        jest["🧪 jest.config.ts"]
+        specSwcrc["⚙️ .spec.swcrc"]
+        pkgJson["📦 package.json"]
+        tsconfig["⚙️ tsconfig.json"]
+        tsconfigApp["⚙️ tsconfig.app.json"]
+        tsconfigSpec["⚙️ tsconfig.spec.json"]
 
-    root --> eslint["⚙️ eslint.config.mjs"]
-    root --> jest["🧪 jest.config.ts"]
-    root --> specSwcrc["⚙️ .spec.swcrc"]
-    root --> pkgJson["📦 package.json"]
-    root --> tsconfig["⚙️ tsconfig.json"]
-    root --> tsconfigApp["⚙️ tsconfig.app.json"]
-    root --> tsconfigSpec["⚙️ tsconfig.spec.json"]
+        subgraph Src ["📁 src/"]
+            main["📄 main.ts"]
+            subgraph Assets ["📁 assets/"]
+                direction TB
+                gitkeep["📄 .gitkeep"]
+            end
+        end
+    end
 ```
 
 :::info Explicación de la Estructura
@@ -383,8 +492,8 @@ graph LR
 Este diagrama muestra la estructura de archivos que genera Nx al crear una nueva aplicación con el generador `@nx/node:app`:
 
 - `src/`: Carpeta que contiene el código fuente de la aplicación.
-- `main.ts`: Punto de entrada principal del programa.
-- `assets/`: Carpeta para recursos estáticos. El archivo `.gitkeep` asegura que la carpeta exista en el repositorio aunque esté vacía.
+    - `main.ts`: Punto de entrada principal del programa.
+    - `assets/`: Carpeta para recursos estáticos. El archivo `.gitkeep` asegura que la carpeta exista en el repositorio aunque esté vacía.
 - `package.json`: Define las dependencias y scripts específicos de esta aplicación.
 - `eslint.config.mjs`: Configuración de ESLint para análisis estático del código.
 - `jest.config.ts`: Configuración para pruebas unitarias con Jest.
@@ -393,37 +502,84 @@ Este diagrama muestra la estructura de archivos que genera Nx al crear una nueva
 
 :::
 
-### ✍️ Modifica el archivo `main.ts`
+### ✍️ Personaliza el mensaje en `main.ts`
+
+Edita el archivo de entrada principal de la aplicación para que imprima un mensaje personalizado al ejecutarse:
 
 ```ts title="packages/arena-app/src/main.ts"
-console.log("Are you not entertained?!");
+console.log('Are you not entertained?!');
 ```
 
 ### 🚀 Ejecuta la aplicación
+
+Ahora que ya creaste y compilaste tu aplicación, es momento de verla en acción.
 
 Desde la raíz del proyecto, ejecuta:
 
 <BoxedTabs groupId={"os"}>
     <TabItem value="Windows" label="Windows">
         ```powershell
-        pnpm nx run @echo-app-nx/arena-app:build && `
-            node packages/arena-app/dist/packages/arena-app/src/main.js
+        pnpm nx build arena-app && `
+        node packages/arena-app/dist/packages/arena-app/src/main.js
         ```
     </TabItem>
-    <TabItem value="Linux/macOS" label="Linux/Mac">
+    <TabItem value="Linux/macOS" label="Linux/macOS">
         ```bash
-        pnpm nx run @echo-app-nx/arena-app:build && \
-            node packages/arena-app/dist/packages/arena-app/src/main.js        
+        pnpm nx build arena-app && \
+        node packages/arena-app/dist/packages/arena-app/src/main.js
         ```
     </TabItem>
 </BoxedTabs>
 
 <Explanation>
-    - `pnpm nx run @echo-app-nx/arena-app:build`: Compila el proyecto de la aplicación llamada `arena-app`, que se encuentra en el workspace `@echo-app-nx`. El resultado se coloca dentro del subdirectorio `dist/` siguiendo la estructura del proyecto.
-    - `node packages/arena-app/dist/packages/arena-app/src/main.js`: Ejecuta directamente el archivo de salida generado por la compilación. Nx transpila el archivo `main.ts` y lo ubica en esa ruta para mantener consistencia con la estructura del workspace.
+    - `pnpm nx build arena-app`: Compila la aplicación `arena-app`. El resultado se guarda automáticamente en la carpeta `dist/`, manteniendo la estructura original del proyecto.
+    - `node packages/arena-app/dist/packages/arena-app/src/main.js`: Ejecuta el archivo JavaScript generado a partir de `main.ts`.
 </Explanation>
 
-Si todo ha ido bien, deberías ver el siguiente mensaje en la consola:
+:::tip ¿Dónde se define la ruta del archivo compilado?
+
+La ruta de salida del archivo compilado se configura dentro del bloque `nx.targets.build.options` del `package.json` del proyecto. Esta configuración le indica a Nx dónde colocar el archivo resultante al compilar el código.
+
+A continuación se muestra un fragmento representativo (no el archivo completo):
+
+```json
+// packages/arena-app/package.json
+{
+  "nx": {
+    "targets": {
+      "build": {
+        "executor": "@nx/esbuild:esbuild",
+        "options": {
+          "outputPath": "dist/",
+          "main": "packages/arena-app/src/main.ts",
+          "tsConfig": "packages/arena-app/tsconfig.app.json"
+        }
+      }
+    }
+  }
+}
+```
+
+Con esta configuración, puedes compilar y ejecutar la aplicación con los siguientes comandos:
+
+<BoxedTabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell
+        pnpm nx build arena-app && `
+        node dist/packages/arena-app/src/main.js
+        ```
+    </TabItem>
+    <TabItem value="Linux/macOS" label="Linux/macOS">
+        ```bash
+        pnpm nx build arena-app && \
+        node dist/packages/arena-app/src/main.js
+        ```
+    </TabItem>
+</BoxedTabs>
+
+:::
+
+Si todo salió bien, deberías ver en la consola:
 
 ```text
 Are you not entertained?!
@@ -431,7 +587,7 @@ Are you not entertained?!
 
 ## 🎯 Conclusiones
 
-En esta lección exploramos cómo crear un proyecto básico usando **Nx** junto a **pnpm**, construyendo una aplicación modular y escalable en TypeScript.
+En esta lección exploramos cómo crear un proyecto básico usando **Nx** junto a **pnpm**, sentando las bases para una aplicación modular y escalable en TypeScript.
 
 A lo largo del proceso, aprendiste a configurar tu entorno, crear el workspace, generar una aplicación simple y ejecutar su código — todo dentro del contexto de un **monorepo moderno**.
 
@@ -440,14 +596,14 @@ A lo largo del proceso, aprendiste a configurar tu entorno, crear el workspace, 
 - **Instalación moderna**: Usamos `pnpm` como gestor de paquetes por su rendimiento y compatibilidad con estructuras monorepo.
 - **Workspace flexible**: Nx permite comenzar con un stack vacío (`None`) para tener mayor control y flexibilidad.
 - **Generación guiada**: Nx facilita la creación de apps y bibliotecas a través de comandos interactivos.
-- **Estructura predecible**: Cada aplicación queda organizada en su propio directorio con configuración, dependencias y código fuente bien separados.
-- **Compilación y ejecución clara**: El resultado de la compilación respeta la jerarquía del proyecto, lo que permite ubicar fácilmente los archivos generados.
+- **Estructura predecible**: Cada aplicación queda organizada en su propio directorio, con configuración, dependencias y código fuente bien separados.
+- **Compilación y ejecución clara**: La compilación genera archivos en una ruta predecible, lo que facilita su ejecución y organización.
 
 ### 🧰 ¿Qué nos llevamos?
 
 Con esta lección no solo dimos nuestros primeros pasos con **Nx**, sino que sentamos las bases para trabajar en proyectos organizados, escalables y mantenibles. Aprendimos a usar herramientas modernas como `pnpm` y a navegar por las decisiones que propone Nx al iniciar un workspace. A través de la construcción de una pequeña aplicación, también comenzamos a explorar cómo estructurar un monorepo con buenas prácticas desde el principio.
 
-Más allá del resultado —una app que imprime una frase memorable—, lo que realmente nos llevamos es la comprensión de cómo dar forma a nuestros proyectos con intención, utilizando herramientas que nos invitan a pensar en modularidad, automatización y calidad desde el día uno.
+Más allá del resultado —una app de consola con actitud de gladiador—, lo que realmente nos llevamos es la comprensión de cómo dar forma a nuestros proyectos con intención, utilizando herramientas que nos invitan a pensar en modularidad, automatización y calidad desde el día uno.
 
 Ahora que hemos abierto la arena, es momento de preparar las bibliotecas que harán brillar nuestras aplicaciones.
 
@@ -456,3 +612,7 @@ Ahora que hemos abierto la arena, es momento de preparar las bibliotecas que har
 ### 🔥 Recomendadas
 
 - 🌐 React Monorepo Tutorial. (s. f.). Nx. Recuperado 29 de marzo de 2025, de https://nx.dev/getting-started/tutorials/react-monorepo-tutorial
+
+### 🔹 Adicionales
+
+- 📹 Nx - Smart Monorepos - Fast CI. (2023, agosto 8). Soo...what is Nx? https://www.youtube.com/watch?v=-_4WMl-Fn0w

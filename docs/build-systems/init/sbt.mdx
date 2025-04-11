@@ -1,5 +1,5 @@
 ---
-title: Creando un Proyecto Básico con sbt
+title: Iniciando un Proyecto Scala 3 con sbt
 ---
 
 import ReadingTime from '@site/src/components/ReadingTime'
@@ -14,49 +14,49 @@ import TabItem from '@theme/TabItem'
 
 Antes de automatizar tareas, definir bibliotecas reutilizables o aplicar análisis estático, necesitamos sentar las bases de nuestro proyecto. En esta lección aprenderás a crear una estructura inicial utilizando **sbt**, la herramienta de construcción más popular en el ecosistema Scala.
 
-A través de una pequeña aplicación de consola llamada `echo-app-sbt`, exploraremos cómo iniciar un proyecto con una plantilla oficial, revisar su estructura básica y ejecutar un primer programa en Scala 3. Este proceso te dará una base sólida para continuar desarrollando bibliotecas escalables, modulares y bien organizadas c las herramientas modernas del lenguaje.
+A través de una pequeña aplicación de consola llamada `echo-app-sbt`, exploraremos cómo iniciar un proyecto a partir de una plantilla oficial, revisar su estructura básica y ejecutar un primer programa en Scala 3. Este proceso te dará una base sólida para continuar desarrollando bibliotecas escalables, modulares y bien organizadas con las herramientas modernas del lenguaje.
 
 ## 🛠️ ¿Qué es sbt?
 
-**sbt** (Simple Build Tool) es la herramienta de construcción más utilizada en el ecosistema Scala, aunque también puede emplearse en proyectos Java o mixtos.
+**sbt** (*Simple Build Tool*) es la herramienta de construcción más utilizada en el ecosistema Scala, aunque también puede emplearse en proyectos Java o mixtos.
 
 Se destaca por:
 
-- **DSL basada en Scala:** sbt utiliza una sintaxis escrita en Scala, lo que permite definir tareas y configuraciones con la expresividad del lenguaje de desarrollo.
-- **Consola interactiva:** proporciona una shell interactiva para ejecutar tareas, observar cambios en tiempo real y recargar configuraciones sin salir del entorno.
-- **Cross-building:** permite compilar el mismo proyecto en múltiples versiones de Scala, lo que es esencial para mantener bibliotecas compatibles con distintas versiones del lenguaje.
+- **DSL basado en Scala:** permite definir tareas y configuraciones utilizando una sintaxis declarativa escrita en Scala, lo que brinda mayor expresividad y flexibilidad.
+- **Consola interactiva:** ofrece una shell integrada para ejecutar tareas, observar cambios en tiempo real y recargar configuraciones sin reiniciar el entorno.
+- **Cross-building:** facilita la compilación del mismo proyecto en múltiples versiones de Scala, una capacidad clave para desarrollar bibliotecas compatibles con distintos entornos.
 
 ## ⚙️ Paso 0: Instalar sbt
 
-Antes de crear un nuevo proyecto, asegúrate de tener instalada la herramienta `sbt` en tu sistema. Puedes usar el gestor de paquetes correspondiente a tu sistema operativo:
+Antes de crear un nuevo proyecto, asegúrate de tener instalada la herramienta `sbt` en tu sistema. Puedes hacerlo utilizando el gestor de paquetes correspondiente a tu sistema operativo:
 
 <BoxedTabs groupId={"os"}>
-    <TabItem value="Windows" label="Windows">
-        ```powershell
-        scoop install sbt
-        ```
-    </TabItem>
-    <TabItem value="macOS" label="macOS">
-        ```bash
-        brew install sbt
-        ```
-    </TabItem>
-    <TabItem value="Linux" label="Linux">
-        ```bash
-        sdk install sbt
-        ```
-    </TabItem>
+  <TabItem value="Windows" label="Windows">
+    ```powershell
+    scoop install sbt
+    ```
+  </TabItem>
+  <TabItem value="macOS" label="macOS">
+    ```bash
+    brew install sbt
+    ```
+  </TabItem>
+  <TabItem value="Linux" label="Linux">
+    ```bash
+    sdk install sbt
+    ```
+  </TabItem>
 </BoxedTabs>
 
-### ✅ Verificar la Instalación
+### ✅ Verificar la instalación
 
-Para asegurarte de que `sbt` se ha instalado correctamente, abre una terminal y ejecuta:
+Para confirmar que `sbt` se ha instalado correctamente, abre una terminal y ejecuta:
 
 ```bash
 sbt --version
 ```
 
-Deberías ver una salida similar a la siguiente:
+Deberías ver una salida similar a:
 
 ```plaintext
 sbt runner version: 1.10.11
@@ -67,80 +67,89 @@ sbt runner version: 1.10.11
 
 :::info ¿Qué versión estás viendo?
 
-La salida indica que `sbt` está instalado correctamente y listo para usarse.  
-Ten en cuenta que esta versión es la del *runner*, y que la versión real de `sbt` utilizada por tu proyecto se definirá en el archivo `project/build.properties`.
+La línea inicial muestra la versión del *runner* de `sbt`, es decir, el script que permite lanzar distintos proyectos con diferentes versiones.  
+La versión real de `sbt` utilizada por un proyecto se define en el archivo `project/build.properties`, lo que permite controlar y fijar la versión de compilación por proyecto.
 
 :::
 
 ## 🧱 Paso 1: Crear el Proyecto Base con sbt
 
-Al igual que otras herramientas de construcción, **sbt** permite crear nuevos proyectos rápidamente a partir de **plantillas oficiales** conocidas como *giter8 templates*. En este paso, utilizaremos la plantilla oficial para proyectos en **Scala 3**.
+Al igual que otras herramientas de construcción, **sbt** permite generar nuevos proyectos rápidamente a partir de **plantillas oficiales**, conocidas como *giter8 templates*. En este paso, usaremos la plantilla oficial para proyectos en **Scala 3**:
 
 ```bash
 sbt new scala/scala3.g8
 ```
 
 <Explanation>
-    Ejecuta `sbt new` para generar un proyecto a partir de una plantilla remota.
+    Este comando genera un nuevo proyecto a partir de una plantilla remota.
 
-    - **`sbt new`**: Comando de sbt que inicia un asistente interactivo para crear un nuevo proyecto basado en una plantilla definida en GitHub.
-    - **`scala/scala3.g8`**: Plantilla oficial mantenida por el equipo de Scala, diseñada para iniciar proyectos en Scala 3. El sufijo `.g8` indica que es una plantilla compatible con *giter8*.
+    - **`sbt new`**: Lanza un asistente interactivo para crear un proyecto basado en una plantilla disponible en GitHub.
+    - **`scala/scala3.g8`**: Plantilla oficial mantenida por el equipo de Scala, pensada para proyectos con Scala 3.  
+      El sufijo `.g8` indica que es una plantilla compatible con [giter8](https://www.foundweekends.org/giter8/), un sistema de scaffolding inspirado en Yeoman.
 </Explanation>
 
 ## 🧩 Paso 2: Nombrar el Proyecto
 
-Al ejecutar `sbt new scala/scala3.g8`, el asistente interactivo te pedirá que ingreses un único valor:
+Al ejecutar `sbt new scala/scala3.g8`, el asistente interactivo te pedirá un único dato:
 
 ```plaintext
 name [Scala 3 Project Template]: echo-app-sbt
 ```
 
 <Explanation>
-    En este paso, sbt solicita el **nombre del proyecto**, que será también el nombre del directorio creado.
+    En este paso, sbt solicita el **nombre del proyecto**, que también determinará el nombre del directorio que se creará.
 
-    - Si presionas Enter sin escribir nada, se usará el valor por defecto (`Scala 3 Project Template`), lo cual **no es recomendable**.
-    - Escribe un nombre representativo como `echo-app-sbt` para que el proyecto quede bien identificado.
+    - Si presionas Enter sin ingresar nada, se usará el valor por defecto (`Scala 3 Project Template`), lo cual **no es recomendable**, ya que el nombre no es representativo y contiene espacios.
+    - Se recomienda escribir un nombre descriptivo como `echo-app-sbt`, siguiendo la convención **kebab-case** (minúsculas y guiones).
 
-    Este nombre también será utilizado en configuraciones internas del proyecto, por lo que es buena práctica utilizar un formato en **kebab-case** (minúsculas y guiones).
+    Este nombre también será utilizado en configuraciones internas del proyecto, por lo que conviene mantenerlo corto, claro y consistente con el propósito del proyecto.
 </Explanation>
 
 ## 🗂 Estructura del Proyecto
 
-Al completar el asistente de creación del proyecto con sbt, se genera una estructura de carpetas organizada que incluye el código fuente, archivos de configuración y pruebas. A continuación se muestra un diagrama con los archivos y directorios más relevantes:
+Al completar el asistente de creación del proyecto con sbt, se genera una estructura organizada que incluye el código fuente, archivos de configuración y pruebas. A continuación se muestra un diagrama con los archivos y directorios más relevantes:
 
 ```mermaid
 graph LR
-    A[📁 echo-app-sbt]
-    A --> B[📄 .gitignore]
-    A --> C[📄 build.sbt]
-    A --> D[📄 README.md]
-    A --> E[📁 project]
-    E --> E1[📄 build.properties]
-    A --> F[📁 src]
-    F --> F1[📁 main]
-    F1 --> F11[📁 scala]
-    F11 --> F111[📄 Main.scala]
-    F --> F2[📁 test]
-    F2 --> F21[📁 scala]
-    F21 --> F211[📄 MySuite.scala]
+    subgraph Root [📁 echo-app-sbt]
+        direction LR
+        A[📄 .gitignore]
+        C[📄 build.sbt]
+        D[📄 README.md]
+        subgraph Project [📁 project]
+            direction LR
+            E[📄 build.properties]
+        end
+        subgraph Src [📁 src]
+            direction LR
+            subgraph Main [📁 main/scala]
+                direction LR
+                F1[📄 Main.scala]
+            end
+            subgraph Test [📁 test/scala]
+                direction LR
+                F2[📄 MySuite.scala]
+            end
+        end
+    end
 ```
 
-:::info Explicación de la Estructura
+:::info Explicación de la estructura
 
-Este diagrama muestra la estructura generada por la plantilla oficial de Scala 3 al ejecutar `sbt new scala/scala3.g8`. Los componentes principales son:
+Este diagrama representa la estructura generada por la plantilla oficial de Scala 3 (`scala/scala3.g8`). Los componentes principales son:
 
-- **📄 `.gitignore`**: Archivo de configuración para Git que indica qué archivos deben ignorarse (como carpetas de compilación, archivos temporales, etc.).
-- **📄 `build.sbt`**: Archivo principal de configuración del proyecto. Aquí se declaran dependencias, opciones de compilación y plugins.
-- **📄 `README.md`**: Documento inicial con instrucciones o descripción del proyecto.
-- **📁 `project/`**: Carpeta reservada para archivos auxiliares de configuración de sbt.
-  - **📄 `build.properties`**: Archivo que especifica la versión de sbt a utilizar para este proyecto.
+- **📄 `.gitignore`**: Indica a Git qué archivos deben ignorarse (como carpetas de compilación y archivos temporales).
+- **📄 `build.sbt`**: Archivo principal de configuración. Aquí se definen dependencias, opciones de compilación y plugins.
+- **📄 `README.md`**: Documento inicial con información básica del proyecto.
+- **📁 `project/`**: Contiene configuraciones adicionales para sbt.
+  - **📄 `build.properties`**: Especifica la versión de sbt que debe usarse.
 - **📁 `src/`**: Carpeta raíz del código fuente.
-  - **📁 `main/scala/`**: Código fuente principal de la aplicación.
+  - **📁 `main/scala/`**: Contiene el código fuente principal.
     - **📄 `Main.scala`**: Punto de entrada del programa.
-  - **📁 `test/scala/`**: Código fuente de pruebas.
-    - **📄 `MySuite.scala`**: Archivo de ejemplo con una prueba unitaria básica.
+  - **📁 `test/scala/`**: Contiene las pruebas.
+    - **📄 `MySuite.scala`**: Prueba de ejemplo incluida por la plantilla.
 
-Esta estructura está pensada para proyectos simples y es totalmente compatible con prácticas modernas de desarrollo con Scala.
+Esta estructura promueve buenas prácticas y es ideal para comenzar con proyectos en Scala bien organizados y escalables.
 
 :::
 
@@ -148,24 +157,32 @@ Esta estructura está pensada para proyectos simples y es totalmente compatible 
 
 Ahora que ya tienes un proyecto funcional, reemplaza el contenido del archivo `Main.scala` con lo siguiente:
 
-```scala title="src/main/scala/Main.scala"
+```scala showLineNumbers title="src/main/scala/Main.scala"
 @main def main(): Unit =
-  println("The smell... it's coming from the sea.")
+  println("A shark... walking...")
 ```
 
 <Explanation>
-    Este código reemplaza el contenido del archivo `Main.scala` generado por la plantilla. La función `@main` indica el **punto de entrada** del programa en Scala 3, y permite definirlo de forma directa y concisa.
+    Este código reemplaza el contenido generado por la plantilla. La función `@main` marca el **punto de entrada** del programa en Scala 3, y permite declararlo de forma directa y concisa.
 
     - La anotación `@main` elimina la necesidad de declarar una clase o extender `App`, como era habitual en Scala 2.
-    - En versiones anteriores, el punto de entrada solía declararse como:
-        ```scala
-        object Main extends App {
-          println("The smell... it's coming from the sea.")
+    - En versiones anteriores, el punto de entrada se escribía así:
+        ```scala showLineNumbers
+        object Main extends App {   // Extender App ya no se recomienda
+          println("A shark... walking...")
         }
         ```
-    - Ahora basta con una función anotada, lo que reduce el código boilerplate y mejora la legibilidad.
+        o bien
+        ```scala showLineNumbers
+        object Main {
+          def main(args: Array[String]): Unit = {
+            println("A shark... walking...")
+          }
+        }
+        ```
+    - Scala 3 permite una versión más simple y expresiva, reduciendo el código boilerplate y mejorando la legibilidad.
 
-    El programa imprimirá una frase inquietante inspirada en *Gyo* de Junji Ito.
+    El mensaje impreso es una referencia inquietante a *Gyo*, un manga de terror de Junji Ito.
 </Explanation>
 
 ### ▶️ Ejecutar el programa
@@ -176,7 +193,7 @@ Para compilar y ejecutar tu aplicación, desde el directorio del proyecto ejecut
 sbt run
 ```
 
-Deberías ver una salida como esta:
+Deberías ver una salida similar a esta:
 
 ```plaintext
 [info] welcome to sbt 1.10.11 (Azul Systems, Inc. Java 23)
@@ -189,7 +206,7 @@ The smell... it's coming from the sea.
 [success] Total time: 4 s, completed Apr 2, 2025, 6:22:12 PM
 ```
 
-Este pequeño experimento demuestra lo fácil que es poner en marcha una aplicación con sbt y Scala 3, incluso si el primer mensaje proviene… del fondo del océano. 🌊🐠
+Este pequeño experimento demuestra lo fácil que es poner en marcha una aplicación con sbt y Scala 3, incluso si el primer mensaje proviene… del fondo del océano glu glu
 
 ## 🎯 Conclusiones
 
@@ -199,20 +216,25 @@ En esta lección aprendimos a crear un proyecto básico usando **sbt** y **Scala
 
 - **sbt** es la herramienta de construcción más utilizada en el ecosistema Scala, compatible tanto con proyectos en Scala como en Java.
 - Usamos el comando `sbt new scala/scala3.g8` para generar un proyecto básico basado en Scala 3.
-- La estructura resultante es clara y está organizada siguiendo convenciones modernas.
-- Scala 3 permite definir el punto de entrada del programa usando `@main`, simplificando el código comparado con Scala 2.
+- La estructura resultante es clara y organizada, siguiendo convenciones modernas de desarrollo.
+- Scala 3 permite definir el punto de entrada de forma directa con la anotación `@main`, reduciendo el código boilerplate habitual en versiones anteriores.
 - Ejecutar el programa con `sbt run` compila y lanza automáticamente la aplicación principal.
 
 ### 🧰 ¿Qué nos llevamos?
 
-Más allá del código que ejecutamos o de los archivos que ahora pueblan nuestro directorio, esta lección nos deja algo más importante: el punto de partida. Aprendimos que crear un proyecto en Scala no tiene por qué ser complejo, y que herramientas como **sbt**, lejos de ser obstáculos, pueden convertirse en aliados para estructurar, automatizar y hacer crecer nuestras ideas.
+Más allá del código ejecutado o de los archivos que ahora pueblan nuestro directorio, esta lección nos deja algo más importante: el punto de partida. Aprendimos que crear un proyecto en Scala no tiene por qué ser complejo, y que herramientas como **sbt**, lejos de ser obstáculos, pueden convertirse en aliadas para estructurar, automatizar y hacer crecer nuestras ideas.
 
 También descubrimos que Scala 3 simplifica muchos aspectos del lenguaje, permitiéndonos escribir programas claros desde el primer día. Iniciar con una función `@main` puede parecer trivial, pero encierra una filosofía: **eliminar el ruido, enfocarse en lo esencial y escribir código que diga exactamente lo que queremos decir**.
 
-A partir de aquí, ya no estás comenzando desde cero. Tienes un entorno configurado, una herramienta poderosa y un lenguaje expresivo a tu disposición. El escenario está listo: ahora puedes concentrarte en escribir el código que realmente importa.
+A partir de aquí, ya no estás comenzando desde cero. Tienes un entorno configurado, una herramienta poderosa y un lenguaje expresivo a tu disposición.  
+🎬 **El escenario está listo: ahora puedes concentrarte en escribir el código que realmente importa.**
 
 ## 📖 Referencias
 
 ### 🔥 Recomendadas
 
 - 🌐 Building and Testing Scala Projects with sbt. (s. f.). Scala Documentation. Recuperado 2 de abril de 2025, de https://docs.scala-lang.org/scala3/book/tools-sbt.html
+
+### 🔹 Adicionales
+
+- 📚 Why sbt? (2016). En J. D. Suereth & M. Farwell, Sbt in Action: The simple Scala build tool (pp. 3–23). Manning.
