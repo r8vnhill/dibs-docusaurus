@@ -15,7 +15,7 @@ const sidebars: SidebarsConfig = {
             type: 'category',
             link: {
                 type: 'doc',
-                id: 'intro/presentation',
+                id: 'type-fundamentals/presentation',
             },
             items: [
                 {
@@ -23,13 +23,13 @@ const sidebars: SidebarsConfig = {
                     type: 'category',
                     link: {
                         type: 'doc',
-                        id: 'intro/kotlin/intro-kotlin',
+                        id: 'type-fundamentals/kotlin/intro-kotlin',
                     },
                     items: [
-                        'intro/kotlin/functions-and-variables',
-                        'intro/kotlin/conditional-expressions',
-                        'intro/kotlin/cycles',
-                        'intro/kotlin/main',
+                        'type-fundamentals/kotlin/functions-and-variables',
+                        'type-fundamentals/kotlin/conditional-expressions',
+                        'type-fundamentals/kotlin/cycles',
+                        'type-fundamentals/kotlin/main',
                     ]
                 },
                 
@@ -38,11 +38,11 @@ const sidebars: SidebarsConfig = {
                     label: 'Tipos de datos algebráicos',
                     link: {
                         type: 'doc',
-                        id: 'intro/algebraic-data-types/adt-overview',
+                        id: 'type-fundamentals/algebraic-data-types/adt-overview',
                     },
                     items: [
-                        'intro/algebraic-data-types/product-types-overview/kt',
-                        'intro/algebraic-data-types/classes/kt',
+                        'type-fundamentals/algebraic-data-types/product-types-overview/kt',
+                        'type-fundamentals/algebraic-data-types/classes/kt',
                         {
                             type: 'category',
                             label: 'Tipos suma',
@@ -62,15 +62,15 @@ const sidebars: SidebarsConfig = {
                     type: 'category',
                     link: {
                         type: 'doc',
-                        id: 'intro/void-safety/void-safety-intro',
+                        id: 'type-fundamentals/void-safety/void-safety-intro',
                     },
                     items: [
                         
                     ]
                 },
-                'intro/intro-libs-software',
-                'intro/clean',
-                'intro/documentation',
+                'type-fundamentals/intro-libs-software',
+                'type-fundamentals/clean',
+                'type-fundamentals/documentation',
             ],
         },
         {
