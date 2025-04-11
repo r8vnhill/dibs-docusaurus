@@ -74,15 +74,6 @@ const sidebars: SidebarsConfig = {
             ],
         },
         {
-            label: 'Unidad 2: Tipos',
-            type: 'category',
-            link: {
-                type: 'doc',
-                id: 'types/index',
-            },
-            items: [],
-        },
-        {
             label: 'Unidad 2: Build Systems',
             type: 'category',
             link: {
