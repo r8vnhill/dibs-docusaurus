@@ -139,6 +139,10 @@ export const CMakeCard = createCard(
   "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Cmake.svg/1200px-Cmake.svg.png",
   "C/C++: CMake"
 );
+export const CMakeCardObjC = createCard(
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Cmake.svg/1200px-Cmake.svg.png",
+  "Objective-C: CMake"
+);
 export const MavenCard = createCard(
   "https://static-00.iconduck.com/assets.00/file-type-maven-icon-192x256-wb8b12w6.png",
   "JVM: Maven"
