@@ -43,6 +43,7 @@ const sidebars: SidebarsConfig = {
                     items: [
                         'type-fundamentals/algebraic-data-types/product-types-overview/kt',
                         'type-fundamentals/algebraic-data-types/classes/kt',
+                        'type-fundamentals/algebraic-data-types/records-1/kt',
                         {
                             type: 'category',
                             label: 'Tipos suma',

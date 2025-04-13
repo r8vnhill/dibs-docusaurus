@@ -1,0 +1,156 @@
+
+## 🎁 Desestructuración
+
+Una de las ventajas de las `data class` es que generan automáticamente funciones `componentN()` que permiten **extraer sus campos de forma clara y concisa**, sin necesidad de acceder a ellos uno por uno.
+
+Por ejemplo, al representar una canción de *Aerosmith*:
+
+```kotlin showLineNumbers title="Desestructuración de una data class"
+data class Song(val title: String, val year: Int)
+
+val (title, year) = Song("Dream On", 1973)
+println("'$title' se lanzó en $year")
+```
+
+Este tipo de desestructuración es especialmente útil cuando:
+
+- Iteras sobre listas de objetos
+- Trabajas con funciones puras que devuelven múltiples valores
+- Usas combinadores como `map`, `filter`, `fold`, etc.
+
+    ```kotlin showLineNumbers title="Uso en una lista"
+    val playlist = listOf(
+        Song("Dream On", 1973),
+        Song("I Don't Want to Miss a Thing", 1998)
+    )
+
+    for ((title, year) in playlist) {
+        println("$title ($year)")
+    }
+    ```
+
+## ♻️ Mutabilidad controlada con `copy`
+
+Las `data class` en Kotlin son **inmutables por convención**. Aunque técnicamente puedes declarar propiedades mutables (`var`), lo recomendable en bibliotecas bien diseñadas es utilizar **solo propiedades inmutables** (`val`), promoviendo un estilo funcional y seguro.
+
+En lugar de modificar un objeto existente, puedes usar el método `copy()` para **crear una nueva instancia** con los cambios deseados, sin alterar el original.
+
+```kotlin showLineNumbers title="Uso de copy para modificar datos sin mutar el original"
+data class Mecha(val name: String, val power: Int)
+
+val gurren = Mecha("Gurren", 3000)
+val gurrenLagann = gurren.copy(name = "Gurren Lagann", power = 9000)
+
+println(gurren)        // Mecha(name=Gurren, power=3000)
+println(gurrenLagann)  // Mecha(name=Gurren Lagann, power=9000)
+```
+
+Este patrón es útil para mantener objetos **seguros, predecibles y fáciles de testear**, especialmente en bibliotecas reutilizables o sistemas concurrentes.
+
+### 🔄 ¿Cuándo es razonable usar mutabilidad?
+
+Aunque las `data class` promueven la **inmutabilidad por convención**, hay situaciones en las que **usar mutabilidad es justificable**:
+
+- Estás modelando **estado mutable por naturaleza**, como una sesión de usuario, un contador, o una conexión abierta.
+- Necesitas **actualizar datos frecuentemente** en contextos donde **crear copias sería ineficiente**, como en simulaciones, videojuegos, o sistemas de alto rendimiento.
+- Estás trabajando en estructuras de datos **transitorias o internas**, donde el modelo no forma parte del contrato público de la biblioteca.
+
+:::tip Recomendación
+
+Si necesitas mutabilidad, considera **separar los datos inmutables del estado mutable**. Una estrategia común es encapsular un modelo inmutable (`data class`) dentro de una clase mutable que controla su evolución:
+
+```kotlin
+data class FighterStats(val hp: Int, val stamina: Int)
+
+class CombatSession(initialStats: FighterStats) {
+    var current = initialStats
+
+    fun receiveDamage(amount: Int) {
+        current = current.copy(hp = (current.hp - amount).coerceAtLeast(0))
+    }
+}
+```
+
+:::
+
+:::danger Rendimiento
+
+En contextos donde se realizan **cientos o miles de copias por segundo**, como en motores físicos, renderizado o procesamiento en tiempo real, la creación reiterada de nuevas instancias puede convertirse en un **cuello de botella**. En estos casos, es válido optar por clases mutables si ello mejora significativamente el rendimiento.
+
+:::
+
+## 🧩 ¿Cuándo usar `data class`, `class` o tuplas (`Pair`/`Triple`)?
+
+| **Escenario**                                | **`data class`** 🟢                     | **`class`** ⚙️                           | **Tupla (`Pair` / `Triple`)** 🔹             |
+|---------------------------------------------|----------------------------------------|------------------------------------------|-----------------------------------------------|
+| Modelar datos estructurados con nombre      | ✅ Ideal                                | ⚠️ Posible pero más verboso              | ❌ Nombres implícitos dificultan el uso        |
+| Comparación por contenido (`==`)            | ✅ Automática                           | ❌ Solo por referencia                    | ⚠️ Sí, pero sin semántica clara                |
+| Requiere métodos como `copy`, `toString` | ✅ Generados automáticamente | ❌ Manuales | ✅ Generados automáticamente (`Pair`, `Triple`) |
+| Encapsular lógica adicional o comportamiento | ⚠️ Es posible, pero no idiomático         | ✅ Ideal para lógica compleja               | ⚠️ Solo mediante `extension functions`, pero **no se recomienda** |
+| Datos temporales o ad-hoc                   | ⚠️ Posible, pero puede ser overkill    | ❌ Verboso para casos simples             | ✅ Ideal para datos rápidos y sin contexto     |
+| Rendimiento extremo / estructuras internas  | ⚠️ Evaluar caso a caso                  | ✅ Control total                          | ✅ Muy livianas y directas                     |
+
+:::tip En resumen
+
+- Usa **`data class`** cuando quieras representar **datos estructurados y reutilizables**, con comparación por contenido y una API rica generada automáticamente.
+- Usa **`class`** cuando necesites **controlar comportamiento interno**, lógica compleja o herencia.
+- Usa **tuplas** solo para **datos temporales**, sin semántica clara, como resultados intermedios o auxiliares dentro de una función.
+
+::: 
+
+## 🔧 Funciones y propiedades en `data class`
+
+Aunque las `data class` están diseñadas para modelar **datos estructurados**, eso no impide que incluyan **propiedades calculadas** o **funciones auxiliares**.
+
+Esto puede ser útil para agregar **lógica derivada**, validaciones simples o representaciones alternativas sin romper la semántica del tipo.
+
+```kotlin title="Propiedad calculada y función auxiliar"
+data class Wizard(val name: String, val magic: String, val power: Int) {
+    val isArchmage: Boolean
+        get() = power > 9000
+
+    fun shout() = println("$name casts $magic at power $power!")
+}
+```
+
+:::info
+En este ejemplo, `isArchmage` es una propiedad calculada que no forma parte de la estructura del tipo, pero entrega **información derivada** a partir de sus campos. `shout()` es una función auxiliar que encapsula un comportamiento asociado al tipo.
+:::
+
+### ⚠️ ¡Ojo! No todos los campos se tratan igual
+
+Solo las propiedades **declaradas en el constructor primario** participan en la generación automática de:
+
+- `equals()` / `hashCode()`
+- `toString()`
+- `copy()`
+- `componentN()`
+
+```kotlin title="Campo declarado fuera del constructor"
+data class GuildMember(val name: String) {
+    var rank: String = "Novice"
+}
+
+val a = GuildMember("Lucy")
+val b = GuildMember("Lucy").also { it.rank = "Master" }
+
+println(a == b) // true ❗ rank no participa en equals
+println(a)      // GuildMember(name=Lucy) ❗ sin rank
+```
+
+:::warning Cuidado
+Al declarar propiedades **fuera del constructor**, estás creando campos **excluidos del contrato estructural** de la `data class`. Esto puede llevar a resultados inesperados en comparación, impresión o copia.
+
+Si el campo es relevante para la identidad del objeto, **debe declararse en el constructor**.
+:::
+
+### 🧭 Recomendación
+
+- ✅ Usa funciones y propiedades para lógica derivada y accesos útiles.
+- ❌ Evita agregar **lógica compleja** o **estado mutable** que rompa la expectativa de que una `data class` es un **contenedor simple y predecible de datos**.
+
+Esto mantiene la intención original clara, mejora la mantenibilidad y previene errores sutiles.
+
+## Constructores
+
+TODO
