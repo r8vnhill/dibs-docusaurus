@@ -26,7 +26,7 @@ const sidebars: SidebarsConfig = {
                         id: 'type-fundamentals/kotlin/intro-kotlin',
                     },
                     items: [
-                        'type-fundamentals/kotlin/functions-and-variables',
+                        'type-fundamentals/kotlin/functions-and-variables/kt',
                         'type-fundamentals/kotlin/conditional-expressions',
                         'type-fundamentals/kotlin/cycles',
                         'type-fundamentals/kotlin/main',
