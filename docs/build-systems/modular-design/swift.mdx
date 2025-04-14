@@ -1,5 +1,5 @@
 ---
-title: Configuraciones básicas de proyectos multi-módulo en Swift
+title: Estructurando Proyectos Multi-Módulo con Swift
 ---
 import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
 import Explanation from '@site/src/components/admonitions/Explanation'
@@ -9,25 +9,67 @@ import ReadingTime from '@site/src/components/ReadingTime';
 <ReadingTime/>
 <GitHubRepoLink repo={"echo-app-swift"} user={"r8vnhill"} />
 
-En lecciones anteriores aprendiste cómo estructurar un proyecto multi-módulo utilizando **Gradle**. Ahora aplicaremos esos mismos principios en un entorno diferente: **Swift**.
+## 🏗️ Estructura esperada del proyecto
 
-Swift Package Manager (SwiftPM) es la herramienta oficial para gestionar dependencias, construir proyectos y organizar código en módulos dentro del ecosistema Swift. A diferencia de Gradle, SwiftPM favorece una estructura de carpetas muy estricta basada en convenciones, lo que simplifica muchas decisiones pero también limita algunas opciones de personalización.
+SwiftPM impone una convención estricta de carpetas para que los módulos (targets) funcionen correctamente.
+A continuación se muestra la estructura completa que debe seguir el proyecto `EchoAppSwift` para que compile correctamente y mantenga una separación clara entre ejecutable, biblioteca y pruebas:
 
-En esta lección aprenderás a:
+```mermaid
+graph TD
+    subgraph Root [📁 EchoAppSwift]
+        direction LR
 
-- Declarar múltiples módulos en `Package.swift`.
-- Establecer relaciones de dependencia entre ellos.
-- Comprender cómo SwiftPM estructura el código en carpetas y archivos.
-- Preparar una base sólida para bibliotecas modulares escritas en Swift.
+        Package[📄 Package.swift]
 
-Aunque los ejemplos que verás aquí son simples, reproducen una estructura típica de proyectos reales —y escalables— que te servirá tanto para crear **bibliotecas reutilizables** como para organizar aplicaciones Swift complejas desde el inicio.
+        subgraph Sources [📁 Sources]
+            direction TB
+
+            subgraph App [📁 App]
+                Main[📄 main.swift]
+            end
+
+            subgraph Lib [📁 Lib]
+                Echo[📄 Echo.swift]
+            end
+        end
+
+        subgraph Tests [📁 Tests]
+            direction TB
+
+            subgraph LibTests [📁 LibTests]
+                EchoTests[📄 EchoTests.swift]
+            end
+        end
+    end
+
+    Package -->|declara| App
+    Package -->|declara| Lib
+    Package -->|declara| LibTests
+    Main -->|import| Echo
+    EchoTests -->|testea| Echo
+```
+
+:::info Explicación de la estructura del proyecto
+
+Este diagrama muestra cómo organizar un proyecto modular en Swift utilizando **Swift Package Manager (SwiftPM)**, respetando sus convenciones:
+
+- **`Package.swift`**: Archivo central de configuración donde se declaran los módulos (`App`, `Lib`, `LibTests`) y sus relaciones.
+- **`Sources/App/`**: Contiene el ejecutable principal. SwiftPM buscará aquí un archivo `main.swift` como punto de entrada del programa.
+- **`Sources/Lib/`**: Módulo de biblioteca reutilizable. Puede ser importado por `App` o cualquier otro módulo.
+- **`Tests/LibTests/`**: Módulo de pruebas unitarias para `Lib`. SwiftPM asocia automáticamente esta carpeta con el target `LibTests`.
+
+📌 Los nombres de las carpetas dentro de `Sources/` y `Tests/` deben coincidir **exactamente** con los nombres de los targets definidos en `Package.swift`.
+
+:::
 
 ## 📦 Declarar múltiples módulos
 
-En SwiftPM, los módulos se organizan como **targets** dentro de un archivo `Package.swift`.  
-Para que otros paquetes o ejecutables puedan usar esos módulos, también se deben declarar como **productos**.
+En Swift, todos los proyectos gestionados con SwiftPM se definen a través de un archivo llamado `Package.swift`.
+Este archivo actúa como el punto central de configuración: en él se declaran los módulos (llamados **targets**), los productos que se generan, sus dependencias internas y externas, y la versión mínima de herramientas requeridas para compilar el proyecto.
 
-```swift showLineNumbers title="Package.swift"
+A continuación, un ejemplo completo que define una aplicación modular simple con una biblioteca y sus pruebas:
+
+```swift showLineNumbers title="Declaración de módulos y productos (Package.swift)"
 // swift-tools-version: 6.0
 import PackageDescription
 
@@ -52,17 +94,39 @@ let package = Package(
 ```
 
 <Explanation>
-    - **`products`**: Definen los artefactos que el paquete expone públicamente. En este caso, una **librería** (`Lib`) y un **ejecutable** (`App`).
-    - **`targets`**: Representan los módulos reales que se compilan. Cada uno puede ser una librería, un ejecutable o un conjunto de tests.
-    - `App` declara una dependencia interna sobre `Lib`, lo que le permite importar y usar su funcionalidad.
-    - `LibTests` depende también de `Lib`, siguiendo el patrón común de "testear la biblioteca de forma aislada".
+    Este archivo está compuesto por varias secciones clave:
+
+    - **`// swift-tools-version: 6.0`**:
+        Esta línea debe estar al inicio del archivo. Indica la versión mínima del `Swift Package Manager` requerida para interpretar correctamente la sintaxis y las capacidades usadas en el paquete.
+    - **`import PackageDescription`**
+        Importa la API necesaria para construir la definición del paquete. Es obligatorio para usar `Package`, `Target`, `Product`, etc.
+    - **`name`**:
+        Define el nombre del paquete. También será el nombre de la carpeta raíz del proyecto.
+    - **`products`**:
+        Declara los artefactos que este paquete expone públicamente.
+        En este caso:
+        - Un ejecutable llamado **`App`**, construido a partir del target `App`.
+        - Una biblioteca llamada **`Lib`**, expuesta a partir del target `Lib`.
+    - **`targets`**:
+        Representan las unidades internas que SwiftPM compila.
+        - `.target(name: "Lib")`: Un módulo de biblioteca con código reutilizable.
+        - `.executableTarget(name: "App", dependencies: ["Lib"])`: Un ejecutable que **importa** y **usa** la biblioteca `Lib`.
+        - `.testTarget(name: "LibTests", dependencies: ["Lib"])`: Un conjunto de pruebas unitarias que también depende de `Lib`, permitiendo testearla de forma aislada.
+
+    Esta estructura modular facilita la separación de responsabilidades entre componentes del sistema, como:
+
+    - **`Lib`** → lógica reutilizable
+    - **`App`** → entrada principal de la aplicación
+    - **`LibTests`** → validación de la biblioteca
 </Explanation>
 
 ## 🧱 Estructura de un proyecto multi-módulo en Swift
 
-Al igual que en Gradle, Swift Package Manager (**SwiftPM**) permite organizar un proyecto en múltiples **módulos reutilizables**, llamados *targets*. Esta estructura facilita el desarrollo independiente, la reutilización y la escalabilidad del código.
+Al igual que en Gradle, **Swift Package Manager (SwiftPM)** permite organizar el proyecto en múltiples **módulos reutilizables**, llamados *targets*.  
+Esta organización mejora la mantenibilidad, facilita el desarrollo modular y permite escalar el código sin perder claridad.
 
-Un proyecto básico puede organizarse así:
+En SwiftPM, la estructura de carpetas **no es arbitraria**: debe seguir convenciones estrictas para que los targets funcionen correctamente.  
+Un proyecto básico multi-módulo puede organizarse así:
 
 ```mermaid
 graph LR
@@ -94,18 +158,21 @@ graph LR
 
 :::info Descripción de la estructura del proyecto
 
-- **`Package.swift`**: Archivo de configuración del proyecto, donde se declaran los módulos (targets) y productos.
-- **`Sources/App`**: Módulo ejecutable principal. Contiene la entrada del programa (`main.swift`) y depende de la biblioteca `Lib`.
-- **`Sources/Lib`**: Módulo de biblioteca reutilizable. Puede incluir lógica compartida entre múltiples aplicaciones o tests.
-- **`Tests/LibTests`**: Módulo de pruebas para la biblioteca `Lib`.
+- **`Package.swift`**: Archivo central de configuración. Define los módulos (*targets*) y productos del proyecto.
+- **`Sources/App/`**: Contiene el código del ejecutable principal (`App`). El archivo `main.swift` es el punto de entrada del programa.
+- **`Sources/Lib/`**: Contiene el código de una biblioteca reutilizable. Puede ser usada por otros targets, como `App` o `LibTests`.
+- **`Tests/LibTests/`**: Contiene las pruebas del módulo `Lib`.  
+  SwiftPM busca automáticamente archivos de test en carpetas llamadas `Tests/<TargetName>Tests`.
 
-Este patrón de separación es estándar en SwiftPM y ayuda a mantener el código organizado y fácil de escalar.
+📌 Los nombres de las carpetas dentro de `Sources/` y `Tests/` **deben coincidir exactamente** con los nombres de los targets declarados en `Package.swift`.
+
 :::
 
 :::tip ¿Y el `main.swift` anterior?
 
-Si previamente creaste un archivo `Sources/main.swift` fuera de un módulo, puedes eliminarlo.  
-Ahora que el módulo ejecutable se llama `App`, todo el código de entrada debe ubicarse dentro de `Sources/App/main.swift`.
+Si creaste un archivo `Sources/main.swift` antes de definir módulos, puedes eliminarlo.  
+Ahora que el ejecutable se llama `App`, su punto de entrada debe estar en `Sources/App/main.swift`.
+
 :::
 
 ## 🎯 Conclusiones

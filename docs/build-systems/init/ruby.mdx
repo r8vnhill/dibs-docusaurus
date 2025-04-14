@@ -159,21 +159,49 @@ A continuación, se presentan las instrucciones para instalar Ruby según tu sis
         ```
     </TabItem>
     <TabItem value="macOS/Linux" label="macOS/Linux">
-        ```bash
-        latest_ruby=$(rbenv install -l | grep -E '^\s*[0-9]+\.[0-9]+\.[0-9]+$' | tail -1 | tr -d ' ') && \
-            rbenv install "$latest_ruby" && \
-            rbenv global "$latest_ruby"
+        ```bash title="Instalar la última versión de Ruby con rbenv"
+        latest_ruby=$(rbenv install -l | grep -E '^\s*[0-9]+\.[0-9]+\.[0-9]+$' | tail -1 | tr -d ' ')
+
+        if rbenv versions | grep -q "$latest_ruby"; then
+            echo "✔ Ruby $latest_ruby ya está instalado."
+        else
+            echo "⬇️ Instalando Ruby $latest_ruby..."
+            rbenv install "$latest_ruby"
+        fi
+
+        rbenv global "$latest_ruby"
+        echo "✅ Ruby $latest_ruby ahora es la versión global."
+
+        # Detectar archivo de configuración del shell
+        shell_config="$(
+            case "$SHELL" in
+                */zsh) echo "$HOME/.zshrc" ;;
+                */bash) echo "$HOME/.bashrc" ;;
+                */fish) echo "$HOME/.config/fish/config.fish" ;;
+                *) echo "" ;;
+            esac
+        )"
+
+        if [ -n "$shell_config" ]; then
+            echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> "$shell_config"
+            echo 'eval "$(rbenv init -)"' >> "$shell_config"
+            echo "✅ Configuración añadida a $shell_config"
+            source "$shell_config"
+        else
+            echo "⚠️ No se detectó automáticamente un archivo de configuración del shell."
+        fi
         ```
 
         <Explanation>
-            Este bloque detecta e instala automáticamente la versión más reciente de Ruby (MRI) disponible a través de `rbenv`.
+            Este script instala y configura automáticamente la última versión disponible de Ruby (MRI) usando `rbenv`.
 
-            1. **`rbenv install -l`**: Lista todas las versiones de Ruby que pueden instalarse, incluyendo variantes como JRuby, TruffleRuby, etc.
-            2. **`grep -E '^\s*[0-9]+\.[0-9]+\.[0-9]+$'`**: Filtra únicamente las versiones estándar de Ruby (MRI), descartando otras implementaciones.
-            3. **`tail -1`**: Selecciona la última de esas versiones, que corresponde a la más reciente.
-            4. **`tr -d ' '`**: Elimina espacios en blanco sobrantes.
-            5. **`rbenv install "$latest_ruby"`**: Instala esa versión de Ruby.
-            6. **`rbenv global "$latest_ruby"`**: Configura esa versión como la predeterminada a nivel global en el sistema.
+            1. **Detecta la última versión estable de Ruby** disponible con `rbenv`.
+            2. **Verifica si ya está instalada** para evitar repetir trabajo innecesario.
+            3. **La instala si es necesario**, y la configura como versión global predeterminada.
+            4. **Detecta el shell actual** (`bash`, `zsh`, `fish`) y añade al archivo correspondiente las instrucciones necesarias para inicializar `rbenv` al iniciar una nueva terminal.
+            5. **Aplica los cambios de inmediato** con `source`.
+
+            Ideal para automatizar instalaciones en máquinas nuevas o entornos de desarrollo.
         </Explanation>
     </TabItem>
 </BoxedTabs>

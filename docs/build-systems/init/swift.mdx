@@ -10,19 +10,29 @@ import TabItem from '@theme/TabItem'
 
 <ReadingTime />
 
-Swift es un lenguaje moderno, seguro y expresivo, utilizado tanto en el desarrollo de aplicaciones para Apple como en otros entornos multiplataforma.  
-Aunque es comúnmente asociado a Xcode y al desarrollo para iOS o macOS, Swift también ofrece herramientas oficiales que permiten compilar, ejecutar y organizar proyectos directamente desde la línea de comandos, en cualquier sistema operativo.
+Swift es un lenguaje de programación creado por Apple con el objetivo de ofrecer una alternativa moderna, segura y veloz a Objective-C. Aunque su adopción se dio inicialmente en el desarrollo de aplicaciones iOS y macOS, Swift ha demostrado ser un lenguaje **versátil y multiplataforma**: hoy se utiliza también para crear herramientas de línea de comandos, scripts, bibliotecas compartidas e incluso servicios web, tanto en **macOS** como en **Linux** y **Windows**.
 
-En esta guía aprenderás a:
+Una de sus grandes fortalezas es el **Swift Package Manager (SwiftPM)**, la herramienta oficial para organizar proyectos modulares, compilar código y gestionar dependencias, sin requerir entornos gráficos como Xcode.
 
-- Instalar Swift en tu sistema operativo.
-- Crear un proyecto ejecutable básico usando Swift Package Manager (SwiftPM).
-- Modificar el punto de entrada del programa.
-- Ejecutar tu aplicación desde la terminal.
+En esta lección aprenderás a:
+
+- Instalar Swift y verificar su disponibilidad en tu sistema.
+- Crear un nuevo proyecto ejecutable con SwiftPM desde la terminal.
+- Comprender la estructura de archivos generada por defecto.
+- Editar el punto de entrada del programa (`main.swift`) y compilarlo con `swift run`.
+
+El objetivo es que puedas **iniciar cualquier proyecto Swift desde cero**, con una estructura sólida y portable, sin depender de herramientas externas. Este conocimiento será especialmente útil si vienes de otros entornos como Kotlin con Gradle, ya que muchas de las ideas —como los módulos, los targets o la compilación desde terminal— se presentan de forma similar pero con convenciones propias de Swift.
 
 ## 🦅 Paso 0: Instalar Swift
 
-Antes de poder compilar y gestionar proyectos en Swift, necesitas instalar el compilador y el Swift Package Manager.  
+[**Swift**](https://www.swift.org) es un lenguaje de programación moderno, seguro y de alto rendimiento desarrollado por Apple.
+Fue diseñado inicialmente para reemplazar a Objective-C en el desarrollo de aplicaciones iOS y macOS, pero su uso no se limita a esas plataformas:
+también es utilizado para crear herramientas de línea de comandos, servidores web, scripts y bibliotecas reutilizables —incluso en Linux y Windows.
+
+Una de sus principales fortalezas es su compatibilidad con el **Swift Package Manager (SwiftPM)**, que permite gestionar dependencias y organizar proyectos modulares de forma integrada.
+
+Antes de poder compilar y gestionar proyectos en Swift, necesitas instalar el compilador y SwiftPM.
+
 A continuación te mostramos cómo instalar Swift en los sistemas operativos más comunes:
 
 <BoxedTabs groupId={"os"}>
@@ -39,27 +49,24 @@ A continuación te mostramos cómo instalar Swift en los sistemas operativos má
     <TabItem value="Linux" label="Linux">
         ```bash
         curl -O https://download.swift.org/swiftly/linux/swiftly-$(uname -m).tar.gz && \
-            tar zxf swiftly-$(uname -m).tar.gz && \
-            ./swiftly init --quiet-shell-followup && \
-            . ~/.local/share/swiftly/env.sh && \
-            hash -r
+        tar zxf swiftly-$(uname -m).tar.gz && \
+        ./swiftly init --quiet-shell-followup && \
+        . ~/.local/share/swiftly/env.sh && \
+        hash -r
         ```
-
         <Explanation>
             Este bloque descarga e instala **Swiftly**, una herramienta ligera que facilita la gestión de versiones de Swift en Linux.  
             A diferencia de otros métodos, **Swiftly no solo se instala a sí misma, sino que también descarga e instala Swift** como parte del proceso:
 
-            1. **`curl -O https://download.swift.org/swiftly/linux/swiftly-$(uname -m).tar.gz`**: Descarga el archivo comprimido de Swiftly para tu arquitectura (`x86_64`, `aarch64`, etc.).
-            2. **`tar zxf swiftly-$(uname -m).tar.gz`**: Extrae el archivo.
-            3. **`./swiftly init --quiet-shell-followup`**: Inicializa Swiftly y automáticamente instala la versión recomendada de Swift (estable). La opción `--quiet-shell-followup` evita mensajes interactivos innecesarios.
-            4. **`. ~/.local/share/swiftly/env.sh`**: Configura el entorno de tu shell para que reconozca Swift y Swiftly.
-            5. **`hash -r`**: Refresca el caché de comandos del shell para asegurar que `swift` esté disponible.
-
-            Después de ejecutar estos pasos, tendrás **Swift listo para usarse** con el comando `swift` directamente desde la terminal.
+            1. Descarga el archivo comprimido de Swiftly para tu arquitectura.
+            2. Extrae el contenido.
+            3. Inicializa Swiftly y descarga Swift estable.
+            4. Configura el entorno del shell.
+            5. Refresca el caché de comandos del shell para que el comando `swift` esté disponible.
 
             :::warning Dependencias del sistema
 
-            Es posible que después de la instalación veas mensajes advirtiendo sobre **dependencias del sistema que deben instalarse manualmente**, como bibliotecas de desarrollo, herramientas de depuración o enlaces nativos.
+            Es posible que después de la instalación veas mensajes advirtiendo sobre **dependencias adicionales del sistema**, como bibliotecas de desarrollo o herramientas de depuración.
 
             Por ejemplo, podrías ver instrucciones como:
 
@@ -67,8 +74,7 @@ A continuación te mostramos cómo instalar Swift en los sistemas operativos má
             apt-get -y install libcurl4-openssl-dev libxml2-dev ...
             ```
 
-            Estos mensajes indican que tu entorno Linux no cuenta con todas las herramientas necesarias para compilar o depurar programas en Swift.  
-            Sigue las instrucciones específicas que aparezcan en tu terminal, y ejecuta los comandos como **administrador del sistema (root)** si es necesario.
+            Estos comandos deben ejecutarse como **administrador (root)** para que Swift funcione correctamente.
 
             :::
         </Explanation>
@@ -77,10 +83,15 @@ A continuación te mostramos cómo instalar Swift en los sistemas operativos má
 
 ### ✅ Verificar la instalación
 
-Después de instalar Swift, puedes comprobar que todo esté funcionando ejecutando:
+Una vez instalado, puedes confirmar que Swift esté correctamente disponible ejecutando:
 
 ```bash
 swift --version
+```
+
+```text title="Salida esperada (puede variar)"
+Swift version 6.0.3 (swift-6.0.3-RELEASE)
+Target: x86_64-unknown-linux-gnu
 ```
 
 ## 📁 Paso 1: Crear el directorio e inicializar el proyecto
@@ -91,54 +102,66 @@ A continuación, te mostramos cómo crear un nuevo proyecto básico de Swift des
 
 <BoxedTabs groupId={"os"}>
     <TabItem value="Windows" label="Windows">    
-        ```powershell
-        'echo-app-swift' | ForEach-Object {
-            New-Item -ItemType Directory -Path $_ -Force && `
-                Set-Location $_
-        } && swift package init --type executable
+        ```powershell title="En PowerShell"
+        'EchoAppSwift' | ForEach-Object {
+            $project = $_
+            New-Item -ItemType Directory -Path $project -Force | Out-Null
+            Set-Location $project
+            swift package init --type executable
+        }
         ```
 
         <Explanation>
-            Este bloque crea un nuevo proyecto Swift ejecutable desde la terminal en Windows:
+            Este bloque de PowerShell automatiza la creación e inicialización de un nuevo proyecto Swift desde cero:
 
-            1. **`'echo-app-swift' | ForEach-Object { ... }`**: Aplica los comandos al nombre `'echo-app-swift'`. Este patrón puede escalar fácilmente a múltiples nombres.
-            2. **`New-Item -ItemType Directory -Path $_ -Force`**: Crea el directorio del proyecto. La opción `-Force` evita errores si ya existe.
-            3. **`Set-Location $_`**: Cambia al directorio recién creado.
-            4. **`swift package init --type executable`**: Inicializa el proyecto como una aplicación ejecutable compatible con Swift Package Manager (SwiftPM).
+            - **`'EchoAppSwift' | ForEach-Object { ... }`**: Usa una única fuente (`EchoAppSwift`) para que el nombre del proyecto no se repita dentro del bloque.
+            - **`New-Item -ItemType Directory -Force`**: Crea la carpeta del proyecto, sin errores si ya existe.
+            - **`Out-Null`**: Suprime la salida del comando anterior.
+            - **`Set-Location`**: Entra al nuevo directorio.
+            - **`swift package init --type executable`**: Inicializa el proyecto con una plantilla básica para ejecutables.
+
+            El resultado es un proyecto Swift listo para compilar y ejecutar desde la terminal.
         </Explanation>
     </TabItem>
 
     <TabItem value="Windows (corto)" label="Windows (corto)">
-        ```powershell
-        'echo-app-swift' | % { md $_ -f && cd $_ } && `
+        ```powershell title="Inicializar un proyecto Swift ejecutable"
+        'EchoAppSwift' | % {
+            md $_ -f > $null
+            cd $_
             swift package init --type executable
+        }
         ```
 
         <Explanation>
-            Versión abreviada del comando anterior, utilizando alias comunes de PowerShell:
+            Este bloque compacto de PowerShell crea e inicializa un nuevo proyecto Swift llamado `EchoAppSwift`:
 
-            1. **`%`** es un alias de `ForEach-Object`.  
-               **`md`** es un alias de `New-Item -ItemType Directory`.  
-               **`-f`** equivale a `-Force`.  
-               **`cd`** es un alias de `Set-Location`.
-            2. Crea el directorio `echo-app-swift` (sin fallar si ya existe) y entra en él.
-            3. Ejecuta `swift package init --type executable` para generar la estructura del proyecto.
+            - **`'EchoAppSwift' | % { ... }`**: Utiliza `%` como alias de `ForEach-Object`, evitando repetir el nombre del proyecto dentro del bloque.
+            - **`md $_ -f > $null`**: Crea el directorio si no existe, suprimiendo la salida con `> $null`.
+            - **`cd $_`**: Cambia al nuevo directorio del proyecto.
+            - **`swift package init --type executable`**: Inicializa un proyecto con plantilla de ejecutable.
+
+            El resultado es una base lista para compilar y extender con módulos personalizados.
         </Explanation>
     </TabItem>
 
     <TabItem value="Linux/macOS" label="Linux/macOS">
-        ```bash
-        dir="echo-app-swift" && mkdir -p "$dir" && cd "$dir" && \
-            swift package init --type executable
+        ```bash title="Inicializar un proyecto Swift ejecutable"
+        dir="EchoAppSwift"
+        mkdir -p "$dir"
+        cd "$dir"
+        swift package init --type executable
         ```
 
         <Explanation>
-            Este comando en Bash crea un nuevo proyecto Swift ejecutable:
+            Este bloque crea e inicializa un nuevo proyecto Swift con una estructura estándar para ejecutables:
 
-            1. **`dir="echo-app-swift"`**: Define el nombre del proyecto como variable reutilizable.
-            2. **`mkdir -p "$dir"`**: Crea el directorio si no existe.
-            3. **`cd "$dir"`**: Entra en el directorio del proyecto.
-            4. **`swift package init --type executable`**: Inicializa una estructura de proyecto ejecutable para SwiftPM.
+            - **`dir="EchoAppSwift"`**: Define el nombre del proyecto en una variable reutilizable.
+            - **`mkdir -p "$dir"`**: Crea el directorio del proyecto si no existe, sin errores si ya está presente.
+            - **`cd "$dir"`**: Entra al directorio recién creado.
+            - **`swift package init --type executable`**: Genera una plantilla de proyecto Swift.
+
+            Al finalizar, tendrás un proyecto Swift listo para compilar y extender.
         </Explanation>
     </TabItem>
 </BoxedTabs>
@@ -156,100 +179,160 @@ Para evitar este problema, asegúrate de incluir `--type executable` al usar `sw
 
 :::
 
-## 🗂️ Estructura del proyecto
+:::tip Convención de nombres
+
+Swift sigue una convención de nombres muy clara para proyectos y módulos: se prefiere **PascalCase**, es decir, palabras unidas con mayúscula inicial.
+
+Por ejemplo:
+
+✅ `EchoAppSwift` → forma recomendada  
+❌ `echo-app-swift` → forma desaconsejada (estilo más común en sistemas de archivos o en otros lenguajes como JavaScript)
+
+Adoptar PascalCase mejora la coherencia con las herramientas del ecosistema y evita problemas al generar carpetas y targets automáticamente con SwiftPM.
+
+:::
+
+## 🗂️ Estructura generada del proyecto
+
+Cuando ejecutas `swift package init --type executable`, SwiftPM genera automáticamente la siguiente estructura básica:
 
 ```mermaid
-graph LR
-    root["📁 echo-app-swift"]
-    root --> build["📁 .build"]
-    root --> sources["📁 Sources"]
-    root --> gitignore["🙈 .gitignore"]
-    root --> package["📦 Package.swift"]
+graph
+    subgraph Root [📁 EchoAppSwift]
+        direction LR
+        package[📦 Package.swift]
+        gitignore[🙈 .gitignore]
+        
+        subgraph Sources [📁 Sources]
+            main["📄 main.swift"]
+        end
 
-    sources --> main["📄 main.swift"]
+        package -->|declara| Sources
+    end
 ```
 
 :::info Explicación de la estructura
 
-Esta estructura representa un proyecto Swift inicializado con `swift package init --type executable`. Los elementos clave son:
+- **`Package.swift`**: Archivo central de configuración del proyecto SwiftPM. Declara los módulos (targets), sus dependencias y los productos que se exponen.
+- **`.gitignore`**: Archivo que indica a Git qué archivos o carpetas deben ignorarse (por ejemplo, archivos de compilación o entornos temporales).
+- **`Sources/`**: Carpeta que contiene el código fuente del ejecutable principal.
+    - **`main.swift`**: Punto de entrada del programa, similar a `main()` en Kotlin. Aquí comienza la ejecución del ejecutable.
 
-- **📁 `echo-app-swift/`**: Carpeta raíz del proyecto.
-- **📁 `.build/`**: Directorio generado automáticamente tras compilar el proyecto. Contiene artefactos, dependencias y cachés usados por SwiftPM.
-- **📁 `Sources/`**: Carpeta que contiene el código fuente del ejecutable principal.
-  - **📄 `main.swift`**: Punto de entrada del programa. Aquí es donde se escribe el código que se ejecutará al usar `swift run`.
-- **🙈 `.gitignore`**: Archivo que indica a Git qué archivos deben ser ignorados, como los contenidos de `.build/`.
-- **📦 `Package.swift`**: Archivo de configuración del proyecto. Define el nombre del paquete, los targets y las dependencias.
-
-Esta estructura mínima permite compilar y ejecutar un programa Swift desde la terminal, sin depender de Xcode ni de entornos gráficos.
+Esta estructura es mínima, pero funcional. SwiftPM puede expandirse fácilmente para incluir bibliotecas, pruebas y múltiples módulos conforme evolucione tu proyecto.
 
 :::
 
+## 📦 Archivo de configuración del proyecto
+
+Cuando creas un proyecto con `swift package init`, SwiftPM genera un archivo llamado `Package.swift`.
+Este archivo es el corazón del proyecto: define su nombre, sus módulos (llamados *targets*), sus productos y dependencias externas si las hay.
+
+Aquí tienes un ejemplo mínimo generado automáticamente para un proyecto ejecutable:
+
+```swift showLineNumbers title="Archivo de configuración inicial (Package.swift)"
+// swift-tools-version: 6.1
+import PackageDescription
+
+let package = Package(
+    name: "EchoAppSwift",
+    targets: [
+        .executableTarget(
+            name: "EchoAppSwift"
+        )
+    ]
+)
+```
+
+<Explanation>
+    Este archivo declara la configuración del proyecto SwiftPM:
+
+    - **`// swift-tools-version: 6.1`**:
+        Indica la versión mínima del `Swift Package Manager` necesaria para interpretar este archivo. Debe estar en la primera línea.
+    - **`import PackageDescription`**:
+        Importa la biblioteca necesaria para construir la descripción del paquete.
+    - **`name: "EchoAppSwift"`**:
+        Define el nombre del paquete (y del proyecto). SwiftPM usará este nombre como base para el ejecutable y los módulos generados.
+    - **`targets`**:
+        Especifica los componentes que se compilarán dentro del paquete. En este caso, hay un único módulo:
+        - **`.executableTarget(name: "EchoAppSwift")`**:
+        Declara un target ejecutable llamado `EchoAppSwift`. SwiftPM buscará su código en `Sources/EchoAppSwift/`.
+
+    Aunque este ejemplo no tiene aún dependencias ni productos explícitos, es suficiente para compilar y ejecutar un programa simple.
+</Explanation>
+
 ## 🌪️ Paso 2: Modificar y ejecutar el `Hello, World`
 
-Al crear el proyecto, Swift genera automáticamente un archivo llamado `echo_app_swift.swift` dentro del directorio `Sources/echo-app-swift/`.  
+Al crear el proyecto, Swift genera automáticamente un archivo llamado `main.swift` dentro del directorio `Sources/`.
 Este archivo contiene una función principal simple que imprime el mensaje `"Hello, world!"`.
 
 Vamos a editarlo para que imprima un mensaje memorable inspirado en *Uzumaki* de Junji Ito.
 
-```swift showLineNumbers title="Sources\main.swift"
+```swift showLineNumbers title="Punto de entrada del ejecutable (Sources/main.swift)"
 print("Spirals.... this town is contaminated with spirals.")
 ```
+Aquí tienes algunas sugerencias de título para ese bloque, dependiendo del enfoque que quieras destacar:
 
 ### ▶️ Ejecutar el proyecto
 
-Una vez que hayas modificado el archivo `main.swift`, puedes compilar y ejecutar el proyecto con el siguiente comando:
+Una vez que hayas modificado el archivo `main.swift`, puedes compilar y ejecutar el proyecto con:
 
 ```bash
 swift run
 ```
 
-Deberías ver una salida similar a la siguiente:
-
-```
+```plaintext title="Salida esperada (puede variar)"
 Building for debugging...
-[8/8] Linking .build/x86_64-unknown-windows-msvc/debug/echo-app-swift.exe
-Build of product 'echo-app-swift' complete! (4.57s)
+[8/8] Linking EchoAppSwift
+Build of product 'EchoAppSwift' complete! (5.10s)
 Spirals.... this town is contaminated with spirals.
 ```
 
 <Explanation>
-    El comando `swift run` realiza dos acciones principales:
+    El comando `swift run` realiza dos pasos clave:
 
-    1. **Compila** el proyecto, si aún no ha sido compilado o si hubo cambios recientes.
-    2. **Ejecuta** el binario generado inmediatamente después.
+    1. **Compila** el proyecto automáticamente si no ha sido compilado antes, o si detecta cambios recientes.
+    2. **Ejecuta** el binario generado de inmediato.
 
-    Es una forma conveniente de probar tu aplicación sin tener que usar `swift build` y luego buscar el ejecutable manualmente.  
-    También es útil en ciclos rápidos de desarrollo, como cuando haces pequeños cambios y quieres verificar su efecto de inmediato.
+    Esto lo convierte en una herramienta ideal para ciclos rápidos de desarrollo, ya que evita tener que compilar (`swift build`) y buscar el ejecutable manualmente.  
+    También garantiza que siempre se esté ejecutando la versión más actualizada del proyecto.
 </Explanation>
 
 ## 🎯 Conclusiones
 
-Swift no solo es un lenguaje moderno y poderoso, sino que también ofrece herramientas accesibles para comenzar a trabajar sin necesidad de entornos gráficos complejos como Xcode.  
-A lo largo de esta guía, aprendimos a configurar Swift en distintos sistemas operativos, a crear un proyecto ejecutable desde la terminal, y a modificar su punto de entrada para ejecutar nuestro propio programa.
+En esta lección aprendimos a instalar Swift en distintos sistemas operativos, crear un proyecto desde cero usando Swift Package Manager (SwiftPM), comprender su estructura base, y ejecutar un programa sencillo desde la línea de comandos.
 
-Este flujo de trabajo es ideal tanto para quienes quieren aprender Swift desde cero como para quienes buscan crear herramientas pequeñas, scripts portables o incluso bibliotecas multiplataforma.
+Aunque el programa resultante es minimalista, los conceptos y herramientas que utilizamos representan el punto de partida para cualquier proyecto profesional en Swift —ya sea una biblioteca, un ejecutable o una aplicación multiplataforma.
+
+Dominar la estructura de `Package.swift` y entender cómo se organizan los módulos es clave para escalar de forma ordenada y mantener una base de código limpia y sostenible.
 
 ### 🔑 Puntos clave
 
-- **Swift se puede usar desde la línea de comandos** sin necesidad de Xcode, en Windows, macOS y Linux.
-- **Swift Package Manager (SwiftPM)** permite crear, compilar y ejecutar proyectos de forma estructurada y coherente.
-- Es crucial usar `--type executable` al inicializar el proyecto si queremos que se pueda ejecutar con `swift run`.
-- El archivo `main.swift` es el punto de entrada de nuestra aplicación y se encuentra dentro de `Sources`.
+- Swift es un lenguaje moderno, seguro y multiplataforma, con una sintaxis expresiva y un enfoque fuerte en la seguridad y el rendimiento.
+- Swift Package Manager (SwiftPM) permite crear proyectos modulares sin depender de Xcode, lo que lo hace ideal para entornos multiplataforma o de línea de comandos.
+- El comando `swift package init --type executable` crea una estructura básica funcional para comenzar rápidamente.
+- El archivo `Package.swift` es el centro de configuración de todo proyecto SwiftPM: allí se declaran los módulos, productos y dependencias.
+- La convención de nombres en **PascalCase** no es solo estilística, sino que garantiza compatibilidad con las herramientas del ecosistema.
+- `swift run` compila y ejecuta el proyecto en un solo paso, ideal para desarrollo iterativo.
 
 ### 🧰 ¿Qué nos llevamos?
 
-Al cerrar esta lección, no solo aprendimos a instalar y configurar Swift, sino también a usar sus herramientas fundamentales de forma directa y consciente.  
-Trabajar desde la terminal nos permitió ver con claridad cómo se estructura un proyecto, cómo se compila y cómo se ejecuta, sin depender de entornos gráficos ni automatismos opacos.
+Esta lección sienta las bases para trabajar de forma profesional con Swift en cualquier contexto: desde pequeños scripts hasta aplicaciones modulares de gran escala.
 
-Más allá del ejemplo que escribimos —un simple mensaje en pantalla inspirado en *Uzumaki*—, lo importante es que dimos el primer paso hacia una comprensión más profunda del lenguaje y de su ecosistema técnico.  
-Crear, modificar y ejecutar un proyecto nos deja listxs para explorar ideas más ambiciosas, con la confianza de saber cómo empezar desde cero, en cualquier sistema operativo.
+A partir de aquí, podrás:
 
-Con esta base, el camino queda abierto para desarrollar bibliotecas, herramientas de línea de comandos o incluso aplicaciones multiplataforma.  
-Y todo comienza aquí: con un archivo, una línea de código… y una espiral.
+- Añadir nuevos módulos al proyecto.
+- Separar tu código en bibliotecas reutilizables.
+- Escribir pruebas unitarias.
+- Preparar tus paquetes para distribución o publicación.
+
+Además, lo aprendido en esta lección no solo es útil para usar Swift como lenguaje, sino también para entender cómo organizar y estructurar cualquier proyecto modular de forma clara y escalable.
 
 ## 📖 Referencias
 
 ### 🔥 Recomendadas
 
-- 📰 Crea tu primera Swift app de línea de comandos y ejecútala en tu terminal. (2022, septiembre 13). SwiftBeta. https://www.swiftbeta.com/crea-tu-primera-command-line-tool-en-swift/
+- [📰 Crea tu primera Swift app de línea de comandos y ejecútala en tu terminal](https://www.swiftbeta.com/crea-tu-primera-command-line-tool-en-swift/) en *SwiftBeta*: Un tutorial completo que muestra cómo crear una *command line tool* en Swift con `swift package init`, realizar peticiones HTTP, y automatizar tareas con `Shortcuts.app`. Es útil para complementar esta lección porque lleva los conceptos vistos —como el uso de SwiftPM y la estructura básica del proyecto— a un caso más avanzado y práctico.
 
+### 🔹 Adicionales
+
+- [🎥 How to Make a Swift Command Line Tool - Swift CLI in Terminal](https://youtu.be/w7HvY29P9A4) de **Paul Solt**: Un video introductorio que guía paso a paso la creación de un CLI en Swift usando SwiftPM. Explica cómo estructurar el proyecto, compilar desde terminal, añadir dependencias como `Swift Argument Parser`, y ejecutar el binario desde cualquier ubicación. Relevante para quienes desean profundizar en el desarrollo de herramientas de terminal y comprender mejor el archivo `Package.swift`.
