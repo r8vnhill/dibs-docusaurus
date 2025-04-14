@@ -83,6 +83,10 @@ export const PythonCard = createCard(
   "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/800px-Python-logo-notext.svg.png",
   "Python"
 );
+export const UvCard = createCard(
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/800px-Python-logo-notext.svg.png",
+  "Python: uv"
+);
 export const ScalaCard = createCard(
   "https://www.svgrepo.com/show/354313/scala.svg",
   "Scala"

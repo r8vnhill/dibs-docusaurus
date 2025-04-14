@@ -56,7 +56,7 @@ Desde la raíz del proyecto:
 
 <BoxedTabs groupId={"os"}>
     <TabItem value="Windows" label="Windows">
-        ```powershell
+        ```powershell title="En PowerShell"
         'core\echo_core', 'app\echo_app' | ForEach-Object {
             $dir = $_
             New-Item -ItemType Directory -Path $dir -Force | Out-Null
@@ -84,7 +84,7 @@ Desde la raíz del proyecto:
         </Explanation>
     </TabItem>
     <TabItem value="Windows (corto)" label="Windows (corto)">
-        ```powershell
+        ```powershell title="En PowerShell"
         'core\echo_core', 'app\echo_app' | % {
             md $_ -f >$null
             ni "$_\__init__.py" -f >$null
@@ -105,7 +105,7 @@ Desde la raíz del proyecto:
         </Explanation>
     </TabItem>
     <TabItem value="Linux/macOS" label="Linux/macOS">
-        ```bash
+        ```bash title="En tu terminal"
         for dir in core/echo_core app/echo_app; do
             mkdir -p "$dir"
             : > "$dir/__init__.py"
@@ -116,25 +116,100 @@ Desde la raíz del proyecto:
         ```
 
         <Explanation>
-            {/* ¿Qué acabamos de hacer? */}
+            Este bloque de Bash crea la estructura inicial de un proyecto Python con dos módulos separados:
+
+            - `core/echo_core`: contiene la lógica reutilizable de la biblioteca.
+            - `app/echo_app`: contiene la aplicación que consume esa lógica.
+
+            Para cada módulo se realizan dos acciones:
+            - Se crea el directorio si no existe (`mkdir -p`).
+            - Se crea un archivo `__init__.py`, necesario para que Python reconozca la carpeta como un paquete.
+
+            Además, si el módulo es `app/echo_app`, se crea un archivo `main.py` vacío, que actuará como punto de entrada de la aplicación.
+
+            La instrucción `: > archivo` es una forma idiomática y muy eficiente en Bash para **crear un archivo vacío** (o vaciarlo si ya existe), sin depender de `touch`. Es especialmente útil para scripts automatizados y portables.
         </Explanation>
     </TabItem>
 </BoxedTabs>
 
-Luego crea un archivo de entrada para la app:
+## 🧠 Paso 2: Implementar una función en core
 
-```bash
-touch app/echo_app/main.py
+Edita `core/echo_core/__init__.py` y agrega una función reutilizable:
+
+Una buena sugerencia para ese bloque sería:
+
+```python showLineNumbers title="Función de eco definida en el módulo core (core/echo_core/__init__.py)"
+def echo(message: str) -> str:
+    return message
+``` 
+
+Este título indica claramente la ubicación del archivo y refuerza que se está trabajando dentro del módulo `core`. ¿Quieres que siga ese formato para los demás bloques también (`app/echo_app/main.py`, por ejemplo)?
+
+Luego, modifica el archivo `pyproject.toml` para declarar el módulo `core/echo_core` como un paquete editable dentro del proyecto.  
+Agrega esta sección al final del archivo:
+
+```toml showLineNumbers title="Declaración del módulo core como dependencia editable (pyproject.toml)"
+[tool.pdm.dev-dependencies]
+core = { path = "core", develop = true }
 ```
 
-## 🧠 Paso 2: Implementar una función en lib
+Y ejecuta en terminal:
 
-Edita `lib/echo_lib/__init__.py` y agrega una función reutilizable:
-
-```python
-def shout(message: str) -> str:
-    return message.upper() + "!!"
+```bash title="En tu terminal"
+pdm install
 ```
+
+<Explanation>
+    Esta función `echo` recibe un mensaje como argumento y simplemente lo devuelve sin modificarlo.  
+    Aunque su implementación es trivial, cumple un propósito importante: actúa como **punto de partida** para probar que la biblioteca `core` puede ser importada y utilizada correctamente desde el módulo `app`.
+
+    Además, al declarar `core` como un paquete editable en `pyproject.toml`, permitimos que su código pueda ser importado directamente desde el entorno gestionado por PDM, sin necesidad de modificar rutas manualmente.  
+    Esto facilita el desarrollo iterativo y la separación clara entre lógica de biblioteca (`core`) y lógica de aplicación (`app`).
+</Explanation>
+
+## 🧪 Paso 3: Usar la función del módulo core desde app
+
+Edita `app/echo_app/main.py` y escribe un pequeño script que utilice la función `echo` definida en el módulo `core`.
+
+```python showLineNumbers title="Uso de la función echo desde app (app/echo_app/main.py)"
+from echo_core import echo
+
+def main():
+    message = "¡Hola desde app usando core!"
+    print(echo(message))
+
+if __name__ == "__main__":
+    main()
+```
+
+<Explanation>
+    Este archivo `main.py` define una función principal que importa la función `echo` desde el paquete `core`, la invoca con un mensaje de prueba y muestra el resultado por consola.
+
+    Este paso valida que:
+    - La estructura multi-módulo funciona correctamente.
+    - `core` fue registrado como paquete editable en el entorno de PDM.
+    - Puedes desarrollar y ejecutar la app sin modificar manualmente variables de entorno como `PYTHONPATH`.
+
+    Además, el uso del patrón `if __name__ == "__main__"` asegura que el código solo se ejecute cuando `main.py` sea ejecutado directamente, no al ser importado desde otro módulo.
+</Explanation>
+
+### ▶️ Ejecutar el programa
+
+Puedes ejecutar el módulo directamente desde terminal usando:
+
+```bash title="En tu terminal"
+pdm run python app/echo_app/main.py
+```
+
+<Explanation>
+    El comando `pdm run` asegura que el script se ejecute dentro del entorno virtual gestionado por PDM, respetando la configuración del proyecto.
+
+    Si todo está bien configurado, deberías ver en consola:
+
+    ```text
+    ¡Hola desde app usando core!
+    ```
+</Explanation>
 
 ## 🚀 Paso 3: Consumir lib desde app
 
