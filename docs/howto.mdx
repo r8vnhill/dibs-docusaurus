@@ -2,6 +2,9 @@
 title: ¿Cómo usar este apunte?
 ---
 import ReadingTime from '@site/src/components/ReadingTime';
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs';
+import TabItem from '@theme/TabItem';
+import Explanation from '@site/src/components/admonitions/Explanation';
 
 <ReadingTime/>
 
@@ -35,6 +38,151 @@ Todo lo que esté en una caja como la siguiente:
 ## 🗺️ Cómo navegar los apuntes
 
 Utiliza el menú de la izquierda para explorar las lecciones. Si buscas algo específico, puedes usar la barra de búsqueda en la parte superior de la página.
+
+## 🤔 ¿Por qué algunas funciones son tan largas?
+
+A lo largo de los apuntes encontrarás funciones que podrían parecer **demasiado largas o detalladas para tareas simples**, como instalar una herramienta o crear un archivo. Esto es **intencional y didáctico**.
+
+Hay varias razones importantes para este enfoque, especialmente si estás aprendiendo a desarrollar bibliotecas de software:
+
+### 🎯 1. Claridad antes que concisión
+
+Aunque muchas tareas podrían resolverse en una línea, escribirlas como funciones permite:
+
+- Mostrar cada paso de forma explícita.
+- Agregar validaciones y mensajes claros.
+- Hacer el comportamiento reproducible y predecible.
+
+> 💡 *En el desarrollo de bibliotecas, la claridad del flujo y el control de errores son más importantes que la brevedad.*
+
+### 🔄 2. Automatización y reutilización
+
+Encapsular comandos en funciones facilita:
+
+- Automatizar entornos de desarrollo.
+- Reutilizar la lógica en scripts más grandes.
+- Parametrizar comportamientos (por ejemplo, permitir una instalación "silenciosa").
+
+### ⚙️ 3. Prepararse para el siguiente paso: build systems
+
+Este tipo de funciones reflejan una práctica fundamental: **automatizar tareas repetitivas de forma controlada**.  
+Más adelante en el curso preferiremos usar un **sistema de construcción (build system)** como `uv`, `CMake`, `Gradle` o `sbt` para definir estas tareas de forma declarativa, portable y escalable.
+
+> 🧠 **Aprender a encapsular operaciones en funciones te prepara para delegarlas a herramientas más poderosas y multiplataforma.**
+
+### 🧪 Ejemplos comparativos
+
+<BoxedTabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell showLineNumbers title="En PowerShell o como script"
+        function Install-Ninja {
+            param (
+                [switch]$Quiet
+            )
+
+            Write-Host "📦 Installing Ninja..." -ForegroundColor Cyan
+
+            $installCommand = { scoop install ninja }
+
+            if ($Quiet) {
+                & $installCommand *>&1 | Out-Null
+            } else {
+                & $installCommand
+            }
+
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "✅ Ninja installed successfully." -ForegroundColor Green
+            } else {
+                Write-Error "❌ Failed to install Ninja."
+                exit 1
+            }
+        }
+        ```
+
+        ```powershell showLineNumbers title="Uso"
+        Install-Ninja          # Instalación normal
+        # Install-Ninja -Quiet # Instalación silenciosa
+        ```
+
+        ---
+
+        **Se puede hacer en una sola línea como `scoop install ninja`?** Claro.     
+        **Pero aporta más claridad y control?** Sí.
+    </TabItem>
+    <TabItem value="macOS" label="macOS">
+        ```bash showLineNumbers title="En la terminal o como script"
+        install_ninja() {
+            local quiet="$1"
+
+            echo "📦 Installing Ninja..."
+
+            if [[ "$quiet" == "quiet" ]]; then
+                brew install ninja &>/dev/null
+            else
+                brew install ninja
+            fi
+
+            if [[ $? -eq 0 ]]; then
+                echo "✅ Ninja installed successfully."
+            else
+                echo "❌ Failed to install Ninja." >&2
+                return 1
+            fi
+        }
+        ```
+
+        ```bash showLineNumbers title="Uso"
+        install_ninja         # Instalación normal
+        # install_ninja quiet # Instalación silenciosa
+        ```
+
+        ---
+
+        **Se puede hacer en una sola línea como `brew install ninja`?** Claro.
+        **Pero aporta más claridad y control?** Sí.
+    </TabItem>
+    <TabItem value="Debian/Ubuntu" label="Debian/Ubuntu">
+        ```bash showLineNumbers title="En la terminal o como script"
+        install_ninja() {
+            local quiet="$1"
+
+            echo "📦 Installing Ninja..."
+
+            if [[ "$quiet" == "quiet" ]]; then
+                sudo apt install -y ninja-build &>/dev/null
+            else
+                sudo apt install -y ninja-build
+            fi
+
+            if [[ $? -eq 0 ]]; then
+                echo "✅ Ninja installed successfully."
+            else
+                echo "❌ Failed to install Ninja." >&2
+                return 1
+            fi
+        }
+        ```
+
+        ```bash showLineNumbers title="Uso"
+        install_ninja         # Instalación normal
+        # install_ninja quiet # Instalación silenciosa
+        ```
+
+        **Se puede hacer en una sola línea como `sudo apt install -y ninja-build`?** Claro.  
+        **Pero aporta más claridad y control?** Sí.
+    </TabItem>
+</BoxedTabs>
+
+### ✅ Ventajas de este enfoque
+
+| ✅ Beneficio | 💬 Descripción |
+|-------------|----------------|
+| **Legible** | Muestra paso a paso qué está ocurriendo. |
+| **Extensible** | Puedes agregar logs, condiciones, validaciones o comandos adicionales. |
+| **Automatizable** | Ideal para scripts de instalación, entornos de desarrollo y CI/CD. |
+| **Preparación** | Sienta las bases para tareas declarativas en sistemas de construcción como Meson o Gradle. |
+
+> 🎓 **El objetivo no es optimizar caracteres, sino claridad, flexibilidad y preparación para construir bibliotecas robustas.**
 
 ## 🔍 Estrategia de lectura
 

@@ -210,5 +210,5 @@ export const RubyCard = createCard(
 );
 export const MesonCard = createCard(
   "https://slaptijack.com/images/logos/meson.png",
-  "Multilenguaje: Meson"
+  "C/C++: Meson"
 )
