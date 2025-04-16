@@ -7,121 +7,297 @@ import Explanation from '@site/src/components/admonitions/Explanation'
 import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
 import Definition from '@site/src/components/Definition'
 import References from '@site/src/components/ReferencesComponent'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
 
 <ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="python-dibs"/>
+
+En esta lección exploraremos cómo se **definen funciones y se declaran variables en Python**, enfocándonos en las diferencias clave con Kotlin. Aunque ambos lenguajes permiten escribir código conciso y expresivo, **Python adopta un enfoque mucho más flexible y dinámico**, lo que trae tanto beneficios como desafíos.
+
+A lo largo del contenido veremos:
+
+- Cómo se definen funciones con y sin anotaciones de tipo.
+- Cómo usar valores por defecto, `*args` y `**kwargs` para construir funciones versátiles.
+- Qué alternativas existen en Python para simular variables inmutables.
+- Qué prácticas se recomiendan al desarrollar bibliotecas o APIs reutilizables.
+
+Este análisis no solo busca enseñar la sintaxis de Python, sino también ayudarte a entender sus **decisiones de diseño** y cómo **adaptar buenas prácticas** al trabajar en proyectos que exigen claridad, mantenibilidad y consistencia.
 
 ## 🧩 Funciones en Python
 
-En Python, las funciones se definen usando la palabra clave `def`. A diferencia de Kotlin, **no se declara el tipo de los parámetros ni del valor de retorno** (aunque puedes usar anotaciones opcionales).
+En Python, las funciones se definen con la palabra clave `def`, seguida del nombre, los parámetros entre paréntesis y dos puntos (`:`) para iniciar el bloque. A diferencia de Kotlin, **no es obligatorio declarar los tipos de los parámetros ni del valor de retorno**, aunque es posible usar **anotaciones de tipo opcionales**.
 
-```python
-def sum(a: int, b: int):
+### ✅ Con anotaciones de tipo (recomendado)
+
+```python showLineNumbers title="Función con anotaciones de tipo"
+def add(a: int, b: int) -> int:
     return a + b
 ```
+
+- `a: int` y `b: int` indican que los parámetros deben ser enteros.
+- `-> int` especifica que la función debería devolver un entero.
+- Estas anotaciones **no son obligatorias** ni afectan la ejecución: Python **no verificará en tiempo de ejecución** que los valores coincidan con los tipos indicados.
+
+::::warning Esto no convierte a Python en un lenguaje de tipado estático.
+
+El intérprete ejecutará este código incluso si los tipos no coinciden con las anotaciones. Por ejemplo:
+
+```python showLineNumbers title="Python ignorando tipos"
+def multiply(a: int, b: int) -> int:
+    return a * b
+
+
+print(multiply("💥", 3))  # Esto imprime 💥💥💥 en lugar de lanzar un error
+```
+
+Este comportamiento es válido para el intérprete, pero puede generar errores sutiles si no se utiliza con cuidado.
+
+::::
+
+### 🟡 Sin anotaciones de tipo
+
+```python showLineNumbers title="Función sin anotaciones"
+def sum(a, b):
+    return a + b
+```
+
+- Esta forma es completamente válida en Python y común en scripts pequeños o experimentales.
+- Sin embargo, **se pierde claridad** sobre qué se espera recibir o retornar, lo cual puede complicar el mantenimiento y dificultar la integración con herramientas de análisis.
+
+:::tip Ante la duda, usa anotaciones de tipo
+
+Aunque Python no hace cumplir las anotaciones, **usarlas es una buena práctica** cuando escribes funciones reutilizables, públicas o parte de una biblioteca. Te ayuda a detectar errores con herramientas como `mypy`, a mejorar la documentación y a facilitar el trabajo en equipo.
+
+:::
+
+:::info ¿Y si no retorno nada?
+
+Si no necesitas retornar nada, puedes usar `None` como tipo de retorno. Esto es similar a `Unit` en Kotlin.
+
+```python showLineNumbers title="Función sin retorno"
+def do_nothing() -> None:
+    pass
+```
+
+:::
 
 ### ✍️ Parámetros con valores por defecto
 
-Python, al igual que Kotlin, **permite valores por defecto** en los parámetros, lo que facilita escribir funciones más flexibles sin necesidad de sobrecarga.
+Al igual que en Kotlin, en Python puedes asignar **valores por defecto a los parámetros** de una función. Esto permite definir funciones más flexibles sin necesidad de múltiples versiones.
 
-```python
-def greet(name, greeting="Hello"):
-    return f"{greeting}, {name}!"
+```python showLineNumbers title="Función con parámetro opcional"
+def summon(character: str, location: str = "Rivendell") -> str:
+    return f"{character} has been summoned to {location}."
 ```
 
-A diferencia de Kotlin, Python **no permite múltiples funciones con el mismo nombre**, por lo que el uso de valores por defecto es especialmente útil como alternativa a la sobrecarga.
+- `summon("Gandalf")` retorna `"Gandalf has been summoned to Rivendell."`
+- `summon("Aragorn", "Minas Tirith")` retorna `"Aragorn has been summoned to Minas Tirith."`
 
-### 🔍 Tipos opcionales
+A diferencia de Kotlin, **Python no permite sobrecargar funciones** (es decir, definir varias funciones con el mismo nombre pero distinta firma). Por eso, los **valores por defecto son la forma principal de lograr comportamiento flexible** sin duplicar código.
 
-Python permite usar anotaciones de tipo, pero **no son obligatorias** ni comprobadas en tiempo de compilación (aunque pueden ser verificadas con herramientas como `mypy`).
+### 🌟 Parámetros variables con `*args` y `**kwargs`
 
-```python
-def sum(a: int, b: int) -> int:
-    return a + b
+Python permite definir funciones que aceptan un número **variable de argumentos posicionales** o **de palabras clave (keyword arguments)** usando `*args` y `**kwargs`, respectivamente.
+
+Esto ofrece una gran flexibilidad, especialmente para construir APIs genéricas, decoradores o funciones utilitarias.
+
+#### ✅ Usando `*args`
+
+```python showLineNumbers title="Función con *args y pattern matching"
+def throw_pokeballs(*targets: str | int) -> None:
+    for target in targets:
+        match target:
+            case str():
+                print(f"You threw a Pokéball at {target}!")
+            case int():
+                print(f"You threw a Pokéball at Pokémon #{target}!")
 ```
 
-Esto hace que la verificación de tipos sea **opcional y externa**, a diferencia del sistema fuerte y estático de Kotlin.
+<Explanation>
+    - `*targets` captura todos los argumentos posicionales como una tupla.
+    - La anotación `str | int` indica que los elementos pueden ser cadenas (`"Pikachu"`) o enteros (`25`).
+    - Se usa **pattern matching** (desde Python 3.10) para distinguir el tipo de cada valor y actuar en consecuencia.
+</Explanation>
 
-### 🚫 Expresiones únicas
+:::note ¿Por qué `str | int`?
 
-Python **no tiene una sintaxis específica para declarar funciones como expresiones** (como `= ...` en Kotlin). En su lugar, se puede usar `lambda`, pero con importantes restricciones:
+Esta forma de anotar tipos se llama **unión de tipos** y proviene de la **programación funcional**. Indica que un valor puede ser de **uno u otro tipo**, pero no necesariamente ambos a la vez.
 
-```python
-add = lambda a, b: a + b  # solo permite una expresión, sin return ni cuerpo múltiple
+Aunque no forma parte del paradigma orientado a objetos tradicional (que se basa en jerarquías y polimorfismo por herencia), este enfoque es muy expresivo y **permite diseñar funciones más concisas y seguras**, especialmente cuando combinamos uniones con `match`.
+
+:::
+
+#### ✅ Usando `**kwargs` (argumentos con nombre)
+
+```python showLineNumbers title="Función con **kwargs"
+def describe_technique(name: str, **details) -> None:
+    print(f"Technique: {name}")
+    for key, value in details.items():
+        print(f"  {key}: {value}")
 ```
 
-Esto es menos potente y menos idiomático para definir funciones con lógica compleja, a diferencia de la sintaxis de expresiones de Kotlin.
+<Explanation>
+    - `**details` captura todos los argumentos con nombre como un diccionario.
+    - Esto permite pasar información adicional sin definir todos los parámetros de antemano.
+    - Llamar a `describe_technique("Phantom Mirage", speed="extreme", class_type="offensive")` imprimirá cada atributo con su valor.
+    - Este patrón es muy útil para funciones que necesitan aceptar una configuración flexible, como sistemas de habilidades o configuraciones dinámicas.
+</Explanation>
 
-<ProCons>
-<Pros title="Ventajas de Python">
-- Sintaxis sencilla y legible para principiantes.
-- Permite definir funciones con tipos o sin ellos.
-- Los valores por defecto eliminan la necesidad de sobrecarga.
-</Pros>
-<Cons title="Limitaciones comparadas con Kotlin">
-- Las funciones no pueden declararse como expresiones completas con múltiples líneas.
-- No hay inferencia de tipos fuerte en tiempo de compilación.
-- Las funciones lambda son muy limitadas (solo una expresión).
-</Cons>
-</ProCons>
+#### ✅ Usando `*args` y `**kwargs` juntos
+
+```python showLineNumbers title="Función con *args y **kwargs"
+def cast_spell(caster: str, *companions: str, **spell_details) -> None:
+    print(f"{caster} begins casting a spell!")
+    if companions:
+        print("Assisted by:", ", ".join(companions))
+    for key, value in spell_details.items():
+        print(f"{key.capitalize()}: {value}")
+```
+
+<Explanation>
+    - `*companions` captura los nombres de otras brujas o personajes que colaboran en el hechizo.
+    - `**spell_details` almacena los atributos del hechizo como un diccionario: elemento, duración, poder, etc.
+    - Llamar a `cast_spell("Akko", "Lotte", "Sucy", element="light", power="unstable")` imprime tanto los asistentes como los detalles del hechizo.
+    - Este patrón es ideal cuando se combinan **parámetros obligatorios**, **listas variables de argumentos** y **configuraciones flexibles**.
+</Explanation>
+
+:::warning Cuidado con el uso excesivo de `*args` y `**kwargs`
+
+`*args` y `**kwargs` son herramientas poderosas para construir funciones extensibles, pero pueden dificultar la comprensión o validación de tipos si se abusa de ellas sin documentación clara.
+
+:::
 
 ## 📦 Declaración de variables
 
-En Python, las variables se declaran simplemente **asignando un valor**. No necesitas usar palabras clave como `val` o `var`.
+En Python, las variables se definen simplemente **asignándoles un valor**, sin necesidad de palabras clave como `val` o `var`.
 
-```python
-technique = "Black Heaven & Earth"
-energy = 10
+```python showLineNumbers title="Variables en Python"
+name = "Emilia"
+mana = 80
 ```
 
-Esto implica que **todas las variables son mutables por defecto**. No existe una forma directa de declarar una variable como "inmutable" como lo harías con `val` en Kotlin.
+- `name` almacena una cadena (string).
+- `mana` almacena un número entero (int).
 
-### 🔁 Mutabilidad en Python
+### 🔄 Mutabilidad por defecto
 
-Aunque las variables son siempre mutables, **la mutabilidad del contenido depende del tipo del objeto**:
-
-```python
-numbers = [1, 2, 3]
-numbers.append(4)  # ✅ Esto es válido
-```
-
-Y al igual que en Kotlin, si apuntas a un objeto mutable, su contenido puede cambiar incluso si no cambias la referencia.
-
-### 🔒 ¿Y constantes?
-
-Python **no tiene soporte nativo para constantes**. Por convención, se escribe en mayúsculas:
+Todas las variables en Python son **mutables por defecto**: puedes reasignar su valor en cualquier momento.
 
 ```python
-MAX_SIZE = 100
+mana = 100  # It can be modified without error
 ```
 
-Pero esto **no impide que se modifique** el valor. Es solo una práctica recomendada, no una garantía del lenguaje.
+Esto contrasta con Kotlin, donde puedes declarar una variable como inmutable usando `val`.
 
-<Explanation>
-    Si necesitas proteger una constante o propiedad, debes usar mecanismos externos como clases, propiedades de solo lectura (`@property`) o herramientas como `typing.Final`.
-</Explanation>
+### 🚫 Inmutabilidad por convención
 
-## ⚖️ Comparación directa
+Python **no tiene una sintaxis nativa para declarar variables inmutables**. Algunas prácticas comunes para simular constantes incluyen:
 
-| Característica                         | Kotlin                              | Python                                   |
-|---------------------------------------|-------------------------------------|------------------------------------------|
-| Inferencia de tipos                   | Fuerte, en tiempo de compilación    | Débil, solo en ejecución                 |
-| Declaración de inmutabilidad (`val`)  | Soportada de forma nativa           | No soportada (solo convención)           |
-| Tipado                                 | Estático                            | Dinámico (opcional con anotaciones)      |
-| Sintaxis de funciones como expresión  | Sí (`= ...`)                        | Limitada (`lambda`)                      |
-| Parámetros con valores por defecto    | Soportados                          | Soportados                               |
-| Verificación de tipos                 | En tiempo de compilación            | Solo con herramientas externas           |
+#### ✅ Usar mayúsculas por convención
 
-## 🧠 Conclusión
+```python
+MAX_MANA = 100
+```
 
-Python es un lenguaje expresivo y flexible, pero su sistema de tipos es mucho más relajado que el de Kotlin. Esto puede ofrecer agilidad en fases tempranas, pero también **reduce las garantías de seguridad y mantenibilidad**, especialmente en bibliotecas grandes.
+Esta convención es informal y **no impide modificaciones**, pero se entiende que no debe cambiarse.
 
-En contraste, Kotlin promueve una sintaxis más explícita y coherente con su filosofía de seguridad en tiempo de compilación: tipos fuertes, inferencia controlada, y un enfoque claro en la inmutabilidad.
+#### ✅ Encapsular en una función
 
-Si vienes de Kotlin, programar en Python te parecerá más permisivo, pero también más propenso a errores si no aplicas disciplina.  
-Y si vienes de Python, Kotlin puede parecer más restrictivo al principio, pero su sistema de tipos **te ayuda a construir APIs más robustas, autoverificables y fáciles de documentar**.
+Puedes encapsular un valor en una función para **simular una constante inmutable**:
 
+```python
+def sanctuary_name() -> str:
+    return "Elior Forest"
+```
+
+Esto evita que el valor sea reasignado directamente, pero sigue siendo **menos directo y más restrictivo** que usar `val` en Kotlin.
+
+### 🔒 Inmutabilidad con `Final` (Python 3.8+)
+
+Desde Python 3.8, puedes usar [`Final`](https://docs.python.org/3/library/typing.html#typing.Final) del módulo `typing` para declarar que una variable **no debe ser reasignada**.
+
+```python
+from typing import Final
+
+SPIRIT_NAME: Final[str] = "Puck"
+```
+
+Esto no cambia el comportamiento en tiempo de ejecución, pero herramientas como `mypy` pueden detectar asignaciones incorrectas:
+
+```python
+SPIRIT_NAME = "Beatrice"  # ⚠️ mypy: Cannot assign to final variable "SPIRIT_NAME"
+```
+
+:::tip Buenas prácticas
+
+Si estás desarrollando bibliotecas o trabajando en proyectos colaborativos, usar `Final` es una forma clara de comunicar la intención de inmutabilidad y evitar errores accidentales.
+
+:::
+
+## ✅ Beneficios / ❌ Limitaciones
+
+<ProCons>
+    <Pros>
+        - Sintaxis simple y flexible para definir funciones y declarar variables.
+        - Soporte opcional de anotaciones de tipo para mejorar documentación y análisis estático.
+        - Parámetros con valores por defecto permiten flexibilidad sin necesidad de sobrecarga.
+        - `Final` y herramientas externas como `mypy` permiten mejorar la seguridad y mantener la intención del código.
+        - `*args` y `**kwargs` permiten diseñar funciones extensibles con interfaces dinámicas.
+        - Pattern matching y uniones de tipo (`|`) acercan a Python a estilos más expresivos y funcionales.
+        - Ideal para prototipado rápido, scripting y desarrollo exploratorio gracias a su baja fricción.
+    </Pros>
+    <Cons>
+        - El tipado no es obligatorio ni verificado en tiempo de ejecución: **errores de tipo pueden pasar desapercibidos**.
+        - No existe una forma nativa de declarar variables inmutables como `val` en Kotlin.
+        - No se permite la sobrecarga de funciones, lo que puede limitar la expresividad en algunos diseños de APIs.
+        - La inmutabilidad con `Final` no se aplica en tiempo de ejecución y depende de herramientas externas para su utilidad.
+        - Las funciones sin tipos explícitos pueden volverse difíciles de mantener en proyectos grandes o colaborativos.
+        - El uso excesivo de `*args` y `**kwargs` puede afectar la claridad, el autocompletado y el análisis estático.
+        - El sistema de tipos sigue siendo opcional y poco estricto, lo que dificulta la prevención de errores en grandes bases de código si no se aplican prácticas disciplinadas.
+    </Cons>
+</ProCons>
+
+## 🎯 Conclusiones
+
+Python ofrece una forma muy flexible y accesible de definir funciones y declarar variables. Aunque permite adoptar un estilo cercano al de lenguajes con tipado estático (como Kotlin) mediante anotaciones y herramientas externas, su naturaleza dinámica implica que esa seguridad no es obligatoria ni garantizada en tiempo de ejecución.
+
+Comprender estas diferencias es clave al portar ideas entre lenguajes o al diseñar bibliotecas reutilizables, donde la claridad y la seguridad del código son tan importantes como la concisión.
+
+### 🔑 Puntos clave
+
+- Las funciones en Python se definen con `def` y pueden usar anotaciones de tipo opcionales (`a: int`) para mayor claridad.
+- El tipado no es estricto: Python no verifica que los valores coincidan con los tipos anotados.
+- Los parámetros con valores por defecto reemplazan la necesidad de sobrecarga de funciones.
+- `*args` y `**kwargs` permiten construir funciones altamente flexibles y genéricas.
+- Las variables en Python son mutables por defecto y no existe un equivalente exacto a `val`, aunque `Final` (desde Python 3.8) permite comunicar intención de inmutabilidad.
+
+### 🧾 Tabla comparativa: Python vs Kotlin
+
+| Característica                          | Python                                       | Kotlin                               |
+|----------------------------------------|----------------------------------------------|---------------------------------------|
+| Declaración de funciones               | `def` con tipos opcionales                   | `fun` con tipos obligatorios          |
+| Tipado                                  | Dinámico con anotaciones opcionales          | Estático y obligatorio                |
+| Verificación de tipos en runtime       | ❌ No                                          | ✅ Sí                                 |
+| Variables mutables por defecto         | ✅ Sí (`=`)                                   | ❌ No (`val` es inmutable por defecto)|
+| Inmutabilidad explícita                | `Final` (no forzado en runtime)              | `val` (forzado por el compilador)     |
+| Valores por defecto en parámetros      | ✅ Sí                                         | ✅ Sí                                 |
+| Sobrecarga de funciones                | ❌ No                                         | ✅ Sí                                 |
+| `*args` y `**kwargs`                   | ✅ Soportado con sintaxis especial            | ❌ No directamente                    |
+| Pensado para                           | Flexibilidad y rapidez                       | Seguridad y expresividad              |
+
+## 🧰 ¿Qué nos llevamos?
+
+Esta lección nos mostró cómo **Python combina flexibilidad con expresividad**, permitiendo escribir funciones potentes con muy poca sintaxis. Pero también nos deja una advertencia: **esa libertad requiere mayor disciplina del equipo desarrollador**, especialmente al escribir bibliotecas o aplicaciones a gran escala.
+
+Entender cómo se declaran funciones y variables —y cómo esto difiere del enfoque más estricto de Kotlin— es fundamental para:
+
+- Escribir código más predecible y mantenible,
+- Compartir funciones con otras personas sin ambigüedad,
+- Diseñar APIs coherentes que resistan el paso del tiempo.
 ## 📖 Referencias
 
-- [PEP 8 - Guía de estilo para Python](https://peps.python.org/pep-0008/)
-- [PEP 484 - Type Hints](https://peps.python.org/pep-0484/)
-- [Documentación oficial de Python sobre funciones](https://docs.python.org/3/tutorial/controlflow.html#defining-functions)
+### 🔥 Recomendadas
+
+- [🌐 "Guía de funciones de Python con ejemplos"](https://www.freecodecamp.org/espanol/news/guia-de-funciones-de-python-con-ejemplos/) en *"freeCodeCamp"* por **Sebastian J. Bustamante**: Explicación clara y accesible sobre cómo se definen y utilizan funciones en Python, incluyendo sintaxis, parámetros con valores por defecto, paso de argumentos por posición o nombre, ámbito de variables, y comportamiento con objetos mutables. También cubre funciones incorporadas como `max`, `min`, `divmod`, `hex`, `len`, `ord`, `chr` e `input`. Es especialmente relevante para esta lección porque refuerza con ejemplos prácticos los fundamentos que tratamos: **sintaxis de funciones, reutilización de código, comportamiento dinámico del lenguaje y diferencias clave con lenguajes de tipado estático como Kotlin**.
+
+{/* ### 🔹 Adicionales */}
