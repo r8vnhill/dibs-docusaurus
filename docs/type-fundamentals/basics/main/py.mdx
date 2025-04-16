@@ -1,0 +1,152 @@
+---
+title: "Punto de entrada en Python"
+---
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import ReadingTime from '@site/src/components/ReadingTime'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+
+<ReadingTime />
+<GithubRepoLink repo="python-dibs" user="r8vnhill"/>
+
+En cualquier lenguaje de programación, definir cómo empieza un programa es clave para poder probar componentes, escribir scripts auxiliares o incluir ejemplos ejecutables. En Kotlin, ya aprendimos que esto se logra a través de la función `main`, claramente marcada como el punto de entrada del sistema.
+
+Python, en cambio, ofrece un enfoque más flexible: **no exige una función principal ni un archivo designado como punto de entrada**, lo que permite una experiencia más ágil en scripts pequeños o tareas interactivas. Sin embargo, esta flexibilidad puede volverse confusa si no seguimos ciertas convenciones.
+
+En esta lección veremos cómo se ejecutan los programas en Python, qué significa el patrón `if __name__ == "__main__"` y por qué conviene usarlo, especialmente cuando estamos desarrollando módulos reutilizables. También compararemos esta estrategia con la de Kotlin para entender mejor cómo ambos lenguajes balancean claridad, control y flexibilidad en la estructura de sus programas.
+
+## 🧭 Punto de entrada en Python
+
+A diferencia de Kotlin, donde la función `main` cumple un rol explícito como punto de partida del programa, **Python no requiere definir `main()` para comenzar la ejecución**. Cualquier código escrito en el **nivel superior** de un archivo será ejecutado automáticamente al correr ese archivo con `python archivo.py`.
+
+Sin embargo, para mantener el orden y favorecer la reutilización, la comunidad de Python suele recomendar el siguiente patrón idiomático:
+
+```python showLineNumbers title="Patrón recomendado en Python"
+# Referencia a Kimi no Na wa.
+def main() -> None:
+    print("Treasure the experience. Dreams fade away after you wake up.")
+
+
+if __name__ == '__main__':
+    main()
+```
+
+Este patrón permite distinguir claramente entre **código que debe ejecutarse al correr el script directamente** y código que se puede **importar desde otros módulos sin efectos colaterales**.
+
+### 📌 ¿Por qué `if __name__ == '__main__'`?
+
+Python define una variable especial llamada `__name__` para cada archivo que ejecuta:
+
+- Si el archivo se ejecuta directamente (por ejemplo: `python archivo.py`), entonces `__name__ == '__main__'`.
+- Si el archivo se **importa desde otro módulo**, entonces `__name__` toma el nombre del archivo como módulo (por ejemplo: `'utils'`, `'main'`, etc.).
+
+Este patrón es fundamental para:
+
+- **Separar responsabilidades** entre lógica ejecutable y funciones reutilizables.
+- **Evitar efectos colaterales inesperados** al importar un archivo que contiene llamadas a funciones, impresiones o acceso a archivos.
+- **Simular un punto de entrada claro**, especialmente útil en proyectos grandes o cuando se integran herramientas externas.
+
+### 🧨 ¿Qué pasa si no lo usamos?
+
+Supongamos que tienes un archivo `engine.py` con este código:
+
+```python title="engine.py"
+print("⚙️ Starting engine...")
+
+def run():
+    print("🚀 Engine is running.")
+```
+
+Y ahora tienes otro archivo `main.py` que lo importa:
+
+```python title="main.py"
+from engine import run
+
+print("🔧 Preparing to launch...")
+run()
+```
+
+Cuando ejecutas `main.py`, la salida será:
+
+```plaintext
+⚙️ Starting engine...
+🔧 Preparing to launch...
+🚀 Engine is running.
+```
+
+¡Sorpresa! Se ejecutó el `print` de `engine.py` **inmediatamente al hacer la importación**, **antes** de que `run()` fuese llamado.
+
+Esto ocurre porque el código de nivel superior en `engine.py` **se ejecuta tan pronto como se importa**, a menos que lo encapsules dentro de un bloque protegido con:
+
+```python
+if __name__ == '__main__':
+    print("⚙️ Starting engine...")
+```
+
+De esta forma, `engine.py` **solo imprime el mensaje cuando es ejecutado directamente**, y **no cuando se importa como módulo**.
+
+:::tip En resumen
+
+Usar `if __name__ == '__main__'` es una buena práctica que:
+
+- Protege tu código de ejecuciones accidentales al importarlo.
+- Hace que tus módulos sean **más predecibles y reutilizables**.
+- Permite incluir pruebas, ejemplos o scripts dentro del mismo archivo sin interferir con el resto del sistema.
+
+:::
+
+## ✅ Beneficios / ❌ Limitaciones
+
+<ProCons>
+    <Pros title="Ventajas de Python">
+        - **Simplicidad en la ejecución**: Cualquier archivo `.py` puede ser ejecutado directamente sin necesidad de declarar una función `main`.
+        - **Flexibilidad para scripts y prototipos**: Ideal para escribir pequeños programas, pruebas rápidas o scripts exploratorios sin mucha estructura.
+        - **Patrón idiomático claro (`if __name__ == '__main__'`)**: Permite separar la lógica de ejecución del resto del código reutilizable.
+        - **Multiplataforma y sin necesidad de compilación**: Se puede ejecutar en distintos entornos sin pasos de construcción intermedios.
+    </Pros>
+    <Cons title="Limitaciones de Python">
+        - **Ejecución implícita puede ser confusa**: Todo el código al nivel superior se ejecuta al importar el archivo si no está protegido por `if __name__ == '__main__'`.
+        - **No hay un punto de entrada único y obligatorio**: En proyectos grandes, puede ser difícil ubicar qué archivo es el principal si no se documenta claramente.
+        - **Falta de control sobre el entorno de ejecución**: No hay una forma estándar de declarar el nombre de la clase principal como en Kotlin o Java (`mainClassName`).
+    </Cons>
+</ProCons>
+
+## 🎯 Conclusiones
+
+A lo largo de esta lección, exploramos cómo Python gestiona el punto de entrada de sus programas y cómo se compara con el enfoque más explícito de Kotlin. Si bien ambos lenguajes permiten definir una función `main`, en Python esta no es obligatoria ni especial, lo que otorga flexibilidad, pero también requiere disciplina para mantener el código organizado y predecible.
+
+Aprendimos por qué es importante usar el patrón `if __name__ == '__main__'`, especialmente cuando desarrollamos módulos reutilizables o deseamos evitar efectos colaterales al importar archivos.
+
+### 🔑 Puntos clave
+
+- Python **no requiere una función `main`** para ejecutar código, pero es recomendable definir una para mayor claridad.
+- El patrón `if __name__ == '__main__'` permite **proteger el código ejecutable** y evitar que se ejecute al importar el archivo.
+- Es posible incluir ejemplos, pruebas o scripts dentro del mismo archivo sin interferir con su uso como módulo.
+- A diferencia de Kotlin, **no hay una única clase o archivo principal por convención**, lo cual otorga flexibilidad pero puede dificultar la navegación en proyectos grandes.
+
+### 📋 Tabla comparativa: Kotlin vs. Python
+
+| Característica                         | Kotlin                            | Python                                       |
+|---------------------------------------|-----------------------------------|----------------------------------------------|
+| **Punto de entrada obligatorio**       | ✅ Sí (`fun main`)                   | ❌ No, pero se puede definir `main()`           |
+| **Requiere clase o archivo específico**| ✅ Sí (`mainClass` en Gradle)        | ❌ No, cualquier archivo puede ser ejecutado    |
+| **Múltiples puntos de entrada**        | Requiere configuración explícita  | Sí, cualquier archivo ejecutable puede tener uno |
+| **Protección contra ejecución al importar** | No necesaria, no se ejecuta al importar | Sí, se necesita `if __name__ == '__main__'` |
+| **Scripts rápidos y exploración**      | Menos directo                     | Muy adecuado para scripts y experimentación  |
+| **Compilación previa requerida**       | ✅ Sí                                | ❌ No                                           |
+
+### 🧰 ¿Qué nos llevamos?
+
+Aunque en Kotlin estamos acostumbradas a una estructura clara con una función `main` bien definida y una clase principal configurable, en Python el punto de entrada es **más libre y flexible**, pero también **más propenso a errores si no seguimos buenas prácticas**.
+
+Este contraste nos recuerda que **la claridad no siempre viene impuesta por el lenguaje**, sino que a menudo depende de nuestra disciplina como personas desarrolladoras. Adoptar el patrón `if __name__ == '__main__'` es un pequeño gesto que mejora la **reusabilidad**, **previsibilidad** y **mantenibilidad** de nuestros módulos, sin perder la agilidad que ofrece Python para escribir scripts y experimentar con ideas.
+
+Este entendimiento será fundamental a medida que avancemos hacia el diseño de bibliotecas en Python, especialmente si queremos combinar ejemplos ejecutables con componentes reutilizables de calidad.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- [🌐 "What Does if `__name__ == '__main__'` Do in Python?"](https://realpython.com/if-name-main-python/) en *Real Python* por **Martin Breuss**: Este artículo explica a fondo el patrón `if __name__ == "__main__"` en Python, mostrando cómo permite ejecutar código solo cuando un archivo es ejecutado directamente, y no al ser importado como módulo. Ilustra casos prácticos, buenas y malas prácticas, y alternativas más idiomáticas en situaciones donde este patrón no es necesario. Refuerza el objetivo de esta unidad al explicar por qué conviene encapsular la lógica ejecutable, evitando efectos colaterales al importar módulos —un punto clave para desarrollar bibliotecas reutilizables en Python.
+
+{/* ### 🔹 Adicionales */}
+

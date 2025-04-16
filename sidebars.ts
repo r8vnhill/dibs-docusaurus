@@ -29,7 +29,7 @@ const sidebars: SidebarsConfig = {
                         'type-fundamentals/basics/functions-and-variables/kt',
                         'type-fundamentals/basics/conditional-expressions',
                         'type-fundamentals/basics/cycles/kt',
-                        'type-fundamentals/basics/main',
+                        'type-fundamentals/basics/main/kt',
                     ]
                 },
                 
