@@ -23,13 +23,13 @@ const sidebars: SidebarsConfig = {
                     type: 'category',
                     link: {
                         type: 'doc',
-                        id: 'type-fundamentals/kotlin/intro-kotlin',
+                        id: 'type-fundamentals/basics/intro-kotlin',
                     },
                     items: [
-                        'type-fundamentals/kotlin/functions-and-variables/kt',
-                        'type-fundamentals/kotlin/conditional-expressions',
-                        'type-fundamentals/kotlin/cycles',
-                        'type-fundamentals/kotlin/main',
+                        'type-fundamentals/basics/functions-and-variables/kt',
+                        'type-fundamentals/basics/conditional-expressions',
+                        'type-fundamentals/basics/cycles/kt',
+                        'type-fundamentals/basics/main',
                     ]
                 },
                 

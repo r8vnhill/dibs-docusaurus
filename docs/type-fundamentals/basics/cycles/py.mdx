@@ -1,0 +1,424 @@
+---
+title: Ciclos y rangos en comparación con Python
+---
+import Explanation from '@site/src/components/admonitions/Explanation'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs';
+import TabItem from '@theme/TabItem';
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import ReadingTime from '@site/src/components/ReadingTime';
+import GitHubRepoLink from "@site/src/components/GithubRepoLink";
+
+<ReadingTime/>
+<GitHubRepoLink repo="python-dibs" user="r8vnhill"/>
+
+En esta lección compararemos cómo **Python** y **Kotlin** abordan uno de los aspectos más fundamentales de cualquier lenguaje de programación: **los ciclos y los rangos**.
+
+Aunque ambos lenguajes permiten repetir acciones, recorrer colecciones y construir nuevas estructuras de datos a partir de otras, lo hacen desde enfoques muy distintos:
+
+- Kotlin favorece **la expresividad con tipos estáticos y estructuras bien tipadas**, como `1..10`, `repeat`, o funciones como `map` y `filter`.
+- Python, en cambio, apuesta por **una sintaxis simple, flexible y directa**, con herramientas como `range`, `for`, y especialmente las *comprehensions*, que permiten generar listas, conjuntos y diccionarios en una sola línea.
+
+Esta comparación te permitirá:
+
+- Ver en acción las diferencias entre ciclos `for`, `while`, `do-while` y sus equivalentes en Python.
+- Entender qué tipo de estructuras se pueden recorrer y cómo se define un rango en cada lenguaje.
+- Aprender a usar comprehensions de listas, sets y diccionarios en Python, entendiendo su poder y sus limitaciones.
+- Reconocer cuándo Python simplifica la escritura de código y cuándo puede perder expresividad o seguridad de tipos frente a Kotlin.
+
+La meta no es decidir cuál es “mejor”, sino **entender los matices** de cada herramienta para que puedas tomar mejores decisiones al diseñar tus propias bibliotecas o escribir código idiomático y claro, sin importar el lenguaje que uses.
+
+## 🔁 Declaración `for`
+
+En Python, los ciclos `for` permiten recorrer directamente cualquier objeto **iterable**, como listas, cadenas o rangos.
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers
+        def print_characters(characters: list[str]) -> None:
+            for char in characters:
+                print(char)
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        Veamos un ejemplo con una lista de personajes del cómic *The Walking Dead*:
+
+        ```python showLineNumbers
+        def print_characters(characters: list[str]) -> None:
+            for char in characters:
+                print(char)
+
+
+        if __name__ == '__main__':
+            print_characters(["Rick", "Michonne", "Carl", "Negan", "Andrea"])
+        ```
+
+        ```plaintext title="Salida"
+        Rick
+        Michonne
+        Carl
+        Negan
+        Andrea
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    En cada iteración, el ciclo asigna un personaje a la variable `character` y ejecuta el cuerpo del bucle, que en este caso imprime su nombre.
+</Explanation>
+
+Este estilo de iteración es claro, expresivo y muy utilizado en Python, especialmente en programas donde queremos **procesar elementos sin preocuparnos por índices o contadores**.
+
+## ⚙️ Generadores básicos
+
+Python ofrece una sintaxis muy concisa y expresiva llamada **comprehensions** para generar nuevas colecciones a partir de otras estructuras iterables. Estas construcciones son especialmente útiles cuando queremos **crear, transformar o filtrar datos de forma declarativa**, sin necesidad de escribir ciclos `for` explícitos.
+
+### 🔁 Sintaxis general
+
+La forma básica de una *comprehension* sigue esta estructura:
+
+```python
+expresión for variable in iterable if condición
+```
+
+- **`expresión`**: lo que se va a agregar a la nueva colección. Tiene acceso a `variable`.
+- **`variable`**: nombre con el que accedemos a cada elemento del iterable.
+- **`iterable`**: cualquier objeto que se pueda recorrer (`list`, `range`, `str`, etc.).
+- **`if condición`** *(opcional)*: filtra los elementos, incluyendo solo aquellos que la cumplan.
+
+### 📦 List Comprehensions
+
+Devuelven una **lista** con los resultados evaluados para cada elemento del iterable.
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers title="Ejemplo: duplicar números"
+        def double_numbers(numbers: list[int]) -> list[int]:
+            return [x * 2 for x in numbers]
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="Ejemplo: duplicar números"
+        def double_numbers(numbers: list[int]) -> list[int]:
+            return [x * 2 for x in numbers]
+
+        if __name__ == '__main__':
+            print(double_numbers([1, 2, 3]))
+        ```
+
+        ```plaintext title="Salida"
+        [2, 4, 6]
+        ```
+    </TabItem>
+</BoxedTabs>
+
+También pueden incluir una condición:
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers title="Ejemplo: filtrar pares"
+        def filter_pairs(numbers: list[int]) -> list[int]:
+            return [x for x in numbers if x % 2 == 0]
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="Ejemplo: filtrar pares"
+        def filter_pairs(numbers: list[int]) -> list[int]:
+            return [x for x in numbers if x % 2 == 0]
+
+
+        if __name__ == '__main__':
+            filter_pairs([1, 2, 3, 4, 5])
+        ```
+            
+        ```plaintext title="Salida"
+        [2, 4]
+        ```
+    </TabItem>
+</BoxedTabs>
+
+### 🧮 Set Comprehensions
+
+En Python, las *set comprehensions* permiten construir conjuntos de forma concisa a partir de estructuras iterables, aplicando filtros y transformaciones en una sola línea.
+
+En el siguiente ejemplo, creamos una función que extrae los **elementos únicos no nulos** de una colección, como una lista de niveles de Digimon.
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers title="Ejemplo: elementos únicos"
+        def unique_elements(elements: Iterable[T]) -> set[T]:
+            return {x for x in elements if x is not None}
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="Ejemplo: elementos únicos"
+        from typing import TypeVar, Iterable
+
+        T = TypeVar("T")
+
+
+        def unique_elements(elements: Iterable[T]) -> set[T]:
+            return {x for x in elements if x is not None}
+
+
+        if __name__ == '__main__':
+            digimon_levels = ["Rookie", "Champion", "Rookie", "Ultimate", None, "Mega"]
+            print(unique_elements(digimon_levels))
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    Este fragmento define una función `unique_elements` que:
+
+    - Recibe una colección de elementos (`Iterable[T]`).
+    - Filtra aquellos que son `None`.
+    - Devuelve un `set[T]` con los elementos únicos.
+
+    En el ejemplo temático, usamos una lista de niveles de Digimon (algunos repetidos y uno nulo). El *set comprehension* nos permite obtener directamente los niveles válidos, sin repeticiones ni valores nulos.
+</Explanation>
+
+### 🗺️ Dict Comprehensions
+
+Las *dict comprehensions* permiten crear diccionarios de forma compacta, aplicando transformaciones y filtros sobre una estructura iterable.
+
+En el siguiente ejemplo, construimos un diccionario que **asocia personajes con su clan**, pero solo incluimos aquellos que **tienen clan conocido**:
+
+<BoxedTabs>
+    <TabItem label="Código esencial" value="Código esencial">
+        ```python showLineNumbers title="Ejemplo: personajes de clanes"
+        def known_clan_members(data: list[tuple[str, str | None]]) -> dict[str, str]:
+            return {
+                char_name: char_clan for char_name, char_clan in data
+                if char_clan is not None
+            }
+        ```
+    </TabItem>
+    <TabItem label="Código completo" value="Código completo">
+    ```python showLineNumbers title="Ejemplo: personajes de clanes"
+    def known_clan_members(data: list[tuple[str, str | None]]) -> dict[str, str]:
+        return {
+            char_name: char_clan for char_name, char_clan in data
+            if char_clan is not None
+        }
+
+
+    if __name__ == '__main__':
+        characters = [
+            ("Chun-Woo Han", "Black Heaven and Earth"),
+            ("Jin-Ie", None),
+            ("So-Chun Hyuk", "Muran"),
+            ("Sera Kang", "Muran"),
+            ("Goomoonryong", None)
+        ]
+
+        result = known_clan_members(characters)
+        for name, clan in result.items():
+            print(f"{name} → {clan}")
+    ```
+
+    ```plaintext title="Salida"
+    Chun-Woo Han → Black Heaven and Earth
+    So-Chun Hyuk → Muran
+    Sera Kang → Muran
+    ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+  Este fragmento define una función que:
+
+  - Recibe una lista de tuplas (`(char_name, char_clan)`).
+  - Filtra los personajes sin clan (`None`).
+  - Devuelve un diccionario `{char_name: char_clan}` de aquellos que tienen clan.
+
+  En este ejemplo inspirado en *The Breaker*, evitamos mostrar personajes cuya afiliación es desconocida o irrelevante en cierto contexto narrativo. Las dict comprehensions son especialmente útiles cuando quieres transformar y filtrar datos al mismo tiempo, sin necesidad de ciclos explícitos.
+</Explanation>
+
+## 📏 Rangos: explícitos pero limitados
+
+Tanto Kotlin como Python permiten definir rangos, pero lo hacen de formas muy distintas y con distintos grados de flexibilidad.
+
+En Kotlin, existen operadores nativos para definir rangos:
+
+- `1..5` → Rango cerrado de 1 a 5  
+- `1..<5` → Rango abierto de 1 a 5 (excluye el 5)
+
+Python, en cambio, utiliza la función incorporada `range()`:
+
+```python showLineNumbers
+range(1, 6)        # Equivalente a 1..<6 (el tope es exclusivo)
+range(5, 0, -1)    # Equivalente a 5 downTo 1
+range(1, 6, 2)     # Equivalente a 1..<6 step 2
+```
+
+A diferencia de Kotlin, **Python no cuenta con un operador específico para definir rangos**. Siempre se utiliza la función `range`, que además **solo funciona con números enteros**.
+
+## 🔂 Ciclos `while` y `do-while`
+
+Tanto **Kotlin** como **Python** permiten repetir acciones mediante ciclos `while`. La idea es evaluar una **condición booleana** y, mientras se cumpla, seguir ejecutando el bloque de código.
+
+### 🌀 Ciclos `while` en Python
+
+Una estructura común en Python es recorrer una lista de posibles fuentes de configuración hasta encontrar una válida. Este patrón es ideal para mostrar cómo se aplica un ciclo `while`.
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers
+        def load_first_valid_config(sources: list[str]) -> int | None:
+            index = 0
+            while index < len(sources):
+                config = try_load_config(sources[index])
+                index += 1
+                if config is not None:
+                    return config
+            return None
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers
+        def try_load_config(source: str) -> int | None:
+            print(f"🔍 Trying to load configuration from '{source}'")
+            if source == "default.yaml":
+                print("✅ Configuration loaded successfully.")
+                return 420
+            else:
+                print("❌ Invalid configuration.")
+                return None
+
+
+        def load_first_valid_config(sources: list[str]) -> int | None:
+            index = 0
+            while index < len(sources):
+                config = try_load_config(sources[index])
+                index += 1
+                if config is not None:
+                    return config
+            return None
+
+
+        if __name__ == '__main__':
+            yaml_files = ["user.yaml", "project.yaml", "default.yaml"]
+
+            valid_config = load_first_valid_config(yaml_files)
+
+            if valid_config is None:
+                print("💥 No valid configuration found.")
+            else:
+                print(f"🛠️ System initialized with config ID {valid_config}.")
+        ```
+
+        ```plaintext title="Salida"
+        🔍 Trying to load configuration from 'user.yaml'
+        ❌ Invalid configuration.
+        🔍 Trying to load configuration from 'project.yaml'
+        ❌ Invalid configuration.
+        🔍 Trying to load configuration from 'default.yaml'
+        ✅ Configuration loaded successfully.
+        🛠️ System initialized with config ID 420.
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    Este ejemplo muestra un caso clásico de uso para `while`: buscar algo en una lista hasta encontrar una respuesta válida.
+
+    - Se usa un índice para recorrer una lista de archivos.
+    - Se intenta cargar la configuración de cada archivo en orden.
+    - Si una fuente es válida (`config is not None`), se retorna inmediatamente.
+    - Si ninguna lo es, la función retorna `None`.
+</Explanation>
+
+### ❗ ¿Y el ciclo `do-while`?
+
+Python **no tiene una construcción `do-while`**, pero puedes simularlo con un `while True` y una instrucción `break`:
+
+```python showLineNumbers title="Simulación de do-while en Python"
+while True:
+    attempt = try_load_config(["file.yaml"])
+    if attempt is not None:
+        break
+```
+
+Este patrón garantiza que el bloque se ejecute **al menos una vez**, como haría un `do-while` en otros lenguajes.
+
+## 🔄 Repeticiones fijas
+
+Kotlin incluye la función `repeat(n)`, que no existe como tal en Python. En Python, lo más cercano es un ciclo `for` con `range(n)`:
+
+```python showLineNumbers title="Repetición fija en Python"
+for _ in range(3):
+    print("Ni!")
+```
+
+Pero **Python no ofrece una alternativa tan expresiva como `repeat { }` de Kotlin**, especialmente cuando no se necesita el índice de iteración.
+
+## ✅ Beneficios / ❌ Limitaciones
+
+<ProCons>
+    <Pros>
+        - **Sintaxis simple y directa**: Los ciclos `for` en Python funcionan directamente con cualquier iterable, sin necesidad de índices explícitos.
+        - **Comprehensions expresivas**: Las list, set y dict comprehensions permiten construir colecciones transformadas o filtradas de forma concisa y declarativa.
+        - **Uniformidad en la iteración**: Las estructuras como listas, rangos, cadenas o archivos se pueden recorrer con el mismo tipo de ciclo `for`.
+        - **Ciclo `while` claro**: El comportamiento de `while` es directo y se adapta bien a patrones comunes como "leer hasta encontrar algo válido".
+        - **Flexible con estructuras personalizadas**: Si una clase implementa `__iter__` o `__contains__`, puede integrarse fácilmente con `for` o `in`.
+
+    </Pros>
+    <Cons>
+        - **Sin `do-while` nativo**: Python no tiene un ciclo que garantice la ejecución del cuerpo al menos una vez. Se debe simular con `while True` y `break`.
+        - **Sin `repeat(n)`**: No hay una función estándar que indique explícitamente "repite esta acción n veces". Se usa `for _ in range(n)`, que es menos semántico.
+        - **`range()` solo con enteros**: No se pueden usar rangos directamente con `float`, `str`, o `char`, lo que limita su expresividad en ciertos contextos.
+        - **No hay operadores de rango**: Python no tiene operadores como `..`, `..<`, o `downTo`; todos los rangos deben construirse con `range(start, stop[, step])`.
+        - **Comprehensions no tipadas**: Aunque muy expresivas, las comprehensions no llevan anotaciones de tipo ni estructuras de control sofisticadas como en Kotlin con `map`, `filter`, `flatMap`, etc.
+
+</Cons>
+</ProCons>
+
+## 🎯 Conclusiones
+
+A lo largo de esta lección, exploramos cómo Python y Kotlin abordan las estructuras de repetición y la generación de colecciones de forma declarativa.
+
+Kotlin prioriza la expresividad mediante rangos, funciones como `repeat`, y estructuras de control que hacen explícita la intención del código. Python, por su parte, opta por una sintaxis simple, directa y poderosa que facilita escribir ciclos y comprehensions de forma natural.
+
+### 🔑 Puntos clave
+
+- Python permite recorrer listas, cadenas y otros iterables directamente con `for`, sin necesidad de índices.
+- Las *comprehensions* (de listas, conjuntos y diccionarios) son una herramienta poderosa para construir nuevas colecciones con filtros y transformaciones.
+- Python usa la función `range()` para generar rangos, pero solo admite enteros.
+- Los ciclos `while` funcionan igual que en Kotlin, pero Python no incluye `do-while`; se simula con `while True` + `break`.
+- No existe en Python una función equivalente a `repeat`, pero se puede lograr el mismo efecto con `for _ in range(n)`.
+
+### 📋 Tabla comparativa: Kotlin vs. Python
+
+| Característica                        | Kotlin                                  | Python                                      |
+|--------------------------------------|-----------------------------------------|---------------------------------------------|
+| **Rangos**                           | `1..5`, `5 downTo 1`, `1..10 step 2`    | `range(1, 6)`, `range(5, 0, -1)`             |
+| **Tipos en rangos**                  | Admite `Int`, `Char`, `Double`, etc.    | Solo admite `int`                           |
+| **Ciclo `for`**                      | Recorre rangos e iterables              | Recorre directamente cualquier iterable     |
+| **`for` como expresión**             | ❌ No                                      | ❌ No                                           |
+| **List comprehension**               | ❌ No (usa `map`, `filter`, etc.)          | ✅ Sí                                           |
+| **Set comprehension**               | ❌ No (usa `toSet()` + `map`/`filter`)     | ✅ Sí                                           |
+| **Dict comprehension**              | ❌ No (usa constructores o `associate`)    | ✅ Sí                                           |
+| **Ciclo `while`**                    | ✅ Sí                                      | ✅ Sí                                           |
+| **Ciclo `do-while`**                 | ✅ Sí                                      | No (se simula con `while True` + `break`)   |
+| **Repetición fija (`repeat`)**       | `repeat(n) { ... }`                     | `for _ in range(n):`                         |
+| **Verificación con `in`**            | `x in 1..10`, `s in "a".."z"`            | `x in range(1, 11)`, `x in lista`            |
+
+### 🧰 ¿Qué nos llevamos?
+
+Comparar cómo dos lenguajes distintos modelan operaciones tan universales como los ciclos nos ayuda a entender no solo sus sintaxis, sino también sus **filosofías de diseño**.
+
+Kotlin busca evitar ambigüedades y favorecer el diseño expresivo, especialmente en bibliotecas. Python, en cambio, apuesta por una sintaxis concisa que deja más control (y más responsabilidad) a quien programa.
+
+Ambos enfoques tienen sus ventajas, y conocerlos nos permite tomar decisiones informadas al escribir código reutilizable, claro y mantenible.
+
+Al final, aprender estas diferencias no se trata solo de saber "cómo se hace en otro lenguaje", sino de **entrenar el ojo para reconocer cuándo un ciclo, una repetición o una construcción declarativa están comunicando bien su propósito**.
+
+Y eso —comunicar bien nuestras intenciones con el código— es una habilidad clave para diseñar buenas bibliotecas.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- [🌐 "When to Use a List Comprehension in Python"](https://realpython.com/list-comprehension-python/) en *Real Python* por **James Timmins**: Una guía práctica y detallada sobre **cuándo conviene usar list comprehensions en Python**, escrita por el equipo de *Real Python*. Explica cómo estas construcciones permiten **transformar, filtrar y construir colecciones** de forma declarativa, comparándolas con ciclos `for`, `map()` y `filter()`. También aborda **casos avanzados**, como el uso de condicionales, comprehensions anidadas, y alternativas como generadores para manejar grandes volúmenes de datos. Es especialmente relevante para esta lección porque **profundiza en el diseño, ventajas y límites de las comprehensions**, y enseña a decidir **cuándo usarlas y cuándo evitarlas** en favor de soluciones más claras o eficientes.
+
+{/* ### 🔹 Adicionales */}

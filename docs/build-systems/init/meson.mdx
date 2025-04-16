@@ -44,7 +44,7 @@ A continuación, selecciona tu sistema operativo para ver cómo instalarlas paso
             )
 
             # 🔍 Checks if a given command is available in the system
-            function Is-CommandAvailable {
+            function Test-Command {
                 param ([string]$Command)
                 return ($null -ne (Get-Command $Command -ErrorAction SilentlyContinue))
             }
@@ -59,7 +59,7 @@ A continuación, selecciona tu sistema operativo para ver cómo instalarlas paso
                 foreach ($pkg in $CommandMap.Keys) {
                     $command = $CommandMap[$pkg]
 
-                    if (Is-CommandAvailable $command) {
+                    if (Test-Command {
                         Write-Host "🔹 $pkg is already available (via '$command'). Skipping Scoop." `
                             -ForegroundColor DarkGray
                         continue
@@ -168,9 +168,9 @@ A continuación, selecciona tu sistema operativo para ver cómo instalarlas paso
                 esac
 
                 local env_lines=(
-                    'PATH="/opt/homebrew/opt/llvm/bin:$PATH"'
-                    'LDFLAGS="-L/opt/homebrew/opt/llvm/lib"'
-                    'CPPFLAGS="-I/opt/homebrew/opt/llvm/include"'
+                    "PATH=\"/opt/homebrew/opt/llvm/bin:\$PATH\""
+                    "LDFLAGS=\"-L/opt/homebrew/opt/llvm/lib\""
+                    "CPPFLAGS=\"-I/opt/homebrew/opt/llvm/include\""
                 )
 
                 for line in "${env_lines[@]}"; do
@@ -385,27 +385,27 @@ Si alguna de las versiones no aparece o el comando falla, asegúrate de que las 
 
             # Resolve full path and create base directory
             $projectPath = Resolve-Path -Path (
-                New-Item -Path $ProjectName -ItemType Directory -Force
+            New-Item -Path $ProjectName -ItemType Directory -Force
             ).FullName
             $srcPath = Join-Path $projectPath "src"
 
             Write-Host "📁 Creating folders and Meson files..."
             New-Item -Path (Join-Path $projectPath "meson.build") `
-                     -ItemType File `
-                     -Force | Out-Null
+                    -ItemType File `
+                    -Force | Out-Null
             New-Item -Path $srcPath `
-                     -ItemType Directory 
-                     -Force | Out-Null
-            New-Item -Path (Join-Path $srcPath "meson.build") 
-                     -ItemType File
-                     -Force | Out-Null
+                    -ItemType Directory `
+                    -Force | Out-Null
+            New-Item -Path (Join-Path $srcPath "meson.build") `
+                    -ItemType File `
+                    -Force | Out-Null
 
             foreach ($file in $SourceFiles) {
                 $filePath = Join-Path $srcPath $file
                 if (-not (Test-Path $filePath)) {
-                    New-Item -Path $filePath
-                             -ItemType File
-                             -Force | Out-Null
+                    New-Item -Path $filePath `
+                            -ItemType File `
+                            -Force | Out-Null
                     Write-Host "📄 Created source file: $file"
                 } else {
                     Write-Warning "⚠️ File already exists: $file"
