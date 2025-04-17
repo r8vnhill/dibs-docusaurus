@@ -1,0 +1,125 @@
+---
+title: 'Registros en Java'
+---
+
+import Explanation from '@site/src/components/admonitions/Explanation'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs';
+import TabItem from '@theme/TabItem';
+import ReadingTime from '@site/src/components/ReadingTime'
+import References from '@site/src/components/mdx/type-fundamentals/algebraic-data-types/records-1/java/references.mdx';
+import GithubRepoLink from '@site/src/components/GithubRepoLink';
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="java-dibs" />
+
+En lecciones anteriores aprendimos a modelar **tipos producto** en Kotlin usando `data class`: estructuras que agrupan múltiples valores bajo una misma entidad, con campos claramente nombrados y comparación por contenido.
+
+Java, tradicionalmente un lenguaje más detallado y ceremonioso, también ha incorporado una alternativa moderna para expresar este mismo concepto: los `record`. Esta característica —introducida como preview en Java 14 y estabilizada en Java 16— permite definir **registros inmutables** de manera concisa, con comportamiento generado automáticamente por el compilador.
+
+En esta lección compararemos ambos enfoques: veremos cómo un `record` en Java cumple el mismo rol que una `data class` en Kotlin, qué capacidades ofrece, y qué limitaciones debemos considerar al usarlo en el diseño de bibliotecas o estructuras centradas en datos.
+
+Nos centraremos en lo que comparten —inmutabilidad, igualdad estructural, transparencia semántica— pero también destacaremos lo que los distingue: desde la desestructuración hasta la capacidad de copia, y el rol del lenguaje en generar código repetitivo de forma segura y expresiva.
+
+## 🎵 Ejemplo: Registro de canción con `record`
+
+A continuación presentamos un ejemplo completo del uso de `record` en Java para modelar un tipo producto simple: una canción con título, compositor, año de lanzamiento y si fue un éxito en Billboard.
+
+<BoxedTabs>
+    <TabItem label="Código esencial" value="Código esencial">
+        ```java showLineNumbers title="Song.java"
+        public record Song(
+            String title,
+            String writer,
+            int releaseYear,
+            boolean billboardHit
+        ) {}
+        ```
+    </TabItem>
+    <TabItem label="Código completo" value="Código completo">
+        ```java showLineNumbers title="Song.java"
+        package cl.ravenhill.music;
+
+        public record Song(
+            String title,
+            String writer,
+            int releaseYear,
+            boolean billboardHit
+        ) {}
+        ```
+
+        ```java showLineNumbers title="Main.java"
+        package cl.ravenhill.music;
+
+        public class Main {
+            public static void main(String[] args) {
+                var song = new Song(
+                    "Walk On By",
+                    "Burt Bacharach",
+                    1964,
+                    true
+                );
+
+                System.out.println(song);
+
+                System.out.println(song.billboardHit()
+                    ? song.title() + " was a Billboard hit!"
+                    : song.title() + " didn't chart.");
+            }
+        }
+        ```
+
+        ```plaintext title="Salida esperada"
+        Song[title=Walk On By, writer=Burt Bacharach, releaseYear=1964, billboardHit=true]
+        Walk On By was a Billboard hit!
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    Este ejemplo muestra cómo Java permite modelar **tipos producto** de forma concisa usando `record`, una característica introducida en Java 14 y estabilizada en Java 16. La clase `Song` representa un **registro inmutable** con campos claramente definidos y comparación por contenido.
+
+    El compilador genera automáticamente:
+    - El constructor con todos los campos,
+    - Los métodos `toString`, `equals` y `hashCode`,
+    - Y los *accessors* (`title()`, `writer()`, etc.).
+</Explanation>
+
+Este estilo se alinea con el concepto de **registro** como una entidad simple, declarativa y orientada a datos, tal como lo exploramos en Kotlin usando `data class`.
+
+## 🎯 Conclusiones
+
+El soporte moderno de Java para `record` permite expresar tipos producto de forma concisa y segura, acercando su modelo de datos al de lenguajes más declarativos como Kotlin. Aunque los `record` no ofrecen todas las funcionalidades de una `data class` (como `copy()` o desestructuración con `componentN()`), sí representan un paso importante hacia la simplificación del diseño orientado a datos en Java.
+
+Esta lección muestra cómo Java puede modelar estructuras inmutables y comparables por valor con una sintaxis clara, ayudando a evitar la verbosidad de las clases tradicionales cuando el objetivo es simplemente **representar datos**.
+
+### 🔑 Puntos clave
+
+- Un `record` en Java permite definir un tipo producto inmutable con semántica por valor.
+- El compilador genera automáticamente métodos útiles como `equals`, `hashCode` y `toString`.
+- Los campos son finales e inmutables por defecto.
+- Aunque conciso, el `record` no permite herencia ni sobrecarga directa de lógica compleja.
+- Es comparable conceptualmente a una `data class` de Kotlin, pero con menos herramientas integradas para desestructuración o clonación.
+
+### 📊 Comparativa: Kotlin vs Java
+
+| Característica                              | Kotlin (`data class`)                      | Java (`record`)                                |
+| ------------------------------------------- | ------------------------------------------ | ---------------------------------------------- |
+| Declaración                                 | `data class Person(...)`                   | `record Person(...)`                           |
+| Comparación por valor (`==`)                | ✅ Generada automáticamente (`equals`)      | ✅ Generada automáticamente (`equals`)          |
+| Representación legible (`toString`)         | ✅ Generada automáticamente                 | ✅ Generada automáticamente                     |
+| Hashing (`hashCode`)                        | ✅ Generado automáticamente                 | ✅ Generado automáticamente                     |
+| Desestructuración (`componentN()`)          | ✅ Sí (hasta 255 campos)                    | ❌ No                                           |
+| Clonación (`copy`)                          | ✅ Con `copy(...)`                          | ❌ No (debe escribirse manualmente)             |
+| Inmutabilidad                               | ✅ Campos `val` (aunque puede usarse `var`) | ✅ Campos inmutables por defecto                |
+| Requiere todos los campos en el constructor | ✅ Sí                                       | ✅ Sí                                           |
+| Herencia                                    | ❌ No (igual que las data classes)          | ❌ No (los `record` son implícitamente `final`) |
+
+### 🧰 ¿Qué nos llevamos?
+
+Tanto `record` como `data class` son herramientas que simplifican la creación de estructuras de datos claras y expresivas. En ambos lenguajes, el objetivo es el mismo: **modelar tipos producto que representen datos con semántica fuerte**, pero sin la necesidad de implementar manualmente comparaciones, impresiones o constructores.
+
+Para quienes vienen de Java, comprender `record` es clave para aprovechar el diseño moderno de APIs. Para quienes vienen de Kotlin, esta comparación refuerza la idea de que los conceptos de la teoría de tipos —como los productos— **se manifiestan de distintas formas según el lenguaje**, pero su propósito común es mejorar la claridad, seguridad y mantenibilidad del código.
+
+Ambos mecanismos favorecen la **inmutabilidad, la transparencia semántica y la simplicidad**, cualidades esenciales en el diseño de bibliotecas reutilizables.
+
+<References />
