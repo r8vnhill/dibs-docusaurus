@@ -1,0 +1,155 @@
+import Explanation from '@site/src/components/admonitions/Explanation'
+
+:::tip *Be lazy*
+
+Te recomendamos descargar el script directamente desde tu terminal:
+
+```powershell showLineNumbers title="Desde tu terminal"
+$path = 'scripts/windows/Initialize-ScalaModules.psm1'; `
+md (Split-Path $path) -f > $null; `
+iwr "https://raw.githubusercontent.com/r8vnhill/echo-app-sbt/refs/heads/main/$path" `
+    -OutFile $path
+```
+
+<Explanation>
+    - `md` (`New-Item -ItemType Directory`): Crea el directorio `scripts/windows` si aún no existe.
+        - `-f` (`-Force`): Ignora errores si el directorio ya existe.
+        - `> $null`: Redirige la salida a `$null` para evitar mostrar mensajes innecesarios.
+    - `iwr` (`Invoke-WebRequest`): Descarga el script desde GitHub.
+        - `-OutFile`: Especifica la ruta donde se guardará el archivo descargado.
+</Explanation>
+
+:::
+
+Ahora puedes hacer las funciones del script disponibles en tu terminal de PowerShell. Para ello, ejecuta el siguiente comando:
+
+```powershell showLineNumbers title="Desde tu terminal"
+Import-Module .\scripts\windows\Initialize-ScalaModules.psm1
+# Y ver la documentación del comando que importamos:
+Get-Help Initialize-ScalaModules -Examples
+```
+
+Y si quieres eliminar el comando del scope de tu terminal, puedes usar el siguiente comando:
+
+```powershell showLineNumbers title="Desde tu terminal"
+Remove-Module Initialize-ScalaModules
+```
+
+:::tip ¿Por qué desasociar el comando?
+
+Al desasociar el comando, evitas que permanezca en el scope de tu terminal, lo que puede ayudar a prevenir conflictos con otros comandos o scripts que puedan tener el mismo nombre.
+
+:::
+
+<details>
+    <summary>
+        Script de inicialización
+    </summary>
+
+    ```powershell showLineNumbers title="scripts\windows\Initialize-ScalaModules.psm1"
+    function Script:Get-PackagePath([string[]]$PackageParts) {
+        $path = $PackageParts[0]
+        for ($i = 1; $i -lt $PackageParts.Count; $i++) {
+            $path = Join-Path $path $PackageParts[$i]
+        }
+        return $path
+    }
+    ```
+
+    <Explanation>
+        Esta función auxiliar toma un arreglo de segmentos de paquete (como `@('com', 'example', 'app')`)
+        y los concatena en una ruta de sistema de archivos usando `Join-Path`.
+
+        Se utiliza para construir rutas como:
+        `"src/main/scala/com/example/app"` de forma segura y multiplataforma.
+    </Explanation>
+    
+    ```powershell showLineNumbers title="scripts/windows/Initialize-ScalaModules.psm1"
+    function Script:New-ScalaDirectory {
+        [CmdletBinding(SupportsShouldProcess)]
+        param (
+            [string]$Path,
+            [string]$Description
+        )
+        if ($PSCmdlet.ShouldProcess($Path, "Create $Description directory")) {
+            New-Item -Path $Path -ItemType Directory -Force -Confirm:$false | Out-Null
+        }
+    }
+    ```
+
+    <Explanation>
+        Esta función crea una carpeta con una descripción personalizada si el usuario acepta la operación. Usa `ShouldProcess` para soportar los parámetros comunes `-WhatIf` y `-Confirm`, lo que permite ejecutar el script de forma más segura.
+
+        Se emplea dentro del proceso de inicialización para crear las carpetas correspondientes a los módulos `app` y `lib`.
+    </Explanation>
+
+    ```powershell showLineNumbers title="scripts/windows/Initialize-ScalaModules.psm1"
+    function Script:New-ScalaFile {
+        [CmdletBinding(SupportsShouldProcess = $true)]
+        param (
+            [string]$Path,
+            [string]$FileName
+        )
+        if ($PSCmdlet.ShouldProcess($Path, "Create $FileName file")) {
+            New-Item -Path $Path -ItemType File -Force -Confirm:$false | Out-Null
+            Write-Verbose "Created $FileName at $Path"
+        }
+    }
+    ```
+
+    <Explanation>
+        Esta función crea un archivo vacío con el nombre y ruta especificados, ideal para scaffolding de proyectos Scala. Usa `ShouldProcess` para que puedas simular la operación con `-WhatIf` o confirmarla con `-Confirm`. El mensaje `Write-Verbose` entrega feedback si ejecutas el comando con `-Verbose`.
+    </Explanation>
+    
+    ```powershell showLineNumbers title="scripts/windows/Initialize-ScalaModules.psm1"
+    function Initialize-ScalaModules {
+        [CmdletBinding(SupportsShouldProcess)]
+        param (
+            [string[]]$BasePackage = @('com', 'github', 'username'),
+            [string[]]$AppPackage  = @('app'),
+            [string[]]$LibPackage  = @('lib'),
+            [string]  $AppFileName = 'App.scala',
+            [string]  $LibFileName = 'Lib.scala'
+        )
+
+        $basePath = Get-PackagePath -PackageParts @('src', 'main', 'scala') + $BasePackage
+        $appPath  = Join-Path 'app' (Join-Path $basePath (Get-PackagePath $AppPackage))
+        $libPath  = Join-Path 'lib' (Join-Path $basePath (Get-PackagePath $LibPackage))
+
+        $appFile  = Join-Path $appPath $AppFileName
+        $libFile  = Join-Path $libPath $LibFileName
+
+        Write-Verbose "App directory: $appPath"
+        Write-Verbose "Lib directory: $libPath"
+        Write-Verbose "App file:      $appFile"
+        Write-Verbose "Lib file:      $libFile"
+
+        New-ScalaDirectory -Path $appPath -Description 'app'
+        New-ScalaDirectory -Path $libPath -Description 'lib'
+        New-ScalaFile      -Path $appFile -FileName    $AppFileName
+        New-ScalaFile      -Path $libFile -FileName    $LibFileName
+    }
+    ```
+
+    <Explanation>
+        Esta función crea la estructura básica para un proyecto Scala multi-módulo.  
+        - Permite configurar paquetes base personalizados (`BasePackage`) y submódulos (`AppPackage`, `LibPackage`).  
+        - Usa funciones auxiliares reutilizables (`New-ScalaDirectory`, `New-ScalaFile`) que soportan los parámetros `-WhatIf` y `-Confirm`.  
+        - Muestra información detallada si se invoca con `-Verbose`.
+
+        Ideal para inicializar proyectos de forma rápida y controlada.
+    </Explanation>
+</details>
+
+```powershell showLineNumbers title="Establece tu paquete (desde la terminal)"
+$basePackage = @('com','github','username')
+```
+
+```powershell showLineNumbers title="Establece tu paquete (desde la terminal)"
+Initialize-ScalaModules -BasePackage $basePackage `
+                        -AppPackage @('app') `
+                        -LibPackage @('lib') `
+                        -AppFileName 'App.scala' `
+                        -LibFileName 'Lib.scala' `
+                        -Verbose
+```
