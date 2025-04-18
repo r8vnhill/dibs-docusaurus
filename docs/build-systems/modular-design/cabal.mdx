@@ -1,5 +1,5 @@
 ---
-title: Estructurando un Proyecto en Haskell con Múltiples Módulos
+title: Estructurando un proyecto modular en Haskell con Cabal
 ---
 
 import ReadingTime from '@site/src/components/ReadingTime'
@@ -7,243 +7,543 @@ import GitHubRepoLink from '@site/src/components/GithubRepoLink'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 import TabItem from '@theme/TabItem'
+import ScriptSetup from '@site/src/components/ScriptSetup'
 
 <ReadingTime />
 <GitHubRepoLink user="r8vnhill" repo="echo-app-cabal" />
 
-En esta lección aprenderás a estructurar un proyecto en **Haskell** con múltiples módulos usando **Cabal**, la herramienta oficial del ecosistema. Veremos cómo separar la lógica principal en una biblioteca reutilizable, cómo escribir un ejecutable que la consuma, y cómo preparar el terreno para agregar pruebas automatizadas más adelante.
+En esta lección aprenderás a estructurar un proyecto en **Haskell** con múltiples módulos usando **Cabal**, la herramienta oficial del ecosistema. Veremos cómo separar la lógica principal en una biblioteca reutilizable, cómo escribir un ejecutable que la consuma, y cómo preparar el terreno para incorporar pruebas automatizadas más adelante.
 
-Este enfoque modular es especialmente importante si vienes del mundo de las bibliotecas en Kotlin o Scala, donde separar `lib` y `app` es una práctica común. En Haskell, esa separación también es posible (y deseable), y nos permite escribir código más mantenible, reutilizable y listo para crecer.
+Este enfoque modular cobra especial relevancia si vienes del mundo de las bibliotecas en Kotlin o Scala, donde separar `lib` y `app` es una práctica común. En Haskell, esa misma separación también es posible (y recomendable), ya que permite escribir código más mantenible, reutilizable y preparado para escalar.
 
 A lo largo del camino:
 
-- Construiremos un proyecto llamado `echo-app-cabal` con una estructura clara y bien definida.
-- Implementaremos una función simple para imprimir mensajes.
+- Construiremos un proyecto llamado `echo-app-cabal` con una estructura clara y bien organizada.
+- Implementaremos una función sencilla para imprimir mensajes.
 - Veremos cómo pasar argumentos desde la terminal para probar su reutilización.
-- Y ajustaremos el archivo `.cabal` para conectar todo de forma explícita.
+- Y ajustaremos el archivo `.cabal` para conectar todos los componentes de forma explícita.
 
-Como siempre en este curso, no solo veremos el *cómo*, sino también el *por qué*. Porque entender la intención detrás de las decisiones de diseño es lo que te convierte en alguien que no solo usa herramientas, sino que sabe cuándo y cómo usarlas.
+Como siempre en este curso, no solo veremos el *cómo*, sino también el *por qué*. Entender la intención detrás de cada decisión de diseño es lo que diferencia a quien simplemente usa herramientas de quien sabe cuándo y cómo aplicarlas con criterio.
 
 初め！
 
-## 🧱 Estructura esperada
+## 🧱 Estructura esperada del proyecto
+
+Antes de modificar el archivo `.cabal`, es importante visualizar cómo estará organizado nuestro proyecto. Lo estructuraremos en tres componentes principales:
+
+- Una **biblioteca** (`src-lib/`) que contendrá la lógica reutilizable.
+- Una **aplicación** (`app/`) que actuará como ejecutable principal.
+- Un módulo de **pruebas** (`test/`) que verificará el comportamiento de la biblioteca.
 
 ```mermaid
-graph LR
-  A[📁 echo-app-cabal]
+graph TD
+    subgraph Root[📁 echo-app-cabal]
+        direction LR
 
-  subgraph B[📁 app]
-    B1[📄 Main.hs]
-  end
+        CabalFile[📄 echo-app-cabal.cabal]
 
-  subgraph C[📁 src-lib]
-    C1[📄 Echo.hs]
-  end
+        subgraph App[📁 app]
+            MainApp[📄 Main.hs]
+        end
 
-  subgraph D[📁 test]
-    D1[📄 Main.hs]
-  end
+        subgraph Lib[📁 src-lib]
+            EchoLib[📄 Echo.hs]
+        end
 
-  A --> B
-  A --> C
-  A --> D
-  A --> E[📄 echo-app-cabal.cabal]
+        subgraph Test[📁 test]
+            MainTest[📄 Main.hs]
+        end
 
-  B --> C
-  D --> C
+        MainApp -->|importa| EchoLib
+        MainTest -->|importa| EchoLib
+        CabalFile -->|library| Lib
+        CabalFile -->|executable| App
+        CabalFile -->|test-suite| Test
+    end
 ```
 
 :::info Explicación de la estructura del proyecto
 
-Este diagrama representa la estructura resultante tras ejecutar `cabal init` con soporte para biblioteca, ejecutable y pruebas.
+Esta estructura separa claramente las responsabilidades:
 
-- **📁 `echo-app-cabal/`**: Carpeta raíz del proyecto. Contiene el archivo de configuración y las carpetas de código.
-    - **📄 `echo-app-cabal.cabal`**: Archivo central de configuración. Define los targets (`library`, `executable`, `test-suite`), las dependencias, opciones de compilación y metadatos del paquete.
-- **📁 `src-lib/`**: Contiene el código fuente de la biblioteca.  
-  - **📄 `Echo.hs`**: Define funciones reutilizables que se pueden importar desde otras partes del proyecto.
-- **📁 `app/`**: Contiene el ejecutable principal de la aplicación.  
-  - **📄 `Main.hs`**: Módulo de entrada con la función `main`. Importa y utiliza funciones definidas en `src-lib`.
-- **📁 `test/`**: Contiene la suite de pruebas del proyecto.  
-  - **📄 `Main.hs`**: Punto de entrada de las pruebas. También importa la biblioteca (`src-lib`) para verificar su comportamiento.
-
-Las flechas del diagrama indican **relaciones de dependencia**:
-- El ejecutable (`app/Main.hs`) **usa** código de la biblioteca (`src-lib/Echo.hs`).
-- Las pruebas (`test/Main.hs`) también **dependen** de la biblioteca para poder verificar su funcionalidad.
-
-Esta separación permite una arquitectura modular, donde la lógica central reside en la biblioteca (`src-lib`), y tanto la aplicación como las pruebas la consumen de forma independiente.  
-Esto favorece la reutilización de código, facilita el testing, y prepara el terreno para publicar la biblioteca en el futuro.
+- `src-lib/` contiene la lógica del programa y se declara como una biblioteca dentro del archivo `.cabal`.
+- `app/` contiene el punto de entrada del ejecutable (`Main.hs`), que depende explícitamente de la biblioteca.
+- `test/` contiene las pruebas del proyecto, reutilizando también la lógica definida en la biblioteca.
+- El archivo `echo-app-cabal.cabal` es el corazón del proyecto: declara los módulos, dependencias y configuraciones de compilación para cada componente.
 
 :::
 
+## 📦 Paso 1: Crear la estructura de carpetas
+
+<BoxedTabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        <ScriptSetup moduleName="Initialize-CabalModules" repo="echo-app-cabal" />
+
+        <details>
+            <summary>
+                Script de inicialización
+            </summary>
+            
+            ```powershell showLineNumbers title="Initialize-CabalModules.psm1"
+            function Initialize-CabalModules {
+                [CmdletBinding(SupportsShouldProcess)]
+                param (
+                    [Alias('app', 'executables', 'apps')]
+                    [ValidateNotNullOrEmpty()]
+                    [string[]]$AppFiles = @('Main.hs'),
+
+                    [Alias('lib', 'modules', 'libs')]
+                    [ValidateNotNullOrEmpty()]
+                    [string[]]$LibFiles = @('Lib.hs'),
+
+                    [Alias('test', 'tests')]
+                    [ValidateNotNullOrEmpty()]
+                    [string[]]$TestFiles = @('Main.hs'),
+
+                    [Alias('f')]
+                    [switch]$Force,
+
+                    [Alias('ni', 'noPrompt')]
+                    [switch]$NoInteractive
+                )
+
+                begin {
+                    Write-Host "`n🚀 Initializing Haskell modules...`n" -ForegroundColor Cyan
+                }
+
+                process {
+                    if ($PSCmdlet.ShouldProcess('Initialize Haskell files', 'Creating Haskell files')) {
+                        $params = @{
+                            Verbose       = $VerbosePreference
+                            WhatIf        = $WhatIfPreference
+                            Force         = $Force
+                            NoInteractive = $NoInteractive
+                        }
+
+                        Initialize-FilesInDirectory -Directory 'app' `
+                            -Files $AppFiles `
+                            -Confirm:$false `
+                            @params
+                        Initialize-FilesInDirectory -Directory 'src-lib' `
+                            -Files $LibFiles  `
+                            -Confirm:$false `
+                            @params
+                        Initialize-FilesInDirectory -Directory 'test' `
+                            -Files $TestFiles `
+                            -Confirm:$false `
+                            @params
+                    }
+                }
+
+                end {
+                    if ($PSCmdlet.ShouldProcess('Haskell files', 'Final confirmation')) {
+                        Write-Host "`n✅ Haskell files created successfully." -ForegroundColor Green
+                    }
+                    if ($WhatIfPreference) {
+                        Write-Host "`nℹ️ WhatIf: No files were created." -ForegroundColor Yellow
+                    }
+                }
+            }
+            ```
+
+            <Explanation>
+                La función `Initialize-CabalModules` es el punto de entrada para generar la estructura inicial de archivos de un proyecto Haskell basado en Cabal. Está pensada para automatizar la creación de los archivos típicos de una aplicación modular: ejecutables (`app`), biblioteca (`src-lib`) y pruebas (`test`).
+
+                #### ¿Qué hace esta función?
+
+                - Declara parámetros para recibir listas de archivos a crear en cada directorio, con valores por defecto (`Main.hs` o `Lib.hs`).
+                - Usa `ShouldProcess` para soportar los flags `-WhatIf` y `-Confirm`, integrándose con flujos interactivos o de simulación.
+                - Usa aliases convenientes como `-lib`, `-apps` o `-ni` para facilitar su uso desde la terminal.
+                - Pasa los parámetros comunes a `Initialize-FilesInDirectory`, que es responsable de crear cada archivo Haskell.
+                - Al final del proceso, imprime un mensaje de éxito o un recordatorio si se ejecutó con `-WhatIf`.
+
+                Esta función es una forma segura, reutilizable y flexible de generar la estructura base de un proyecto, permitiendo personalización con poco esfuerzo.
+            </Explanation>
+        
+            <details>
+                <summary>
+                    Funciones auxiliares
+                </summary>
+
+                ```powershell showLineNumbers title="Initialize-CabalModules.psm1"
+                function Script:Initialize-FilesInDirectory {
+                    [CmdletBinding(SupportsShouldProcess)]
+                    param (
+                        [Parameter(Mandatory)][string]$Directory,
+                        [Parameter(Mandatory)][string[]]$Files,
+                        [switch]$Force,
+                        [switch]$NoInteractive
+                    )
+                    foreach ($file in $Files) {
+                        $filePath = Join-Path -Path $Directory -ChildPath $file
+
+                        if ($PSCmdlet.ShouldProcess($filePath, 'Create Haskell file')) {
+                            New-HaskellFile -FileName $filePath `
+                                -Force:$Force `
+                                -NoInteractive:$NoInteractive `
+                                -Verbose:$VerbosePreference `
+                                -WhatIf:$WhatIfPreference `
+                                -Confirm:$false
+                        }
+                    }
+                }
+                ```
+
+                <Explanation>
+                    La función `Initialize-FilesInDirectory` se encarga de crear múltiples archivos Haskell dentro de un directorio específico. Recibe:
+
+                    - Un nombre de directorio (`$Directory`) donde crear los archivos.
+                    - Una lista de nombres de archivo (`$Files`), como `"Main.hs"` o `"Lib.hs"`.
+                    - Dos modificadores opcionales: `-Force` para sobrescribir archivos existentes sin preguntar, y `-NoInteractive` para evitar solicitudes de confirmación en caso de conflicto.
+
+                    Por cada archivo:
+                    - Se construye la ruta completa con `Join-Path`.
+                    - Se evalúa si debería proceder la operación con `ShouldProcess`, lo cual respeta los flags `-WhatIf` y `-Confirm`.
+                    - Se invoca `New-HaskellFile`, que crea el archivo con el encabezado de módulo correspondiente, manejando la lógica de existencia, sobrescritura y confirmación.
+
+                    Este patrón modular permite que la inicialización de archivos sea clara, reutilizable y segura para flujos interactivos y automatizados.
+                </Explanation>
+
+                
+                ```powershell showLineNumbers title="Initialize-CabalModules.psm1"
+                function Script:Initialize-FilesInDirectory {
+                    [CmdletBinding(SupportsShouldProcess)]
+                    param (
+                        [Parameter(Mandatory)][string]$Directory,
+                        [Parameter(Mandatory)][string[]]$Files,
+                        [switch]$Force,
+                        [switch]$NoInteractive
+                    )
+                    foreach ($file in $Files) {
+                        $filePath = Join-Path -Path $Directory -ChildPath $file
+
+                        if ($PSCmdlet.ShouldProcess($filePath, 'Create Haskell file')) {
+                            New-HaskellFile -FileName $filePath `
+                                -Force:$Force `
+                                -NoInteractive:$NoInteractive `
+                                -Verbose:$VerbosePreference `
+                                -WhatIf:$WhatIfPreference `
+                                -Confirm:$false
+                        }
+                    }
+                }
+                ```
+
+                <Explanation>
+                    La función `Initialize-FilesInDirectory` automatiza la creación de varios archivos en una carpeta específica.
+
+                    - Recorre una lista de nombres de archivo (`$Files`) y los concatena con el nombre del directorio (`$Directory`) usando `Join-Path`.
+                    - Antes de crear cada archivo, evalúa si la operación debe ejecutarse con `ShouldProcess`, lo que habilita soporte para los flags `-WhatIf` y `-Confirm`.
+                    - Llama a `New-HaskellFile` con los parámetros adecuados, incluyendo:
+                        - `-Force` para sobrescribir sin preguntar.
+                        - `-NoInteractive` para evitar confirmaciones manuales.
+                        - `-Verbose`, `-WhatIf` y `-Confirm` para respetar las preferencias del usuario.
+
+                    Esta función sirve como un puente entre el usuario y la lógica de creación de archivos, permitiendo ejecutar múltiples inicializaciones de forma controlada y segura.
+                </Explanation>
+
+                ```powershell showLineNumbers title="Initialize-CabalModules.psm1"
+                function Script:New-HaskellFile {
+                    [CmdletBinding(SupportsShouldProcess)]
+                    param (
+                        [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
+                        [ValidateNotNullOrEmpty()]
+                        [string]$FileName,
+
+                        [switch]$Force,
+                        [switch]$NoInteractive
+                    )
+
+                    process {
+                        # Required: PowerShell 7.0 or later
+                        $finalName = $FileName.EndsWith('.hs') ? $FileName : "$FileName.hs"
+                        $fullPath = Resolve-FullPath $finalName
+                        $directory = Split-Path $fullPath -Parent
+
+                        if (-not (Test-ShouldOverwrite -Path $fullPath `
+                                    -Force:$Force `
+                                    -NoInteractive:$NoInteractive)) {
+                            Write-Host "⏭️ Skipped: $fullPath" -ForegroundColor Gray
+                            return
+                        }
+
+                        if ($PSCmdlet.ShouldProcess($fullPath, 'Create Haskell file')) {
+                            try {
+                                New-DirectoryIfMissing $directory
+                                Write-ModuleHeader $fullPath
+                                Write-Verbose "✅ Created file: $fullPath"
+                            } catch {
+                                Write-Error "❌ Failed to create file '$fullPath': $_"
+                            }
+                        }
+                    }
+                }
+                ```
+
+                <Explanation>
+                    La función `New-HaskellFile` crea un archivo de módulo `.hs` de forma segura, evitando sobrescrituras accidentales y admitiendo ejecución interactiva o automatizada.
+
+                    - **Normaliza el nombre**: Si el nombre no termina en `.hs`, lo agrega automáticamente.
+                    - **Resuelve la ruta**: Usa `Resolve-FullPath` para obtener la ruta absoluta del archivo.
+                    - **Verifica sobrescritura**: Usa `Test-ShouldOverwrite` para decidir si debe continuar, según la existencia del archivo y los flags `-Force` o `-NoInteractive`.
+                    - **Crea la carpeta si es necesario**: Llama a `New-DirectoryIfMissing`.
+                    - **Genera el contenido base del archivo**: Escribe un encabezado de módulo con `Write-ModuleHeader`.
+                    - **Soporta `-WhatIf` y `-Confirm`**: Gracias a `ShouldProcess`, permite simular acciones o confirmar antes de ejecutarlas.
+
+                    Este enfoque modular mejora la legibilidad, mantiene el control en manos del usuario, y facilita integrar esta función en scripts más grandes para inicializar proyectos Haskell.
+                </Explanation>
+        
+                ```powershell showLineNumbers title="Initialize-CabalModules.psm1"
+                function Script:Test-ShouldOverwrite(
+                    [string]$Path,
+                    [switch]$Force,
+                    [switch]$NoInteractive
+                ) {
+                    if (-not (Test-Path $Path) -or $Force) { return $true }
+                    if ($NoInteractive) {
+                        Write-Host "⚠️ File already exists: $Path. Use -Force to overwrite." `
+                            -ForegroundColor DarkYellow
+                        return $false
+                    }
+
+                    $answer = Read-Host "⚠️ File '$Path' exists. Overwrite? (y/N)"
+                    return $answer -eq 'y' -or $answer -eq 'Y'
+                }
+                ```
+
+                <Explanation>
+                    La función `Test-ShouldOverwrite` decide si se debe sobrescribir un archivo existente, controlando de forma flexible tanto flujos automáticos como interactivos.
+
+                    - Si el archivo no existe o se pasó `-Force`, devuelve `true`, permitiendo la creación o sobrescritura sin preguntar.
+                    - Si se pasó `-NoInteractive`, se evita la pregunta y se emite un mensaje de advertencia, devolviendo `false`.
+                    - En otros casos, se solicita confirmación manual con `Read-Host`, devolviendo `true` solo si se responde "y" o "Y".
+
+                    Esta función es útil para scripts que generan archivos, como módulos de Haskell, y que deben ser cuidadosos al sobrescribir contenido ya existente. También permite que los scripts funcionen bien tanto en entornos automatizados como en sesiones interactivas.
+                </Explanation>
+        
+                ```powershell showLineNumbers title="Initialize-CabalModules.psm1"
+                function Script:Write-ModuleHeader([string]$Path) {
+                    $module = [IO.Path]::GetFileNameWithoutExtension($Path)
+                    $header = "module $module where`n"
+                    Set-Content -Path $Path `
+                        -Value $header `
+                        -Force `
+                        -Encoding UTF8 `
+                        -Confirm:$false `
+                        -WhatIf:$WhatIfPreference
+                }
+                ```
+
+                <Explanation>
+                    La función `Write-ModuleHeader` escribe una cabecera básica de módulo Haskell en un archivo dado.
+
+                    - Primero, se extrae el nombre del módulo a partir del nombre del archivo usando `[IO.Path]::GetFileNameWithoutExtension`.  
+                    Por ejemplo, para `Echo.hs`, se obtiene `Echo`.
+                    - Luego, se construye una línea de cabecera del estilo `module Echo where` y se guarda como contenido del archivo usando `Set-Content`.
+                    - Los flags:
+                        - `-Force`: crea o sobreescribe el archivo si ya existe.
+                        - `-Encoding UTF8`: asegura una codificación estándar.
+                        - `-Confirm:$false` y `-WhatIf:$WhatIfPreference`: respetan los modos de ejecución y simulación del script.
+
+                    Esta función se usa para inicializar rápidamente archivos `.hs` vacíos con una declaración válida de módulo, algo necesario para que GHC o Cabal los reconozcan correctamente.
+                </Explanation>
+                    
+                ```powershell showLineNumbers title="Initialize-CabalModules.psm1"
+                function Script:New-DirectoryIfMissing([string]$Path) {
+                    if ($Path -and -not (Test-Path $Path)) {
+                        New-Item -ItemType Directory `
+                            -Path $Path `
+                            -Force `
+                            -Confirm:$false `
+                            -WhatIf:$WhatIfPreference | Out-Null
+                        Write-Verbose "✅ Created directory: $Path"
+                    }
+                }
+                ```
+
+                <Explanation>
+                    La función `New-DirectoryIfMissing` se asegura de que un directorio exista. Si la ruta especificada no existe aún, lo crea de manera silenciosa y segura:
+
+                    - `Test-Path $Path` verifica si ya existe el directorio.
+                    - Si no existe, se invoca `New-Item` para crearlo con:
+                    - `-Force` para evitar errores si parte de la ruta ya existe.
+                    - `-Confirm:$false` para omitir confirmaciones.
+                    - `-WhatIf:$WhatIfPreference` para respetar los modos simulados.
+
+                    Esto permite que el script sea idempotente y compatible con `-WhatIf` y `-Verbose`, evitando errores innecesarios si los directorios ya existen o están por crearse más adelante.
+                </Explanation>
+
+                ```powershell showLineNumbers title="Initialize-CabalModules.psm1"
+                function Script:Resolve-FullPath([string]$Path) {
+                    $resolved = Resolve-Path -Path $Path -ErrorAction SilentlyContinue
+                    return $resolved ? $resolved.Path : $Path
+                }
+                ```
+
+                <Explanation>
+                    La función `Resolve-FullPath` intenta obtener la ruta absoluta de un archivo o directorio. Si no puede resolverla (por ejemplo, si el archivo aún no existe), devuelve la ruta original sin producir errores.
+
+                    Esto asegura que las rutas que usamos más adelante en el script sean siempre válidas, ya sea que apunten a archivos existentes o que vayan a crearse más adelante.
+
+                    Se utiliza el operador ternario (`? :`) introducido en PowerShell 7.0+, lo que permite expresar la lógica condicional de forma más concisa.
+                </Explanation>
+            </details>   
+        </details>
+
+        ```powershell showLineNumbers title="Establece tu paquete (desde la terminal)"
+        Initialize-CabalModules `
+            -LibFiles 'Echo.hs' `
+            -NoInteractive `
+            -Verbose
+        ```
+    </TabItem>
+    <TabItem value="macOS" label="macOS">
+        {/* <Bash /> */}
+    </TabItem>
+    <TabItem value="Ubuntu/Debian" label="Ubuntu/Debian">
+        {/* <Bash /> */}
+    </TabItem>
+</BoxedTabs>
+
 ## 🧪 Paso 1: Crear un módulo de biblioteca
 
-Primero definiremos una pequeña biblioteca que nos permita imprimir mensajes con un formato determinado.  
-Vamos a crear el archivo `src-lib/Echo.hs` con el siguiente contenido:
+Comenzamos implementando la lógica reutilizable en un módulo llamado `Echo`. Este módulo definirá una función `echoMessage` que imprimirá un mensaje en la terminal.
 
 ```haskell title="src-lib/Echo.hs"
 module Echo (echoMessage) where
 
-echoMessage :: String -> IO ()
-echoMessage msg = do
-    putStrLn msg
+echoMessage :: String -> String
+echoMessage msg = msg
 ```
 
 <Explanation>
-    En este paso creamos un **módulo llamado `Echo`** que define una función pública `echoMessage`.  
-    Esta función toma un texto (`String`) y lo imprime por pantalla (`IO ()`).  
-    El archivo está ubicado dentro del directorio `src-lib/`, que configuramos como origen de la biblioteca durante el `cabal init`.
+    En este paso definimos un **módulo de biblioteca** en `src-lib/Echo.hs`. 
 
-    - `module Echo (echoMessage) where`: declara el nombre del módulo y exporta la función `echoMessage`.
-    - `echoMessage :: String -> IO ()`: especifica que la función recibe un texto y produce una acción de entrada/salida.
-    - `putStrLn msg`: imprime el mensaje en la consola.
+    - Usamos `module Echo (echoMessage) where` para declarar el nombre del módulo y exportar explícitamente la función `echoMessage`.
+    - La función tiene el tipo `String -> String`, lo que indica que recibe un mensaje de texto y devuelve el mismo mensaje como resultado.
+    
+    Este diseño modular nos permite importar `Echo` desde otros componentes del proyecto, como la aplicación principal o las pruebas. Es un patrón común en Haskell para escribir código reutilizable y testable.
 </Explanation>
-
-**Por ahora comenzamos con una versión simple**, pero en pasos posteriores le agregaremos más funcionalidades útiles, como imprimir la hora actual junto al mensaje.  
-Esto nos permitirá reutilizar `echoMessage` tanto en la aplicación principal como en otros contextos del proyecto.
 
 ## 🚀 Paso 2: Usar la biblioteca desde el ejecutable
 
-Ahora que tenemos una función `echoMessage` en nuestra biblioteca, vamos a usarla desde el ejecutable.  
-Edita el archivo `app/Main.hs` para que reciba argumentos desde la línea de comandos y los imprima uno por uno con nuestra función:
+Ya que nuestra función `echoMessage` está definida como parte de un módulo de biblioteca, podemos usarla desde el ejecutable para procesar argumentos de línea de comandos.
 
 ```haskell title="app/Main.hs" showLineNumbers
 module Main where
 
 import Echo (echoMessage)
 import System.Environment (getArgs)
-import Control.Monad (forM_)
 
 main :: IO ()
-main = do
-    messages <- getArgs
-    forM_ messages $ \msg -> 
-        echoMessage msg
+main = getArgs >>= mapM_ (putStrLn . echoMessage)
 ```
 
 <Explanation>
-    En este paso creamos el **punto de entrada de la aplicación**, donde conectamos el ejecutable con la biblioteca `Echo`.
+    En este paso creamos el punto de entrada principal del programa (`Main.hs`), que actúa como ejecutable.
 
-    - `getArgs`: obtiene los argumentos pasados al programa desde la línea de comandos.
-    - `forM_ messages $ \msg -> ...`: recorre cada argumento (`msg`) y lo pasa a `echoMessage` para imprimirlo.
-    - `echoMessage msg`: delega en la biblioteca la lógica de impresión.
-
-    Este diseño ya nos permite probar la reutilización del módulo `Echo`, y sienta las bases para seguir extendiéndolo.  
+    - Usamos `getArgs` para obtener los argumentos pasados por la terminal.
+    - Aplicamos `echoMessage` a cada uno usando `mapM_`, que ejecuta una acción (`putStrLn`) sobre cada elemento de la lista, descartando el resultado.
+    - La expresión `(putStrLn . echoMessage)` aplica la función `echoMessage` a cada argumento y luego imprime el resultado.
 </Explanation>
 
-<details>
-    <summary>ℹ️ ¿Qué es <code>forM_</code> y por qué usamos <code>Control.Monad</code>?</summary>
-
-    En Haskell, `forM_` es una función de la librería `Control.Monad` que permite recorrer una lista realizando acciones de tipo `IO`, **sin acumular los resultados**.
-
-    ```haskell
-    forM_ :: Monad m => [a] -> (a -> m b) -> m ()
-    ```
-
-    Es equivalente a `mapM_`, pero con los argumentos en orden más natural: primero la lista, luego la acción.
-
-    Usamos `forM_` en lugar de un bucle tradicional porque Haskell no tiene bucles imperativos como `for` o `while`.  
-    En su lugar, usamos funciones de orden superior como `mapM_`, `forM_` o recursión explícita para recorrer listas y realizar efectos colaterales.
-
-    Importamos `Control.Monad` porque ahí se definen estas funciones monádicas útiles para trabajar con efectos como `IO`, listas, `Maybe`, etc.
-</details>
-
+Esta forma es idiomática en Haskell, compacta y expresiva, y muestra cómo una biblioteca puede ser reutilizada desde un módulo ejecutable.
 ## ⚙️ Paso 3: Ajustar el archivo `.cabal`
 
-A continuación, ajustaremos el archivo `echo-app-cabal.cabal` para que el ejecutable y la suite de pruebas puedan acceder a la biblioteca definida en `src-lib`.
+Ahora configuraremos el archivo `echo-app-cabal.cabal` para que el ejecutable y la suite de pruebas puedan reutilizar la biblioteca definida en `src-lib`.
 
 <BoxedTabs>
-  <TabItem label={"Código esencial"} value={"Código esencial"}>
-    ```haskell showLineNumbers title="echo-app-cabal.cabal"
-    -- Nombre del proyecto
-    name:               echo-app-cabal
+    <TabItem label="Código esencial" value="Código esencial">
+        ```haskell showLineNumbers title="echo-app-cabal.cabal"
+        -- Nombre del proyecto
+        name:               echo-app-cabal
 
-    -- Configuración de la biblioteca
-    library
-      exposed-modules:  Echo
-      hs-source-dirs:   src-lib
+        -- Configuración de la biblioteca
+        library
+            exposed-modules:  Echo
+            hs-source-dirs:   src-lib
 
-    -- Ejecutable que usa la biblioteca
-    executable echo-app-cabal
-      main-is:          Main.hs
-      hs-source-dirs:   app
-      build-depends:
-        echo-app-cabal
+        -- Ejecutable que usa la biblioteca
+        executable echo-app-cabal
+            main-is:          Main.hs
+            hs-source-dirs:   app
+            build-depends:    echo-app-cabal
 
-    -- Suite de pruebas que también depende de la biblioteca
-    test-suite echo-app-cabal-test
-      hs-source-dirs:   test
-      main-is:          Main.hs
-      build-depends:
-        echo-app-cabal
-    ```
-  </TabItem>
+        -- Suite de pruebas que también depende de la biblioteca
+        test-suite echo-app-cabal-test
+            main-is:          Main.hs
+            hs-source-dirs:   test
+            type:             exitcode-stdio-1.0
+            build-depends:    echo-app-cabal
+        ```
+    </TabItem>
+    <TabItem label="Código completo" value="Código completo">
+        ```haskell showLineNumbers title="echo-app-cabal.cabal"
+        cabal-version:      3.0
+        name:               echo-app-cabal
+        version:            0.1.0.0
+        homepage:           https://dibs.pages.dev
+        license:            BSD-2-Clause
+        license-file:       LICENSE
+        author:             r8vnhill
+        maintainer:         reachme@ravenhill.cl
+        build-type:         Simple
+        extra-doc-files:    CHANGELOG.md
 
-  <TabItem label={"Código completo"} value={"Código completo"}>
-    ```haskell showLineNumbers title="echo-app-cabal.cabal"
-    cabal-version:      3.0
-    name:               echo-app-cabal
-    version:            0.1.0.0
-    homepage:           https://dibs.pages.dev
-    license:            BSD-2-Clause
-    license-file:       LICENSE
-    author:             r8vnhill
-    maintainer:         reachme@ravenhill.cl
-    build-type:         Simple
-    extra-doc-files:    CHANGELOG.md
+        common warnings
+            ghc-options:      -Wall
 
-    common warnings
-      ghc-options: -Wall
+        library
+            import:           warnings
+            exposed-modules:  Echo
+            build-depends:    base ^>=4.17.2.1
+            hs-source-dirs:   src-lib
+            default-language: GHC2021
 
-    library
-      import:           warnings
-      exposed-modules:  Echo
-      build-depends:    base ^>=4.17.2.1
-      hs-source-dirs:   src-lib
-      default-language: GHC2021
+        executable echo-app-cabal
+            import:           warnings
+            main-is:          Main.hs
+            hs-source-dirs:   app
+            build-depends:
+            base ^>=4.17.2.1,
+            echo-app-cabal
+            default-language: GHC2021
 
-    executable echo-app-cabal
-      import:           warnings
-      main-is:          Main.hs
-      build-depends:
-        base ^>=4.17.2.1,
-        echo-app-cabal
-      hs-source-dirs:   app
-      default-language: GHC2021
-
-    test-suite echo-app-cabal-test
-      import:           warnings
-      default-language: GHC2021
-      type:             exitcode-stdio-1.0
-      hs-source-dirs:   test
-      main-is:          Main.hs
-      build-depends:
-        base ^>=4.17.2.1,
-        echo-app-cabal
-    ```
-  </TabItem>
+        test-suite echo-app-cabal-test
+            import:           warnings
+            main-is:          Main.hs
+            hs-source-dirs:   test
+            type:             exitcode-stdio-1.0
+            build-depends:
+            base ^>=4.17.2.1,
+            echo-app-cabal
+            default-language: GHC2021
+        ```
+    </TabItem>
 </BoxedTabs>
 
 <Explanation>
-    El archivo `.cabal` define cómo se construyen los distintos componentes del proyecto:
+    El archivo `.cabal` describe cómo se construyen y conectan los distintos componentes del proyecto:
 
-    - En la sección `library`, declaramos el módulo `Echo` como expuesto y lo ubicamos en `src-lib/`.
-    - En el bloque `executable`, indicamos que `Main.hs` es el punto de entrada y que este ejecutable depende de la biblioteca `echo-app-cabal` (sí, el mismo nombre del proyecto).
-    - En `test-suite`, hacemos lo mismo: configuramos el punto de entrada y declaramos la dependencia hacia la biblioteca.
-
-    De esta forma, tanto el ejecutable como la suite de pruebas pueden importar y reutilizar código desde el módulo `Echo`.
+    - En la sección `library`, declaramos que el módulo `Echo` estará disponible para otros componentes, y especificamos que su código fuente vive en `src-lib/`.
+    - En `executable`, indicamos que `Main.hs` es el punto de entrada de la app, que está en `app/`, y que este módulo depende de la biblioteca del proyecto.
+    - En `test-suite`, seguimos una estructura similar para habilitar pruebas que también pueden usar el código de la biblioteca.
+    - Usamos `import: warnings` para aplicar opciones comunes como `-Wall` a todos los componentes, favoreciendo advertencias útiles durante el desarrollo.
 </Explanation>
+
+Esta configuración modular refleja buenas prácticas de diseño en Haskell: separar responsabilidades, promover la reutilización y preparar el terreno para escalar el proyecto con facilidad.
 
 ## ▶️ Paso 4: Ejecutar el proyecto
 
-Con la biblioteca, el ejecutable y la configuración listos, ahora podemos compilar y ejecutar el programa desde la raíz del proyecto.
+Con la biblioteca, el ejecutable y la configuración listos, ya podemos compilar y lanzar el programa desde la raíz del proyecto.
 
 Ejecuta el siguiente comando:
 
-```bash
+```bash showLineNumbers title=""
 cabal run echo-app-cabal -- "Hi Barbie!" "Hi Ken!" "Do you guys ever think about dying?"
 ```
 
-La salida será algo como:
+La salida debería ser algo como:
 
 ```plaintext
 Hi Barbie!
@@ -252,14 +552,13 @@ Do you guys ever think about dying?
 ```
 
 <Explanation>
-    Usamos `cabal run` seguido del nombre del ejecutable (`echo-app-cabal`) y una serie de argumentos entre comillas.  
-    Estos argumentos se transforman en una lista de `String` que `getArgs` recibe en `Main.hs`.
+    Usamos `cabal run` seguido del nombre del ejecutable (`echo-app-cabal`) y los argumentos que queremos pasar entre comillas.  
+    Estos argumentos son capturados por la función `getArgs` en `Main.hs`, lo que permite que el programa procese entradas dinámicas desde la línea de comandos.
 
-    Luego, cada uno se imprime línea por línea mediante `forM_`, usando la función `echoMessage` de nuestra biblioteca.
-
+    Luego, cada argumento se transforma con la función `echoMessage` definida en la biblioteca y se imprime por separado, gracias al uso de `mapM_`.
 </Explanation>
 
-👉 Este paso comprueba que **el ejecutable está correctamente conectado a la biblioteca** y que **puede recibir entradas dinámicas desde la línea de comandos**, lo que lo hace mucho más flexible y útil.
+👉 Este paso confirma que el ejecutable está correctamente conectado a la biblioteca y que puede recibir entradas externas, lo que lo hace más interactivo y reutilizable.
 
 ## 🎯 Conclusiones
 
