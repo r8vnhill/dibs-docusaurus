@@ -1,0 +1,110 @@
+---
+title: Tipos producto como tuplas en Python
+---
+
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import ReadingTime from '@site/src/components/ReadingTime'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+
+<ReadingTime />
+
+Antes de introducir clases o estructuras personalizadas, muchos lenguajes permiten **agrupar datos** mediante formas más simples: **pares** y **tuplas**. Estas estructuras representan uno de los conceptos más fundamentales en el diseño de tipos: los **tipos producto**. Son ideales para capturar múltiples valores relacionados entre sí, de forma compacta y sin ambigüedad.
+
+En Kotlin, ya exploramos cómo `Pair` y `Triple` permiten representar este tipo de agrupaciones. En esta lección veremos cómo se aborda el mismo problema en Python, un lenguaje que ofrece distintas posibilidades —más flexibles, pero también más propensas a errores— a la hora de representar tipos producto sin clases.
+
+Analizaremos cómo funcionan las **tuplas** en Python, cómo se desestructuran, y cómo podemos agregar **semántica explícita** a través de `namedtuple`, todo sin abandonar la simplicidad de una tupla. También compararemos estas decisiones con las de Kotlin, evaluando los puntos fuertes y débiles de cada enfoque.
+
+Esta comparación te ayudará a elegir representaciones adecuadas para tus tipos producto, entendiendo mejor qué compromisos implican en distintos lenguajes y contextos de diseño.
+
+## 📐 Tuplas en Python
+
+En Python, las **tuplas** son una forma fundamental de representar tipos producto: permiten agrupar múltiples valores en una sola unidad. A diferencia de las listas, son **inmutables**, lo que las hace útiles para representar datos que no deberían cambiar.
+
+```python showLineNumbers title="Ejemplo de tuplas (type-fundamentals/abstract_types/product/tuples.py)"
+position = (10, 5)
+```
+
+Este ejemplo representa una posición 2D. Al estar agrupados en una tupla, se garantiza que ambos valores se usen en conjunto, reforzando la idea de cohesión semántica.
+
+Una característica útil de las tuplas en Python es la **desestructuración** directa, ideal para funciones que devuelven múltiples valores:
+
+```python showLineNumbers title="Devolución múltiple con tuplas (type-fundamentals/abstract_types/product/tuples.py)"
+def get_coordinates() -> tuple[int, int]:
+    return 42, 24
+
+x, y = get_coordinates()
+```
+
+Aquí, `x` e `y` capturan automáticamente los valores retornados por la tupla, sin necesidad de acceder por índices.
+
+También es común utilizar tuplas para representar secuencias de más de dos elementos, como dimensiones o configuraciones:
+
+```python showLineNumbers title="Tupla con tres valores (type-fundamentals/abstract_types/product/tuples.py)"
+dimensions = (1920, 1080, 60)
+print(f"Dimensions: {dimensions[0]}x{dimensions[1]}@{dimensions[2]}Hz")
+```
+
+Aunque esta forma es concisa, acceder a los campos por índice puede afectar la claridad. Por eso, cuando los elementos tienen un significado específico y estable, es recomendable usar estructuras con campos nombrados, como `namedtuple` o `dataclass`.
+
+## 🏷️ `namedtuple`
+
+Aunque las tuplas comunes son útiles para agrupar valores, acceder a sus elementos por posición (`[0]`, `[1]`, etc.) puede dificultar la lectura y aumentar la posibilidad de errores, especialmente cuando los datos tienen un significado semántico claro.
+
+Para estos casos, Python ofrece `namedtuple`, una forma ligera de definir tuplas **con campos nombrados**, lo que mejora la expresividad sin perder la inmutabilidad ni la eficiencia:
+
+```python showLineNumbers title="Tupla con campos nombrados (type-fundamentals/abstract_types/product/namedtuple.py)"
+from collections import namedtuple
+
+Resolution = namedtuple("Resolution", ["width", "height", "refresh"])
+screen = Resolution(1920, 1080, 60)
+
+print(f"{screen.width}x{screen.height}@{screen.refresh}Hz")
+```
+
+Esto produce exactamente el mismo resultado que una tupla tradicional, pero con una gran ventaja: **cada campo tiene nombre propio**, lo que comunica mejor la intención y hace que el código sea más fácil de entender y mantener.
+
+## 🎯 Conclusiones
+
+Las tuplas son una herramienta poderosa y flexible para representar tipos producto en Python. Permiten agrupar valores sin definir clases, lo que las hace ideales para estructuras simples, temporales o auxiliares. Sin embargo, esta flexibilidad viene con un costo: **la falta de semántica explícita** cuando no se utilizan mecanismos como `namedtuple`.
+
+En el contexto de diseño de bibliotecas, donde la claridad, la seguridad y la mantenibilidad son fundamentales, es clave elegir bien cuándo usar tuplas simples y cuándo preferir representaciones más expresivas.
+
+Mientras que Kotlin favorece estructuras con significado a través de `data class`, Python permite un espectro más amplio de formas —desde tuplas simples hasta `namedtuple` y `dataclass`— con diferentes compromisos entre concisión y expresividad.
+
+### 🔑 Puntos clave
+
+- Las **tuplas** en Python permiten representar tipos producto de forma concisa, inmutable y sin necesidad de clases.
+- La **desestructuración** es idiomática y sencilla, lo que facilita su uso como resultados de funciones.
+- El acceso por índice puede perjudicar la legibilidad cuando los elementos tienen significado propio.
+- `namedtuple` permite asignar **nombres a los campos** de una tupla sin perder eficiencia ni inmutabilidad.
+- Python permite tuplas de **cualquier aridad**, mientras que Kotlin está limitado a `Pair` y `Triple` sin clases auxiliares.
+
+### 📊 Comparación con Kotlin
+
+| Característica                             | Python                                | Kotlin                          |
+| ------------------------------------------ | ------------------------------------- | ------------------------------- |
+| Tuplas simples                             | ✅ `()` con aridad libre               | ⚠️ Solo `Pair` y `Triple`       |
+| Desestructuración directa                  | ✅                                     | ✅ con `componentN()`            |
+| Inmutabilidad                              | ✅ por defecto                         | ✅ por defecto                   |
+| Tuplas con campos nombrados (`namedtuple`) | ✅ sin definir clases                  | ❌ No existe equivalente directo |
+| Tipado estático                            | ❌ dinámico                            | ✅                               |
+| Semántica explícita sin clases             | ✅ (`namedtuple`)                      | ❌ requiere `data class`         |
+| Acceso a campos                            | Por índice o nombre (`[0]`, `.field`) | `.first`, `.second`, etc.       |
+
+### 🧰 ¿Qué nos llevamos?
+
+Los **tipos producto** son una herramienta conceptual y práctica esencial en el diseño de software, y las tuplas son su forma más inmediata. En Python, tenemos una amplia gama de opciones: desde tuplas anónimas y temporales hasta estructuras con semántica explícita gracias a `namedtuple`.
+
+A través de esta comparación con Kotlin, aprendemos que **la elección de representación no depende solo del lenguaje, sino del propósito**: si los datos tienen un significado estable y forman parte del contrato público de una biblioteca, vale la pena representarlos con nombres explícitos. Si en cambio son temporales, intermedios o auxiliares, las tuplas comunes ofrecen una solución simple y eficaz.
+
+En ambos lenguajes, los tipos producto son una forma de expresar ideas con precisión y claridad. Usarlos con intención es uno de los pilares para crear **librerías reutilizables, fáciles de entender y difíciles de usar mal**.
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- [🌐 "Python's tuple Data Type: A Deep Dive With Examples"](https://realpython.com/python-tuple/) en *Real Python* por **Leodanis Pozo Ramos**: Este artículo ofrece una guía exhaustiva sobre las tuplas en Python, cubriendo desde su creación, acceso, desestructuración y uso en funciones, hasta sus propiedades más avanzadas como inmutabilidad, anidamiento, empaquetado, desempacado y uso como claves en diccionarios. Es especialmente relevante para esta lección porque ilustra cómo las tuplas representan tipos producto en Python, mostrando tanto sus fortalezas como sus limitaciones, y discute alternativas como `namedtuple` y `NamedTuple` que permiten agregar semántica a estas estructuras. Ideal para profundizar en el uso idiomático de tuplas dentro del diseño de bibliotecas y programas más expresivos y seguros.
+
+{/* ### 🔹 Adicionales */}
+
+{/* - [📚]() */}
