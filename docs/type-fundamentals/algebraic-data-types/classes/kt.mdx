@@ -5,103 +5,115 @@ sidebar_label: Clases
 import ReadingTime from '@site/src/components/ReadingTime'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 import TabItem from '@theme/TabItem'
+import Glossary from '@site/src/components/admonitions/Glossary'
 
-<ReadingTime />
+<ReadingTime multiplier={1.8}/>
 
-En lecciones anteriores vimos que los **tipos producto** nos permiten representar múltiples valores de forma conjunta, y cómo estructuras como `Pair` y `Triple` ofrecen una solución rápida para ello. Sin embargo, estas opciones genéricas no son ideales cuando necesitamos expresar con claridad la intención de nuestros datos, especialmente al diseñar bibliotecas reutilizables.
+En lecciones anteriores vimos que los **tipos producto** nos permiten agrupar múltiples valores en una sola entidad. Kotlin ofrece estructuras como `Pair` y `Triple` para resolver esto rápidamente, pero estas opciones genéricas **no expresan claramente el propósito de cada campo**.
 
-En esta lección aprenderemos cómo **las clases comunes en Kotlin** nos permiten definir tipos producto más expresivos, nombrando explícitamente cada campo y encapsulando operaciones relevantes. Veremos cómo se declaran, cómo funcionan los **constructores primarios y secundarios**, y por qué resultan esenciales para construir tipos que no solo agrupen datos, sino que **comuniquen propósito**.
+En esta lección exploraremos cómo las **clases comunes** en Kotlin permiten definir tipos producto más expresivos y seguros. Verás cómo declarar clases con propiedades bien nombradas, cómo funcionan los **constructores primarios y secundarios**, y cómo encapsular lógica relevante dentro del mismo tipo.
 
-Este enfoque nos prepara para usar técnicas más avanzadas y idiomáticas, como las `data class`, que estudiaremos en la próxima lección.
+Este conocimiento es clave al diseñar bibliotecas reutilizables: nos permite representar estructuras de datos que no solo agrupan información, sino que **comunican claramente su intención**. La próxima lección profundizará en las `data class`, una forma más idiomática y concisa de construir estos tipos.
+
+<Glossary>
+    - **Tipo producto**: Tipo que agrupa varios valores (como campos) en una sola entidad.
+    - **Clase**: Estructura que encapsula datos (propiedades) y operaciones (métodos) relacionadas.
+    - **Constructor primario**: Forma principal de inicializar una clase en Kotlin, declarada junto al nombre de la clase.
+    - **Constructor secundario**: Constructor adicional definido dentro del cuerpo de la clase.
+</Glossary>
 
 ## 🏗️ Clases comunes como tipos producto
 
-Además de estructuras como `Pair` y `Triple`, Kotlin permite definir **tipos producto personalizados** usando clases. Una clase con múltiples propiedades representa un tipo que contiene simultáneamente un valor por cada campo: esa es precisamente la definición de un **tipo producto**.
+Aunque estructuras como `Pair` y `Triple` permiten agrupar valores rápidamente, **las clases comunes de Kotlin** ofrecen una forma mucho más expresiva y mantenible de definir **tipos producto personalizados**.
+
+Un tipo producto es una estructura que **contiene un valor por cada uno de sus campos**, y una clase con varias propiedades cumple exactamente con esa definición. Esto permite modelar entidades del dominio con **nombres claros y significado semántico**, en lugar de depender de posiciones genéricas.
 
 Por ejemplo, para representar la posición de un personaje en un juego:
 
-```kotlin
+```kotlin showLineNumbers title="Posición como tipo producto"
 class Position(val x: Int, val y: Int)
 ```
 
-Este tipo modela directamente el producto $ \text{Int} \times \text{Int} $, agrupando ambos valores en una sola entidad:
+Este tipo modela el producto cartesiano $ \text{Int} \times \text{Int} $, agrupando ambos valores en una sola unidad coherente:
 
-```kotlin
+```kotlin showLineNumbers title="Uso de la clase Position"
 val pos = Position(10, 5)
 println(pos.x)  // 10
 println(pos.y)  // 5
 ```
 
+Al definir una clase como `Position`, **le damos nombre a cada campo y al conjunto en sí**, lo que hace que el código sea más fácil de leer, extender y mantener, especialmente en bibliotecas.
+
 ::::tip Instanciación sin `new`
 
-En Kotlin, **no se utiliza la palabra clave `new`** para crear objetos. Basta con llamar al constructor como si fuera una función:
+En Kotlin, **no se utiliza la palabra clave `new`** para crear objetos. Basta con invocar el constructor como si fuera una función:
 
-```kotlin title="Kotlin"
+```kotlin showLineNumbers title="Kotlin"
 val hunter = DemonHunter("Dante", "Rebellion")
 ```
 
-Esto hace que la sintaxis sea más limpia y coherente con la idea de que una clase también puede comportarse como una función.
+Esta sintaxis es más limpia y coherente con la idea de que una clase también puede comportarse como una función.
 
 En contraste, lenguajes como **Java**, **C#** o **C++** requieren la palabra clave `new` para instanciar clases:
 
-```java title="Java"
+```java showLineNumbers title="Java"
 final var hunter = new DemonHunter("Dante", "Rebellion");
 ```
 
 :::note `final var` en Java
 
-En Java, `var` permite **inferir el tipo** de la variable, mientras que `final` impide que la referencia sea **reasignada** después de su inicialización.  
-Esto es similar al uso de `val` en Kotlin, que también declara una **referencia inmutable**.
+En Java, `var` permite **inferir el tipo** de la variable, mientras que `final` impide que la referencia sea **reasignada** después de su inicialización. Esto se asemeja al uso de `val` en Kotlin, que también declara una **constante referencial**.
 
-Ten en cuenta que esta inmutabilidad **no es profunda**: si el objeto es mutable, su contenido aún puede cambiar.
+Sin embargo, esta inmutabilidad **no es profunda**: si el objeto es mutable, su contenido aún puede cambiar.
 
 :::
 
-Este cambio puede parecer sutil, pero refleja el enfoque de Kotlin hacia una sintaxis más **concisa**, **expresiva** y **funcionalmente inspirada**, donde la creación de objetos no requiere ruido adicional como `new`.
+Este detalle puede parecer menor, pero refleja el enfoque de Kotlin hacia una sintaxis más **concisa**, **expresiva** y **orientada a la funcionalidad**, donde crear objetos no requiere ruido adicional como `new`.
 
 ::::
 
-A diferencia de `Pair`, una clase permite **nombrar claramente los campos** y agregar **comportamiento adicional**:
+A diferencia de `Pair`, una clase permite **nombrar explícitamente cada campo** y definir **comportamiento asociado al dominio**:
 
-```kotlin
+```kotlin showLineNumbers title="Clase con comportamiento"
 class Position(val x: Int, val y: Int) {
-    fun isOrigin(): Boolean = x == 0 && y == 0
+    val isOrigin: Boolean
+        get() = x == 0 && y == 0
 }
 ```
 
-Esto permite encapsular tanto datos como operaciones relevantes al dominio, mejorando la expresividad y mantenibilidad.
+Esto permite encapsular no solo los datos, sino también las operaciones relevantes, lo que **mejora la legibilidad, la expresividad y la mantenibilidad** del código. Al modelar el dominio con clases, es más fácil transmitir la intención detrás de cada tipo y prevenir usos incorrectos.
 
 ## 🧱 Constructores primarios y secundarios
 
-En Kotlin, una clase puede tener **un constructor primario** y **uno o más constructores secundarios**. El constructor primario se declara directamente en el encabezado de la clase, y es la forma idiomática de inicializar sus propiedades.
+En Kotlin, una clase puede tener **un constructor primario** y **uno o más constructores secundarios**. El constructor primario se declara directamente en el encabezado de la clase y representa la **forma idiomática de inicializar las propiedades** de una clase, promoviendo una sintaxis concisa y declarativa.
 
 ### 🔹 Constructor primario
 
-El constructor primario se escribe después del nombre de la clase. Si no contiene anotaciones ni modificadores de visibilidad, la palabra clave `constructor` puede omitirse:
+El constructor primario se escribe después del nombre de la clase. Si no incluye anotaciones ni modificadores de visibilidad, **se puede omitir** la palabra clave `constructor`:
 
 ```kotlin
 class Person(val name: String, var age: Int)
 ```
 
-Si el constructor necesita una **anotación** (como `@Inject`) o un **modificador de visibilidad** (como `private`, `protected` o `internal`), entonces **es obligatorio usar la palabra clave `constructor`**:
+Cuando se requiere una **anotación** (como `@Inject`) o un **modificador de visibilidad** (`private`, `protected` o `internal`), es **necesario** incluir explícitamente la palabra clave `constructor`:
 
 ```kotlin
 class Person @Inject internal constructor(val name: String)
 ```
 
-Esto es común cuando se utilizan frameworks de **inyección de dependencias** como [Dagger](https://dagger.dev/), [Koin](https://insert-koin.io/) o [Hilt](https://developer.android.com/training/dependency-injection/hilt-android), que requieren anotar los constructores para que el sistema pueda crearlos automáticamente.
+Este patrón es común al usar frameworks de **inyección de dependencias** como [Dagger](https://dagger.dev/), [Koin](https://insert-koin.io/) o [Hilt](https://developer.android.com/training/dependency-injection/hilt-android), que requieren anotar los constructores para poder generar código o instancias automáticamente.
 
 :::info `internal` en Kotlin
 
-El modificador `internal` restringe el uso del constructor a **dentro del mismo módulo**. Aunque aún no hemos visto qué es un módulo (lo exploraremos más adelante en la unidad sobre *build systems*), puedes pensar en él como una **unidad de compilación separada**, como una biblioteca o subproyecto.
+El modificador `internal` restringe el uso del constructor a **dentro del mismo módulo**. Aunque todavía no hemos visto qué es un módulo (lo exploraremos más adelante en la unidad sobre *build systems*), puedes pensarlo como una **unidad de compilación independiente**, como una biblioteca o subproyecto.
 
-Este modificador es especialmente útil al diseñar bibliotecas: permite que una clase sea visible para quienes la usan, pero **controla desde dónde puede instanciarse**, evitando usos indebidos fuera del contexto esperado.
+Este modificador es especialmente útil al diseñar bibliotecas: permite que una clase sea **visible para el exterior**, pero **limita quién puede crear instancias**, ayudando a mantener el control sobre el uso y evitando construcciones fuera del contexto esperado.
 
 :::
 
-Cuando se requiere ejecutar lógica adicional al crear la instancia, se utilizan **bloques `init`** dentro del cuerpo de la clase:
+Cuando se necesita ejecutar lógica adicional al crear una instancia, Kotlin ofrece los **bloques `init`**, que se colocan dentro del cuerpo de la clase:
 
-```kotlin
+```kotlin showLineNumbers title="Bloque init"
 class Person(val name: String, var age: Int) {
     init {
         require(age >= 0) { "Age must be non-negative" }
@@ -109,23 +121,20 @@ class Person(val name: String, var age: Int) {
 }
 ```
 
-El bloque `init` se ejecuta justo después de la evaluación de los argumentos del constructor. Se pueden tener múltiples bloques `init`, y se ejecutan en orden de aparición.
+El bloque `init` se ejecuta justo después de evaluar los argumentos del constructor. Se pueden definir **múltiples bloques `init`**, y se ejecutarán en **orden de aparición**, lo que permite estructurar la inicialización en pasos claros.
 
 :::note `require`, `check` y `error`
 
-- `require(...)` valida argumentos de entrada. Lanza `IllegalArgumentException`.
-- `check(...)` valida el estado interno del objeto. Lanza `IllegalStateException`.
-- `error(...)` lanza incondicionalmente un `IllegalStateException`.
+- `require(Boolean) { String }: Unit` valida argumentos de entrada. Lanza `IllegalArgumentException`.
+- `check(Boolean) { String }: Unit` valida el estado interno del objeto. Lanza `IllegalStateException`.
+- `error(String): Nothing` lanza incondicionalmente un `IllegalStateException`.
 
-Estas funciones ayudan a capturar errores temprano con mensajes claros y específicos.
+Estas funciones permiten capturar errores de forma temprana y expresiva, con mensajes claros que facilitan el diagnóstico.
 
 :::
-
-En Kotlin, el encabezado de la clase **no puede contener código ejecutable**. Por eso, toda la lógica de inicialización debe colocarse en bloques `init`, lo cual favorece una estructura más limpia y clara.
-
 ### 🔹 Constructor secundario
 
-Los **constructores secundarios** permiten definir múltiples formas de crear una instancia. Se usan dentro del cuerpo de la clase y deben **delegar obligatoriamente al constructor primario** utilizando `this(...)`:
+Los **constructores secundarios** permiten definir múltiples formas de instanciar una clase. Se declaran dentro del cuerpo de la clase y deben **delegar obligatoriamente al constructor primario** mediante `this(...)`:
 
 ```kotlin showLineNumbers
 class Person(val name: String) {
@@ -137,13 +146,13 @@ class Person(val name: String) {
 }
 ```
 
-Esta delegación debe hacerse **como parte de la cabecera del constructor**, no dentro de su cuerpo. Esto garantiza que **el constructor primario sea siempre invocado primero**, lo que elimina ambigüedades en la inicialización del objeto.
+Esta delegación debe realizarse **en la cabecera del constructor**, no dentro de su cuerpo. Esto asegura que el constructor primario **siempre se ejecute primero**, evitando ambigüedades y errores de inicialización.
 
-Son útiles cuando:
+Los constructores secundarios son útiles en escenarios como:
 
-- Se necesita interoperabilidad con Java.
-- Se requieren múltiples caminos de inicialización.
-- Se aplica herencia con lógica de construcción específica.
+- Interoperabilidad con Java.
+- Necesidad de múltiples formas de inicialización.
+- Aplicación de herencia con lógica de construcción específica.
 
 :::tip Parámetros por defecto
 
@@ -153,138 +162,47 @@ En Kotlin, los **parámetros con valores por defecto** suelen eliminar la necesi
 class Person(val name: String, var age: Int = 0)
 ```
 
-Esta versión es más idiomática, más concisa y más fácil de mantener.
+Esta forma es más **idiomática**, **concisa** y **mantenible**, y suele preferirse cuando no se requiere lógica adicional.
 
 :::
 
-#### 🔍 Diferencia importante
-
-En lenguajes como **Java** y **Swift**, la llamada a otro constructor con `this(...)` (o su equivalente) es una **instrucción dentro del cuerpo del constructor**, no parte de su definición. En cambio, en Kotlin, la delegación al constructor primario **se declara en la cabecera del constructor secundario**, lo que **obliga a que ocurra primero**, sin excepciones.
-
-<details>
-    <summary>🔍 ¿Por qué importa esta diferencia?</summary>
-
-    En muchos lenguajes como **Java**, **Swift** o **Objective-C**, la delegación a otro constructor (`this(...)`, `self.init(...)`, etc.) se trata como **una instrucción dentro del cuerpo del constructor**, y aunque suele exigirse que ocurra primero, esa regla **no está reforzada por la sintaxis**.
-
-    Esto puede permitir que otras instrucciones se ejecuten antes de delegar correctamente, lo que en algunos lenguajes puede derivar en objetos mal inicializados.
-
-    #### 🧨 Ejemplo real: Objective-C
-
-    En **Objective-C**, la inicialización no está estrictamente controlada por la sintaxis. El siguiente código es **válido** y compila, pero puede generar errores si se accede a campos antes de inicializar `self` correctamente:
-
-    <BoxedTabs>
-        <TabItem label={"Código esencial"} value={"Código esencial"}>
-            ```objc showLineNumbers
-            - (instancetype)init {
-                NSLog(@"Antes de delegar: %@", self.name); // ⚠️ Acceso a propiedad antes de inicializar self
-                self = [self initWithName:@"Default"];
-                return self;
-            }
-            ```
-        </TabItem>
-        <TabItem label={"Código completo"} value={"Código completo"}>
-            ```objc showLineNumbers
-            #import <Foundation/Foundation.h>
-
-            @interface Person : NSObject
-            @property (nonatomic, strong) NSString *name;
-            - (instancetype)initWithName:(NSString *)name;
-            @end
-
-            @implementation Person
-
-            - (instancetype)init {
-                NSLog(@"Antes de delegar: %@", self.name); // ⚠️ Acceso a propiedad antes de inicializar self
-                self = [self initWithName:@"Default"];
-                return self;
-            }
-
-            - (instancetype)initWithName:(NSString *)name {
-                self = [super init];
-                if (self) {
-                    self.name = name;
-                }
-                return self;
-            }
-
-            @end
-
-            int main() {
-                Person *p = [[Person alloc] init];
-                return 0;
-            }
-            ```
-        </TabItem>
-    </BoxedTabs>
-    
-    Si `self` aún no ha sido inicializado, acceder a propiedades puede producir **comportamiento indefinido** o errores en tiempo de ejecución. A diferencia de Kotlin, no hay forma de prevenir esto en la sintaxis del lenguaje.
-
-    #### ✅ Kotlin lo previene desde la sintaxis
-
-    En Kotlin, **la delegación al constructor primario se declara en la cabecera**, antes de abrir las llaves del constructor secundario. Esto impide que cualquier lógica se ejecute antes de inicializar correctamente el objeto:
-
-    ```kotlin title="Kotlin – Seguro por diseño"
-    class Person(val name: String) {
-        var age: Int = 0
-
-        constructor(name: String, age: Int) : this(name) {
-            this.age = age
-        }
-    }
-    ```
-
-    🔐 Esto garantiza que el constructor primario **siempre se invoque primero**, evitando errores de inicialización.
-
-    #### 📚 Otros lenguajes con delegación flexible (y riesgos potenciales)
-
-    - **Objective-C**: se puede acceder a `self` antes de llamar a `init`, con consecuencias impredecibles.
-    - **Dart** (`factory constructors`): permiten ejecutar lógica libre antes de retornar una instancia.
-    - **Java** y **Swift**: imponen orden con verificación semántica, pero no mediante la sintaxis.
-
-    #### ✅ Comparación rápida
-
-    | Lenguaje       | ¿Delegación forzada por la sintaxis? | ¿Riesgo de inicialización incorrecta? |
-    | -------------- | ------------------------------------ | ------------------------------------- |
-    | Kotlin         | ✅ Sí (en cabecera)                  | ❌ Bajo                               |
-    | Java           | ❌ No (verificación semántica)       | ⚠️ Medio                              |
-    | Objective-C    | ❌ No                                | ⚠️ Alto                               |
-    | Dart (factory) | ❌ No                                | ⚠️ Medio                              |
-
-    Kotlin evita este tipo de errores al **incorporar la delegación en la sintaxis misma**, favoreciendo una inicialización **más segura, clara y robusta**, especialmente en bibliotecas reutilizables.
-</details>
-
 ## 🎯 Conclusiones
 
-A lo largo de esta lección exploramos cómo las **clases comunes** en Kotlin pueden representar tipos producto, es decir, estructuras que agrupan múltiples valores en una única unidad coherente. A diferencia de tipos genéricos como `Pair` o `Triple`, las clases permiten **nombrar cada campo**, **encapsular lógica relevante** y **estructurar el dominio del problema de forma clara y extensible**.
+En esta lección exploramos cómo las **clases comunes** en Kotlin pueden representar **tipos producto**, es decir, estructuras que agrupan múltiples valores en una única unidad coherente. A diferencia de tipos genéricos como `Pair` o `Triple`, las clases permiten **nombrar cada campo**, **encapsular lógica relevante**, y **estructurar el dominio del problema de forma clara y extensible**.
 
-También vimos cómo Kotlin facilita la construcción de estas clases mediante **constructores primarios** y **bloques `init`**, y ofrece mecanismos adicionales como **constructores secundarios** y **parámetros por defecto** para adaptarse a distintos escenarios.
+También aprendimos a construir estas clases mediante **constructores primarios**, **bloques `init`**, y —cuando es necesario— **constructores secundarios**. Además, vimos cómo los **parámetros con valores por defecto** pueden simplificar muchos casos de uso comunes.
 
 ### 🔑 Puntos clave
 
-- Una **clase común** que declara varias propiedades representa un **tipo producto**: un valor que contiene simultáneamente un valor por cada campo.
-- Kotlin permite instanciar objetos sin usar `new`, lo que mejora la **concisión y legibilidad**.
-- El **constructor primario** es la forma idiomática de inicializar clases. Los **bloques `init`** permiten incluir validaciones o lógica adicional.
-- Los **constructores secundarios** son útiles en casos especiales, pero a menudo pueden reemplazarse por **parámetros con valores por defecto**.
-- Las clases permiten encapsular tanto datos como comportamiento, lo que no es posible con estructuras genéricas como `Pair`.
+- Una clase con varias propiedades representa un **tipo producto**: un valor que contiene simultáneamente un valor por cada campo.
+- Kotlin permite instanciar objetos sin `new`, lo que mejora la **concisión y legibilidad**.
+- El **constructor primario** es la forma idiomática de inicializar clases; los **bloques `init`** permiten validar o ejecutar lógica adicional.
+- Los **constructores secundarios** permiten distintos caminos de inicialización, pero muchas veces se pueden evitar con parámetros por defecto.
+- Las clases permiten encapsular datos y comportamiento, a diferencia de estructuras genéricas como `Pair`.
 
 ### 🧰 ¿Qué nos llevamos?
 
-Entender cómo usar clases comunes como tipos producto es un paso esencial para construir **tipos seguros, expresivos y reutilizables** en Kotlin. Esta capacidad es especialmente importante en el diseño de bibliotecas, donde cada tipo que definimos forma parte del contrato con quienes las consumen.
+Dominar el uso de clases como tipos producto es esencial para construir **tipos seguros, expresivos y reutilizables** en Kotlin. En el contexto del diseño de bibliotecas, cada tipo que definimos se convierte en parte del **contrato que ofrecemos** a quienes consumen nuestro código.
 
-Esto no solo mejora la expresividad interna, sino que también **define contratos más claros para quienes consumen nuestras bibliotecas**, haciendo explícita la estructura y el propósito de los datos expuestos.
+Este enfoque no solo mejora la expresividad interna, sino que también **define estructuras claras e intencionales**, facilitando el mantenimiento y evitando malentendidos sobre cómo deben usarse los datos.
 
-A medida que una biblioteca crece, las clases con nombres semánticos y campos bien definidos **evitan ambigüedades, mejoran la legibilidad y facilitan cambios futuros**, a diferencia de las tuplas genéricas, que tienden a volverse opacas.
+A medida que una biblioteca crece, las clases con nombres semánticos y campos bien definidos **evitan ambigüedades**, **mejoran la legibilidad** y **facilitan la evolución del código**, a diferencia de tuplas genéricas que tienden a volverse opacas.
 
-Al dominar estas herramientas, no solo estás entendiendo cómo funciona Kotlin: estás aprendiendo a **modelar tu dominio de forma robusta y expresiva**, eligiendo representaciones que hacen explícitas las intenciones de tu código. Este principio —**que el código comunique su propósito**— es clave en el diseño de bibliotecas limpias, mantenibles y comprensibles para otrxs.
+Al dominar estas herramientas, no solo estás aprendiendo cómo funciona Kotlin: estás aprendiendo a **modelar tu dominio de forma robusta y comprensible**, eligiendo representaciones que hacen explícito el propósito del código. Este principio —**que el código comunique su intención**— es clave en el diseño de bibliotecas limpias, mantenibles y útiles para otrxs.
 
-Aprendiste a construir tus propios tipos producto desde cero. En la próxima lección, **descubrirás cómo Kotlin puede generar por ti muchos de los detalles repetitivos** mediante `data class`, llevándote aún más cerca de escribir código claro, conciso y expresivo.
+Has aprendido a construir tus propios tipos producto desde cero. En la próxima lección, descubrirás cómo Kotlin puede **automatizar gran parte de esta tarea** mediante `data class`, acercándote aún más a escribir código **claro, conciso y expresivo**.
+
+<div class="exclude-from-reading-time">
 
 ## 📖 Referencias
 
 ### 🔥 Recomendadas
 
-- 🌐 Classes | Kotlin. (s. f.). Kotlin Help. Recuperado 9 de abril de 2025, de https://kotlinlang.org/docs/classes.html
+- [🌐 *"Classes"*](https://kotlinlang.org/docs/classes.html) de la **documentación oficial de Kotlin**: La referencia más completa y actualizada sobre cómo declarar y trabajar con clases en Kotlin. Explica de forma detallada los **constructores primarios y secundarios**, los **bloques `init`**, la inicialización de propiedades, la creación de instancias, los modificadores de visibilidad y otros elementos clave del sistema de clases. **Relevante porque** profundiza en las reglas del lenguaje con múltiples ejemplos prácticos, lo que complementa y respalda los conceptos explicados en esta lección sobre tipos producto y construcción segura de objetos en Kotlin.
 
 ### 🔹 Adicionales
 
-- 📰 Vukovic, M. (2024, diciembre 26). Pairs and triples in Kotlin (and why you shouldn’t use them). Nutrient. https://www.nutrient.io/blog/pairs-and-triples-in-kotlin-and-why-you-shouldnt-use-them/
+- [🌐 *"Pairs and triples in Kotlin (and why you shouldn't use them)"*](https://www.nutrient.io/blog/pairs-and-triples-in-kotlin-and-why-you-shouldnt-use-them/) en *Nutrient.io* por **Menil Vukovic**: Este artículo argumenta que `Pair` y `Triple` son una solución tentadora pero inadecuada para modelar datos en Kotlin. Presenta ejemplos donde su uso puede dificultar la comprensión, mantenimiento y extensibilidad del código, especialmente cuando se usan como estructuras de retorno en funciones o para representar entidades del dominio. **Relevante porque** refuerza el valor de las clases con propiedades nombradas frente a las tuplas genéricas, destacando cómo estas últimas comprometen la claridad del código, una preocupación central al diseñar bibliotecas limpias y expresivas.
+- [🎥 *"Kotlin Classes and Constructors – Primary vs Secondary"*](https://www.youtube.com/watch?v=Ly_onmXpDiw) (13m50s) en *YouTube* por **Will Tollefson**: Un video introductorio claro y bien estructurado que explica cómo declarar clases en Kotlin, diferenciando entre constructores primarios y secundarios, y mostrando en qué orden se ejecutan los bloques `init` y los inicializadores de propiedades. También aborda buenas prácticas sobre visibilidad, uso de valores por defecto y cuándo (y por qué) **evitar constructores secundarios**. **Relevante porque** refuerza visualmente los conceptos de esta lección, mostrando ejemplos en orden de ejecución, y ayuda a comprender cómo Kotlin promueve un estilo conciso, expresivo y seguro al modelar tipos producto.
+
+</div>
