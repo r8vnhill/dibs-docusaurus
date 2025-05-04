@@ -1,0 +1,108 @@
+---
+title: Tipos suma como enumeraciones
+sidebar_label: Enumeraciones
+---
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import ReadingTime from '@site/src/components/reading-time/ReadingTime'
+
+<ReadingTime />
+
+## 🎯 Motivación
+
+Supongamos que estás diseñando una biblioteca para representar el **estado de una conexión de red**. Algunos posibles estados son `Connected`, `Disconnected` o `InProgress`. ¿Cómo podrías modelarlos de forma **segura y expresiva**?
+
+Una solución frágil sería usar una `String`:
+
+```kotlin showLineNumbers
+val state = "Connected"
+```
+
+Pero esto permite errores sutiles, como:
+
+```kotlin showLineNumbers
+val state = "Connnected" // error silencioso: compila, pero está mal escrito
+```
+
+## Enumeraciones
+
+Las **enumeraciones** son una forma de representar un **tipo suma** en Kotlin. Permiten definir un conjunto cerrado de valores posibles, lo que mejora la seguridad y la legibilidad del código.
+Además, el compilador puede verificar que solo se usen valores válidos, evitando errores comunes como cadenas mal escritas o valores no válidos.
+
+Conceptualmente, si un tipo suma $S$ tiene $N$ alternativas $S = A_1 + A_2 + ... + A_N$, podemos representarlo como una enumeración `enum class` en Kotlin:
+
+```kotlin showLineNumbers title="Tipo suma como enumeración"
+enum class TipoSuma {
+    Alternativa1,
+    Alternativa2,
+    // ...
+    AlternativaN
+}
+```
+
+<Explanation>
+    Hemos definido un **tipo suma** usando `enum class`, que nos permite modelar un conjunto de **alternativas fijas y conocidas**.  
+    Cada valor dentro del `enum` representa **una opción válida**, y el compilador se asegura de que **solo una alternativa esté presente a la vez**.  
+    Este enfoque mejora la seguridad del modelo y evita errores como comparar cadenas mal escritas o usar valores no válidos.
+</Explanation>
+
+Cada instancia del `enum` es exactamente **una** de las alternativas posibles. Este enfoque es ideal cuando:
+
+- Las alternativas son fijas y conocidas de antemano.
+- No necesitas asociar datos adicionales a cada caso.
+
+:::danger TODO:
+
+Aquí podría ir un `details` con la notación `|` (equivalente a `+`) para representar el tipo suma que se usa en varios lenguajes de programación y también en la teoría de tipos. Elegimos `+` para representar el tipo suma más arriba para seguir la notación de suma.
+
+:::
+
+## 📦 Uso habitual en bibliotecas
+
+Los `enum class` son especialmente útiles para representar:
+
+- **Estados finitos** (como el estado de una conexión, sesión o flujo de trabajo).
+- **Modos de operación** (por ejemplo, modo oscuro/claro, lectura/escritura).
+- **Resultados controlados** (como `OK`, `ERROR`, `TIMEOUT`, etc.).
+
+Veamos un ejemplo típico:
+
+```kotlin showLineNumbers title="Ejemplo de uso de enum class"
+enum class LogLevel {
+    INFO,
+    WARNING,
+    ERROR
+}
+
+fun log(message: String, level: LogLevel) {
+    if (level == LogLevel.ERROR) {
+        System.err.println("$level: $message")
+    } else {
+        println("$level: $message")
+    }
+}
+
+fun main() {
+    log("Todo está bien", LogLevel.INFO)      // INFO: Todo está bien
+    log("Algo salió mal", LogLevel.ERROR)     // ERROR: Algo salió mal
+}
+```
+
+<Explanation>
+    Hemos definido un conjunto cerrado de niveles de log (`LogLevel`) usando `enum class`.  
+    Luego, lo usamos como parámetro en una función `log` que actúa de forma distinta según el valor recibido.  
+    Esto garantiza que **solo valores válidos y conocidos** pueden ser usados, evitando errores como cadenas mal escritas y habilitando el chequeo en tiempo de compilación.
+</Explanation>
+
+## `when` exhaustivo
+
+:::danger TODO:
+
+- [ ] Notación `|` para representar el tipo suma.
+- [ ] Notar que usamos `==` para "preguntar por tipo" y no `is`.
+- [ ] Explicar el `when` exhaustivo y su relación con los `enum class`.
+- [ ] Ejemplo de uso del `when` exhaustivo con `enum class`.
+- [ ] Conclusiones
+- [ ] Introducción
+
+:::

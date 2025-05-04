@@ -86,6 +86,9 @@ const sections: CourseSection[] = [
       "Delegation pattern",
       "Functor pattern",
       "Monad pattern",
+      "Dependency injection",
+      "Internal DSLs",
+      "Builder pattern",
     ],
   },
   {

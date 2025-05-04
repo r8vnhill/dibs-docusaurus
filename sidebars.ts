@@ -45,6 +45,7 @@ const sidebars: SidebarsConfig = {
                         'type-fundamentals/algebraic-data-types/classes/kt',
                         'type-fundamentals/algebraic-data-types/records-1/kt',
                         'type-fundamentals/algebraic-data-types/records-2/kt',
+                        'type-fundamentals/algebraic-data-types/enums/kt',
                         {
                             type: 'category',
                             label: 'Tipos suma',
