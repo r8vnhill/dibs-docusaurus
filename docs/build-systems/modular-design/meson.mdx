@@ -1,0 +1,215 @@
+---
+title: Modularizando tu proyecto C++ con Meson
+---
+
+import GitHubRepoLink from "@site/src/components/GithubRepoLink";
+import Explanation from "@site/src/components/admonitions/Explanation";
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import TabItem from '@theme/TabItem'
+import Glossary from '@site/src/components/admonitions/Glossary'
+import ExcludeFromReadingTime from '@site/src/components/reading-time/ExcludeFromReadingTime'
+import ReadingTime from '@site/src/components/reading-time/ReadingTime'
+import Sh from '@site/src/components/mdx/build-systems/modular-design/meson/sh.mdx'
+
+<ReadingTime />
+<GitHubRepoLink user="r8vnhill" repo="echo-app-cpp-meson" />
+
+<Glossary>
+    :::danger TODO
+
+    - [ ] Añadir un glosario rápido.
+
+    :::
+</Glossary>
+
+## 🏗️ Estructura esperada del proyecto
+
+```mermaid
+graph TD
+```
+
+:::danger TODO
+
+- [ ] Añadir un diagrama de flujo de la estructura del proyecto.
+
+:::
+
+## 📦 Paso 1: Crear la estructura de carpetas
+
+Desde la raíz del proyecto:
+
+<BoxedTabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell showLineNumbers title="src/scripts/ps1/CreateProjectStructure.ps1"
+        @{
+            App = @("src/app/main.cpp", "src/app/meson.build")
+            Core = @("src/core/echo.cpp", "src/core/echo.hpp", "src/core/meson.build")
+        }.GetEnumerator() | ForEach-Object {
+            $module = $_.Key
+            $files = $_.Value
+
+            Write-Host "📁 Creating structure for module: $module" -ForegroundColor Cyan
+
+            foreach ($file in $files) {
+                $dir = Split-Path $file -Parent
+                if (-not (Test-Path $dir)) {
+                    New-Item -Path $dir -ItemType Directory -Force | Out-Null
+                }
+                New-Item -Path $file -ItemType File -Force | Out-Null
+                Write-Host "✅ $file" -ForegroundColor Green
+            }
+        }
+
+        Write-Host "🟢 Project initialized successfully." -ForegroundColor Green
+        ```
+
+        <Explanation>
+            Este script de PowerShell automatiza la creación de una estructura de carpetas y archivos mínima para un proyecto modular en C++ usando **Meson** como sistema de construcción.
+
+            - Define un diccionario con dos módulos: `App` y `Core`, cada uno asociado a los archivos que necesita.
+            - Por cada archivo:
+                - Crea la carpeta contenedora si no existe (por ejemplo, `src/app/` o `src/core/`).
+                - Crea un archivo vacío (`main.cpp`, `echo.cpp`, `meson.build`, etc.) en la ubicación indicada.
+                - Muestra en consola un mensaje de confirmación (`✅`) por cada archivo creado.
+        </Explanation>
+        
+        Puedes crear el archivo `CreateProjectStructure.ps1` y ejecutarlo desde PowerShell para crear la estructura de carpetas y archivos automáticamente.
+
+        ```powershell
+        .\scripts\ps1\CreateProjectStructure.ps1
+        ```
+    </TabItem>
+    <TabItem value="macOS" label="macOS">
+        <Sh />
+    </TabItem>
+    <TabItem value="Ubuntu/Debian" label="Ubuntu/Debian">
+        <Sh />
+    </TabItem>
+</BoxedTabs>
+
+::::tip Limpieza
+
+Puedes borrar los archivos creados en la lección pasada o guardarlos como recuerdo.
+
+<BoxedTabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```powershell showLineNumbers title=""
+        'src\main.cpp', 'src\meson.build' | Remove-Item -Force -Verbose
+        ```
+    </TabItem>
+    <TabItem value="macOS" label="macOS">
+        ```bash showLineNumbers title=""
+        #!/bin/sh
+
+        echo "🗑️ Removing files..."
+
+        for file in src/main.cpp src/meson.build; do
+            if [ -f "$file" ]; then
+                rm -f "$file"
+                echo "✅ Removed: $file"
+            else
+                echo "⚠️ File not found: $file"
+            fi
+        done
+        ```
+    </TabItem>
+    <TabItem value="Ubuntu/Debian" label="Ubuntu/Debian">
+        :::danger TODO
+
+        - [ ] Añadir el script de eliminación de archivos. Este script es el mismo que el de macOS, así que puede ir en un .mdx compartido.
+
+        :::
+    </TabItem>
+</BoxedTabs>
+
+::::
+
+## 🧾 Paso 2: Declarar el archivo raíz `meson.build`
+
+En este archivo indicamos a Meson que estamos creando un proyecto en C++, especificamos su versión, y declaramos qué subdirectorios contienen código que debe ser compilado.
+
+```python title="meson.build"
+project('echo-app', 'cpp', version: '0.2.0')  # Nombre, lenguaje y versión del proyecto
+
+subdir('src/core')  # Biblioteca reutilizable
+subdir('src/app')   # Ejecutable principal
+```
+
+<Explanation>
+    Este archivo es el punto de entrada del sistema de construcción de Meson. Declara el proyecto y registra los subdirectorios que contienen sus propios archivos `meson.build`. Así, Meson podrá compilar correctamente tanto la biblioteca (`core`) como la aplicación (`app`).
+</Explanation>
+
+
+## Paso 3: ...
+
+```python title="src/core/meson.build"
+core_sources = files('echo.cpp')
+core_lib = static_library('core', core_sources,
+    include_directories: include_directories('.')
+)
+```
+
+Y su archivo de cabecera:
+
+```cpp title="src/core/echo.hpp"
+#pragma once
+#include <string>
+
+std::string echo(const std::string& message);
+```
+
+Implementación:
+
+```cpp title="src/core/echo.cpp"
+#include "echo.hpp"
+
+std::string echo(const std::string& message) {
+    return "Echo: " + message;
+}
+```
+
+## 🚀 Módulo `app`: ejecutable
+
+```python title="src/app/meson.build"
+app_sources = files('main.cpp')
+executable('app', app_sources,
+    dependencies: [],
+    link_with: core_lib,
+    include_directories: include_directories('..')
+)
+```
+
+Código principal:
+
+```cpp title="src/app/main.cpp"
+#include <iostream>
+#include "core/echo.hpp"
+
+int main() {
+    std::cout << echo("Hello from Meson!") << std::endl;
+    return 0;
+}
+```
+
+## 🔨 Compilación
+
+Desde la raíz del proyecto:
+
+```bash
+meson setup build
+meson compile -C build
+```
+
+Y ejecuta el binario:
+
+```bash
+./build/src/app/app
+```
+
+```plaintext
+Echo: Hello from Meson!
+```
+
+<Explanation>
+El ejecutable `app` se compila en `build/src/app/app` y enlaza con la biblioteca `core`. Gracias a la configuración modular, puedes mantener `core` como una unidad reutilizable o independiente.
+</Explanation>
