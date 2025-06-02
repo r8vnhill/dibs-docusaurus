@@ -8,35 +8,27 @@ import GitHubRepoLink from "@site/src/components/GithubRepoLink";
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 import TabItem from '@theme/TabItem'
 import References from '@site/src/components/mdx/build-systems/modular-design/uv/references.mdx'
+import CleanupSh from '@site/src/components/mdx/build-systems/modular-design/uv/cleanup-sh.mdx'
 
 <ReadingTime />
 <GitHubRepoLink repo={"echo-app-py-uv"} user={"r8vnhill"} />
 
 En la lección anterior dimos nuestros primeros pasos con `uv`, creando un proyecto simple en Python y ejecutando un *Hello, World!* en un entorno virtual aislado.
 
-Ahora llevaremos esa base un paso más allá: **estructuraremos el proyecto en múltiples módulos**, separando la lógica de negocios en una biblioteca (`core`) y la lógica de ejecución en una aplicación (`app`) que la consume. Este enfoque modular no solo facilita la organización del código, sino que también habilita una evolución más sostenible y profesional del proyecto.
+Ahora llevaremos esa base un paso más allá: **estructuraremos el proyecto en múltiples módulos**, separando la lógica de negocio en una biblioteca (`core`) y la lógica de ejecución en una aplicación (`app`) que la consume. Este enfoque modular no solo mejora la organización del código, sino que también permite una evolución más sostenible y profesional del proyecto.
 
 En esta lección aprenderás a:
 
-- Declarar múltiples módulos en un workspace de `uv`.
-- Crear carpetas y archivos base para organizar los paquetes Python.
+- Declarar múltiples módulos dentro de un workspace de `uv`.
+- Crear la estructura base de carpetas y archivos para organizar paquetes de Python.
 - Establecer dependencias locales entre módulos.
 - Ejecutar una aplicación que importa y utiliza código de otro módulo.
 
-Al finalizar, habrás transformado un script suelto en un proyecto con **estructura escalable y responsabilidad bien delimitada**, tal como se esperaría en un entorno de desarrollo profesional.
-
-:::info Glosario rápido
-
-- **Workspace**: Conjunto de módulos que comparten configuración y pueden interactuar entre sí sin ser publicados.
-- **Módulo**: Proyecto independiente con su propio `pyproject.toml`.
-- **Paquete Python**: Carpeta con `__init__.py` que puede ser importada como módulo.
-- **`uv`**: Herramienta de gestión de dependencias y ejecución de scripts en Python, compatible con `pyproject.toml`.
-
-:::
+Al finalizar, habrás transformado un script suelto en un proyecto con una **estructura escalable y responsabilidades bien definidas**, alineado con las buenas prácticas de desarrollo profesional.
 
 ## 🏗️ Estructura esperada del proyecto
 
-Nuestro objetivo es organizar el repositorio en dos módulos independientes: una biblioteca llamada `core` con la lógica de negocios, y una aplicación llamada `app` que consume esa biblioteca.
+Nuestro objetivo es organizar el repositorio en dos módulos independientes: una biblioteca llamada `core`, que contiene la lógica de negocio, y una aplicación llamada `app`, que consume esa biblioteca.
 
 La estructura final será la siguiente:
 
@@ -72,104 +64,133 @@ graph
 
 :::info Explicación de la estructura
 
-Esta estructura representa un proyecto Python **multi-módulo** organizado con `uv` como workspace. Está compuesta por:
+Esta estructura representa un proyecto Python **multi-módulo**, organizado con `uv` como workspace. Está compuesta por:
 
-- `pyproject.toml` en la raíz: define el proyecto principal y declara los módulos `core` y `app` como miembros del workspace.
-- `core/`: contiene la lógica de negocios del proyecto. Dentro:
+- `pyproject.toml` en la raíz: define el proyecto principal y declara `core` y `app` como miembros del workspace.
+- `core/`: contiene la lógica de negocio del proyecto. Dentro:
     - `echo_core/`: paquete Python que implementa la biblioteca.
     - `__init__.py`: habilita `echo_core` como módulo importable.
-- `app/`: contiene la aplicación que consume `core`. Dentro:
+- `app/`: contiene la aplicación que depende de `core`. Dentro:
     - `echo_app/`: paquete Python de la aplicación.
-    - `main.py`: punto de entrada.
+    - `main.py`: punto de entrada de la app.
     - `__init__.py`: habilita `echo_app` como módulo.
 
-Esta estructura modular permite mantener una **clara separación entre lógica de negocio y lógica de aplicación**, facilitando la escalabilidad, el testeo independiente de componentes y la reutilización en otros proyectos.
+Esta estructura modular permite mantener una **clara separación entre lógica de negocio y lógica de aplicación**, lo que facilita la escalabilidad, las pruebas unitarias independientes y la reutilización en otros proyectos.
 
 :::
 
-:::tip ¿Y el `main.py` anterior?
+::::tip Limpieza
 
-Puedes eliminar el archivo `main.py` que creaste en la lección anterior, o guardarlo como recuerdo.
+Puedes borrar los archivos creados en la lección pasada o guardarlos como recuerdo.
 
-:::
+<BoxedTabs groupId={"os"}>
+    <TabItem value="Windows" label="Windows">
+        ```sh showLineNumbers title="scripts/sh/cleanup-project.sh"
+        Remove-Item -Path 'main.py' -Verbose
+        ```
+
+        Puedes ejecutar el comando desde la terminal, o como script de PowerShell:
+
+        ```powershell title="En PowerShell"
+        .\scripts\ps1\CleanupProject.ps1
+        ```
+    </TabItem>
+    <TabItem value="macOS" label="macOS">
+        <CleanupSh />
+    </TabItem>
+    <TabItem value="Ubuntu/Debian" label="Ubuntu/Debian">
+        <CleanupSh />
+    </TabItem>
+</BoxedTabs>
+
+::::
 
 ## 📦 Paso 1: Crear la estructura de carpetas
 
 Desde la raíz del proyecto:
 
 <BoxedTabs groupId={"os"}>
-    <TabItem value="Windows" label="Windows">
-        ```powershell title="En PowerShell"
-        'core', 'app' | ForEach-Object {
-            $name = $_
-            $modulePath = ".\$name"
-            $packagePath = "$modulePath\echo_$name"
 
-            # Crear carpeta del módulo y del paquete
-            New-Item -ItemType Directory -Path $packagePath -Force | Out-Null
-            New-Item -ItemType File -Path "$packagePath\__init__.py" -Force | Out-Null
+{/* region : Windows --------------------------------------------------------------------------- */}
+<TabItem value="Windows" label="Windows">
 
-            # Crear pyproject.toml
-            New-Item -ItemType File -Path "$modulePath\pyproject.toml" -Force | Out-Null
+```powershell showLineNumbers title="scripts/ps1/SetupModularProject.ps1"
+@{
+    App = @("app\pyproject.toml", "app\echo_app\__init__.py", "app\echo_app\main.py")
+    Core = @("core\pyproject.toml", "core\echo_core\__init__.py")
+}.GetEnumerator() | ForEach-Object {
+    $module = $_.Key
+    $files = $_.Value
 
-            # Crear main.py solo en app
-            if ($name -eq 'app') {
-                New-Item -ItemType File -Path "$packagePath\main.py" -Force | Out-Null
-            }
+    Write-Host "📁 Creating structure for module: $module" -ForegroundColor Cyan
+
+    foreach ($file in $files) {
+        $dir = Split-Path $file -Parent
+        if (-not (Test-Path $dir)) {
+            New-Item -Path $dir -ItemType Directory -Force | Out-Null
         }
-        ```
+        New-Item -Path $file -ItemType File -Force | Out-Null
+        Write-Host "✅ $file" -ForegroundColor Green
+    }
+}
 
-        <Explanation>
-            Este bloque crea dos módulos: `core` y `app`, cada uno con una subcarpeta `echo_core` o `echo_app` que actúa como paquete Python.
+Write-Host "🟢 Project initialized successfully." -ForegroundColor Green
+```
 
-            - Crea las carpetas del módulo (`core/`, `app/`) y sus respectivos paquetes (`echo_core/`, `echo_app/`).
-            - Genera un archivo `__init__.py` en cada paquete, para marcarlo como módulo importable.
-            - Crea un archivo `pyproject.toml` vacío en cada módulo, que luego será completado manualmente.
-            - Si el módulo es `app`, se crea además un `main.py` como punto de entrada para la aplicación.
+<Explanation>
 
-            Esta estructura permite definir una biblioteca reutilizable (`core`) y una aplicación que la consume (`app`), siguiendo buenas prácticas de separación de responsabilidades.
-        </Explanation>
-    </TabItem>
-    <TabItem value="Windows (corto)" label="Windows (corto)">
-        ```powershell title="En PowerShell"
-        'core', 'app' | % {
-            $pkg = "echo_$_"
-            md $_, "$_/$pkg" -f > $null
-            ni "$_/$pkg/__init__.py", "$_/$pkg/pyproject.toml" -f > $null
-            if ($_ -eq 'app') {
-                ni "$_/$pkg/main.py" -f > $null
-            }
-        }
-        ```
+Este script de PowerShell **automatiza la creación de la estructura base del proyecto**. Lo que hace es:
 
-        <Explanation>
-            Este script compacto:
+1. **Definir los módulos** `App` y `Core`, junto con la lista de archivos que cada uno debe contener.
+2. Recorrer esa información usando `GetEnumerator()` y `ForEach-Object`.
+3. Para cada archivo:
+   - **Verifica si la carpeta padre existe** (`Split-Path` + `Test-Path`) y la crea si no está (`New-Item -ItemType Directory`).
+   - **Crea el archivo vacío correspondiente** (`New-Item -ItemType File`).
+   - Muestra un mensaje en consola por cada archivo creado.
 
-            - Crea dos módulos: `core` y `app`.
-            - Dentro de cada módulo, genera un paquete Python (`echo_core` o `echo_app`) con `__init__.py`.
-            - Agrega un `pyproject.toml` vacío en cada módulo.
-            - En el módulo `app`, también crea `main.py` como punto de entrada.
-        </Explanation>
-    </TabItem>
-    <TabItem value="Linux/macOS" label="Linux/macOS">
-        ```bash title="En tu terminal"
-        for module in core app; do
-            pkg="echo_$module"
-            mkdir -p "$module/$pkg"
-            : > "$module/pyproject.toml" "$module/$pkg/__init__.py"
-            [[ $module == app ]] && : > "$module/$pkg/main.py"
-        done
-        ```
+</Explanation>
 
-        <Explanation>
-            Este script:
+Puedes ejecutar los comandos desde la terminal, o como script de PowerShell:
 
-            - Crea dos módulos: `core` y `app`.
-            - Dentro de cada uno, genera un paquete Python (`echo_core` o `echo_app`) con `__init__.py`.
-            - Agrega un `pyproject.toml` vacío por módulo.
-            - En el módulo `app`, también crea `main.py` como punto de entrada.
-        </Explanation>
-    </TabItem>
+```powershell title="En PowerShell"
+.\scripts\ps1\SetupModularProject.ps1
+```
+
+</TabItem>
+{/* endregion Windows -------------------------------------------------------------------------- */}
+
+{/* region : macOS ----------------------------------------------------------------------------- */}
+<TabItem value="macOS" label="macOS">
+
+:::danger TODO
+
+- [ ] Añadir código de creación de estructura para macOS.
+
+:::
+
+```bash showLineNumbers title="scripts/sh/setup_modular_project.sh"
+
+```
+
+</TabItem>
+{/* endregion macOS ---------------------------------------------------------------------------- */}
+
+{/* region : Ubuntu/Debian --------------------------------------------------------------------- */}
+<TabItem value="Ubuntu/Debian" label="Ubuntu/Debian">
+
+:::danger TODO
+
+- [ ] Añadir código de creación de estructura para Ubuntu/Debian (reusar el de macOS).
+
+:::
+
+```bash showLineNumbers title=""
+
+```
+
+</TabItem>
+{/* endregion Ubuntu/Debian ------------------------------------------------------------------- */}
+
 </BoxedTabs>
 
 ## ⚙️ Paso 2: Declarar los módulos en el `pyproject.toml`

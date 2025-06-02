@@ -1,0 +1,546 @@
+---
+title: "Clases como Tipos Producto en Python"
+---
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import ExcludeFromReadingTime from '@site/src/components/reading-time/ExcludeFromReadingTime'
+import ReadingTime from '@site/src/components/reading-time/ReadingTime'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs';
+import TabItem from '@theme/TabItem';
+
+<ReadingTime multiplier={1.0}/>
+<GithubRepoLink user="r8vnhill" repo="python-dibs" />
+
+:::danger TODO
+
+- [ ] Introducción
+
+:::
+
+### 🏗️ Declaración de clases
+
+En Python, una clase se define con la palabra clave `class`, y sus propiedades se inicializan dentro del método especial `__init__`, que actúa como constructor. Las anotaciones de tipo se declaran usando `:` después del nombre del atributo o parámetro:
+
+```python showLineNumbers title="Clase básica en Python (type-fundamentals/algebraic_types/product/classes.py)"
+class Point:
+    x: int
+    y: int
+
+    def __init__(self, x: int, y: int):
+        self.x = x
+        self.y = y
+```
+
+<Explanation>
+    Declaramos una clase `Point` con dos propiedades (`x` e `y`), ambas de tipo `int`. Las anotaciones de tipo aparecen tanto en la declaración de atributos como en los parámetros del constructor `__init__`.
+</Explanation>
+
+Este patrón cumple el mismo rol que el **constructor primario** en Kotlin: permite inicializar los valores que componen el tipo. Sin embargo, en Python es necesario:
+
+- Anotar los tipos por separado.
+- Declarar explícitamente las propiedades fuera del constructor.
+- Asignarlas manualmente dentro del cuerpo del `__init__`.
+
+En Kotlin, en cambio, estas acciones se combinan en una sola línea, lo que da lugar a una **sintaxis más declarativa, compacta y libre de redundancia**.
+
+::::info `self`
+
+- `self` es una convención en Python que representa la instancia actual de la clase. Es equivalente a `this` en otros lenguajes como Kotlin.
+- Todo método de instancia debe tener `self` como primer parámetro, lo que permite acceder a atributos y otros métodos de la instancia.
+
+:::warning Error común
+
+Un error frecuente es **olvidar incluir `self` como primer parámetro** en el método `__init__`, lo que hace que Python malinterprete los argumentos al instanciar la clase.
+
+```python showLineNumbers title="path/to/file"
+class Point:
+    x: int
+    y: int
+
+    def __init__(x: int, y: int):  # ❌ Falta self
+        self.x = x
+        self.y = y
+```
+
+Esto genera el siguiente error en tiempo de ejecución:
+
+```plaintext
+Traceback (most recent call last):
+  File "path/to/file", line 38, in <module>
+    pos: Final[Point] = Point(1, 2)
+                        ^^^^^^^^^^^
+TypeError: Point.__init__() takes 2 positional arguments but 3 were given
+```
+
+El problema es que Python espera que el primer parámetro de un método de instancia sea una referencia a la propia instancia. Como no escribimos `self`, el nombre `x` ocupa ese lugar, por lo que al llamar `Point(1, 2)`, Python interpreta que estás pasando **tres** argumentos: `self`, `1` y `2`, cuando la función solo espera dos.
+
+<details>
+<summary>Abusando de la sintaxis: `this`</summary>
+
+Dado que `self` es solo una convención, **podríamos usar cualquier otro nombre**, pero **no es recomendable**. Por ejemplo:
+
+```python showLineNumbers title="Abusando de la sintaxis"
+class Point:
+    x: int
+    y: int
+
+    def __init__(this, x: int, y: int):
+        this.x = x
+        this.y = y
+```
+
+Esto funcionará correctamente, pero **rompe la legibilidad y las convenciones del lenguaje**, por lo que debe evitarse.
+
+</details>
+
+:::
+::::
+
+
+## 🧪 Instanciación
+
+Instanciar una clase en Python es similar a Kotlin en cuanto a sintaxis: se omite el uso de `new`, y los argumentos se pasan directamente al constructor.
+
+```python showLineNumbers title="Instanciación de una clase (type-fundamentals/algebraic_types/product/classes.py)"
+point: Final[Point] = Point(49, 41)
+print(point.x)  # 49
+print(point.y)  # 41
+```
+
+<Explanation>
+    Creamos una instancia de `Point` pasando los valores `49` y `41` al constructor. La variable `pos` está anotada con `Final`, lo que indica que **no debe ser reasignada**. Esto se asemeja a `val` en Kotlin, aunque en Python esta restricción no es estricta en tiempo de ejecución, sino solo una **sugerencia para herramientas de análisis estático** como `mypy` o `ty`.
+</Explanation>
+
+## 🧱 Encapsulamiento y lógica interna
+
+Python permite incluir métodos en una clase igual que en Kotlin. Aquí usamos **atributos privados**, **métodos**, y **propiedades** para encapsular la lógica:
+
+<BoxedTabs>
+
+<TabItem label={"Código esencial"} value={"Código esencial"}> {/*  region : CÓDIGO ESENCIAL */}
+
+```python showLineNumbers title="Clase con lógica interna (type-fundamentals/algebraic_types/product/classes.py)"
+class Position:
+    def __init__(self, x: int, y: int):
+        self.__x = x
+        self.__y = y
+
+    def move(self, dx: int, dy: int) -> 'Position':  # 'Position' es una forward reference
+        return Position(self.__x + dx, self.__y + dy)
+
+    @property
+    def is_origin(self) -> bool:
+        return self.__x == 0 and self.__y == 0
+```
+
+</TabItem>  {/* endregion CÓDIGO ESENCIAL */}
+
+<TabItem label={"Código completo"} value={"Código completo"}>   {/*  region : CÓDIGO COMPLETO */}
+
+```python showLineNumbers title="some title (and path/to/file)"
+class Position:
+__x: int
+__y: int
+
+def __init__(self, x: int, y: int):
+    self.__x = x
+    self.__y = y
+
+def move(self, dx: int, dy: int) -> 'Position':
+    return Position(self.__x + dx, self.__y + dy)
+
+@property
+def is_origin(self) -> bool:
+    return self.__x == 0 and self.__y == 0
+
+@property
+def x(self) -> int:
+    return self.__x
+
+@property
+def y(self) -> int:
+    return self.__y
+```
+
+```python showLineNumbers title="some title (and path/to/file)"
+position: Final[Position] = Position(86, 29)
+print(position.is_origin)                   # False
+print(position.move(-86, -29).is_origin)    # True
+```
+</TabItem>  {/* endregion CÓDIGO COMPLETO */}
+
+</BoxedTabs>
+
+<Explanation>
+    En este ejemplo:
+    
+    - Usamos `__x` y `__y` con doble guion bajo para indicar que son **atributos privados**, siguiendo una convención de ocultamiento.
+    - El método `move` crea una **nueva instancia** con los valores actualizados, siguiendo un estilo inmutable.
+    - Usamos `@property` para exponer `x`, `y` e `is_origin` como **atributos de solo lectura**. Esto permite acceder a ellos como si fueran campos (`pos.x`), sin paréntesis.
+        - Ya que no definimos un setter, estos atributos son **inmutables** desde el exterior.
+    - La anotación `'Position'` en `-> 'Position'` es una **forward reference**, necesaria porque estamos usando el tipo dentro de su propia definición.
+</Explanation>
+
+<details>
+<summary>🔓 Abusando de la sintaxis: Rompiendo el encapsulamiento</summary>
+
+```python showLineNumbers title="Intento 1: setter en propiedad de solo lectura"
+position: Final[Position] = Position(45, 64)
+position.x = 85
+```
+
+Esto generará un error en tiempo de ejecución, ya que `x` es una **propiedad de solo lectura**:
+
+```plaintext
+Traceback (most recent call last):
+  File "path/to/file", line 42, in <module>
+    position.x = 85
+    ^^^^^^^^^^
+AttributeError: property 'x' of 'Position' object has no setter
+```
+
+```python showLineNumbers title="Intento 2: asignación directa a atributo 'privado'"
+position: Final[Position] = Position(45, 64)
+position.__x = 85
+print(position.x)  # 45
+```
+
+Este código no lanza error, pero **no modifica** el valor real del atributo `__x`. Lo que sucede es que se crea un nuevo atributo llamado `__x` en la instancia, **distinto** del atributo interno original.
+
+```python showLineNumbers title="Intento 3: name mangling para forzar el acceso"
+position: Final[Position] = Position(45, 64)
+position._Position__x = 85
+print(position.x)  # 85
+```
+
+Aquí sí se modifica el valor interno real, accediendo al atributo a través de su nombre transformado por *name mangling*.
+
+---
+
+En realidad, Python no impide el acceso a atributos privados. Lo que hace es aplicar **[name mangling](https://commons.wikimedia.org/wiki/File:Mangle.jpg#/media/File:Mangle.jpg)** (renombrado de atributos), anteponiendo el nombre de la clase al atributo (por ejemplo, `__x` se convierte en `_Position__x`). Esto **no garantiza encapsulamiento real**, sino que actúa como una convención para evitar colisiones accidentales y desalentar el acceso directo.
+
+</details>
+
+## 🏗 ¿Constructores secundarios?
+
+En Python **no existe el concepto de constructores primario y secundarios** como en Kotlin. En lugar de eso, se suelen usar otros patrones y mecanismos que permiten lograr comportamientos similares.
+
+A continuación, se presentan algunas formas comunes de definir múltiples maneras de crear instancias de una clase:
+
+### 🏭 Métodos de fábrica estáticos
+
+Son funciones que devuelven instancias de la clase y permiten tener distintos nombres y lógicas para crear objetos.
+
+#### 🔹 `@classmethod`
+
+Se usa cuando necesitas acceder a la clase (no a la instancia). Es útil para crear **constructores alternativos**, especialmente cuando la lógica de creación puede variar, o cuando quieres dar nombres más expresivos a las distintas formas de construir una instancia.
+
+<BoxedTabs>
+
+<TabItem label={"Código esencial"} value={"Código esencial"}>
+
+```python showLineNumbers title="Uso de @classmethod como constructor alternativo (type-fundamentals/algebraic_types/product/classes.py)"
+class Point:
+    @classmethod
+    def from_tuple(cls, coords: (int, int)) -> 'Point':
+        return cls(coords[0], coords[1])
+```
+
+</TabItem>
+
+<TabItem label={"Código completo"} value={"Código completo"}>
+
+```python showLineNumbers title="Uso de @classmethod como constructor alternativo (type-fundamentals/algebraic_types/product/classes.py)"
+class Point:
+    __x: int
+    __y: int
+
+    def __init__(self, x: int, y: int):
+        self.__x = x
+        self.__y = y
+
+    @classmethod
+    def from_tuple(cls, coords: (int, int)) -> 'Point':
+        return cls(coords[0], coords[1])
+```
+
+```python showLineNumbers title="Creación de instancia con from_tuple (type-fundamentals/algebraic_types/product/classes.py)"
+point_from_tuple: Final[Point] = Point.from_tuple((49, 41))
+print(point_from_tuple.x)   # 49
+```
+
+</TabItem>
+
+</BoxedTabs>
+
+:::info `cls`
+
+`cls` es una **convención** en Python que representa la **clase actual**, de la misma forma que `self` representa la instancia actual.  
+En un `@classmethod`, `cls` se recibe como primer parámetro en lugar de `self`, permitiendo invocar el constructor (`cls(...)`) o acceder a atributos estáticos de la clase.
+
+:::
+
+#### 🔹 `@staticmethod`
+
+No recibe ni la instancia (`self`) ni la clase (`cls`). Se usa para funciones relacionadas que no dependen del estado.
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```python showLineNumbers title="Uso de @staticmethod como constructor alternativo (type-fundamentals/algebraic_types/product/classes.py)"
+        class Point:
+            @staticmethod
+            def from_position(pos: 'Position') -> 'Point':
+                return Point(pos.x, pos.y)
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```python showLineNumbers title="Uso de @staticmethod como constructor alternativo (type-fundamentals/algebraic_types/product/classes.py)"
+        class Point:
+            __x: int
+            __y: int
+
+            def __init__(self, x: int, y: int):
+                self.__x = x
+                self.__y = y
+
+            @staticmethod
+            def from_position(pos: 'Position') -> 'Point':
+                return Point(pos.x, pos.y)
+        ```
+
+        ```python showLineNumbers title="Creación de instancia con from_position (type-fundamentals/algebraic_types/product/classes.py)"
+        point_from_position: Final[Point] = Point.from_position(position)
+        print(point_from_position.x)    # 86
+        ```
+    </TabItem>
+</BoxedTabs>
+
+:::danger TODO
+
+Continuar desde acá 👇
+
+:::
+
+### ✨ Uso de `*args` y `**kwargs`: Inicialización flexible
+
+En Python, `*args` y `**kwargs` permiten crear constructores **flexibles y genéricos**, aceptando múltiples formas de inicializar una clase sin necesidad de definir varios constructores como en Kotlin.
+
+Esto es útil cuando:
+
+- Los parámetros pueden venir en diferentes formas (tuplas, diccionarios, etc.).
+- Se desea simular **constructores secundarios** sin replicar código.
+- Se busca compatibilidad con otras APIs o configuraciones dinámicas.
+
+Supongamos que estamos implementando una clase `DenseLayer`, inspirada en frameworks de deep learning:
+
+<BoxedTabs>
+
+<TabItem label={"Código esencial"} value={"Código esencial"}>
+
+```python showLineNumbers title="some title (and path/to/file)"
+```
+
+</TabItem>
+
+<TabItem label={"Código completo"} value={"Código completo"}>   {/*  region : CÓDIGO COMPLETO */}
+
+```python showLineNumbers title="Clase con inicialización flexible usando *args y **kwargs (type-fundamentals/algebraic_types/product/classes.py)"
+class DenseLayer:
+    __input_dim: int
+    __output_dim: int
+    __activation: str
+    __use_bias: bool
+    
+    def __init__(self, *args: int, **kwargs: dict[str, int | str | bool]):
+        if args:
+            self.__input_dim = args[0]
+            self.__output_dim = args[1]
+        else:
+            self.__input_dim = kwargs.get('input_dim', 0)
+            self.__output_dim = kwargs.get('output_dim', 0)
+
+        self.__activation = kwargs.get('activation', 'relu')
+        self.__use_bias = kwargs.get('use_bias', True)
+
+    def summary(self) -> dict[str, int | str | bool]:
+        return {
+            "input_dim": self.__input_dim,
+            "output_dim": self.__output_dim,
+            "activation": self.__activation,
+            "use_bias": self.__use_bias
+        }
+```
+
+```python showLineNumbers title="some title (and path/to/file)"
+# Using positional parameters
+layer1: Final[DenseLayer] = DenseLayer(128, 64)
+
+# Using named parameters
+layer2: Final[DenseLayer] = DenseLayer(
+    input_dim=256, output_dim=128, activation="tanh", use_bias=False
+)
+
+# Using dynamically loaded configuration
+config = {"input_dim": 512, "output_dim": 256, "activation": "sigmoid"}
+layer3 = DenseLayer(**config)
+
+print(layer1.summary())
+print(layer2.summary())
+print(layer3.summary())
+```
+Aquí tienes algunas sugerencias de títulos para ambos fragmentos, con distintos enfoques según lo que quieras destacar.
+
+---
+
+### ⚙️ Para el uso de `DenseLayer`
+
+#### Enfoque de prueba de uso
+
+```python showLineNumbers title="Ejemplos de inicialización flexible de DenseLayer (path/to/file)"
+```
+
+#### Enfoque centrado en argumentos
+
+```python showLineNumbers title="Inicialización con argumentos posicionales, nombrados y dinámicos (path/to/file)"
+```
+
+#### Enfoque pedagógico
+
+```python showLineNumbers title="Simulación de constructores secundarios: tres formas de crear una instancia (path/to/file)"
+```
+
+---
+
+¿Quieres que los títulos sigan un patrón uniforme para toda la unidad (por ejemplo, "Clase: ..." y "Uso: ...")? Puedo ayudarte a nombrar el resto de archivos de forma coherente.
+
+</TabItem>  {/* endregion CÓDIGO COMPLETO */}
+
+</BoxedTabs>
+
+```python showLineNumbers title="dense_layer.py"
+class DenseLayer:
+    def __init__(self, *args, **kwargs):
+        if args:
+            self.input_dim = args[0]
+            self.output_dim = args[1]
+        else:
+            self.input_dim = kwargs.get('input_dim', 0)
+            self.output_dim = kwargs.get('output_dim', 0)
+
+        self.activation = kwargs.get('activation', 'relu')
+        self.use_bias = kwargs.get('use_bias', True)
+
+    def summary(self):
+        return {
+            "input_dim": self.input_dim,
+            "output_dim": self.output_dim,
+            "activation": self.activation,
+            "use_bias": self.use_bias
+        }
+```
+
+#### Uso flexible
+
+```python showLineNumbers title="example.py"
+# Usando argumentos posicionales
+layer1 = DenseLayer(128, 64)
+
+# Usando argumentos nombrados
+layer2 = DenseLayer(input_dim=256, output_dim=128, activation='tanh', use_bias=False)
+
+# Usando configuración cargada dinámicamente
+config = {"input_dim": 512, "output_dim": 256, "activation": "sigmoid"}
+layer3 = DenseLayer(**config)
+
+print(layer1.summary())
+print(layer2.summary())
+print(layer3.summary())
+```
+
+---
+
+Este patrón permite adaptar el constructor a distintos contextos de uso sin modificar la clase original, lo que resulta muy útil en proyectos de machine learning donde los modelos suelen configurarse desde archivos JSON, YAML o argumentos de línea de comandos.
+
+### 🧱 Builder Pattern: Simulando constructores múltiples
+
+En Python, si una clase tiene muchos parámetros opcionales o configuraciones posibles, una buena forma de simular **constructores secundarios** (como en Kotlin) es usar el **patrón Builder**. Este patrón te permite construir objetos paso a paso, manteniendo el constructor de la clase principal limpio y enfocado.
+
+#### Ejemplo: Creación flexible de una clase `User`
+
+```python showLineNumbers title="user_builder.py"
+class User:
+    def __init__(self, name: str, age: int, email: str | None = None, phone: str | None = None):
+        self.name = name
+        self.age = age
+        self.email = email
+        self.phone = phone
+
+class UserBuilder:
+    def __init__(self, name: str, age: int):
+        self._name = name
+        self._age = age
+        self._email = None
+        self._phone = None
+
+    def with_email(self, email: str) -> 'UserBuilder':
+        self._email = email
+        return self
+
+    def with_phone(self, phone: str) -> 'UserBuilder':
+        self._phone = phone
+        return self
+
+    def build(self) -> User:
+        return User(
+            name=self._name,
+            age=self._age,
+            email=self._email,
+            phone=self._phone
+        )
+```
+
+#### Uso del builder
+
+```python showLineNumbers title="example.py"
+user1 = UserBuilder("Ana", 28).with_email("ana@example.com").build()
+user2 = UserBuilder("Luis", 35).with_phone("555-1234").build()
+
+print(user1.email)  # ana@example.com
+print(user2.phone)  # 555-1234
+```
+
+---
+
+Este enfoque tiene varias ventajas:
+
+- Separa la lógica de construcción de la clase principal.
+- Permite una API más fluida y legible.
+- Es útil cuando hay múltiples formas válidas de construir el objeto, simulando **constructores secundarios nombrados** como en Kotlin.
+
+**Nota:** en Python, este patrón es menos común gracias a `@classmethod`, `*args`, `**kwargs` y valores por defecto, pero sigue siendo útil en casos donde la construcción es compleja o quieres una API más expresiva.
+
+## 🔍 ¿Qué se puede hacer en Kotlin que no en Python?
+
+* **Bloques `init`**: No hay equivalente directo en Python para ejecutar código inmediatamente después de la construcción. En Python, la lógica de validación debe colocarse dentro de `__init__`.
+* **Valores por defecto y propiedades en el encabezado de clase**: Kotlin permite declarar y asignar valores por defecto en el constructor primario, algo que en Python se debe hacer dentro del `__init__`, lo que genera más repetición.
+* **Visibilidad por modificadores (`private`, `internal`)**: Python no tiene control de visibilidad real. Usos como `_atributo` o `__atributo` son solo convenciones, no restricciones del compilador.
+
+---
+
+## 🎯 Conclusiones
+
+Tanto Kotlin como Python permiten modelar tipos producto con clases, encapsulando datos y operaciones. Sin embargo, **Kotlin ofrece una sintaxis más concisa, declarativa y segura**, diseñada específicamente para evitar errores comunes al modelar estructuras de datos.
+
+Python, en cambio, ofrece más flexibilidad y menos restricciones, pero requiere mayor disciplina del programador para lograr un diseño claro, seguro y mantenible.
+
+Aprender las diferencias entre estos enfoques no solo ayuda a escribir mejor código en cada lenguaje, sino también a **elegir conscientemente cómo representar nuestros dominios y diseñar nuestras bibliotecas.**
+
+:::danger TODO
+
+- [ ] Actualizar README
+- [ ] Beneficios/Limitaciones
+    - [ ] **Ventaja en Kotlin:** La sintaxis del constructor primario permite declarar y definir propiedades simultáneamente, lo que reduce el ruido.
+
+:::
+
+[^1]: Cuando utilizamos el término "patrón de diseño", nos referimos a una solución comúnmente aceptada para un problema recurrente en el desarrollo de software, no necesariamente a un patrón formal de diseño como los de la "Gang of Four". En este contexto, nos referimos a prácticas comunes en Python para lograr un comportamiento similar al de los constructores secundarios de Kotlin.

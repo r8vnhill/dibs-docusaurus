@@ -3,73 +3,76 @@ title: Tipos producto como registros y data class
 sidebar_label: Registros y data class
 ---
 
-import ReadingTime from '@site/src/components/ReadingTime'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import * as LanguageCards from '@site/src/components/cards/LanguageCard'
+import ExcludeFromReadingTime from '@site/src/components/reading-time/ExcludeFromReadingTime'
+import ReadingTime from '@site/src/components/reading-time/ReadingTime'
 
 <ReadingTime />
 
-En la lección anterior exploramos cómo las **clases comunes en Kotlin** pueden utilizarse para representar **tipos producto**: estructuras que agrupan múltiples valores en una sola entidad, como `Position(x, y)` o `Person(name, age)`. Aprendimos a nombrar explícitamente cada campo y a encapsular lógica relevante dentro de la clase, superando las limitaciones de estructuras genéricas como `Pair` o `Triple`.
+En la lección anterior exploramos cómo las **clases comunes en Kotlin** pueden utilizarse para representar **tipos producto**: estructuras que agrupan múltiples valores en una sola entidad, como `Position(x, y)` o `Person(name, age)`. Aprendimos a nombrar explícitamente cada campo y a encapsular lógica relevante dentro de la clase, superando las limitaciones de tipos genéricos como `Pair` o `Triple`.
 
-En esta lección llevaremos esa idea un paso más allá, introduciendo el concepto de **registro** (*record*) como una abstracción común a muchos lenguajes de programación funcional y orientada a datos. Veremos cómo Kotlin ofrece un soporte nativo y expresivo para este patrón mediante las **`data class`**, y qué ventajas nos entrega respecto a las clases tradicionales.
+En esta lección llevaremos esa idea un paso más allá, introduciendo el concepto de **registro** (*record*), una abstracción común en muchos lenguajes orientados a datos y programación funcional. Veremos cómo Kotlin proporciona un soporte conciso y expresivo para este patrón mediante las **`data class`**, y qué ventajas ofrece frente a las clases tradicionales.
 
-Nuestro objetivo será comprender cómo los registros y las `data class` permiten representar tipos producto de forma **más declarativa, segura y reutilizable**, especialmente en el contexto del diseño de bibliotecas.
+Nuestro objetivo será comprender cómo los registros —y en particular las `data class` de Kotlin— permiten modelar tipos producto de forma **más declarativa, segura y reutilizable**, lo cual resulta especialmente útil en el contexto del **diseño de bibliotecas**.
 
-## 📘 ¿Qué es un registro (record)?
+## 📘 ¿Qué es un registro (*record*)?
 
-En programación, un **registro** (o *record*) es un tipo de dato compuesto que **agrupa múltiples valores bajo una misma entidad**, donde **cada valor tiene un nombre explícito**. Es una forma de representar **datos estructurados**, es decir, información que no solo tiene contenido, sino también una **intención semántica clara**.
+En programación, un **registro** (o *record*) es una estructura de datos que **agrupa múltiples valores en una sola entidad**, donde **cada valor está asociado a un nombre explícito**. Es una forma de representar **datos estructurados**, es decir, información compuesta que transmite una **intención semántica clara**.
 
-Desde el punto de vista de la teoría de tipos, un registro es un caso particular de un **tipo producto**: un tipo que **contiene simultáneamente un valor para cada uno de sus campos**.
+Desde la teoría de tipos, un registro corresponde a un caso particular de **tipo producto**: un tipo que **posee simultáneamente un valor para cada uno de sus campos**.
 
-Por ejemplo, para representar una coordenada en dos dimensiones, podríamos definir un registro con los campos `x` e `y`:
+Por ejemplo, para representar una coordenada bidimensional, podríamos definir un registro con los campos `x` e `y`:
 
-```kotlin title="Registro como coordenada bidimensional"
+```kotlin showLineNumbers title="Registro como coordenada bidimensional"
 val point = Coordinate(x = 2, y = 5)
 ```
 
-A diferencia de una lista o una tupla, un registro **asocia un nombre a cada componente**, lo que mejora la legibilidad, facilita el mantenimiento del código y deja más claro el propósito de cada campo. Esto resulta especialmente útil al diseñar **tipos reutilizables en bibliotecas**.
+A diferencia de listas o tuplas, un registro **asigna un nombre a cada componente**, lo que mejora la legibilidad, refuerza la intención del diseño y facilita el mantenimiento. Esta claridad es especialmente valiosa al diseñar **tipos reutilizables dentro de bibliotecas**.
 
 ### 🆚 ¿En qué se diferencia de una clase u objeto?
 
-Aunque un **registro** puede parecerse a una clase, su propósito es más específico y limitado:
+Aunque un **registro** puede parecerse superficialmente a una clase, su propósito es más limitado y está orientado exclusivamente al **modelo de datos**:
 
-| Característica              | Clases tradicionales                     | Registros (`record`, `data class`, etc.)     |
-|----------------------------|------------------------------------------|----------------------------------------------|
-| Propósito                  | Modelar **entidades** con comportamiento | Modelar **datos estructurados**              |
-| Comparación (`==`)         | Por **referencia** (por defecto)         | Por **contenido** (por campos)               |
-| Mutabilidad                | Pueden tener estado mutable              | Usualmente **inmutables** por convención     |
-| Lógica interna             | Contienen múltiples métodos y estados    | Enfocados en **almacenar y exponer datos**   |
+| Característica              | Clases tradicionales                          | Registros (`record`, `data class`, etc.)     |
+|----------------------------|-----------------------------------------------|----------------------------------------------|
+| Propósito                  | Modelar **entidades con comportamiento**       | Modelar **estructuras de datos simples**     |
+| Comparación (`==`)         | Por **referencia** (por defecto)               | Por **contenido** (campos)                   |
+| Mutabilidad                | Comúnmente **mutables**                       | Usualmente **inmutables** por convención     |
+| Lógica interna             | Pueden encapsular lógica compleja             | Limitados a **almacenar y exponer datos**    |
 
 :::tip En resumen
 
-Una **clase** modela una entidad con identidad, estado interno y comportamiento.
+Una **clase** modela una entidad con identidad, estado mutable y comportamiento asociado.
 
-Un **registro** modela una **colección de datos con nombre**, sin lógica compleja, comparable **por valor**, y pensada para representar estructuras "planas" y **transparentes en su propósito**.
+Un **registro** modela una **colección inmutable de datos con nombre**, comparable por valor, sin lógica compleja, ideal para representar **tipos producto planos y transparentes**.
 
 :::
 
-### 🌍 Registros en otros lenguajes
+### 🌍 Registros en distintos lenguajes
 
-Distintos lenguajes ofrecen mecanismos propios para definir registros:
+Muchos lenguajes ofrecen mecanismos específicos para definir registros, es decir, estructuras inmutables y comparables por valor:
 
-- En **Haskell** y **ML**, los *records* son estructuras inmutables con campos nombrados.
-- En **Python**, estructuras como `namedtuple`, `dataclass` o `attrs` permiten lograr un comportamiento similar.
-- En **Java**, desde la versión 16, los `record` proporcionan una forma concisa de declarar clases centradas en datos.
-- En **Scala**, las `case class` cumplen este rol de manera idiomática.
-- En **Kotlin**, el equivalente directo y expresivo son las `data class`.
+- En **Haskell** y **ML**, los *records* son estructuras inmutables con campos nombrados y soporte para desestructuración.
+- En **Python**, herramientas como `namedtuple`, `dataclass` y `attrs` permiten definir contenedores de datos con comparaciones por valor y generación automática de métodos.
+- En **Java**, a partir de la versión 16, los `record` permiten declarar tipos centrados en datos de forma concisa y segura.
+- En **Scala**, las `case class` ofrecen inmutabilidad, desestructuración y comparación por valor de manera idiomática.
+- En **Kotlin**, las `data class` son el mecanismo principal para representar registros, con soporte directo para `copy`, `toString`, `equals`, `hashCode`, y desestructuración.
 
-Todos estos mecanismos comparten una idea común: representar datos con semántica clara, mínima lógica y comportamiento generado automáticamente.
+Aunque varían en sintaxis y detalles, **todos estos mecanismos comparten un objetivo común**: representar datos con **estructura explícita, semántica clara y sin lógica incidental**.
 
 ## 📦 ¿Qué es una `data class`?
 
-En Kotlin, una `data class` es la forma idiomática de definir registros. Al marcar una clase como `data`, el compilador genera automáticamente:
+En Kotlin, una `data class` es la forma idiomática de definir **registros**: estructuras que agrupan varios valores con nombre y se comparan por contenido.
 
-- `equals()` y `hashCode()` para comparar objetos por contenido (ideal para usar como claves de mapas, sets o caching).
-- `toString()` para imprimir representaciones legibles (útil en logs, depuración o documentación).
-- `copy()` para clonar objetos inmutables con ligeras modificaciones.
-- Funciones `componentN()` para desestructurar valores fácilmente en funciones y expresiones.
+Al marcar una clase como `data`, el compilador genera automáticamente:
 
-Estas características hacen que las `data class` sean ideales para representar **datos estructurados** con intención semántica clara y un **contrato de igualdad por valor**.
+- `equals()` y `hashCode()` para comparación por **contenido**, no por referencia (ideal para usar como claves en mapas, sets o para deduplicación).
+- `toString()` para imprimir una representación legible (útil en logs, debugging y documentación).
+- `copy()` para clonar objetos inmutables con modificaciones puntuales.
+- Funciones `componentN()` para **desestructurar** fácilmente los valores en expresiones y funciones.
+
+Estas características hacen que las `data class` sean ideales para representar **tipos producto**.
 
 ```kotlin showLineNumbers title="Definición de un mago como data class"
 data class Wizard(
@@ -79,17 +82,17 @@ data class Wizard(
 )
 ```
 
-Este tipo representa el producto:
+Este tipo representa el producto cartesiano:
 
 $$
 \text{String} \times \text{String} \times \text{Int}
 $$
 
-Cada instancia combina un nombre, un tipo de magia y un nivel de poder.
+Cada instancia combina un nombre, un tipo de magia y un nivel de poder. Su propósito es **expresar datos**, no lógica compleja ni identidad mutable.
 
 ### 🎭 Sin `data class`
 
-Este ejemplo muestra cómo sería implementar manualmente una clase que represente un registro. Aunque es completamente válido, resulta **verboso** y **repetitivo**, especialmente si lo comparamos con una `data class`, que genera todo este código automáticamente:
+Este ejemplo muestra cómo sería implementar manualmente una clase que represente un **registro**. Aunque es completamente válido, resulta **verboso**, **propenso a errores** y **repetitivo**, especialmente si lo comparamos con una `data class`, que genera automáticamente todo este comportamiento:
 
 ```kotlin showLineNumbers title="Definición de un mago como clase normal"
 class Wizard(
@@ -101,9 +104,7 @@ class Wizard(
         name: String = this.name,
         magic: String = this.magic,
         powerLevel: Int = this.powerLevel
-    ): Wizard {
-        return Wizard(name, magic, powerLevel)
-    }
+    ) = Wizard(name, magic, powerLevel)
 
     operator fun component1(): String = name
     operator fun component2(): String = magic
@@ -113,8 +114,8 @@ class Wizard(
         if (this === other) return true
         if (other !is Wizard) return false
 
-        return name == other.name && 
-               magic == other.magic && 
+        return name == other.name &&
+               magic == other.magic &&
                powerLevel == other.powerLevel
     }
 
@@ -125,52 +126,33 @@ class Wizard(
         return result
     }
 
-    override fun toString(): String {
-        return "Wizard(name='$name', magic='$magic', powerLevel=$powerLevel)"
-    }
+    override fun toString() =
+        "Wizard(name='$name', magic='$magic', powerLevel=$powerLevel)"
 }
 ```
 
 :::tip ¿Por qué importa?
 
-Este ejemplo es útil para entender qué genera una `data class` "por debajo".
-Usar `data` no solo reduce el código, sino que **garantiza un comportamiento uniforme y correcto**, evitando errores humanos en métodos como `equals` o `hashCode`.
+Este ejemplo ilustra lo que hace el compilador de Kotlin al marcar una clase como `data`.
+
+- **Ahorro de código**: una `data class` genera automáticamente `copy`, `componentN`, `equals`, `hashCode` y `toString`.
+- **Comportamiento predecible**: evita errores sutiles que pueden surgir al implementar manualmente métodos como `equals`.
+- **Intención clara**: al usar `data`, declaras explícitamente que el propósito de la clase es **representar datos con semántica por valor**.
+
+Este patrón es fundamental al diseñar bibliotecas que manejan estructuras inmutables, comparables y fáciles de serializar o probar.
 
 :::
 
-<details>
-    <summary>
-        🔤 ¿Qué son las *soft keywords*?
-    </summary>
-
-    En Kotlin, una **soft keyword** es una palabra reservada que **no está prohibida como nombre de identificador**, a menos que se use en un contexto específico.
-
-    Esto significa que puedes usar palabras como `data`, `value`, `sealed`, etc., como nombres de variables, clases o funciones **fuera de los contextos donde tienen un significado especial**.
-
-    Por ejemplo, `data` solo actúa como palabra clave cuando aparece en la declaración de una clase:
-
-    ```kotlin
-    data class Wizard(val name: String)
-    ```
-
-    Pero es totalmente válido como nombre de una variable en otro contexto:
-
-    ```kotlin
-    val data = "Fairy Tail"
-    ```
-
-    :::info
-    Esta flexibilidad permite que el lenguaje evolucione agregando nuevas construcciones sin romper el código existente.
-    :::
-
-    Puedes consultar la [lista completa de soft keywords en la documentación oficial](https://kotlinlang.org/docs/keyword-reference.html#soft-keywords).
-</details>
-
 ### 🥊 Comparación por contenido vs referencia
 
-Cuando usamos clases para representar datos, es importante entender cómo se comparan las instancias. En Kotlin, las clases comunes comparan por **referencia**, mientras que las `data class` comparan por **contenido**. Veamos un ejemplo inspirado en *Rocky Balboa*:
+Al representar datos, es clave entender cómo se comparan las instancias. En Kotlin:
 
-```kotlin title="Clase común: comparación por referencia"
+- Las **clases comunes** comparan por **referencia** (`===`), es decir, evalúan si apuntan al mismo objeto en memoria.
+- Las **`data class`** comparan por **contenido** (`==`), es decir, evalúan si los campos tienen los mismos valores.
+
+Veamos un ejemplo inspirado en *Rocky Balboa*:
+
+```kotlin showLineNumbers title="Clase común: comparación por referencia"
 class Boxer(val name: String, val weight: Int)
 
 val rocky1 = Boxer("Rocky", 91)
@@ -179,7 +161,7 @@ val rocky2 = Boxer("Rocky", 91)
 println(rocky1 == rocky2) // false
 ```
 
-```kotlin title="Data class: comparación por contenido"
+```kotlin showLineNumbers title="Data class: comparación por contenido"
 data class Boxer(val name: String, val weight: Int)
 
 val rocky1 = Boxer("Rocky", 91)
@@ -188,50 +170,69 @@ val rocky2 = Boxer("Rocky", 91)
 println(rocky1 == rocky2) // true
 ```
 
+<Explanation>
+    Este ejemplo muestra una diferencia clave entre clases comunes y `data class`:
+
+    - En la primera versión, aunque los valores son idénticos, los objetos son distintos en memoria → `false`.
+    - En la segunda, `data class` genera automáticamente `equals`, por lo que se comparan los campos → `true`.
+
+    Esta capacidad de comparar por contenido es fundamental para representar **tipos producto**, donde nos interesa **el valor**, no la identidad del objeto.
+</Explanation>
+
 <details>
     <summary>🤔 ¿Y si quiero comparar por referencia?</summary>
 
-    En Kotlin:
+    En Kotlin, existen dos operadores para comparar objetos:
 
-    - `==` compara **por contenido**, si la clase redefine `equals()` (como en una `data class`).
-    - `===` compara **por referencia**, es decir, si ambas variables apuntan al mismo objeto en memoria.
+    - `==` compara **por contenido**: se traduce en una llamada a `equals()`.  
+      Las `data class` sobrescriben `equals` automáticamente, por lo que `==` compara sus campos.
+    - `===` compara **por referencia**: verifica si **ambas variables apuntan al mismo objeto en memoria**.
 
     ```kotlin
     val a = Boxer("Rocky", 91)
     val b = a
     val c = Boxer("Rocky", 91)
 
-    println(a == c)   // true → compara contenido
-    println(a === c)  // false → diferentes instancias
-    println(a === b)  // true → misma referencia
+    println(a == c)   // true → mismo contenido
+    println(a === c)  // false → objetos distintos
+    println(a === b)  // true → misma instancia
     ```
+
+    :::tip
+
+    Usa `===` solo cuando necesites verificar identidad de objetos.  
+    Para la mayoría de los casos con tipos producto, la comparación por contenido (`==`) es más adecuada y segura.
+
+    :::
 </details>
 
 ## 🎯 Conclusiones
 
-A lo largo de esta lección aprendimos que los **registros** son una representación de datos estructurados con campos explícitos, y que en Kotlin su forma idiomática son las `data class`. Estos tipos no solo agrupan múltiples valores bajo una misma entidad, sino que comunican de forma clara la estructura y el propósito de los datos.
+A lo largo de esta lección aprendimos que los **registros** son estructuras diseñadas para representar **datos con nombre y propósito explícito**. En Kotlin, su forma idiomática son las `data class`, que permiten declarar **tipos producto** de forma concisa, expresiva y segura.
 
-Exploramos cómo las `data class` permiten representar productos con semántica fuerte, y cómo el compilador se encarga de generar automáticamente comportamientos comunes como `equals`, `toString`, `copy` y `componentN`. Esto reduce el código repetitivo y ayuda a mantener nuestras bibliotecas simples, expresivas y robustas.
+Las `data class` agrupan múltiples valores en una sola entidad y **delegan en el compilador la generación de comportamientos comunes** como `equals`, `toString`, `copy` y `componentN`. Esto **reduce la repetición de código**, mejora la legibilidad y evita errores frecuentes al trabajar con datos estructurados.
 
-También vimos que, aunque las `data class` pueden parecer simples, **su diseño refleja decisiones profundas sobre igualdad, mutabilidad y legibilidad del código**.
+También discutimos cómo estas decisiones de diseño impactan en la **igualdad estructural**, la **inmutabilidad por convención**, y la facilidad para crear APIs limpias y coherentes.
 
 ### 🔑 Puntos clave
 
-- Un **registro** representa un tipo producto con campos con nombre.
-- En Kotlin, las `data class` son la forma idiomática de declarar registros.
-- El compilador genera automáticamente métodos como `equals`, `toString`, `copy` y `componentN`.
-- A diferencia de las clases comunes, las `data class` comparan por **contenido** y no por referencia.
-- Son especialmente útiles para diseñar **tipos claros, reutilizables y fáciles de testear**.
+- Un **registro** es una forma de representar un **tipo producto con campos nombrados**, pensado para modelar datos.
+- Las `data class` son la forma idiomática de definir registros en Kotlin.
+- El compilador genera automáticamente métodos útiles como `equals`, `hashCode`, `toString`, `copy` y `componentN`.
+- A diferencia de las clases comunes, las `data class` **comparan por contenido**, no por referencia.
+- Son especialmente útiles para diseñar tipos **transparentes, inmutables y fácilmente testeables**.
 
 ### 🧰 ¿Qué nos llevamos?
 
-Comprender qué es un registro y cómo modelarlo como `data class` es fundamental para escribir bibliotecas expresivas y bien diseñadas. Este enfoque permite **hacer explícita la estructura de los datos**, reduciendo ambigüedades y promoviendo la claridad semántica en nuestras APIs.
+Comprender el rol de los registros y el uso adecuado de `data class` nos permite escribir **código más claro, seguro y reutilizable**. Este enfoque mejora no solo la implementación de tipos internos, sino también la **legibilidad y mantenibilidad** de nuestras bibliotecas.
 
-Al usar `data class`, Kotlin nos da herramientas que favorecen la inmutabilidad, la igualdad estructural y la desestructuración, todo con una sintaxis concisa y segura.
+Al adoptar `data class` como representación idiomática de los tipos producto, **aprovechamos lo mejor del diseño declarativo** con el respaldo de un compilador que nos asiste en tareas repetitivas y propensas a errores.
 
 <div className="language-card-container">
     <LanguageCards.JavaCard link="/docs/type-fundamentals/algebraic-data-types/records-1/java" />
 </div>
+
+<ExcludeFromReadingTime>
 
 ## 📖 Referencias
 
@@ -239,4 +240,8 @@ Al usar `data class`, Kotlin nos da herramientas que favorecen la inmutabilidad,
 
 - 📚 "Data Classes" (pp. 198-200) en *"Atomic Kotlin"* de **Bruce Eckel** y **Dmitry Jemerov**: muestra cómo las `data class` eliminan código repetitivo al modelar tipos producto: generan automáticamente `equals`, `toString`, `copy` y `hashCode`, lo que facilita la comparación por contenido, el uso en estructuras como `HashMap` y `HashSet`, y la creación de nuevas instancias con modificaciones. Es relevante para esta lección porque muestra claramente cómo las `data class` implementan el concepto de **registro** en Kotlin de forma idiomática y eficiente.
 
-{/* ### 🔹 Adicionales */}
+### 🔹 Adicionales
+
+- 📚 “Objects and Classes.” (pp. 107-132) en *Programming Kotlin: Create Elegant, Expressive, and Performant JVM and Android Applications* de **Venkat Subramaniam**: Este capítulo explora cómo Kotlin permite definir clases y registros de manera concisa y expresiva, eliminando la necesidad de escribir código repetitivo. Introduce las `data class` como una forma idiomática de representar tipos producto inmutables y comparables por valor, destacando cómo el compilador genera automáticamente métodos como `equals`, `hashCode`, `toString`, `copy` y `componentN()`. Además, compara este enfoque con las clases tradicionales, analiza los beneficios de la inmutabilidad, y presenta patrones de diseño como objetos singleton y constructores personalizados. Es especialmente relevante para esta lección porque **explica en profundidad cómo las `data class` implementan el concepto de registro en Kotlin y cómo esto mejora el diseño de estructuras de datos claras, reutilizables y seguras**.
+
+</ExcludeFromReadingTime>
