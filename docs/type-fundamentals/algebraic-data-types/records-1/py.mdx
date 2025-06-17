@@ -1,0 +1,200 @@
+---
+title: Registros y data class – comparación con Python
+sidebar_label: Comparación con Python
+---
+
+import ReadingTime from '@site/src/components/reading-time/ReadingTime'
+import ExcludeFromReadingTime from '@site/src/components/reading-time/ExcludeFromReadingTime'
+import GitHubRepoLink from '@site/src/components/GithubRepoLink'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime multiplier={2} />
+<GitHubRepoLink user="r8vnhill" repo="python-dibs" />
+
+Ya conoces las `data class` de Kotlin como una forma concisa de representar tipos producto.  
+En esta lección, exploraremos cómo Python resuelve el mismo problema utilizando el decorador `@dataclass`, incorporado desde la versión 3.7 del lenguaje.
+
+A través de ejemplos concretos, compararemos sus características, ventajas y limitaciones.  
+Nuestro objetivo no es aprender todos los detalles de Python, sino **reconocer patrones comunes** en el diseño de registros que nos permitan razonar con claridad sobre el diseño de bibliotecas reutilizables, incluso cuando cambiamos de lenguaje.
+
+También veremos cómo aspectos como la mutabilidad, la igualdad por contenido y el orden de los campos afectan el comportamiento de estas estructuras en la práctica.
+
+## 📦 Registros con `dataclass`
+
+Desde la versión 3.7, Python incluye el decorador [`@dataclass`](https://docs.python.org/3/library/dataclasses.html), que permite declarar clases centradas en datos con una sintaxis concisa y funcionalidades generadas automáticamente.
+
+Un registro típico en Python con `dataclass` declara sus atributos directamente en la clase. Al igual que en Kotlin, el decorador se encarga de generar:
+
+- `__init__` para inicializar los atributos.
+- `__repr__` para obtener una representación legible.
+- `__eq__` para comparar por contenido.
+
+<BoxedTabs>
+
+<TabItem label={"Código esencial"} value={"Código esencial"}>
+
+```python title="Ejemplo en Python con @dataclass (type-fundamentals/algebraic_types/product/data_classes/book.py)" showLineNumbers
+from dataclasses import dataclass
+
+
+@dataclass
+class Book:
+    title: str
+    year: int
+    author: str = "Unknown"
+```
+
+</TabItem>
+
+<TabItem label={"Código completo"} value={"Código completo"}>
+
+```python title="Ejemplo en Python con @dataclass (type-fundamentals/algebraic_types/product/data_classes/book.py)" showLineNumbers
+from dataclasses import dataclass
+
+
+@dataclass
+class Book:
+    title: str
+    year: int
+    author: str = "Unknown"
+
+
+if __name__ == '__main__':
+    book = Book(title="The Two Towers", year=1954, author="J.R.R. Tolkien")
+    print(book)  # Book(title='The Two Towers', author='J.R.R. Tolkien', year=1954)
+    print(str(book))  # Book(title='The Two Towers', author='J.R.R. Tolkien', year=1954)
+    print(repr(book))  # Book(title='The Two Towers', author='J.R.R. Tolkien', year=1954)
+    print(book.title)  # The Two Towers
+    print(book.author)  # J.R.R. Tolkien
+    print(book == Book("The Two Towers", 1954, "J.R.R. Tolkien"))  # True
+```
+
+</TabItem>
+
+</BoxedTabs>
+
+Esta estructura representa un producto:
+
+$$
+\mathtt{str} \times \mathtt{int} \times \mathtt{str}
+$$
+
+Al igual que en Kotlin, cada campo tiene un nombre claro y las instancias se comparan por contenido.
+
+:::warning Mutabilidad por defecto
+
+Los campos de una `dataclass` son **mutables por defecto**, lo que significa que sus valores pueden cambiarse después de la creación del objeto.  
+Si deseas que las instancias sean inmutables, puedes usar el argumento `frozen=True` en el decorador.
+
+Veremos este ajuste con más detalle en la próxima lección.
+
+:::
+
+:::danger Valores por defecto
+
+Los campos con valor por defecto **deben declararse después** de todos los campos que no tienen valor por defecto.  
+De lo contrario, se producirá un error al intentar crear la clase.
+
+:::
+
+### ⚖️ Comparación por contenido
+
+En Python, las clases **comunes** comparan por **referencia**, al igual que en Kotlin.  
+Sin embargo, al usar `@dataclass`, se genera automáticamente un método `__eq__`, lo que permite comparar **por contenido**.
+
+```python title="Clase común: comparación por referencia" showLineNumbers
+class Armor:
+    model: str
+    power: int
+
+    def __init__(self, model: str, power: int):
+        self.model = model
+        self.power = power
+
+if __name__ == '__main__':
+    mark1 = Armor("Mark I", 75)
+    mark1_clone = Armor("Mark I", 75)
+    print(mark1 == mark1_clone) # False
+```
+
+```python title="@dataclass: comparación por contenido" showLineNumbers
+@dataclass
+class Armor:
+    model: str
+    power: int
+
+
+if __name__ == '__main__':
+    mark2 = Armor("Mark II", 100)
+    mark2_clone = Armor("Mark II", 100)
+    print(mark2 == mark2_clone) # True
+```
+
+<Explanation>
+    Al igual que en Kotlin, el decorador `@dataclass` genera automáticamente el método `__eq__` en Python,  
+    lo que permite comparar las instancias por el valor de sus atributos en lugar de su identidad en memoria.
+
+    - Las clases comunes heredan el comportamiento por defecto de `object`, que compara por referencia → `False`.
+    - Las `dataclass` implementan comparación por contenido → `True`.
+
+    Esta característica es esencial cuando se usan las instancias como representaciones de datos (tipos producto),  
+    como los distintos modelos de armadura que construye Tony Stark.
+</Explanation>
+
+<details>
+
+<summary>🔬 ¿Y si quiero comparar por referencia en Python?</summary>
+
+Puedes usar el operador `is`, que verifica si **dos variables apuntan al mismo objeto** en memoria:
+
+```python
+a = Armor("Hulkbuster", 150)
+b = a
+c = Armor("Hulkbuster", 150)
+print(a == c)  # True
+print(a is c)  # False
+print(a is b)  # True
+```
+
+:::tip
+
+Al igual que en Kotlin, usa `is` solo cuando te interese verificar identidad.  
+Para estructuras de datos y tipos producto, la comparación por contenido (`==`) es lo más común y útil.
+
+:::
+
+</details>
+
+## 🎯 Conclusiones
+
+En esta lección comparamos las `data class` de Kotlin con las `@dataclass` de Python, explorando cómo ambos lenguajes ofrecen mecanismos similares para representar tipos centrados en datos. Analizamos su estructura, comportamiento por defecto, y diferencias clave como la **mutabilidad** y el **orden de los campos con valores por defecto**.
+
+También destacamos el impacto de estas construcciones en la **comparación de objetos**: mientras las clases comunes comparan por referencia, tanto en Kotlin como en Python, los mecanismos de clases de datos permiten **comparar por contenido**, lo cual es fundamental al trabajar con tipos producto.
+
+### 🔑 Puntos clave
+
+- Python ofrece `@dataclass` desde la versión 3.7 como una forma concisa de definir registros.
+- Al igual que en Kotlin, estas clases generan automáticamente métodos como `__init__`, `__repr__` y `__eq__`.
+- Los campos son mutables por defecto, pero se puede cambiar a inmutabilidad usando `frozen=True`.
+- Es importante definir primero los campos sin valor por defecto.
+- Las `dataclass` comparan por contenido (`==`), mientras que las clases comunes lo hacen por referencia, salvo que se implemente `__eq__`.
+- Para comparar por referencia en Python, se usa el operador `is`, equivalente a `===` en Kotlin.
+
+### 🧰 ¿Qué nos llevamos?
+
+Comprender cómo se representan registros en otros lenguajes como Python nos ayuda a identificar **patrones comunes en el diseño de tipos producto**, y a apreciar las similitudes y diferencias en sus enfoques.
+
+Esta comparación también nos permite escribir bibliotecas más interoperables y nos entrena en pensar en términos de estructura, inmutabilidad y semántica de igualdad, que son pilares del diseño robusto de software.  
+A medida que avancemos, seguiremos explorando estas ideas desde distintas perspectivas y lenguajes.
+
+<ExcludeFromReadingTime>
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- 📕 “Data Class Builders.” (pp. 163-199) en *Clear, Concise, and Effective Programming, Second edition* de **Luciano Ramalho**: En este capítulo se muestran tres formas de definir registros en Python—`namedtuple`, `typing.NamedTuple` y `@dataclass`—destacando su generación automática de constructor, representación y comparación, el soporte de inmutabilidad, valores por defecto y anotaciones de tipo, y advirtiendo sobre el “code smell” de las clases sin comportamiento. **Relevancia:** Complementa la lección al contrastar con Kotlin, ilustrando cómo Python aborda los tipos producto, sus trade-offs de mutabilidad y personalización, y por qué automatizar estos patrones mejora la calidad de las bibliotecas.
+
+</ExcludeFromReadingTime>
