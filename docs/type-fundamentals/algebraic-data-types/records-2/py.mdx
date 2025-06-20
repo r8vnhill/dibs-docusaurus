@@ -1,0 +1,353 @@
+---
+title: Uso idiomático de data class en Python
+---
+
+import ReadingTime from '@site/src/components/reading-time/ReadingTime'
+import ExcludeFromReadingTime from '@site/src/components/reading-time/ExcludeFromReadingTime'
+import GitHubRepoLink from '@site/src/components/GithubRepoLink'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
+import TabItem from '@theme/TabItem'
+
+<ReadingTime multiplier={2} />
+<GitHubRepoLink user="r8vnhill" repo="python-dibs" />
+
+En Kotlin, las `data class` son una herramienta idiomática para representar **tipos producto**: estructuras que agrupan datos con nombre y significado.  
+En esta lección exploraremos cómo Python ofrece una funcionalidad similar mediante el decorador `@dataclass`, disponible desde la versión 3.7.
+
+Nos centraremos en su uso **idiomático y expresivo**, con énfasis en prácticas recomendadas para diseñar **estructuras inmutables, validadas y reutilizables**, tal como lo harías al construir una biblioteca bien diseñada.
+
+A lo largo del recorrido, compararemos estos mecanismos con sus contrapartes en Kotlin para reconocer similitudes, diferencias clave y decisiones de diseño que pueden ayudarte a construir modelos más claros —sin importar el lenguaje.
+
+## 💥 Mutabilidad por defecto
+
+En Python, las clases decoradas con `@dataclass` son **mutables por defecto**. Esto significa que puedes modificar los atributos de una instancia incluso después de haberla creado:
+
+```python showLineNumbers title="Mutabilidad por defecto"
+@dataclass
+class Comic:
+    title: str
+    publisher: str
+
+comic = Comic("Batman: I Am Gotham", "DC")
+comic.publisher = "Marvel"  # Esto es válido
+```
+
+Este comportamiento puede ser útil en scripts pequeños o estructuras efímeras, pero **no es deseable** cuando se quiere representar un tipo producto **estable, inmutable y seguro**, como suele hacerse en bibliotecas reutilizables.
+
+Para declarar un registro **inmutable** en Python, puedes usar el parámetro `frozen=True`:
+
+```python showLineNumbers title="Inmutabilidad con frozen=True (type-fundamentals/algebraic_types/product/data_classes/comic.py)"
+@dataclass(frozen=True)
+class Comic:
+    title: str
+    publisher: str
+
+
+if __name__ == "__main__":
+    comic = Comic(title="Batman: I Am Gotham", publisher="DC")
+    comic.publisher = "Marvel"
+```
+
+<Explanation>
+    En este ejemplo, al intentar modificar `publisher`, Python lanza un `FrozenInstanceError`. Esto ocurre porque usamos `@dataclass(frozen=True)`, que convierte cada campo en **de solo lectura** una vez creada la instancia.
+
+    Este enfoque es equivalente a declarar todas las propiedades como `val` en Kotlin. Es recomendable cuando modelas datos que **no deben cambiar** una vez definidos, como registros de base de datos, configuraciones o valores calculados.
+</Explanation>
+
+:::warning Inmutabilidad en tiempo de ejecución
+
+El parámetro `frozen=True` **no garantiza inmutabilidad en tiempo de compilación**, como ocurre con `val` en Kotlin.  
+En su lugar, aplica una restricción en **tiempo de ejecución**, interceptando cualquier intento de modificar los atributos y lanzando un `FrozenInstanceError`.
+
+:::
+
+## ♻️ Copias inmutables con `replace`
+
+En Kotlin, puedes usar `copy()` para crear una nueva instancia de una `data class` con campos modificados, sin alterar el original.  
+En Python, puedes lograr un efecto similar con `@dataclass(frozen=True)` y la función auxiliar [`replace`](https://docs.python.org/3/library/dataclasses.html#dataclasses.replace).
+
+Esto permite mantener la inmutabilidad y al mismo tiempo modelar **transformaciones de estado**.
+
+<BoxedTabs>
+
+<TabItem label={"Código esencial"} value={"Código esencial"}>
+
+```python showLineNumbers title="Creación de copias inmutables con replace (type-fundamentals/algebraic_types/product/data_classes/ghoul.py)"
+@dataclass(frozen=True)
+class Ghoul:
+    name: str
+    hunger: int
+```
+
+```python showLineNumbers title="Uso de replace (type-fundamentals/algebraic_types/product/data_classes/ghoul.py)"
+nishio_before = Ghoul(name="Nishiki Nishio", hunger=77)
+print(nishio_before)
+print("Eating...")
+nishio_after = replace(nishio_before, hunger=nishio_before.hunger - 10)
+print(nishio_after)
+```
+
+</TabItem>
+
+<TabItem label={"Código completo"} value={"Código completo"}>
+
+```python showLineNumbers title="Creación de copias inmutables con replace (type-fundamentals/algebraic_types/product/data_classes/ghoul.py)"
+from dataclasses import dataclass, replace
+from typing import Final
+
+
+@dataclass(frozen=True)
+class Ghoul:
+    name: str
+    hunger: int
+
+
+if __name__ == "__main__":
+    nishio_before: Final[Ghoul] = Ghoul(name="Nishiki Nishio", hunger=77)
+    print(nishio_before)
+    print("Eating...")
+    nishio_after: Final[Ghoul] = replace(nishio_before, hunger=nishio_before.hunger - 10)
+    print(nishio_after)
+```
+
+</TabItem>
+
+</BoxedTabs>
+
+<Explanation>
+    
+En este ejemplo, usamos `replace(...)` para crear una nueva instancia de `Ghoul` con el campo `hunger` modificado.  
+Dado que `Ghoul` es una `@dataclass(frozen=True)`, **no podemos modificar sus atributos directamente**, pero sí podemos crear una copia con valores nuevos.
+
+Este patrón es equivalente al uso de `copy()` en Kotlin, y es clave para **mantener inmutabilidad sin sacrificar expresividad**.
+
+</Explanation>
+
+## 🎁 Desestructuración
+
+En Kotlin puedes desestructurar una `data class` directamente, gracias a los métodos `componentN()` generados automáticamente.  
+En Python, en cambio, **las `@dataclass` no son desestructurables por defecto**.
+
+Sin embargo, el módulo `dataclasses` incluye una función auxiliar llamada [`astuple`](https://docs.python.org/3/library/dataclasses.html#dataclasses.astuple), que convierte una instancia de `@dataclass` en una tupla. Esto permite realizar una desestructuración manual de forma segura y explícita:
+
+<BoxedTabs>
+
+<TabItem label={"Código esencial"} value={"Código esencial"}>
+
+```python showLineNumbers title="Desestructuración con astuple (type-fundamentals/algebraic_types/product/data_classes/videogame.py)"
+title, developer = astuple(
+    VideoGame(
+        title="The Awesome Adventures of Captain Spirit",
+        developer="Dontnod Entertainment",
+    )
+)
+print(f"Title: {title}, Developer: {developer}")
+```
+
+</TabItem>
+
+<TabItem label={"Código completo"} value={"Código completo"}>
+
+```python showLineNumbers title="Desestructuración con astuple (type-fundamentals/algebraic_types/product/data_classes/videogame.py)"
+from dataclasses import dataclass, astuple
+
+
+@dataclass
+class VideoGame:
+    title: str
+    developer: str
+
+
+if __name__ == "__main__":
+    title, developer = astuple(
+        VideoGame(
+            title="The Awesome Adventures of Captain Spirit",
+            developer="Dontnod Entertainment",
+        )
+    )
+    print(f"Title: {title}, Developer: {developer}")
+```
+
+</TabItem>
+
+</BoxedTabs>
+
+<Explanation>
+
+Aquí usamos `astuple(...)` para convertir una instancia de `VideoGame` en una tupla como `("The Awesome Adventures of Captain Spirit", "Dontnod Entertainment")`.  
+Esto nos permite desestructurar el objeto usando la sintaxis habitual de Python, aunque el lenguaje **no ofrece esta capacidad de forma automática** como sí lo hace Kotlin con `componentN()`.
+
+Si necesitas que la instancia de una `@dataclass` se desestructure sin usar `astuple`, puedes implementar el método especial `__iter__`, aunque eso rompe la semántica de tu tipo producto si no estás modelando una secuencia.
+
+</Explanation>
+
+## 🔂 Funciones auxiliares y propiedades derivadas
+
+Al igual que en Kotlin, las `@dataclass` de Python pueden incluir **propiedades calculadas** y **funciones auxiliares**.  
+Esto permite enriquecer tus tipos producto con comportamiento derivado **sin alterar su estructura básica**.
+
+<BoxedTabs>
+
+<TabItem label={"Código esencial"} value={"Código esencial"}>
+
+```python showLineNumbers title="Funciones auxiliares y propiedades derivadas (type-fundamentals/algebraic_types/product/data_classes/pokemon.py)"
+@dataclass
+class Pokemon:
+    name: str
+    hp: int
+    attack: int
+    defense: int
+
+    @property
+    def total_stats(self) -> int:
+        return self.hp + self.attack + self.defense
+
+    def speak(self) -> str:
+        return f"{self.name}!"
+```
+
+</TabItem>
+
+<TabItem label={"Código completo"} value={"Código completo"}>
+
+```python showLineNumbers title="Funciones auxiliares y propiedades derivadas (type-fundamentals/algebraic_types/product/data_classes/pokemon.py)"
+from dataclasses import dataclass
+
+
+@dataclass
+class Pokemon:
+    name: str
+    hp: int
+    attack: int
+    defense: int
+
+    @property
+    def total_stats(self) -> int:
+        return self.hp + self.attack + self.defense
+
+    def speak(self) -> str:
+        return f"{self.name}!"
+
+
+if __name__ == "__main__":
+    snorunt = Pokemon(name="Snorunt", hp=210, attack=94, defense=94)
+    print("Total stats:", snorunt.total_stats)
+    print(snorunt.speak())
+```
+
+</TabItem>
+
+</BoxedTabs>
+
+<Explanation>
+
+En este ejemplo, la `@dataclass` `Pokemon` representa un tipo producto con tres atributos numéricos (`hp`, `attack`, `defense`) y un nombre.
+
+Agregamos:
+
+- Una **propiedad derivada** `total_stats`, que **no se almacena** como campo, pero se **calcula dinámicamente** al acceder. Esto es útil para representar lógica que depende del estado de otros atributos sin introducir redundancia.
+- Una **función auxiliar** `speak()`, que encapsula una representación básica del comportamiento de un Pokémon.
+
+</Explanation>
+
+## 🛡️ Validación con `__post_init__`
+
+En Kotlin, puedes usar un bloque `init` dentro de una `data class` para validar datos.  
+En Python, el equivalente es el método especial `__post_init__`, que se ejecuta **automáticamente después del constructor generado por `@dataclass`**.
+
+Este método te permite aplicar **reglas de dominio** y lanzar errores si los datos no cumplen con ciertas condiciones.
+
+<BoxedTabs>
+
+<TabItem label={"Código esencial"} value={"Código esencial"}>
+
+```python showLineNumbers title="Validación en __post_init__ (type-fundamentals/algebraic_types/product/data_classes/song.py)"
+@dataclass
+class Song:
+    title: str
+    year: int
+
+    def __post_init__(self):
+        if self.year < 1:
+            raise ValueError("Year must be a positive integer")
+```
+
+</TabItem>
+
+<TabItem label={"Código completo"} value={"Código completo"}>
+
+```python showLineNumbers title="Validación en __post_init__ (type-fundamentals/algebraic_types/product/data_classes/song.py)"
+from dataclasses import dataclass
+
+
+@dataclass
+class Song:
+    title: str
+    year: int
+
+    def __post_init__(self):
+        if self.year < 1:
+            raise ValueError("Year must be a positive integer")
+
+
+if __name__ == '__main__':
+    song = Song(title="Enemy to Injustice", year=2014)
+    print(song)
+
+    invalid_song = Song(title="Invalid Song", year=0)
+```
+
+</TabItem>
+
+</BoxedTabs>
+
+<Explanation>
+
+En este ejemplo, usamos `__post_init__` para asegurarnos de que el campo `year` sea un número positivo.  
+Si el valor no cumple esta condición, se lanza una excepción `ValueError`.
+
+Este patrón es equivalente al uso de `require(...)` en el bloque `init` de Kotlin, y permite definir clases de datos **robustas y seguras**, que validan su propio estado.
+
+</Explanation>
+
+## 🎯 Conclusiones
+
+A lo largo de esta lección exploramos cómo Python permite representar tipos producto de forma idiomática usando `@dataclass`.  
+Aunque el lenguaje no ofrece todas las garantías de compilación de Kotlin, provee mecanismos expresivos que cumplen un rol similar al modelar datos estructurados.
+
+Aprendimos a declarar registros con nombre, aplicar validaciones, controlar la mutabilidad, definir propiedades derivadas y realizar desestructuración.  
+También contrastamos con Kotlin para identificar diferencias importantes en la semántica del lenguaje, especialmente en lo relacionado con inmutabilidad y transformaciones de estado.
+
+### 🔑 Puntos clave
+
+- Las `@dataclass` generan automáticamente métodos como `__init__`, `__repr__` y `__eq__`, permitiendo representar tipos producto de forma concisa.
+- Por defecto, sus campos son **mutables**, pero se puede lograr inmutabilidad usando `frozen=True`.
+- Para modificar instancias inmutables, Python ofrece la función `replace`, análoga a `copy()` en Kotlin.
+- Python no ofrece desestructuración automática, pero se puede lograr mediante `astuple` o definiendo `__iter__`.
+- Las `@dataclass` pueden incluir funciones y propiedades derivadas, manteniendo la semántica de tipo producto sin necesidad de herencia ni lógica compleja.
+- El método `__post_init__` permite validar campos o inicializar valores derivados de manera segura, después de construido el objeto.
+
+### 🧰 ¿Qué nos llevamos?
+
+Al igual que en Kotlin, modelar tipos producto en Python usando `@dataclass` nos ayuda a escribir código más **legible, expresivo y fácil de mantener**.
+
+Aprender a usar estas estructuras de forma idiomática no solo mejora la calidad del código, sino que te entrena para pensar en términos de **estructura y semántica**, no solo de implementación.
+
+Este enfoque es clave al diseñar **bibliotecas reutilizables**, donde los datos deben ser claros, validables, comparables y seguros por construcción.
+
+Dominar `@dataclass` te permite construir modelos robustos, expresar reglas de dominio desde el tipo mismo, y mantener un estilo declarativo —incluso en un lenguaje dinámico como Python.
+
+<ExcludeFromReadingTime>
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- [🌐 "PEP 557 – Data Classes"](https://peps.python.org/pep-0557/) en **Python Enhancement Proposals**: Esta PEP introduce el decorador `@dataclass`, que automatiza la generación de métodos especiales como `__init__`, `__repr__`, `__eq__`, entre otros, en clases que definen atributos mediante anotaciones de tipo. Su objetivo es simplificar la creación de clases que almacenan datos sin requerir la escritura manual de código repetitivo. Las `dataclasses` soportan valores por defecto, campos opcionales (`field()`), control de mutabilidad (`frozen=True`), solo inicialización (`InitVar`), y funciones auxiliares (`asdict()`, `astuple()`, etc.). Ofrece una alternativa integrada y más ligera frente a bibliotecas como `attrs`, con énfasis en la claridad del código y compatibilidad con anotaciones de tipo.
+
+{/* ### 🔹 Adicionales */}
+
+{/* - [📚]() */}
+
+</ExcludeFromReadingTime>
