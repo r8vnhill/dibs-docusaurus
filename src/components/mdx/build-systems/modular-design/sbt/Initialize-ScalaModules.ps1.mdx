@@ -1,0 +1,49 @@
+```powershell showLineNumbers title="scripts/windows/Initialize-ScalaModules.ps1"
+[CmdletBinding()]   # Support for advanced features like -Verbose and -Debug
+param (
+    # Require a valid Scala-style package name (e.g., com.example.project)
+    [Parameter(Mandatory)]
+    [ValidatePattern('^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$')]
+    [string] $BasePackageName
+)
+
+function Script:Initialize-ScalaModules {
+    [CmdletBinding()]   # Support for advanced features like -Verbose and -Debug
+    param (
+        # Base directory in path format (e.g., com/example/project)
+        [string] $BaseDir
+    )
+
+    # Define initial file paths for app and library sources
+    $paths = @(
+        "app/src/main/scala/$BaseDir/echo/App.scala",
+        "lib/src/main/scala/$BaseDir/echo/EchoMessage.scala"
+    )
+
+    # Create necessary directories and files
+    foreach ($path in $paths) {
+        New-Item -Path $path `
+                 -Force `
+                 -ItemType File `
+                 -Verbose:$VerbosePreference `
+                 -Debug:$DebugPreference
+        # Write the package declaration to the file
+        Set-Content -Path $path `
+                    -Value "package $BasePackageName.echo`n" `
+                    -Verbose:$VerbosePreference `
+                    -Debug:$DebugPreference
+    }
+}
+
+# Replace dots in package name with slashes to match directory structure
+$Script:baseDir = $BasePackageName -replace '\.', '/'
+
+# Call the function to create Scala module structure
+Initialize-ScalaModules -BaseDir $baseDir
+```
+
+Luego puedes ejecutar el script con:
+
+```powershell title="En PowerShell"
+.\scripts\windows\Initialize-ScalaModules.ps1 -BasePackageName "com.github.username"
+```

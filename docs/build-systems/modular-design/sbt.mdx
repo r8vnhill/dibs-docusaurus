@@ -7,37 +7,35 @@ import Explanation from '@site/src/components/admonitions/Explanation'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 import TabItem from '@theme/TabItem'
 import GithubRepoLink from '@site/src/components/GithubRepoLink'
-import Ps from '@site/src/components/mdx/build-systems/modular-design/sbt/ps.mdx'
-import Bash from '@site/src/components/mdx/build-systems/modular-design/sbt/bash.mdx'
+import Ps from '@site/src/components/mdx/build-systems/modular-design/sbt/Initialize-ScalaModules.ps1.mdx'
+import Bash from '@site/src/components/mdx/build-systems/modular-design/sbt/initialize_scala_modules.sh.mdx'
 import Glossary from '@site/src/components/admonitions/Glossary'
+import RemoveSrcDirectorySh from '@site/src/components/mdx/build-systems/modular-design/sbt/remove_src_directory.sh.mdx'
 
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="echo-app-sbt" />
 
-Antes de que una biblioteca crezca —antes de agregar pruebas o automatizar tareas—, es fundamental estructurar bien el proyecto. Si en la lección anterior aprendiste a crear un proyecto básico con sbt y a ejecutar tu primer programa en Scala 3, esta vez daremos un paso más allá: **modularizar tu aplicación**.
+Antes de que una biblioteca crezca —antes de agregar pruebas o automatizar tareas—, es fundamental estructurar bien el proyecto.  
+Si en la lección anterior aprendiste a crear un proyecto básico con sbt y a ejecutar tu primer programa en Scala 3, esta vez daremos un paso más allá: **modularizar tu aplicación**.
 
-En esta lección aprenderás a organizar un proyecto multi-módulo con sbt, una práctica esencial para desarrollar bibliotecas reutilizables y aplicaciones escalables. A través de un ejemplo simple pero completo, veremos cómo:
+En esta lección aprenderás a organizar un proyecto multi-módulo con sbt, una práctica esencial para desarrollar bibliotecas reutilizables y aplicaciones escalables.  
+A través de un ejemplo simple pero completo, veremos cómo:
 
 - Definir múltiples subproyectos (`lib` y `app`) dentro de un mismo `build.sbt`.
 - Compartir configuraciones comunes entre módulos.
 - Reutilizar lógica definida en un módulo desde otro.
 - Ejecutar un subproyecto específico desde la línea de comandos.
 
-Este enfoque modular te permitirá escribir código más limpio, reutilizable y fácil de mantener. Lo que comienza como un proyecto simple puede convertirse en una base sólida para bibliotecas profesionales. **Paso a paso, construimos una arquitectura que Scala (hehe).**
+Este enfoque modular te permitirá escribir código más limpio, reutilizable y fácil de mantener.  
+Lo que comienza como un proyecto simple puede convertirse en una base sólida para bibliotecas profesionales.
 
-<Glossary>
-
-- **Multi-módulo**: Estructura de proyecto donde el código se divide en varios subproyectos (`lib`, `app`, etc.), cada uno con su propia funcionalidad. Permite separar responsabilidades y facilita el mantenimiento y la escalabilidad del código.
-- **`build.sbt`**: Archivo de configuración principal de sbt. Define los módulos del proyecto, sus dependencias, configuraciones compartidas y más.
-- **Paquete**: Estructura jerárquica utilizada para organizar el código en namespaces. En Scala se suelen usar dominios invertidos, como `com.github.username.echo`.
-
-</Glossary>
+**Paso a paso, construimos una arquitectura que Scala (hehe).**
 
 ## 🏗️ Estructura esperada del proyecto
 
 Antes de configurar el `build.sbt`, es importante visualizar cómo estará organizado el proyecto. Nuestro objetivo es dividirlo en dos subproyectos: una **biblioteca (`lib`)** que contendrá la lógica de negocio reutilizable, y una **aplicación (`app`)** que funcionará como punto de entrada y consumirá esa biblioteca.
 
-La siguiente estructura refleja esta separación, mostrando cómo se distribuyen los archivos fuente dentro de cada módulo y cómo se conectan entre sí:
+La siguiente estructura refleja esta separación, mostrando cómo se distribuyen los archivos fuente dentro de cada módulo y cómo se relacionan entre sí:
 
 ```mermaid
 graph TD
@@ -70,21 +68,76 @@ graph TD
 
 :::info Explicación de la estructura
 
-Este proyecto está dividido en dos módulos: una biblioteca (`lib`) y una aplicación (`app`). Ambos son definidos en el archivo raíz `build.sbt`, lo que permite que compartan configuraciones y se compilen como parte del mismo proyecto.
+Este proyecto está dividido en dos módulos: una biblioteca (`lib`) y una aplicación (`app`). Ambos se definen en el archivo raíz `build.sbt`, lo que permite compartir configuraciones y compilarlos como parte del mismo proyecto.
 
 - `lib/` contiene la lógica de negocio reutilizable, organizada en el paquete `com.github.username.echo`.
-- `app/` define la aplicación que importa y utiliza la funcionalidad de `lib`, dentro del mismo paquete para mantener consistencia.
-- `EchoMessage.scala` representa una función o clase reutilizable en la biblioteca.
+- `app/` define la aplicación que importa y utiliza la funcionalidad de `lib`, usando el mismo paquete para mantener consistencia.
+- `EchoMessage.scala` representa una función o clase de utilidad en la biblioteca.
 - `App.scala` actúa como punto de entrada de la aplicación.
-- El subproyecto `app` declara una dependencia directa sobre `lib`, lo que permite acceder a su código sin necesidad de duplicación.
-
-Esta estructura modular refleja buenas prácticas de diseño en proyectos reales, donde la separación entre lógica de negocio y lógica de ejecución permite mayor claridad, mantenibilidad y escalabilidad.
+- El subproyecto `app` declara una dependencia explícita sobre `lib`, lo que permite acceder a su código directamente sin duplicación.
 
 :::
+
+Esta estructura modular refleja buenas prácticas en proyectos reales, donde separar la lógica de negocio de la lógica de ejecución permite lograr mayor claridad, mantenibilidad y escalabilidad.
 
 :::tip ¿Y la carpeta `src/` que habíamos creado antes?
 
 Puedes eliminar el directorio `src/` que creaste en la lección anterior, o guardarlo como recuerdo.
+
+<BoxedTabs groupId={"os"}>
+
+{/* #region  Windows */}
+<TabItem value="Windows" label="Windows">
+
+```powershell showLineNumbers title="scripts/windows/Remove-SrcDirectory.ps1"
+# Enable cmdlet binding to support -Verbose, -WhatIf, etc.
+[CmdletBinding(SupportsShouldProcess)]
+param ()
+
+$Script:targetPath = 'src'
+
+# Define a function to remove the 'src' directory recursively and forcefully
+function Script:Remove-SrcDirectory {
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
+    param ()
+
+    # Check if the user wants to proceed
+    if ($PSCmdlet.ShouldProcess('src', 'Remove src directory')) {
+        # Deletes the 'src' directory and all its contents, forwarding any bound parameters
+        Remove-Item -Path $Script:targetPath -Recurse -Force @PSBoundParameters
+    }
+}
+
+# Call the function, forwarding any bound parameters like -Verbose or -WhatIf
+Remove-SrcDirectory @PSBoundParameters
+```
+
+Luego puedes ejecutar el script con:
+
+```powershell title="En la terminal de PowerShell"
+.\scripts\windows\Remove-SrcDirectory.ps1 -Verbose
+```
+
+</TabItem>
+{/* #endregion Windows */}
+
+{/* #region macOS */}
+<TabItem value="macOS" label="macOS">
+
+<RemoveSrcDirectorySh />
+
+</TabItem>
+{/* #endregion macOS */}
+
+{/* #region Ubuntu/Debian */}
+<TabItem value="Ubuntu/Debian" label="Ubuntu/Debian">
+
+<RemoveSrcDirectorySh />
+
+</TabItem>
+{/*  #endregion Ubuntu/Debian */}
+
+</BoxedTabs>
 
 :::
 
@@ -109,10 +162,17 @@ Puedes eliminar el directorio `src/` que creaste en la lección anterior, o guar
 Para transformar nuestro proyecto en una estructura multi-módulo, comenzamos por definir sus componentes principales dentro del archivo `build.sbt` raíz:
 
 ```scala showLineNumbers title="build.sbt"
-val scala3Version = "3.6.4"
+ThisBuild / scalaVersion := "3.7.1"
+
+ThisBuild / organization := "com.github.username"
+ThisBuild / name := "echo-app"
 
 lazy val commonSettings = Seq(
-    scalaVersion := scala3Version
+    scalacOptions ++= Seq(
+        "-deprecation",
+        "-unchecked",
+        "-feature"
+    )
 )
 
 lazy val lib = project
@@ -122,6 +182,11 @@ lazy val lib = project
 lazy val app = project
   .in(file("app"))
   .dependsOn(lib)
+  .settings(commonSettings *)
+
+lazy val root = project
+  .in(file("."))
+  .aggregate(lib, app)
   .settings(commonSettings *)
 ```
 

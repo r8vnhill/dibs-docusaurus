@@ -1,0 +1,38 @@
+```bash showLineNumbers title="scripts/unix/initialize_scala_modules.sh"
+#!/bin/bash
+
+# Exit immediately on error, undefined variable, or failed pipeline command
+set -euo pipefail
+
+# Get the base package name from the first argument
+BASE_PACKAGE_NAME="$1"
+
+# Validate the package name using a regex: must follow Scala package conventions
+if [[ ! "$BASE_PACKAGE_NAME" =~ ^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$ ]]; then
+  echo "❌ Invalid package name: '$BASE_PACKAGE_NAME'"
+  echo "Use a valid Scala package name (e.g., com.example.project)"
+  exit 1
+fi
+
+# Convert the dot-separated package name into a path (e.g., com.example → com/example)
+BASE_DIR="${BASE_PACKAGE_NAME//./\/}"
+
+# Define the files to be created
+FILES=(
+  "app/src/main/scala/$BASE_DIR/echo/App.scala"
+  "lib/src/main/scala/$BASE_DIR/echo/EchoMessage.scala"
+)
+
+# Create each file with a corresponding package declaration
+for FILE in "${FILES[@]}"; do
+  mkdir -p "$(dirname "$FILE")"                     # Ensure parent directories exist
+  echo -e "package ${BASE_PACKAGE_NAME}.echo\n" > "$FILE"  # Write package declaration
+  echo "✅ Created $FILE"
+done
+```
+
+Luego puedes ejecutar el script con:
+
+```bash title="En la terminal"
+bash scripts/unix/initialize_scala_modules.sh com.github.username
+```

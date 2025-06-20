@@ -9,29 +9,20 @@ import TabItem from '@theme/TabItem'
 import Exercise from '@site/src/components/exercise/Exercise'
 import Solution from '@site/src/components/exercise/Solution'
 import Hint from '@site/src/components/exercise/Hint'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
 
 <ReadingTime multiplier={2.0} />
+<GithubRepoLink user="r8vnhill" repo="algebraic-data-types-kt" />
 
-En Kotlin, las `data class` son una de las herramientas más poderosas y expresivas para modelar datos. Su diseño se alinea con los principios de inmutabilidad, comparación estructural y simplicidad declarativa, convirtiéndolas en una opción ideal para representar **tipos producto** —estructuras que agrupan múltiples valores con significado semántico.
+En Kotlin, las `data class` son una de las herramientas más expresivas y útiles para modelar datos. Su diseño favorece la inmutabilidad, la comparación estructural y la simplicidad declarativa, lo que las convierte en una excelente opción para representar **tipos producto**: estructuras que agrupan múltiples valores con significado semántico.
 
-En esta lección exploraremos el uso idiomático de las `data class`, enfocándonos en sus ventajas frente a clases tradicionales o tuplas, su comportamiento predeterminado, y su rol en el diseño de **bibliotecas reutilizables**. Veremos cómo desestructurar datos, crear nuevas instancias inmutables con `copy`, aprovechar constructores alternativos, y mantener un diseño limpio incluso cuando se requiere mutabilidad controlada.
+En esta lección exploraremos su uso idiomático, enfocándonos en sus ventajas frente a clases tradicionales o tuplas, su comportamiento por defecto y su rol en el diseño de **bibliotecas reutilizables**. Veremos cómo desestructurar instancias, crear copias inmutables con `copy`, utilizar constructores alternativos y mantener un diseño claro incluso cuando se requiere cierta mutabilidad.
 
-Esta lección no solo te enseñará a usar `data class` con fluidez, sino que te dará herramientas para tomar decisiones de diseño informadas al modelar estructuras de datos claras, robustas y fáciles de mantener.
-
-:::info Glosario rápido
-
-- **Tipo producto**: Agrupa múltiples valores con nombre, como `Point(x, y)`.
-- **Registro (record)**: Tipo producto inmutable, comparable por contenido. En Kotlin: `data class`.
-- **Inmutabilidad por convención**: Usar `val` para evitar modificar objetos.
-- **Comparación por contenido**: Evalúa igualdad de campos (`==`), no de referencias (`===`).
-- **Desestructuración**: Extraer campos como variables usando `componentN()`.
-
-:::
-
+Más que enseñarte a usar `data class`, esta lección te dará criterios para tomar decisiones de diseño informadas al modelar estructuras de datos claras, robustas y fáciles de mantener.
 
 ## 🎁 Desestructuración
 
-Una de las ventajas de las `data class` es que generan automáticamente funciones `componentN()` que permiten **extraer sus campos de forma clara y concisa**, sin necesidad de acceder a ellos uno por uno.
+Una de las ventajas de las `data class` es que generan automáticamente funciones `componentN()`, lo que permite **extraer sus campos de forma clara y concisa**, sin necesidad de acceder a cada propiedad manualmente.
 
 Por ejemplo, al representar una canción de *Aerosmith*:
 
@@ -42,7 +33,7 @@ val (title, year) = Song("Dream On", 1973)
 println("'$title' se lanzó en $year")
 ```
 
-Este tipo de desestructuración es especialmente útil cuando:
+Este tipo de desestructuración resulta especialmente útil cuando:
 
 - Iteras sobre listas de objetos
 - Trabajas con funciones puras que devuelven múltiples valores
@@ -59,11 +50,30 @@ for ((title, year) in playlist) {
 }
 ```
 
+### 🧪 Ejemplo con combinadores
+
+Los combinadores como `filter` y `map` permiten transformar y seleccionar datos de forma declarativa. Gracias a la desestructuración, esto es muy legible:
+
+```kotlin showLineNumbers title="Filtrar y transformar con combinadores"
+val classics = playlist
+    .filter { (_, year) -> year < 1980 }
+    .map { (title, _) -> title.uppercase() }
+
+println(classics) // [DREAM ON]
+```
+
+Aquí usamos:
+
+- `(_, year)` para ignorar el título y filtrar por año.
+- `(title, _)` para ignorar el año y transformar el título.
+
+Esto muestra cómo la desestructuración simplifica operaciones típicas sobre colecciones.
+
 ## ♻️ Mutabilidad controlada con `copy`
 
-Las `data class` en Kotlin son **inmutables por convención**. Aunque técnicamente permiten declarar propiedades mutables (`var`), en bibliotecas bien diseñadas se recomienda usar **solo propiedades inmutables** (`val`), promoviendo un estilo funcional y seguro.
+Las `data class` en Kotlin son **inmutables por convención**. Aunque es posible declarar propiedades mutables (`var`), en bibliotecas bien diseñadas se recomienda utilizar **solo propiedades inmutables** (`val`). Esto favorece un estilo funcional, más seguro y predecible.
 
-En lugar de modificar un objeto existente, puedes usar el método `copy()` para **crear una nueva instancia** con los cambios deseados, sin alterar el original:
+Cuando necesitas "modificar" una instancia, en lugar de cambiarla directamente, puedes usar el método `copy()` para **crear una nueva instancia** con los valores actualizados, sin alterar el original:
 
 ```kotlin showLineNumbers title="Uso de copy para modificar datos sin mutar el original"
 data class Mecha(val name: String, val power: Int)
@@ -75,28 +85,28 @@ println(gurren)        // Mecha(name=Gurren, power=3000)
 println(gurrenLagann)  // Mecha(name=Gurren Lagann, power=9000)
 ```
 
-Este patrón permite que los objetos sean **seguros, predecibles y fáciles de testear**, cualidades fundamentales en el desarrollo de bibliotecas reutilizables o sistemas concurrentes.
+Este patrón favorece objetos **seguros, predecibles y fáciles de testear** —cualidades esenciales para construir bibliotecas reutilizables, componentes funcionales y sistemas concurrentes.
 
 ### 🔄 ¿Cuándo es razonable usar mutabilidad?
 
-Aunque las `data class` promueven la **inmutabilidad por convención**, existen escenarios en los que **la mutabilidad está justificada**:
+Aunque las `data class` promueven la **inmutabilidad por convención**, existen escenarios donde **la mutabilidad está justificada**:
 
-- Estás modelando **estado que cambia naturalmente con el tiempo**, como una sesión de usuario, un contador o una conexión activa.
-- Necesitas **actualizar datos de forma intensiva o frecuente**, donde **crear copias sería costoso** o innecesariamente complejo (por ejemplo, en simulaciones, videojuegos o sistemas de alto rendimiento).
-- Estás trabajando con **estructuras internas o transitorias**, que no forman parte del contrato público de tu biblioteca y pueden beneficiarse de una representación mutable.
+- Estás modelando **estado que cambia naturalmente con el tiempo** (una sesión, una conexión, etc.).
+- Necesitas **actualizar datos frecuentemente**, donde `copy()` sería costoso o complejo (como en videojuegos o simulaciones).
+- Trabajas con **estructuras internas o efímeras** que no forman parte del contrato público de tu biblioteca.
 
 :::tip Recomendación
 
-Cuando requieras mutabilidad, considera **separar el estado mutable del modelo inmutable**. Un enfoque común es utilizar una `data class` como **modelo de referencia o configuración inicial**, y representar el estado cambiante con una clase mutable dedicada:
+Cuando requieras mutabilidad, separa el **modelo inmutable** del **estado mutable**. Por ejemplo:
 
-```kotlin showLineNumbers title="Separación de modelo y estado mutable"
+```kotlin showLineNumbers title="Separación entre modelo y estado mutable"
 data class FighterStats(val maxHp: Int, val maxStamina: Int)
 
 class CombatSession(stats: FighterStats) {
-    var currentHp: Int = stats.maxHp
+    var currentHp = stats.maxHp
         private set
 
-    var currentStamina: Int = stats.maxStamina
+    var currentStamina = stats.maxStamina
         private set
 
     fun receiveDamage(amount: Int) {
@@ -109,13 +119,13 @@ class CombatSession(stats: FighterStats) {
 }
 ```
 
-En este patrón, `FighterStats` representa un modelo inmutable de referencia (por ejemplo, los valores base del personaje), mientras que `CombatSession` gestiona el estado mutable de la instancia en ejecución. Así se evita crear copias constantes y se mantiene clara la separación entre **datos persistentes** y **estado transitorio**.
+Aquí, `FighterStats` define un modelo de referencia inmutable, mientras que `CombatSession` gestiona un estado mutable que puede cambiar en tiempo de ejecución.
 
 :::
 
 :::danger Rendimiento
 
-En contextos donde se realizan **cientos o miles de copias por segundo** —como en motores físicos, sistemas de renderizado o procesamiento en tiempo real—, la creación constante de nuevas instancias puede convertirse en un **cuello de botella**. En estos casos, usar clases mutables puede ser una decisión válida si **mejora significativamente el rendimiento** sin comprometer la claridad ni la seguridad del diseño.
+En contextos de **altas tasas de actualización** (como motores físicos o renderizado), crear múltiples copias puede ser un **cuello de botella**. En esos casos, una clase mutable puede ser una alternativa válida si **mejora el rendimiento** sin sacrificar claridad ni seguridad.
 
 :::
 
@@ -135,6 +145,12 @@ En contextos donde se realizan **cientos o miles de copias por segundo** —como
 - Usa **`data class`** para representar **datos estructurados con semántica clara**, donde la comparación por contenido, los métodos generados y la legibilidad son importantes.
 - Usa **`class`** cuando necesites **lógica adicional**, comportamiento mutable, herencia, o un control más fino sobre el ciclo de vida del objeto.
 - Usa **tuplas (`Pair` / `Triple`)** solo para **datos temporales o intermedios**, donde los nombres de los campos no son relevantes y la concisión es prioritaria.
+
+:::
+
+:::info Consejo adicional
+
+Si necesitas representar **más de tres elementos**, considera siempre una `data class` con nombres explícitos. Las tuplas de aridad alta son difíciles de mantener y comprender.
 
 :::
 
@@ -161,7 +177,7 @@ data class Wizard(val name: String, val magic: String, val power: Int) {
 
 Aunque es válido incluir funciones y propiedades adicionales en una `data class`, **no deberías cargarla con lógica compleja, efectos secundarios o estado mutable**. Su propósito principal es representar **datos inmutables, estructurados y comparables por contenido**.
 
-Las `data class` forman parte del contrato público de tu biblioteca o API: cualquier campo fuera del constructor primario **no participará en `equals`, `hashCode`, `copy` ni `toString`**, lo que puede generar inconsistencias sutiles o errores difíciles de detectar.
+Además, las `data class` forman parte del contrato público de tu biblioteca o API: cualquier campo fuera del constructor primario **no participará en `equals`, `hashCode`, `copy` ni `toString`**, lo que puede generar inconsistencias sutiles o errores difíciles de detectar.
 
 :::tip Recomendación
 
@@ -229,158 +245,182 @@ En el siguiente ejemplo, modelamos libros publicados en el siglo XX. El construc
 </BoxedTabs>
 
 <Explanation>
-    En este ejemplo aprendimos a usar un **constructor secundario** para cubrir un caso especial: cuando el autor de un libro no es conocido. Además, usamos el constructor primario `init` para validar las reglas del dominio (solo libros publicados entre 1900 y 1999), manteniendo el modelo robusto y consistente. Si se entrega un año fuera del rango, el programa lanza una excepción.
+    En este ejemplo aprendimos a usar un **constructor secundario** para cubrir un caso especial: cuando el autor de un libro no es conocido. Además, usamos el bloque `init` del constructor primario para validar las reglas del dominio (solo libros publicados entre 1900 y 1999), manteniendo el modelo robusto y consistente. Si se entrega un año fuera del rango, el programa lanza una excepción.
 </Explanation>
 
 :::tip ¿Podríamos haber usado parámetros por defecto?
 
-Sí.
+Sí, y de hecho, en Kotlin se prefiere usar parámetros con valores por defecto en el constructor primario cuando sea posible. Es más conciso, más idiomático y evita tener que declarar un constructor secundario si la lógica es trivial:
+
+```kotlin showLineNumbers title="Parámetros por defecto en el constructor primario"
+data class TwentiethCenturyBook(
+    val title: String,
+    val author: String = "Unknown",
+    val year: Int
+) {
+    init {
+        require(year in 1900..1999)
+    }
+}
+```
 
 :::
 
 ## 📝 Ejercicio práctico — Gestiona tu catálogo de dependencias
 
 <Exercise>
-    Imagina que mantienes un repositorio interno con artefactos Maven/Gradle. Cada artefacto se identifica por:
 
-    | Campo        | Tipo    | Reglas de dominio |
-    |--------------|---------|-------------------|
-    | `group`      | `String`| No vacío, minúsculas y puntos (`com.example`) |
-    | `name`       | `String`| No vacío, sin espacios |
-    | `version`    | `String`| Formato *semver* `MAJOR.MINOR.PATCH`, p. ej. `1.2.3` |
+Imagina que mantienes un repositorio interno con artefactos Maven/Gradle. Cada artefacto se identifica por:
 
-    1. Declara `DependencyMetadata` y valida en `init` que:
-        - Ningún campo esté en blanco.
-        - `version` cumpla el patrón semver.
+| Campo        | Tipo    | Reglas de dominio |
+|--------------|---------|-------------------|
+| `group`      | `String`| No vacío, minúsculas y puntos (`com.example`) |
+| `name`       | `String`| No vacío, sin espacios |
+| `version`    | `String`| Formato *semver* `MAJOR.MINOR.PATCH`, p. ej. `1.2.3` |
 
-        <Hint hints={[
-            <>
-                Puedes verificar que un string no esté vacío con <code>String.isNotBlank(): Boolean</code>.
-            </>,
-            <>
-                Para validar el formato de <code>version</code>, usa <code>Regex.matches(String): Boolean</code>. Por ejemplo, <code>"""\d+\.\d+\.\d+""".toRegex().matches("19.3.7")</code>.
-            </>,
-            <>
-                Puedes ver que un string esté en minúsculas con <code>String.lowercase(): String</code>.
-            </>
-        ]}/>
+1. Declara `DependencyMetadata` y valida en `init` que:
+    - Ningún campo esté en blanco.
+    - `version` cumpla el patrón semver.
 
-    2. Algunos módulos internos aún no se versionan; permite crearlos sin `version`. Si no se indica, usa `"0.1.0‑SNAPSHOT"`.
-    3. Añade una propiedad calculada `isSnapshot` que sea `true` si `version` termina en `"SNAPSHOT"`.
-        <Hint hints={[
-            <>Para verificar si una cadena termina en un sufijo, usa <code>String.endsWith(String): Boolean</code>.</>,
-        ]}/>
+    <Hint hints={[
+        <>
+            Puedes verificar que un string no esté vacío con <code>String.isNotBlank(): Boolean</code>.
+        </>,
+        <>
+            Para validar el formato de <code>version</code>, usa <code>Regex.matches(String): Boolean</code>. Por ejemplo, <code>"""\d+\.\d+\.\d+""".toRegex().matches("19.3.7")</code>.
+        </>,
+        <>
+            Puedes ver que un string esté en minúsculas con <code>String.lowercase(): String</code>.
+        </>
+    ]}/>
 
-    <Solution>
-        <BoxedTabs>
-            <TabItem label={"Código esencial"} value={"Código esencial"}>
-                1.
-                ```kotlin showLineNumbers title="Declaración y validación de artefacto (DependencyMetadata.kt)"
-                data class DependencyMetadata(
-                    val group: String,
-                    val name: String,
-                    val version: String
-                ) {
+2. Algunos módulos internos aún no se versionan; permite crearlos sin `version`. Si no se indica, usa `"0.1.0‑SNAPSHOT"`.
+3. Añade una propiedad calculada `isSnapshot` que sea `true` si `version` termina en `"SNAPSHOT"`.
+    <Hint hints={[
+        <>Para verificar si una cadena termina en un sufijo, usa <code>String.endsWith(String): Boolean</code>.</>,
+    ]}/>
 
-                    private val semver = Regex("""\d+\.\d+\.\d+""")
+<Solution>
+    <BoxedTabs>
+        <TabItem label={"Código esencial"} value={"Código esencial"}>
+            1.
+            ```kotlin showLineNumbers title="Declaración y validación de artefacto (DependencyMetadata.kt)"
+            data class DependencyMetadata(
+                val group: String,
+                val name: String,
+                val version: String
+            ) {
 
-                    init {
-                        require(group.isNotBlank()) { "Group must not be blank" }
-                        require(name.isNotBlank()) { "Name must not be blank" }
-                        require(group == group.lowercase() && '.' in group) {
-                            "Group must be lowercase and dot-separated"
-                        }
-                        require(semver.matches(version)) {
-                            "Version must follow semver format. Got: $version"
-                        }
+                private val semver = Regex("""\d+\.\d+\.\d+""")
+
+                init {
+                    require(group.isNotBlank()) { "Group must not be blank" }
+                    require(name.isNotBlank()) { "Name must not be blank" }
+                    require(group == group.lowercase() && '.' in group) {
+                        "Group must be lowercase and dot-separated"
+                    }
+                    require(semver.matches(version)) {
+                        "Version must follow semver format. Got: $version"
                     }
                 }
-                ```
+            }
+            ```
 
-                2.
-                ```kotlin showLineNumbers title="Constructor secundario por defecto (DependencyMetadata.kt)"
+            2.
+            ```kotlin showLineNumbers title="Constructor secundario por defecto (DependencyMetadata.kt)"
+            constructor(group: String, name: String) : this(group, name, "0.1.0-SNAPSHOT") {
+                println("No version provided — using default snapshot.")
+            }
+            ```
+
+            3.
+            ```kotlin showLineNumbers title="Propiedad calculada isSnapshot (DependencyMetadata.kt)"
+            val isSnapshot: Boolean
+                get() = version.endsWith("SNAPSHOT")
+            ```
+        </TabItem>
+        <TabItem label={"Código completo"} value={"Código completo"}>
+            ```kotlin showLineNumbers title="Ejemplo completo con validaciones y ejecución (DependencyMetadata.kt)"
+            data class DependencyMetadata(
+                val group: String,
+                val name: String,
+                val version: String
+            ) {
+
+                private val semver = Regex("""\d+\.\d+\.\d+""")
+
+                init {
+                    require(group.isNotBlank()) { "Group must not be blank" }
+                    require(name.isNotBlank()) { "Name must not be blank" }
+                    require(group == group.lowercase() && '.' in group) {
+                        "Group must be lowercase and dot-separated"
+                    }
+                    require(semver.matches(version)) {
+                        "Version must follow semver format. Got: $version"
+                    }
+                }
+
                 constructor(group: String, name: String) : this(group, name, "0.1.0-SNAPSHOT") {
                     println("No version provided — using default snapshot.")
                 }
-                ```
 
-                3.
-                ```kotlin showLineNumbers title="Propiedad calculada isSnapshot (DependencyMetadata.kt)"
                 val isSnapshot: Boolean
                     get() = version.endsWith("SNAPSHOT")
-                ```
-            </TabItem>
-            <TabItem label={"Código completo"} value={"Código completo"}>
-                ```kotlin showLineNumbers title="Ejemplo completo con validaciones y ejecución (DependencyMetadata.kt)"
-                data class DependencyMetadata(
-                    val group: String,
-                    val name: String,
-                    val version: String
-                ) {
+            }
 
-                    private val semver = Regex("""\d+\.\d+\.\d+""")
+            fun main() {
+                val dep1 = DependencyMetadata("com.example", "analytics", "1.2.3")
+                println("Dependency: $dep1")
+                println("Is snapshot: ${dep1.isSnapshot}") // false
 
-                    init {
-                        require(group.isNotBlank()) { "Group must not be blank" }
-                        require(name.isNotBlank()) { "Name must not be blank" }
-                        require(group == group.lowercase() && '.' in group) {
-                            "Group must be lowercase and dot-separated"
-                        }
-                        require(semver.matches(version)) {
-                            "Version must follow semver format. Got: $version"
-                        }
-                    }
+                val dep2 = DependencyMetadata("com.example", "logging")
+                println("Dependency: $dep2")
+                println("Is snapshot: ${dep2.isSnapshot}") // true
+            }
+            ```
+        </TabItem>
+    </BoxedTabs>
+</Solution>
 
-                    constructor(group: String, name: String) : this(group, name, "0.1.0-SNAPSHOT") {
-                        println("No version provided — using default snapshot.")
-                    }
-
-                    val isSnapshot: Boolean
-                        get() = version.endsWith("SNAPSHOT")
-                }
-
-                fun main() {
-                    val dep1 = DependencyMetadata("com.example", "analytics", "1.2.3")
-                    println("Dependency: $dep1")
-                    println("Is snapshot: ${dep1.isSnapshot}") // false
-
-                    val dep2 = DependencyMetadata("com.example", "logging")
-                    println("Dependency: $dep2")
-                    println("Is snapshot: ${dep2.isSnapshot}") // true
-                }
-                ```
-            </TabItem>
-        </BoxedTabs>
-    </Solution>
 </Exercise>
 
 ## 🎯 Conclusiones
 
-En esta lección profundizamos en el uso idiomático de las `data class` en Kotlin como mecanismo fundamental para representar tipos producto. Exploramos sus ventajas frente a clases tradicionales y tuplas, incluyendo su comparación por contenido, generación automática de métodos comunes, y su integración natural con herramientas como desestructuración, combinadores funcionales y validación en el constructor.
+En esta lección profundizamos en el uso idiomático de las `data class` en Kotlin como mecanismo fundamental para representar tipos producto.
 
-También discutimos buenas prácticas sobre mutabilidad, cuándo está justificada, y cómo estructurar el código para mantener un diseño claro y robusto, especialmente en el contexto del desarrollo de bibliotecas reutilizables.
+Exploramos sus ventajas frente a clases tradicionales y tuplas, incluyendo comparación por contenido, generación automática de métodos comunes y su integración natural con herramientas como la desestructuración, combinadores funcionales y validación de reglas de dominio.
+
+También discutimos buenas prácticas sobre mutabilidad: cuándo está justificada y cómo estructurar el código para mantener un diseño claro, seguro y mantenible —especialmente en bibliotecas reutilizables.
 
 ### 🔑 Puntos clave
 
-- Las `data class` son la forma idiomática en Kotlin de definir registros: tipos que agrupan datos con nombre y estructura clara.
-- Permiten comparar objetos por contenido, generar copias de manera segura y desestructurar valores de forma concisa.
-- Aunque permiten lógica adicional, su uso debe centrarse en modelar datos y evitar estados mutables o comportamientos complejos.
+- Las `data class` son la forma idiomática en Kotlin de definir **registros**: estructuras de datos con nombre, contenido significativo y comportamiento predecible.
+- Permiten comparar objetos por contenido, generar copias de manera segura y desestructurar valores con una sintaxis clara.
+- Aunque pueden incluir lógica adicional, su propósito principal es **modelar datos**, no encapsular comportamiento complejo ni estados mutables.
 - Su uso adecuado contribuye a diseños más expresivos, seguros y fáciles de mantener.
 
 ### 🧰 ¿Qué nos llevamos?
 
-Diseñar estructuras de datos con intención semántica clara no es solo una cuestión de estilo, sino una herramienta clave para **mejorar la expresividad, la mantenibilidad y la seguridad de nuestras bibliotecas**. Las `data class` permiten comunicar de forma directa el propósito de un tipo, garantizando al mismo tiempo un comportamiento coherente por parte del compilador.
+Diseñar estructuras de datos con intención semántica clara no es solo una cuestión de estilo: es una herramienta clave para **mejorar la expresividad, mantenibilidad y seguridad** de nuestras bibliotecas.
 
-Al preferir `data class` para representar tipos producto, evitamos repetir código, reducimos errores relacionados con comparaciones, y promovemos un diseño más funcional y predecible. Comprender sus límites y posibilidades es esencial para escribir APIs limpias, reutilizables y alineadas con los principios del diseño moderno de software.
+Al preferir `data class` para representar tipos producto:
+
+- Evitamos código repetido
+- Reducimos errores en comparaciones o copias
+- Promovemos un estilo más funcional y predecible
+
+Comprender sus límites y posibilidades es esencial para diseñar **APIs claras, robustas y sostenibles**, que otras personas puedan usar con confianza y sin sorpresas.
 
 <div class="exclude-from-reading-time">
+
 ## 📖 Referencias
 
 ### 🔥 Recomendadas
 
 - [🌐 "Data classes"](https://kotlinlang.org/docs/data-classes.html) en la **documentación oficial de Kotlin**: Explica en detalle cómo funcionan las `data class` en Kotlin y qué genera automáticamente el compilador (como `equals`, `hashCode`, `toString`, `copy`, y `componentN`). Es relevante para esta lección porque **respalda y amplía los conceptos presentados**, mostrando requisitos técnicos, restricciones y casos de uso idiomáticos fundamentales para modelar tipos producto de forma segura y expresiva.
 
-{/* ### 🔹 Adicionales */}
+### 🔹 Adicionales
 
-{/* - [📚]() */}
+- 📕 "Data Classes" en *Beginner’s Guide to Kotlin Programming* de **John Hunt**: Este capítulo introduce las *data classes*, una característica del lenguaje Kotlin diseñada para representar estructuras de datos inmutables con propiedades, pero con poca o ninguna lógica asociada. Se explican las ventajas de usar estas clases, como la generación automática de métodos como `toString()`, `equals()`, `hashCode()` y `copy()`, basados exclusivamente en las propiedades del constructor. También se detalla cómo funcionan con propiedades no incluidas en el constructor, cómo pueden implementar interfaces, extender clases abiertas y utilizarse con desestructuración. Finalmente, se incluye un ejercicio práctico para crear una clase de datos `Customer` en un contexto de aplicación financiera.
+
 </div>
