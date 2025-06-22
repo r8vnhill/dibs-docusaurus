@@ -1,0 +1,160 @@
+---
+title: "Punto de entrada en Haskell"
+---
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import ExcludeFromReadingTime from '@site/src/components/reading-time/ExcludeFromReadingTime'
+import ReadingTime from '@site/src/components/reading-time/ReadingTime'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="haskell-dibs" />
+
+En esta lección aprenderás cómo se define el punto de entrada en un programa Haskell. A diferencia de otros lenguajes como Kotlin, donde el sistema puede ocultar ciertos detalles, Haskell exige que declares explícitamente los efectos y la estructura de tu aplicación. 
+
+Veremos cómo funciona la función `main`, cómo se conectan los módulos con el archivo `.cabal`, y cómo leer argumentos desde la línea de comandos. A través de ejemplos simples entenderás cómo estos conceptos se aplican en la práctica y qué beneficios ofrece el enfoque funcional de Haskell para programas pequeños y reutilizables.
+
+## 🛠️ ¿Cómo ejecutar estos ejemplos?
+
+Para poder ejecutar los ejemplos mostrados, es útil saber cómo crear un proyecto básico en Haskell y cómo estructurarlo en módulos reutilizables. Estos recursos te guiarán paso a paso:
+
+- 📦 [Creando un Proyecto Básico en Haskell con Cabal](/docs/build-systems/init/cabal/)  
+  Aprende a iniciar un proyecto desde cero usando Cabal.
+- 🧩 [Estructurando un proyecto modular en Haskell con Cabal](/docs/build-systems/modular-design/cabal/)  
+  Descubre cómo dividir tu código en módulos separados para mejorar la organización, reutilización y mantenibilidad.
+
+## 🏁 Punto de entrada
+
+En Haskell, el punto de entrada de un programa es una función llamada `main` que debe devolver una acción dentro del tipo `IO ()`. Esta función es buscada en el **módulo principal del ejecutable** configurado en tu archivo `.cabal`, normalmente llamado `Main`.
+
+Un programa básico en Haskell puede escribirse así:
+
+```haskell title="Programa básico (type-fundamentals/basics/Main.hs)" showLineNumbers
+module Main where
+
+main :: IO ()
+main = putStrLn "When dealing with aliens, try to be polite."
+```
+
+<Explanation>
+
+Este programa define un módulo llamado `Main`, que es obligatorio para que el compilador lo reconozca como ejecutable.
+
+- La función `main` es el punto de entrada obligatorio para todos los programas ejecutables en Haskell.
+- `putStrLn` es una acción del tipo `IO ()` que imprime una cadena seguida de un salto de línea.
+- Todo el programa se ejecuta como un efecto, lo que refleja el enfoque explícito de Haskell sobre los efectos secundarios.
+- El mensaje es una referencia a *District 9*, una película de ciencia ficción que plantea temas sociales a través del contacto con alienígenas.
+
+</Explanation>
+
+Ahora puedes ejecutar este programa con Cabal:
+
+```bash title="Desde la terminal"
+cabal run type-fundamentals
+```
+
+Este comando compilará (si es necesario) y luego ejecutará el ejecutable llamado `type-fundamentals`, definido en tu archivo `.cabal`.
+
+## 📥 Argumentos desde la línea de comandos
+
+Al igual que en Kotlin, Haskell permite acceder a los argumentos que se pasan cuando se ejecuta el programa desde la terminal. Esto es útil para scripts y herramientas interactivas.
+
+```haskell title="Acceso a argumentos (type-fundamentals/basics/Main.hs)" showLineNumbers
+module Main where
+
+import System.Environment (getArgs)
+
+main :: IO ()
+main = do
+    args <- getArgs
+    case args of
+        [] -> putStrLn "To obtain, something of equal value must be lost."
+        _  -> putStrLn $ "Transmuting " ++ unwords args
+```
+
+<Explanation>
+
+Este pequeño programa accede a los argumentos de línea de comandos usando `getArgs`, que devuelve una lista de cadenas (`[String]`).
+
+- Si no se pasan argumentos, se imprime una cita famosa de *Fullmetal Alchemist* que representa el principio del intercambio equivalente.
+- Si se pasan argumentos, se concatenan y se imprime un mensaje que sugiere una "transmutación".
+
+La función `unwords` convierte la lista de cadenas en una sola cadena con espacios entre las palabras, útil para reconstruir frases completas.
+
+</Explanation>
+
+Luego, puedes ejecutar el programa pasando argumentos desde la línea de comandos:
+
+```bash title="Desde la terminal"
+cabal run type-fundamentals -- Philosopher's Stone
+```
+
+Esto imprimirá:
+
+```
+Transmuting Philosopher's Stone
+```
+
+## 📊 Resumen comparativo
+
+| Característica                        | Kotlin                                                                                   | Haskell                                                                                 |
+|--------------------------------------|------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| **Punto de entrada**                 | Función `main()` dentro de un archivo `.kt`                                              | Función `main :: IO ()` dentro de un módulo llamado `Main`                              |
+| **Estructura del programa**          | Puede estar en cualquier archivo, idealmente acompañado de `package`                     | El ejecutable debe tener un módulo `Main` y declararlo en el `.cabal`                   |
+| **Impresión en consola**            | `println(...)` o `print(...)`                                                            | `putStrLn` o `print`                                                                    |
+| **Manejo de argumentos**            | `args: Array<String>` en la función `main`                                               | Uso de `getArgs` del módulo `System.Environment`                                        |
+| **Compilación y ejecución**         | `./gradlew :app:run` (con o sin `--args`)                                                | `cabal run ejecutable [args]`                                                           |
+
+### ✅ Beneficios / ❌ Limitaciones
+
+<ProCons>
+
+<Pros>
+
+- Los efectos como impresión o lectura de argumentos están **tipados de forma explícita** con `IO`, promoviendo mayor claridad.
+- La separación entre funciones puras y efectos facilita la prueba y reutilización de lógica sin imprimir ni modificar estado.
+- El sistema de tipos ayuda a evitar errores comunes al interactuar con argumentos o realizar entradas/salidas.
+
+</Pros>
+
+<Cons>
+
+- Se requiere mayor familiaridad con el sistema de tipos y el concepto de efectos para tareas básicas como imprimir o leer argumentos.
+- La necesidad de definir un módulo `Main` y configurar el `.cabal` puede ser una barrera para comenzar rápidamente con scripts simples.
+- La gestión de efectos puede parecer verbosa o poco intuitiva para quienes vienen de lenguajes imperativos.
+
+</Cons>
+
+</ProCons>
+
+## 🎯 Conclusiones
+
+En esta lección exploramos cómo definir el punto de entrada en Haskell mediante la función `main`, contrastando su enfoque explícito sobre los efectos con el estilo más flexible de Kotlin. Aprendimos a estructurar ejecutables en proyectos Cabal, a imprimir mensajes en consola, y a procesar argumentos desde la línea de comandos.
+
+Vimos también cómo Haskell exige que todo efecto esté claramente declarado en el tipo de retorno (`IO`), lo que ayuda a separar el código puro del que interactúa con el entorno, un principio fundamental del diseño funcional.
+
+### 🔑 Puntos clave
+
+- El punto de entrada de un ejecutable en Haskell es siempre una función `main :: IO ()` dentro de un módulo `Main`.
+- La impresión en consola y el acceso a argumentos se realizan como acciones del tipo `IO`, lo que obliga a declarar explícitamente los efectos.
+- `getArgs` permite acceder a los argumentos como una lista de cadenas, que puede ser manipulada libremente con funciones como `unwords`.
+- La estructura de un ejecutable debe estar declarada en el archivo `.cabal`, incluyendo su módulo principal y archivo fuente.
+- Haskell enfatiza la separación entre lógica pura y efectos colaterales, lo cual fortalece la mantenibilidad, aunque añade complejidad inicial.
+
+### 🧰 ¿Qué nos llevamos?
+
+Haskell nos recuerda que incluso las tareas más simples —como imprimir un mensaje o recibir un argumento— deben ser tratadas con claridad y rigor. Esta disciplina no es una limitación, sino una oportunidad para escribir programas más predecibles, reutilizables y fáciles de probar. Aunque requiere familiarizarse con nuevos conceptos, comprender cómo funciona el punto de entrada en Haskell es un paso clave para construir herramientas funcionales robustas y bien tipadas.
+
+<ExcludeFromReadingTime>
+
+## 📖 Referencias
+
+### 🔥 Recomendadas
+
+- 📕 "I/O" (pp.165-191) en *Real World Haskell: Code You Can Believe In* de **Bryan O'Sullivan, John Goerzen, y Donald Bruce Stewart**: Este capítulo explora en profundidad el sistema de entrada y salida en Haskell, destacando su enfoque funcional y su separación estricta entre código puro y efectos. Comienza con ejemplos sencillos de I/O, como leer argumentos de la línea de comandos o escribir en consola con `putStrLn`, y luego presenta conceptos más avanzados como acciones I/O, el uso de `Handle`, I/O perezoso (`hGetContents`, `interact`, `readFile`), manejo de archivos temporales, buffering, y el uso de monadas para secuenciar efectos. Se enfatiza cómo Haskell permite escribir programas interactivos sin sacrificar la pureza, facilitando la optimización, la prueba de código y el razonamiento formal.
+
+{/* ### 🔹 Adicionales */}
+
+{/* - [📚]() */}
+
+</ExcludeFromReadingTime>
