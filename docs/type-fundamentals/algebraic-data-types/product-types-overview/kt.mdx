@@ -21,87 +21,109 @@ import Explanation from '@site/src/components/admonitions/Explanation'
 
 <ReadingTime multiplier={1.8}/>
 
-Cuando diseñamos bibliotecas, uno de los desafíos más importantes es **representar datos de forma precisa, clara y segura**. Buscamos estructuras que expresen exactamente lo que significan, que **prevengan estados inválidos**, y que otras personas puedan utilizar sin ambigüedad ni riesgo de errores.
+Cuando diseñamos bibliotecas, uno de los desafíos más importantes es **representar datos de forma precisa, clara y segura**. Buscamos estructuras que expresen con exactitud su significado, que **prevengan estados inválidos**, y que otras personas puedan utilizar sin ambigüedades ni riesgo de errores.
 
-En este contexto, los **tipos producto** son una herramienta fundamental. Permiten **agrupar múltiples valores relacionados en una sola unidad semántica**, creando estructuras que reflejan con claridad la intención del dominio. Son la base de muchas construcciones que usamos todos los días: posiciones, configuraciones, coordenadas, rangos, tamaños, credenciales, combinaciones de flags, entre muchas otras.
+En este contexto, los **tipos producto** son una herramienta fundamental. Permiten **agrupar múltiples valores relacionados en una sola unidad semántica**, creando estructuras que reflejan con claridad la intención del dominio. Son la base de muchas construcciones que usamos a diario: posiciones, configuraciones, coordenadas, rangos, tamaños, credenciales, combinaciones de flags, entre otras.
 
-Aunque a primera vista parezcan simples, los tipos producto son la piedra angular de numerosas decisiones de diseño: desde elegir entre un `Pair` o una `data class`, hasta decidir qué propiedades deben convivir dentro de un mismo tipo. Comprender su lógica y sus representaciones es clave para crear **tipos expresivos, mantenibles y reutilizables**, que se integren naturalmente con las capacidades del lenguaje.
+Aunque a primera vista parezcan simples, los tipos producto son la piedra angular de numerosas decisiones de diseño: desde elegir entre un `Pair` o una `data class`, hasta decidir qué propiedades deben convivir dentro de un mismo tipo. Comprender su lógica y sus representaciones es clave para crear **tipos expresivos, mantenibles y reutilizables**, que se integren de forma natural con las capacidades del lenguaje.
 
-En esta lección exploraremos los fundamentos teóricos de los tipos producto, sus representaciones básicas en Kotlin, y las ventajas que ofrecen al momento de diseñar APIs más robustas y comprensibles.
+En esta lección exploraremos los fundamentos teóricos de los tipos producto, sus representaciones básicas en Kotlin, y las ventajas que ofrecen al diseñar APIs más robustas y comprensibles.
 
 ## 🧱 ¿Qué son los tipos producto?
 
-Los **tipos producto** son una de las construcciones fundamentales dentro de los **tipos de datos algebraicos** (ADTs). Su nombre proviene del álgebra: si un tipo $A$ tiene $|A|$ valores posibles y otro tipo $B$ tiene $|B|$, entonces el tipo compuesto $A \times B$ representa $|A| \cdot |B|$ combinaciones. En programación, esto se traduce en estructuras que **agrupan múltiples valores al mismo tiempo**.
+En esta lección comenzamos explorando los **tipos producto**, una de las formas más simples y poderosas de agrupar datos relacionados. Son una de las construcciones fundamentales dentro de los **tipos de datos algebraicos** (ADTs).
+
+Su nombre proviene del álgebra: si el tipo $A$ tiene $a$ valores posibles y $B$ tiene $b$, entonces el tipo compuesto $A × B$ tiene $a × b$ combinaciones.
+
+$$
+|A × B| = |A| × |B|
+$$
+
+En programación, esto se traduce en estructuras que **agrupan múltiples valores al mismo tiempo**, de forma estructurada.
 
 Por ejemplo, para representar la posición de un personaje en un juego, podrías declarar dos variables por separado:
 
-```kotlin showLineNumbers title="Posición separada"
+```kotlin title="Posición separada" showLineNumbers
 val x = 10
 val y = 5
 ```
 
-Pero nada garantiza que se usen juntas de manera coherente. Una mejor opción es combinarlas en una única unidad:
+Pero declarar `x` e `y` como variables sueltas no garantiza coherencia: podrías pasar una sin la otra, mezclarlas entre personajes, o incluso olvidarte de una. Una mejor opción es combinarlas en una única unidad:
 
-```kotlin showLineNumbers title="Posición combinada"
+```kotlin title="Posición combinada" showLineNumbers
 val position = Pair(10, 5)
 ```
 
 Este `Pair` es un **tipo producto**: un valor que encapsula dos datos a la vez, posiblemente de tipos distintos.
 
-En Kotlin, puedes construir un `Pair` de dos formas equivalentes:
+Kotlin permite construir un `Pair` de dos formas equivalentes:
 
-```kotlin showLineNumbers title="Construcción de un Pair"
+```kotlin title="Construcción de un Pair" showLineNumbers
 val pair1 = Pair(1, true)
 val pair2 = 1 to true
 ```
 
-Ambas expresiones crean un `Pair<Int, Boolean>`, cuyo espacio total de representaciones es:
+La notación infija `a to b` es más común al declarar entradas de un `Map`.
+
+Ambas expresiones crean un `Pair<Int, Boolean>`. Si `Int` representa $2^{32}$ valores posibles y `Boolean` solo 2, entonces el espacio total de representaciones es:
 
 $$
-|\text{Int} \times \text{Boolean}| = 2^{32} \cdot 2 = 2^{33}
+|\mathtt{Int} × \mathtt{Boolean}| = 2^{32} × 2 = 2^{33}
 $$
+
+Cada combinación representa un estado distinto del sistema.
 
 Los tipos producto no solo aportan claridad semántica, sino que también **amplían el espacio de representación** de manera multiplicativa. Son ideales para modelar coordenadas, rangos, dimensiones, configuraciones y cualquier estructura donde múltiples valores estén **lógicamente conectados**.
 
-## 📦 Representaciones básicas: `Triple` y tuplas
+## 📦 Tuplas simples en Kotlin: `Pair`, `Triple` y sus limitaciones
 
-Una **tupla** es una secuencia finita y ordenada de elementos, donde cada posición puede contener un valor de tipo distinto. En Kotlin, estructuras como `Pair` y `Triple` permiten representar tuplas de 2 o 3 elementos, respectivamente.
+Kotlin incluye algunas estructuras básicas para representar tipos producto pequeños sin definir una clase nueva. Estas estructuras —como `Pair` y `Triple`— permiten agrupar datos de manera compacta mediante **tuplas**, es decir, secuencias ordenadas y finitas de valores, donde cada posición puede tener un tipo diferente.
 
-<details>
-  <summary>¿En qué se diferencian de los conjuntos?</summary>
+A diferencia de los conjuntos:
 
-  A diferencia de los conjuntos, las tuplas tienen tres propiedades fundamentales:
+- ✔ **Pueden contener duplicados**: `(1, 2, 2)` es válido.
+- ✔ **El orden importa**: `(1, 2, 3) != (3, 2, 1)`.
+- ✔ **Tienen longitud fija**: siempre se esperan `n` elementos.
 
-  1. **Pueden contener elementos repetidos:**  
-     La tupla $(1,\, 2,\, 2,\, 3)$ es diferente de $(1,\, 2,\, 3)$, mientras que los conjuntos $\{1,\, 2,\, 2,\, 3\}$ y $\{1,\, 2,\, 3\}$ se consideran equivalentes.
-  2. **El orden importa:**  
-     La tupla $(1,\, 2,\, 3)$ no es igual a $(3,\, 2,\, 1)$, pero los conjuntos $\{1,\, 2,\, 3\}$ y $\{3,\, 2,\, 1\}$ sí lo son.
-  3. **Tienen longitud fija:**  
-     Una tupla siempre contiene un número definido de elementos, mientras que los conjuntos pueden crecer indefinidamente.
-</details>
-
-```kotlin showLineNumbers title="Ejemplo de Triple"
-val dimensions = Triple(1920, 1080, 60)
+```kotlin title="Ejemplo de Triple" showLineNumbers
+val dimensions = Triple(1920, 1080, 60)  // ancho, alto, frecuencia
 val resolution = "${dimensions.first}x${dimensions.second}@${dimensions.third}Hz"
 ```
 
-Este tipo de estructuras resulta útil para **valores intermedios o temporales**, especialmente cuando no justifica definir un tipo con nombre propio.
+Estas estructuras resultan útiles para **valores intermedios o temporales**, especialmente cuando no se justifica definir un tipo con nombre propio.
 
-Sin embargo, **no se recomienda usarlas cuando cada campo tiene un significado semántico claro**, ya que propiedades como `first`, `second`, y `third` dificultan la legibilidad y la intención del código.
+Sin embargo, **no se recomienda su uso cuando cada campo tiene un significado semántico claro**. Propiedades como `first`, `second` y `third` dificultan la legibilidad e impiden expresar la intención del dominio.
 
-Aunque Kotlin no ofrece un sistema general de tuplas como en otros lenguajes funcionales, **cualquier clase con múltiples propiedades** puede cumplir ese rol de manera más expresiva. También es posible anidar `Pair`s para simular tuplas de mayor aridad:
+Aunque Kotlin no ofrece un sistema general de tuplas como en otros lenguajes funcionales, **cualquier clase con múltiples propiedades** puede cumplir ese rol de forma más clara y expresiva. También es técnicamente posible anidar `Pair`s para simular tuplas de mayor aridad:
 
-```kotlin showLineNumbers title="Anidación de Pair"
+```kotlin title="Anidación de Pair" showLineNumbers
 val nested = Pair("A", Pair("B", "C"))  // equivalente a una tupla de tres elementos
 ```
 
-No obstante, este enfoque **se vuelve rápidamente ilegible** y propenso a errores. Para representar estructuras más complejas con significado claro, es preferible usar `data class`, como exploraremos en las siguientes lecciones.
+Este enfoque, sin embargo, **se vuelve rápidamente ilegible y propenso a errores**. Para representar estructuras más complejas con significado claro, es preferible usar `data class`, como exploraremos en las siguientes lecciones.
+
+<details>
+
+<summary>
+¿Por qué no existe soporte nativo para tuplas de más de 3 elementos en Kotlin?
+</summary>
+
+Kotlin solo incluye `Pair` y `Triple`, y no ofrece un tipo genérico para n-tuplas por varias razones:
+
+1. **Preferencia por la claridad y la legibilidad**: Quienes diseñaron del lenguaje optaron por **evitar tipos anónimos complejos** en favor de `data class` con nombres semánticos. Esto alinea con su filosofía de código explícito y mantenible.
+2. **Complejidad y mantenimiento**: Introducir n-tuplas implicaría generar `Tuple4`, `Tuple5`, ..., (como se hace en Scala, por ejemplo[^1]) además de manejar la desestructuración, equivalencia, hash, etc. Por eso, se considera que **no vale la pena frente a usar una data class clara**.
+3. **Facilidad superior con `data class`**: Cualquier estructura compuesta puede modelarse de forma más legible y extensible usando una `data class` explícita en lugar de una tupla anónima, lo que evita acceso confuso a campos `first`, `second`, `third`.
+4. **Anti-patrón en código complejo**: El uso excesivo de `Pair` o `Triple` puede dificultar la interpretación del código. En estructuras más avanzadas es preferible usar `data class` con nombres descriptivos.
+
+En resumen, Kotlin prioriza **legibilidad, mantenibilidad y expresividad** sobre la conveniencia sintáctica de tuplas genéricas. El lenguaje fomenta construir tipos con nombre cuando la semántica lo requiere, y usar tuplas solo para casos triviales o temporales.
+
+</details>
 
 ## 🎯 Conclusiones
 
 Los **tipos producto** nos permiten representar múltiples valores como una sola unidad lógica, lo cual es esencial para mantener cohesión, legibilidad y seguridad en el código. Aunque `Pair` y `Triple` son útiles para estructuras simples o temporales, **no deberían usarse para modelar entidades con significado dentro de una biblioteca**.
 
-Cuando diseñamos software reutilizable, cada tipo que exponemos es parte del contrato con quienes lo utilizan. Usar tipos producto bien definidos —con campos nombrados y propósito claro— mejora tanto la experiencia de uso como la calidad del diseño.
+Cuando diseñamos software reutilizable, cada tipo que exponemos forma parte del contrato con quienes lo utilizan. Usar tipos producto bien definidos —con campos nombrados y propósito claro— mejora tanto la experiencia de uso como la calidad del diseño.
 
 ### 🔑 Puntos clave
 
@@ -114,7 +136,13 @@ Cuando diseñamos software reutilizable, cada tipo que exponemos es parte del co
 
 Esta lección sienta las bases para trabajar con tipos producto de forma idiomática en Kotlin. Pero más allá de la sintaxis, lo importante es la **intención de diseño**: usar tipos producto no solo como herramienta técnica, sino como un medio para **expresar ideas del dominio con claridad y precisión**.
 
-Cuando representamos datos relevantes del dominio de forma clara y verificable, nuestras bibliotecas se vuelven más fáciles de entender, más difíciles de usar mal, y más simples de extender. Esa es la verdadera fuerza de los tipos producto en el diseño de software bien pensado.
+Cuando representamos datos relevantes del dominio de forma clara, explícita y verificable, nuestras bibliotecas se vuelven:
+
+- más fáciles de entender,
+- más difíciles de usar mal,
+- y más simples de extender.
+
+Esa es la verdadera fuerza de los tipos producto en el diseño de software bien pensado.
 
 En las próximas lecciones exploraremos cómo aprovechar al máximo estas capacidades usando clases comunes y `data class`, aprendiendo **cuándo usarlas, cómo estructurarlas y cómo impactan en la API que diseñamos**.
 
@@ -129,6 +157,7 @@ En las próximas lecciones exploraremos cómo aprovechar al máximo estas capaci
 ### 🔥 Recomendadas
 
 - 🌐 ["Tuple"](https://en.wikipedia.org/w/index.php?title=Tuple&oldid=1281619645) en *Wikipedia*: Artículo que describe qué es una tupla desde el punto de vista matemático y computacional, incluyendo su relación con los **tipos producto**, su uso en programación funcional y su diferencia con los conjuntos. Refuerza la base teórica detrás de estructuras como `Pair` y `Triple`, clave para entender cómo representar múltiples valores de forma coherente en un solo tipo.
+- 🌐 ["Pairs and Triples in Kotlin (and Why You Shouldn’t Use Them)"](https://www.nutrient.io/blog/pairs-and-triples-in-kotlin-and-why-you-shouldnt-use-them/) en *Nutrient* por **Menil Vukovic**: El artículo examina el uso de `Pair` y `Triple` en Kotlin como una solución conveniente pero problemática para agrupar valores. A través de ejemplos y contraejemplos, se argumenta que estas estructuras dificultan la legibilidad, la escalabilidad y la extensibilidad del código, y se propone el uso de `data class` como una alternativa superior para representar datos con significado semántico claro y mantenimiento a largo plazo.
 
 ### 🔹 Adicionales
 
@@ -137,3 +166,5 @@ En las próximas lecciones exploraremos cómo aprovechar al máximo estas capaci
 - 📚 "Product Types" (pp. 79–84) en *Practical foundations for programming languages* (2nd ed) de **Robert Harper**: Explica formalmente qué son los tipos producto, desde pares binarios hasta tuplas etiquetadas, y cómo se comportan bajo evaluación estricta o perezosa. Además, introduce sus reglas estáticas y dinámicas, su rol en recursión mutua, y su relación con los tipos de registros. Aporta una base teórica rigurosa para entender los tipos producto como fundamento para estructuras compuestas y diseño de APIs expresivas, reforzando los conceptos vistos en la lección.
 
 </ExcludeFromReadingTime>
+
+[^1]: [`Tuple2`](https://www.scala-lang.org/api/current/scala/Tuple2.html), [`Tuple5`](https://www.scala-lang.org/api/current/scala/Tuple5.html), [`Tuple21`](https://scala-lang.org/api/current/scala/Tuple21.html)
