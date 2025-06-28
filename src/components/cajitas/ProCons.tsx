@@ -1,36 +1,40 @@
-import React from 'react';
+import { FC, PropsWithChildren } from 'react';
 import './ProCons.css';
+import React from 'react';
 
-interface ProConsProps {
-    children: React.ReactNode;
+interface SectionProps extends PropsWithChildren {
+  title?: string;
+  className: string;
+  defaultTitle: string;
 }
 
-class ProCons extends React.Component<ProConsProps> {
-    render() {
-        return <div className="procons-container">{this.props.children}</div>;
-    }
-}
+const Section: FC<SectionProps> = ({ title, children, className, defaultTitle }) => (
+  <div className={className}>
+    <h3>{title ?? defaultTitle}</h3>
+    {children}
+  </div>
+);
 
-class Pros extends React.Component<ProConsProps> {
-    render() {
-        return (
-            <div className="pros">
-                <h3>Beneficios</h3>
-                {this.props.children}
-            </div>
-        );
-    }
-}
+export const ProCons: FC<PropsWithChildren> = ({ children }) => (
+  <div className="procons-container">{children}</div>
+);
 
-class Cons extends React.Component<ProConsProps> {
-    render() {
-        return (
-            <div className="cons">
-                <h3>Limitaciones</h3>
-                {this.props.children}
-            </div>
-        );
-    }
-}
+export const Pros: FC<PropsWithChildren<{ title?: string }>> = ({ title, children }) => (
+  <Section
+    className="procons__section--pros"
+    title={title}
+    defaultTitle="Beneficios"
+  >
+    {children}
+  </Section>
+);
 
-export {ProCons, Pros, Cons};
+export const Cons: FC<PropsWithChildren<{ title?: string }>> = ({ title, children }) => (
+  <Section
+    className="procons__section--cons"
+    title={title}
+    defaultTitle="Limitaciones"
+  >
+    {children}
+  </Section>
+);
