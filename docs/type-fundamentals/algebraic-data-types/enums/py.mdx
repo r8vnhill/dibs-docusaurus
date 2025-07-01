@@ -1,0 +1,65 @@
+---
+title: Tipos suma como enumeraciones en Python
+---
+import ReadingTime from '@site/src/components/reading-time/ReadingTime'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="python-dibs"/>
+
+## 🐍 Comparación: Enumeraciones en Python
+
+En Python, también podemos representar tipos suma usando enumeraciones mediante el módulo estándar [`enum`](https://docs.python.org/3/library/enum.html). Esta técnica se usa para representar conjuntos fijos de alternativas, de forma similar a `enum class` en Kotlin.
+
+### ✅ Alternativas cerradas
+
+```python
+from enum import Enum
+
+class ConnectionState(Enum):
+    CONNECTED = 1
+    DISCONNECTED = 2
+    IN_PROGRESS = 3
+```
+
+Aquí definimos un conjunto cerrado de alternativas. Cada miembro de `ConnectionState` es una instancia única del enumerado, similar a lo que ocurre en Kotlin.
+
+### 🚦 Control de flujo exhaustivo (¡no disponible!)
+
+Python **no tiene verificación exhaustiva** como la que ofrece el compilador de Kotlin. Si escribimos una función que opera sobre `ConnectionState`, podemos olvidarnos fácilmente de manejar un caso sin que el intérprete nos lo advierta:
+
+```python
+def describe_state(state: ConnectionState) -> str:
+    if state == ConnectionState.CONNECTED:
+        return "Connected!"
+    elif state == ConnectionState.DISCONNECTED:
+        return "Disconnected!"
+    # ¿Y si olvidamos IN_PROGRESS?
+```
+
+> ⚠️ En Kotlin, esto causaría un *error o advertencia de compilación* al usar `when`. En Python, el error sólo aparecería en tiempo de ejecución si ese caso se presenta.
+
+### 🧠 Comparación de características
+
+{/* <ProCons>
+
+<Pros title="Ventajas de Python">
+- Definición sencilla usando la biblioteca estándar.
+- Fácil de serializar o extender dinámicamente en algunos casos.
+
+<Cons title="Desventajas respecto a Kotlin">
+- No hay verificación exhaustiva: puedes olvidar un caso y el error pasará desapercibido hasta el tiempo de ejecución.
+- No hay soporte nativo para desestructuración ni integración con expresiones similares a `when`.
+- No se puede restringir el conjunto de alternativas fuera de la definición tan estrictamente como en Kotlin (por ejemplo, con `sealed`).
+
+</ProCons> */}
+
+### 🔍 ¿Qué puede hacer Kotlin que Python no?
+
+* **Verificación exhaustiva en tiempo de compilación** usando `when`: garantiza que todos los casos de una enumeración estén cubiertos.
+* **Compatibilidad con `sealed class`** para evolucionar hacia tipos suma con datos asociados.
+* **Context-sensitive resolution** para escribir menos sin perder seguridad.
+
+---
+
+Esta comparación refuerza por qué `enum class` es una herramienta poderosa en Kotlin al diseñar bibliotecas seguras y expresivas. Aunque Python permite representar tipos suma con `Enum`, su enfoque dinámico lo vuelve más propenso a errores silenciosos y omisiones en tiempo de ejecución.
