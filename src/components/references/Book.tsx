@@ -1,24 +1,8 @@
 import React from "react";
 import ExcludeFromReadingTime from "../reading-time/ExcludeFromReadingTime";
+import styles from "./Book.module.css";
 
-type PageRange = string & { __brand: "PageRange" };
-
-/**
- * Creates a validated `PageRange` from a string value.
- *
- * This function ensures the string is in the format `number-number`, such as `"12-45"`, and casts
- * it to a branded type.
- *
- * @param value - The raw string representing a page range.
- * @returns A branded `PageRange` string.
- * @throws Will throw an error if the format does not match `^\d+-\d+$`.
- */
-export function createPageRange(value: string): PageRange {
-  if (!/^\d+-\d+$/.test(value)) {
-    throw new Error(`Invalid page range: ${value}`);
-  }
-  return value as PageRange;
-}
+type PageRange = [number, number];
 
 /**
  * Props for the {@link Book} reference component.
@@ -54,7 +38,7 @@ export interface BookProps {
  * ```tsx
  * <Book
  *   chapter="Introduction to Gradle"
- *   pages={createPageRange("1-10")}
+ *   pages={[1, 10]}
  *   book="Gradle in Action"
  *   author="Benjamin Muschko"
  * >
@@ -62,7 +46,7 @@ export interface BookProps {
  * </Book>
  * ```
  */
-const Book: React.FC<BookProps> = ({
+const Book = React.memo(({
   chapter,
   pages,
   book,
@@ -70,22 +54,27 @@ const Book: React.FC<BookProps> = ({
   className = "",
   icon = "📕",
   children,
-}) => {
-  if (!chapter || !pages || !book || !author) {
+}: BookProps) => {
+  if (!chapter || !book || !author) {
     throw new Error(
-      "Book: 'chapter', 'pages', 'book' and 'author' are required props."
+      "Book: 'chapter', 'book' and 'author' are required props."
     );
   }
 
   return (
-    <ExcludeFromReadingTime>
-      <div className={`book ${className}`}>
-        {icon} "{chapter}" (pp. {createPageRange(pages).replace("-", "–")}) en{" "}
-        <i>{book}</i> por <b>{author}</b>:
-      </div>
-      {children && <div className="book-description">{children}</div>}
-    </ExcludeFromReadingTime>
+    <div className={`${styles.book} ${className}`.trim()}>
+      <span className={styles.icon}>{icon}</span>{' '}
+      <span className={styles.chapter}>“{chapter}”</span>{' '}
+      {pages && (
+        <span className={styles.pages}>
+          (pp. {pages[0]}–{pages[1]})
+        </span>
+      )}{" en "}
+      <span className={styles.bookTitle}>{book}</span> por{' '}
+      <span className={styles.author}>{author}</span>:
+      {children && <div className={styles.description}>{children}</div>}
+    </div>
   );
-};
+});
 
 export default Book;

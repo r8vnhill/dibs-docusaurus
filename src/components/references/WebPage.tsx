@@ -1,4 +1,5 @@
 import React from "react";
+import styles from "./WebPage.module.css";
 
 /**
  * Props for the {@link WebPage} component.
@@ -49,16 +50,15 @@ const WebPage: React.FC<WebPageProps> = ({
   }
 
   return (
-    <div className={`webpage ${className}`}>
-      {icon}{" "}
-      <a href={url} target="_blank" rel="noopener noreferrer">
-        "{title}"
-      </a>{" "}
-      en <b>{location}</b>:
-      {children && <div className="webpage-description">{children}</div>}
+    <div className={`${styles.webPage} ${className}`.trim()}>
+      <span className={styles.icon}>{icon}</span>{' '}
+      <a href={url} target="_blank" rel="noopener noreferrer" className={styles.title}>
+        “{title}”
+      </a> en{' '}
+      <span className={styles.location}>{location}</span>:
+      {children && <div className={styles.description}>{children}</div>}
     </div>
   );
 };
 
 export default WebPage;
-  

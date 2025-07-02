@@ -1,4 +1,6 @@
 import React from "react";
+import ExcludeFromReadingTime from "../reading-time/ExcludeFromReadingTime";
+import styles from "./ReferenceList.module.css";
 
 export interface ReferenceListProps {
   items: React.ReactNode[];
@@ -21,14 +23,16 @@ const ReferenceList: React.FC<ReferenceListProps> = ({
   title = "Referencias",
 }) => {
   return (
-    <section className={`reference-list ${className}`.trim()}>
-      {title && <h2>{title}</h2>}
-      <ul>
-        {items.map((item, index) => (
-          <li key={index}>{item}</li>
-        ))}
-      </ul>
-    </section>
+    <ExcludeFromReadingTime>
+      <section className={`${styles.referenceList} ${className}`.trim()}>
+        {title && <h3 className={styles.title}>{title}</h3>}
+        <ul className={styles.list}>
+          {items.map((item, index) => (
+            <li key={index} className={styles.listItem}>{item}</li>
+          ))}
+        </ul>
+      </section>
+    </ExcludeFromReadingTime>
   );
 };
 
