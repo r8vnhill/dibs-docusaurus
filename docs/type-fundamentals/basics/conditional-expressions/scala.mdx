@@ -2,13 +2,25 @@
 title: Expresiones condicionales en Scala
 ---
 import Explanation from '@site/src/components/admonitions/Explanation'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import ReadingTime from '@site/src/components/reading-time/ReadingTime'
+import GithubRepoLink from '@site/src/components/GithubRepoLink'
+
+<ReadingTime />
+<GithubRepoLink user="r8vnhill" repo="scala-dibs" />
+
+Scala es un lenguaje expresivo y funcional donde incluso las construcciones de control más tradicionales, como `if` y `match`, se comportan como **expresiones**: devuelven un valor y pueden componer lógica declarativa sin efectos secundarios.
+
+En esta lección exploraremos cómo Scala trata las decisiones condicionales de forma más rica que otros lenguajes como Java o Kotlin. Aprenderás a escribir `if` como una verdadera expresión, a evitar errores comunes como omitir la rama `else`, y a usar `match` para construir flujos de decisión potentes y seguros, incluyendo técnicas como **guardas** y **coincidencia estructural**.
+
+Estas capacidades son fundamentales para diseñar bibliotecas expresivas, seguras y fáciles de mantener —y te prepararán para modelar lógica más avanzada con tipos algebraicos.
 
 ## 🔀 `if` siempre es una expresión
 
 En Scala, **`if` es siempre una expresión**: produce un valor y no se limita a controlar el flujo del programa.  
 Esto permite escribir funciones concisas y expresivas, sin necesidad de bloques adicionales para calcular y luego retornar un valor.
 
-```scala
+```scala showLineNumbers
 def maxOf(a: Int, b: Int): Int = if a > b then a else b
 ```
 
@@ -17,125 +29,170 @@ def maxOf(a: Int, b: Int): Int = if a > b then a else b
     No se necesita una variable temporal ni múltiples líneas: la expresión produce el resultado esperado en una sola instrucción.
 </Explanation>
 
-Cuando se omite la rama `else`, el compilador debe proporcionar un valor para el caso faltante.  
-Scala resuelve esto introduciendo el valor `()`, de tipo `Unit`, que representa la ausencia de información útil (similar a `void` en otros lenguajes).
+### ⚠️ Omitir `else` puede generar resultados confusos
 
-```scala
-val x: Int | Unit = if 1 > 2 then 1
+Aunque `if` siempre es una expresión en Scala, **omitir la rama `else` cuando se espera un valor no invalida el programa**, pero sí produce un comportamiento inesperado y un warning del compilador.
+
+```scala showLineNumbers
+val x: Unit = if 1 > 2 then 1
+val y: Unit = if 2 > 1 then 1
 println(x) // Prints: ()
+println(y) // Prints: ()
 ```
 
 <Explanation>
-    - En este ejemplo, como la condición es falsa y no hay rama `else`, el resultado de la expresión `if` es `()`.
-    - La rama `then` retorna un `Int`, mientras que la rama implícita retorna `Unit`, por lo que el tipo inferido debe abarcar ambos: `Int | Unit`.
+    - En ambos casos, el compilador detecta que estás usando `if` como expresión, pero falta la rama `else`.
+    - Como se espera un valor de tipo `Unit`, Scala convierte implícitamente la expresión `if` en un bloque `{ 1; () }`, descartando el valor `1` y retornando `()`.
+    - El compilador muestra una advertencia:  
+      **"Discarded non-Unit value of type Int. Add `: Unit` to discard silently."**
+    - Aunque el código compila y se ejecuta, **el resultado final es siempre `()`**, lo que probablemente no sea lo que se pretendía.
 </Explanation>
 
 :::tip Mejores prácticas
 
-Dado que `if` siempre es una expresión en Scala, es recomendable incluir explícitame
-nte la rama `else`.  
-Esto hace que el código sea más claro, más predecible, y evita tipos compuestos innecesarios como `Int | Unit`.
+Si estás usando `if` como expresión, **nunca omitas la rama `else`** cuando esperas que produzca un valor.  
+Esto previene advertencias, evita que valores útiles sean descartados silenciosamente, y hace que la intención del código sea explícita.
 
 :::
 
-### 🎛️ `match` como alternativa a `when`
+## 🎛️ `match` como alternativa a `when`
 
-TODO
+Scala no tiene una construcción `when` como Kotlin, pero ofrece algo más potente: el **patrón de emparejamiento** (`match`).  
+`match` permite comparar un valor contra múltiples patrones y ejecutar diferentes ramas según corresponda. A diferencia de `switch` en otros lenguajes, es **más expresivo y seguro** si se usa correctamente.
 
-```scala
-status match {
+```scala showLineNumbers
+status match
   case 200 | 201 | 204 => "Success"
-  case 400             => "Bad Request"
-  case 404             => "Not Found"
-  case x if x >= 500   => "Server error"
-  case _               => "Unhandled status"
-}
+  case 400 => "Bad Request"
+  case 404 => "Not Found"
+  case 500 => "Internal Server Error"
+  case "timeout" => "The request timed out"
+  case status: Int => s"Unhandled status code: $status"
+  case status: String => s"Unhandled string: $status"
+  case _ => "Unknown type"
 ```
 
-#### 🧠 Lo que sí puedes hacer en Scala (pero no en Kotlin):
-
-- **Coincidencia estructural**: puedes hacer *pattern matching* con destructuración.
+<Explanation>
+  Este ejemplo muestra cómo `match` puede combinar múltiples técnicas de emparejamiento:
   
-  ```scala
-  val person = ("Jane", 30)
+  - `200 | 201 | 204`: uso de **patrones alternativos** con `|` para valores equivalentes.
+  - `status: Int`: **extracción con tipo**, que permite manejar enteros no cubiertos antes.
+  - `status: String`: lo mismo pero para cadenas.
+  - `_`: **comodín** que actúa como caso por defecto.
+  
+  Esta estructura es mucho más flexible que `switch` o `when`, ya que permite trabajar con estructuras complejas, tipos, guardas y más.
+</Explanation>
 
-  person match {
-    case (name, age) => s"$name is $age years old"
-  }
-  ```
+### 🧪 Pattern guards
 
-- **Coincidencias por tipo y extracción simultánea**:
+Scala permite refinar aún más los patrones usando **pattern guards**, una condición adicional escrita con `if` después del patrón.  
+Esto permite, por ejemplo, distinguir ciertos enteros o validar condiciones más complejas:
 
-  ```scala
-  def describe(x: Any): String = x match {
-    case i: Int    => s"Integer: $i"
-    case s: String => s"String: $s"
-    case _         => "Unknown"
-  }
-  ```
-
-- **Coincidencias anidadas y múltiples niveles de patrones**.
-
-#### ❌ Esto no es posible en Kotlin:
-
-Kotlin no admite coincidencias destructivas con `when`, ni siquiera con tuplas. Tampoco permite anidamientos complejos directamente dentro de `when`.  
-Para obtener capacidades similares a las de `match`, necesitas usar bibliotecas externas o combinar varias expresiones.
-
----
-
-### 🧪 `if`, `match` y tipos
-
-Scala también infiere el tipo de las expresiones `if` o `match`:
-
-```scala
-val message = if (isValid) "OK" else 404
-// message: Any → mezcla String e Int
+```scala showLineNumbers
+status match
+  case s: Int if s >= 200 && s < 300 => "Success"
+  case s: Int if s >= 400 && s < 500 => "Client error"
+  case s: Int if s >= 500 => "Server error"
+  case _ => "Unknown"
 ```
 
-Cuando las ramas tienen tipos distintos, el tipo resultante será su **tipo común más general**, usualmente `Any`. Esto puede ser fuente de errores si no se maneja con cuidado.
+<Explanation>
+  Aquí usamos **pattern guards** para clasificar códigos HTTP numéricos por rango:
+  
+  - Cada `case` empareja primero un entero (`s: Int`), y luego aplica una condición adicional (`if ...`) sobre ese valor.
+  - Esta técnica evita tener que enumerar todos los valores individualmente.
+  - También puede usarse con cualquier tipo de patrón, no solo enteros.
+</Explanation>
 
----
+### 🧮 `match` no siempre es exhaustivo
 
-### 🧮 `match` exhaustivo
+A diferencia de Kotlin, Scala **no fuerza la exhaustividad** en todas las situaciones.  
+Si no se cubren todos los casos posibles y no se incluye un comodín (`_`), se corre el riesgo de un error en tiempo de ejecución llamado `MatchError`.
 
-Scala exige que el `match` sea **exhaustivo**, especialmente cuando se trabaja con tipos sellados (`sealed`).  
-Esto ayuda al compilador a detectar ramas faltantes:
-
-```scala
-sealed trait Status
-case object Ok extends Status
-case object Error extends Status
-
-def message(s: Status): String = s match {
-  case Ok    => "All good"
-  case Error => "Something went wrong"
-  // No se necesita case _ si todos los casos están cubiertos
-}
+```scala showLineNumbers
+networkStatus(Object())
 ```
 
-En Kotlin, `when` también puede ser exhaustivo si se usa con tipos `sealed`, pero no lo exige por defecto salvo en asignaciones.
+```plaintext
+Exception in thread "main" scala.MatchError: java.lang.Object@... (of class java.lang.Object)
+  at ...
+```
 
----
+<Explanation>
+  En este ejemplo, `networkStatus` no tiene una rama que maneje objetos arbitrarios.  
+  Al pasarle un `Object`, ninguna de las cláusulas coincide, lo que produce un `MatchError`.  
+  Para evitarlo, se recomienda:
+  
+  - Usar un caso `case _ =>` como rama por defecto.
+  - Trabajar con **tipos sellados (`sealed`)** o **enumeraciones**, donde el compilador sí puede forzar exhaustividad.
+</Explanation>
 
-## 🧾 Conclusiones comparativas
+:::tip Mejores prácticas
 
-| Característica                    | Kotlin (`if` / `when`)               | Scala (`if` / `match`)                      |
-|----------------------------------|--------------------------------------|---------------------------------------------|
-| `if` como expresión              | ✅ Sí                                 | ✅ Sí                                        |
-| `if` sin `else`                 | ❌ Error de compilación               | ⚠️ Permitido, pero puede resultar en `null` |
-| `when` / `match` como expresión  | ✅ Sí                                 | ✅ Sí                                        |
-| Verificación de tipo            | ✅ `is` / `!is`                       | ✅ con `case x: Type =>`                     |
-| Coincidencia estructural        | ❌ No                                 | ✅ Sí                                        |
-| Destructuración de tuplas       | ❌ No                                 | ✅ Sí                                        |
-| Anidación compleja              | ❌ Limitada                           | ✅ Avanzada                                  |
-| Pattern matching exhaustivo     | ⚠️ Solo con `sealed` y en asignaciones | ✅ Requiere exhaustividad con `sealed`       |
+Siempre que uses `match`, asegúrate de cubrir todos los casos posibles, ya sea mediante patrones específicos o con un comodín `_`.  
+Si trabajas con tus propios tipos, usa `sealed trait` o `enum` para que el compilador pueda ayudarte a detectar casos no cubiertos.
 
----
+:::
 
-## 🧠 Reflexión
+### 🧩 Pattern matching
 
-Tanto Kotlin como Scala promueven un enfoque expresivo y funcional en el control de flujo.  
-Sin embargo, **Scala lleva este enfoque más lejos con su soporte completo para *pattern matching***, lo cual es especialmente útil al construir bibliotecas sobre estructuras algebraicas, árboles sintácticos o representaciones anidadas.
+Los ejemplos que vimos hasta ahora son casos simples de **pattern matching**: comparar valores literales o tipos básicos.  
+Sin embargo, una de las fortalezas más destacadas de Scala es su capacidad para realizar **coincidencia estructural** y **destructuración** de objetos y colecciones.
 
-Si vienes de Kotlin, apreciarás la consistencia de las expresiones, pero también notarás que **Scala te da más herramientas para representar y manipular datos de forma estructurada y concisa**, lo que puede resultar muy poderoso en el diseño de bibliotecas reutilizables.
+Más adelante, cuando veamos **tipos algebraicos** como `case class`, `enum` o jerarquías con `sealed trait`, aprenderemos cómo `match` puede descomponer estructuras complejas, extraer valores internos, e incluso aplicar condiciones personalizadas.
 
+Esto permite escribir código conciso, seguro y expresivo, especialmente útil al diseñar bibliotecas y trabajar con estructuras de datos ricas.
+
+## 📊 Resumen comparativo
+
+| Característica                  | Kotlin                               | Scala                                |
+|---------------------------------|--------------------------------------|--------------------------------------|
+| Naturaleza de `if`              | Declaración o expresión              | Siempre expresión                    |
+| Rama `else` en expresiones `if` | Obligatoria                          | Opcional (pero recomendada)          |
+| Valor de `if` sin `else`        | Error de compilación                 | Retorna `Unit` (con advertencia)     |
+| Bloques con llaves              | Obligatorio para múltiples líneas    | Indentación obligatoria (Scala 3)    |
+| Estructura múltiple             | `when`                               | `match`                              |
+| Retorno de valor en estructuras | `if` y `when` pueden retornar valor  | `if` y `match` retornan valor       |
+| Fall-through en estructuras     | No permitido                         | No permitido                        |
+| Patrón comodín                  | Rama `else` obligatoria si no exhaustivo | `_` opcional (pero recomendado)  |
+| Chequeo de exhaustividad        | Automático para `when` con enums o sealed types | Automático solo con tipos sellados o enums |
+| Coincidencia estructural avanzada | No soportada (solo básica)           | Soportada (destructuración, guardas, coincidencias avanzadas) |
+| Guardas en patrones             | Experimental (`-Xwhen-guards`)       | Soportado plenamente (`if`)         |
+
+<ProCons>
+  <Pros title="Beneficios de Scala">
+    - **`if` siempre es una expresión**, lo que simplifica la lógica al permitir un estilo más funcional y menos imperativo.
+    - **`match` ofrece patrones avanzados** como la coincidencia estructural, destructuración y guardas, lo que permite un control de flujo más potente y expresivo.
+    - **Unión de tipos** (`Int | String`) que mejora la flexibilidad al evaluar condiciones con valores de tipos distintos.
+    - El **pattern matching estructural** permite trabajar fácilmente con estructuras de datos complejas como listas, tuplas y case classes.
+    - Uso de **guardas en patrones** (`case ... if`) para evaluar condiciones adicionales, haciendo el código más conciso y legible.
+  </Pros>
+  
+  <Cons title="Limitaciones de Scala">
+    - **La rama `else` es opcional en expresiones `if`**, lo que puede causar errores inadvertidos al retornar valores inesperados (`Unit`).
+    - **No fuerza exhaustividad en todos los casos** del patrón `match`, lo que puede llevar a errores en tiempo de ejecución (`MatchError`) si no se usa correctamente.
+    - **El patrón comodín (`_`) es opcional**, por lo que queda en manos del desarrollador asegurar que todos los casos estén cubiertos, aumentando el riesgo de errores inadvertidos.
+    - Aunque flexible, el uso avanzado del pattern matching puede generar código difícil de leer si se abusa de patrones complejos o guardas demasiado intrincadas.
+  </Cons>
+</ProCons>
+
+## 🎯 Conclusiones
+
+Scala promueve un estilo funcional y expresivo donde incluso las construcciones de control tradicionales como `if` y `match` son expresiones que retornan valores. Esto permite componer lógica de forma más declarativa y concisa, pero también implica nuevas responsabilidades: el compilador permite más, pero espera que quien escribe el código sea más explícito y cuidadoso.
+
+El sistema de patrones de Scala —junto con sus guardas y coincidencia estructural— abre la puerta a un estilo poderoso y seguro de programación, especialmente útil al diseñar bibliotecas con estructuras de datos complejas. No obstante, este poder requiere atención: omitir un caso en `match` o no usar un `else` puede derivar en errores sutiles.
+
+### 🔑 Puntos clave
+
+- `if` **siempre es una expresión** y puede devolver un valor, pero omitir `else` cuando se espera un valor **puede llevar a resultados inesperados**.
+- Scala **no tiene `when`**, pero `match` lo supera ampliamente en flexibilidad y expresividad.
+- Se pueden usar **tipos alternativos**, destructuración y **pattern guards** para expresar condiciones de forma elegante.
+- El compilador **solo fuerza exhaustividad con tipos sellados o enumeraciones**, por lo que es buena práctica incluir un comodín (`_`) para evitar errores en tiempo de ejecución.
+
+### 🧰 ¿Qué nos llevamos?
+
+Aprendimos que en Scala el control de flujo no es una excepción al diseño expresivo y funcional del lenguaje: tanto `if` como `match` pueden usarse para devolver valores, construir lógica compleja sin efectos secundarios y modelar decisiones con precisión.
+
+Además, vimos cómo `match` no se limita a simples comparaciones, sino que permite construir patrones ricos, validar condiciones con guardas y desestructurar estructuras complejas. Estas capacidades son fundamentales para escribir código expresivo, seguro y reutilizable en bibliotecas funcionales.
+
+Esta base será esencial para lo que viene: modelar datos con tipos algebraicos y aprovechar aún más el poder de los patrones.
