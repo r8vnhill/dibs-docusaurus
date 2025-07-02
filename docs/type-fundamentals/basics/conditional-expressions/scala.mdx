@@ -1,0 +1,141 @@
+---
+title: Expresiones condicionales en Scala
+---
+import Explanation from '@site/src/components/admonitions/Explanation'
+
+## 🔀 `if` siempre es una expresión
+
+En Scala, **`if` es siempre una expresión**: produce un valor y no se limita a controlar el flujo del programa.  
+Esto permite escribir funciones concisas y expresivas, sin necesidad de bloques adicionales para calcular y luego retornar un valor.
+
+```scala
+def maxOf(a: Int, b: Int): Int = if a > b then a else b
+```
+
+<Explanation>
+    En este ejemplo, `if` retorna directamente el mayor valor entre `a` y `b`.  
+    No se necesita una variable temporal ni múltiples líneas: la expresión produce el resultado esperado en una sola instrucción.
+</Explanation>
+
+Cuando se omite la rama `else`, el compilador debe proporcionar un valor para el caso faltante.  
+Scala resuelve esto introduciendo el valor `()`, de tipo `Unit`, que representa la ausencia de información útil (similar a `void` en otros lenguajes).
+
+```scala
+val x: Int | Unit = if 1 > 2 then 1
+println(x) // Prints: ()
+```
+
+<Explanation>
+    - En este ejemplo, como la condición es falsa y no hay rama `else`, el resultado de la expresión `if` es `()`.
+    - La rama `then` retorna un `Int`, mientras que la rama implícita retorna `Unit`, por lo que el tipo inferido debe abarcar ambos: `Int | Unit`.
+</Explanation>
+
+:::tip Mejores prácticas
+
+Dado que `if` siempre es una expresión en Scala, es recomendable incluir explícitame
+nte la rama `else`.  
+Esto hace que el código sea más claro, más predecible, y evita tipos compuestos innecesarios como `Int | Unit`.
+
+:::
+
+### 🎛️ `match` como alternativa a `when`
+
+TODO
+
+```scala
+status match {
+  case 200 | 201 | 204 => "Success"
+  case 400             => "Bad Request"
+  case 404             => "Not Found"
+  case x if x >= 500   => "Server error"
+  case _               => "Unhandled status"
+}
+```
+
+#### 🧠 Lo que sí puedes hacer en Scala (pero no en Kotlin):
+
+- **Coincidencia estructural**: puedes hacer *pattern matching* con destructuración.
+  
+  ```scala
+  val person = ("Jane", 30)
+
+  person match {
+    case (name, age) => s"$name is $age years old"
+  }
+  ```
+
+- **Coincidencias por tipo y extracción simultánea**:
+
+  ```scala
+  def describe(x: Any): String = x match {
+    case i: Int    => s"Integer: $i"
+    case s: String => s"String: $s"
+    case _         => "Unknown"
+  }
+  ```
+
+- **Coincidencias anidadas y múltiples niveles de patrones**.
+
+#### ❌ Esto no es posible en Kotlin:
+
+Kotlin no admite coincidencias destructivas con `when`, ni siquiera con tuplas. Tampoco permite anidamientos complejos directamente dentro de `when`.  
+Para obtener capacidades similares a las de `match`, necesitas usar bibliotecas externas o combinar varias expresiones.
+
+---
+
+### 🧪 `if`, `match` y tipos
+
+Scala también infiere el tipo de las expresiones `if` o `match`:
+
+```scala
+val message = if (isValid) "OK" else 404
+// message: Any → mezcla String e Int
+```
+
+Cuando las ramas tienen tipos distintos, el tipo resultante será su **tipo común más general**, usualmente `Any`. Esto puede ser fuente de errores si no se maneja con cuidado.
+
+---
+
+### 🧮 `match` exhaustivo
+
+Scala exige que el `match` sea **exhaustivo**, especialmente cuando se trabaja con tipos sellados (`sealed`).  
+Esto ayuda al compilador a detectar ramas faltantes:
+
+```scala
+sealed trait Status
+case object Ok extends Status
+case object Error extends Status
+
+def message(s: Status): String = s match {
+  case Ok    => "All good"
+  case Error => "Something went wrong"
+  // No se necesita case _ si todos los casos están cubiertos
+}
+```
+
+En Kotlin, `when` también puede ser exhaustivo si se usa con tipos `sealed`, pero no lo exige por defecto salvo en asignaciones.
+
+---
+
+## 🧾 Conclusiones comparativas
+
+| Característica                    | Kotlin (`if` / `when`)               | Scala (`if` / `match`)                      |
+|----------------------------------|--------------------------------------|---------------------------------------------|
+| `if` como expresión              | ✅ Sí                                 | ✅ Sí                                        |
+| `if` sin `else`                 | ❌ Error de compilación               | ⚠️ Permitido, pero puede resultar en `null` |
+| `when` / `match` como expresión  | ✅ Sí                                 | ✅ Sí                                        |
+| Verificación de tipo            | ✅ `is` / `!is`                       | ✅ con `case x: Type =>`                     |
+| Coincidencia estructural        | ❌ No                                 | ✅ Sí                                        |
+| Destructuración de tuplas       | ❌ No                                 | ✅ Sí                                        |
+| Anidación compleja              | ❌ Limitada                           | ✅ Avanzada                                  |
+| Pattern matching exhaustivo     | ⚠️ Solo con `sealed` y en asignaciones | ✅ Requiere exhaustividad con `sealed`       |
+
+---
+
+## 🧠 Reflexión
+
+Tanto Kotlin como Scala promueven un enfoque expresivo y funcional en el control de flujo.  
+Sin embargo, **Scala lleva este enfoque más lejos con su soporte completo para *pattern matching***, lo cual es especialmente útil al construir bibliotecas sobre estructuras algebraicas, árboles sintácticos o representaciones anidadas.
+
+Si vienes de Kotlin, apreciarás la consistencia de las expresiones, pero también notarás que **Scala te da más herramientas para representar y manipular datos de forma estructurada y concisa**, lo que puede resultar muy poderoso en el diseño de bibliotecas reutilizables.
+
