@@ -97,7 +97,7 @@ export const ScalaTestCard = createCard(
 );
 export const MSBuildCard = createCard(
   "https://upload.wikimedia.org/wikipedia/commons/b/bf/MSBuild_logo.png",
-  ".NET: MSBuild"
+  "C#: MSBuild"
 );
 export const AntCard = createCard(
   "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Apache-Ant-logo.svg/2560px-Apache-Ant-logo.svg.png",
