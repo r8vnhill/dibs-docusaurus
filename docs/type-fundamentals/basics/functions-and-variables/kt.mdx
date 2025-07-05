@@ -1,9 +1,8 @@
 ---
 title: Declaración de funciones y variables
 ---
-import ReadingTime from '@site/src/components/ReadingTime'
+import ReadingTime from '@site/src/components/reading-time/ReadingTime'
 import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
-import References from '@site/src/components/ReferencesComponent'
 import Tabs from '@theme/Tabs'
 import TabItem from '@theme/TabItem'
 import Exercise from '@site/src/components/exercise/Exercise'
@@ -14,129 +13,27 @@ import Corollary from '@site/src/components/Corollary'
 import GithubRepoLink from '@site/src/components/GithubRepoLink'
 import * as LanguageCards from '@site/src/components/cards/LanguageCard'
 import Explanation from '@site/src/components/admonitions/Explanation'
-import RepoClone from '@site/src/components/admonitions/RepoClone'
-import AnimatedCodeExample from '@site/src/components/animations/AnimatedCode'
+import ReferenceList from '@site/src/components/references/ReferenceList'
+import Book from '@site/src/components/references/Book'
+import WebPage from '@site/src/components/references/WebPage'
 
 <ReadingTime />
 
-Ahora es momento de enfocarnos en dos elementos esenciales para cualquier programa —y especialmente importantes al desarrollar bibliotecas reutilizables—: las funciones y las variables.
-En una biblioteca, estos elementos constituyen la interfaz pública (API), por lo que deben diseñarse con claridad, coherencia y propósito.
+Ahora es momento de enfocarnos en dos elementos esenciales para cualquier programa —y especialmente relevantes al desarrollar bibliotecas reutilizables—: las funciones y las variables.  
+En una biblioteca, estos elementos forman parte fundamental de la interfaz pública (API), por lo que deben diseñarse con claridad, coherencia y propósito.
 
-En esta lección aprenderás a declarar funciones tanto de forma tradicional como mediante expresiones, aprovecharás la **inferencia de tipos** para reducir redundancias y aumentar la legibilidad, y entenderás cómo elegir conscientemente entre **val** y **var**, según la necesidad real de mutabilidad en tu código. También discutiremos convenciones y buenas prácticas para mantener un estilo claro, coherente y alineado con el diseño idiomático de Kotlin.
+En esta lección aprenderás a declarar funciones tanto de forma tradicional como mediante expresiones, a aprovechar la **inferencia de tipos** para reducir redundancias y mejorar la legibilidad, y a elegir conscientemente entre **val** y **var** según la necesidad real de mutabilidad en tu código. También discutiremos convenciones y buenas prácticas para mantener un estilo claro, consistente y alineado con el diseño idiomático de Kotlin.
 
-Comprender estos aspectos fundamentales te permitirá escribir, desde el inicio, un código más limpio, seguro y fácil de mantener, sentando las bases necesarias para construir bibliotecas sólidas y bien diseñadas.
+Comprender estos aspectos fundamentales te permitirá escribir, desde el inicio, un código más limpio, seguro y mantenible, sentando las bases para construir bibliotecas sólidas y bien diseñadas.
 
-## 🧩 Funciones en Kotlin
-
-Una **función** en Kotlin es un bloque de código reutilizable que realiza una tarea específica. La sintaxis básica para declarar una función es la siguiente:
-
-```kotlin title="Estructura general"
-fun functionName(param1: Type1, param2: Type2 = defaultValue, ...): ReturnType {
-    // Cuerpo de la función
-    return result
-}
-```
-
-:::info Explicación de la sintaxis
-
-- **`fun`**: Palabra clave que se utiliza para declarar una función.
-- **`functionName`**: Nombre descriptivo que identifica la función.
-- **`param1`, `param2`**: Parámetros que recibe la función, cada uno con su tipo correspondiente.
-  - Puedes declarar funciones sin parámetros si no los necesitas.
-  - También puedes definir parámetros opcionales, asignándoles valores predeterminados.
-- **`ReturnType`**: Tipo del valor que retorna la función.
-  - Si la función no retorna ningún valor útil, se utiliza el tipo especial `Unit` (puede omitirse, ya que es implícito).
-- **Cuerpo de la función**: Conjunto de instrucciones que definen el comportamiento de la función.
-
-:::
-
-
-### ➕ Ejemplo: Sumar dos números
-
-```kotlin showLineNumbers title="Versión con cuerpo de bloque"
-fun sum(a: Int, b: Int): Int {
-    return a + b
-}
-```
-
-Si la función consiste en una única expresión, puedes usar una sintaxis más concisa mediante asignación directa:
-
-```kotlin showLineNumbers title="Versión con asignación directa y tipo explícito"
-fun sum(a: Int, b: Int): Int = a + b
-```
-
-Y aún más, Kotlin puede inferir automáticamente el tipo de retorno:
-
-```kotlin showLineNumbers title="Versión con inferencia de tipos"
-fun sum(a: Int, b: Int) = a + b
-```
-
-Este estilo hace que el código sea más conciso, idiomático y fácil de leer.
-
-:::note Si vienes de Scala...
-
-En Kotlin, **la palabra clave `return` es obligatoria** cuando usas el bloque clásico `{ ... }`.
-Esto contrasta con Scala, donde la **última expresión se devuelve automáticamente** sin necesidad de `return`.
-
-En Kotlin, ese comportamiento implícito **solo ocurre** cuando usas la sintaxis de una sola expresión (`= ...`).
-
-:::
-
-
-::::info Inferencia de tipos
-
-Kotlin es un lenguaje con **inferencia de tipos**, lo que significa que el compilador puede deducir el tipo de una variable o expresión según el contexto.
-En el ejemplo anterior, como la función tiene una única expresión, **el tipo de retorno se infiere automáticamente**.
-
-:::warning No abuses de la inferencia
-
-Aunque la inferencia puede hacer el código más limpio y conciso, **no siempre es recomendable omitir los tipos**.
-En funciones **públicas** o con lógica **más compleja**, declarar el tipo explícitamente mejora la **claridad**, la **documentación implícita** y la **mantenibilidad** del código.
-
-:::
-::::
-
-:::::tip Estilo de nombres
-
-En Kotlin, **las funciones y variables deben nombrarse usando la convención `camelCase`**. Esto significa:
-
-- El nombre comienza con **minúscula**.
-- Las palabras subsiguientes se escriben **pegadas**, iniciando con **mayúscula**.
-
-✅ Ejemplos correctos:
-- `calculateTotal`
-- `printMessage`
-- `main`
-
-Un estilo de nombres consistente **mejora la legibilidad** y ayuda a mantener un código coherente con las prácticas idiomáticas de Kotlin.
-
-::::danger Estilos incorrectos
-
-Evita otros estilos que pueden venir de otros lenguajes o hábitos anteriores:
-
-- `CalculateTotal` → ❌ **PascalCase**, usado para **clases** y **tipos**, no funciones.
-- `calculate_total` → ❌ **snake_case**, típico de Python, **no se usa** en Kotlin.
-- `calculate-total` → ❌ **kebab-case**, **inválido** como identificador en Kotlin.
-- `CALCULATE_TOTAL` → ❌ Reservado para **constantes**, no para funciones o variables mutables.
-
-:::note ¿Y `val`?
-
-Aunque `val` representa una variable inmutable, eso **no significa que sea una constante**.
-En Kotlin, las variables en mayúsculas como `CALCULATE_TOTAL` están reservadas para **constantes**, es decir, valores que son conocidos y fijos **en tiempo de compilación**.
-
-Ampliaremos esta idea más adelante cuando veamos **definiciones estáticas** y cómo Kotlin las maneja.
-
-:::
-::::
-:::::
 
 
 ## 📦 Declaración de variables
 
 En Kotlin puedes declarar variables de dos formas:
 
-- `val` → **inmutable**: no puede reasignarse una vez inicializada.
-- `var` → **mutable**: puede cambiar su valor posteriormente.
+- `val` → **sólo lectura**: su valor no puede reasignarse una vez inicializado. 
+- `var` → **lectura y escritura**: su valor puede modificarse posteriormente.
 
 ```kotlin title="Sintaxis general"
 val o var nombreVariable: Tipo = valor
@@ -144,40 +41,42 @@ val o var nombreVariable: Tipo = valor
 
 :::tip Inferencia de tipos
 
-En ambos casos, el tipo puede omitirse si el compilador puede inferirlo.
+En ambos casos, puedes omitir el tipo si el compilador puede inferirlo a partir del valor asignado.
 
 :::
 
-### 🔒 Inmutable (`val`)
+### 🔒 Sólo lectura (`val`)
 
-Usa `val` cuando **la referencia** de la variable no cambiará después de su asignación. Una vez inicializada, no podrás reasignarle otro valor.
+Usa `val` cuando **la referencia** de la variable no cambiará después de su asignación.  
+Una vez inicializada, no podrás asignarle otro valor.
 
-```kotlin showLineNumbers title="Inmutabilidad con val: asignación única y errores de reasignación"
+```kotlin showLineNumbers title="Variables de solo lectura"
 val master = "Goomoonryong"
 master = "Yi Shi-Woon"  // 🔥 Error: no se puede reasignar un 'val'
 
 val student: String
-student = "Haje Kang"   // ✅ Correcto: asignación tardía (solo una vez)
+student = "Haje Kang"   // ✅ Correcto: asignación diferida (una sola vez)
 student = "Shi-Ho Lee"  // 🔥 Error: la referencia no puede cambiar
 ```
 
 <Explanation>
-    - **`master`** es una variable declarada con `val` e inicializada inmediatamente. Reasignarla genera un error de compilación.
-    - **`student`** también es una `val`, pero se inicializa más adelante. Kotlin permite esta inicialización diferida siempre que se haga solo una vez.
+    - **`master`** es una variable declarada con `val` e inicializada de inmediato. Reasignarla produce un error de compilación.
+    - **`student`** también es una `val`, pero se inicializa más adelante. Kotlin permite esta asignación diferida siempre que ocurra solo una vez.
 </Explanation>
 
 A lo largo del curso nos referiremos a estas variables como **constantes referenciales** o **propiedades de solo lectura**: su referencia no puede cambiar una vez asignada.
 
-Esto **no implica** que el valor al que apuntan sea inmutable. Por ejemplo, una variable `val` puede referirse a una lista mutable, y aunque no puedas reasignar la variable, sí puedes modificar el contenido de la lista.
+Esto **no implica** que el valor al que apuntan sea inmutable.  
+Por ejemplo, una variable `val` puede referirse a una lista mutable. Aunque no puedas reasignar la variable, sí puedes modificar el contenido de la lista.
 
 Más adelante hablaremos de las **constantes en tiempo de compilación**, que se declaran con `const val` y cuyo valor debe conocerse de antemano.  
 Por ahora, basta con distinguir entre variables **mutables** (`var`) y **referencias inmutables** (`val`).
 
-### 🔓 Mutable (`var`)
+### 🔓 Lectura y escritura (`var`)
 
 Usa `var` cuando necesites **modificar el valor o cambiar la referencia** de una variable después de declararla:
 
-```kotlin showLineNumbers title="Variables mutables: reasignación y actualización de valores"
+```kotlin showLineNumbers title="Variables de lectura y escritura"
 var technique = "Black Heaven & Earth"
 technique = "Soul-Crushing Strike"     // ✅ Correcto: la referencia cambia a otra técnica
 
@@ -188,122 +87,142 @@ energy++                               // ✅ Incremento en 1
 ```
 
 <Explanation>
-    - **`technique`** es una variable mutable cuyo contenido puede cambiar libremente: aquí cambia de una técnica a otra.
-    - **`energy`** demuestra distintas formas válidas de modificar valores numéricos mutables: suma explícita, operación compuesta (`+=`) e incremento (`++`).
+    - **`technique`** es una variable mutable: aquí su referencia cambia libremente de una técnica a otra.
+    - **`energy`** muestra distintas formas válidas de actualizar un valor numérico mutable: suma directa, operación compuesta (`+=`) e incremento (`++`).
 </Explanation>
 
-:::danger Inmutabilidad ≠ inmutabilidad profunda
+:::danger Inmutabilidad referencial ≠ inmutabilidad profunda
 
 En Kotlin, declarar una variable con `val` **no significa** que su contenido sea inmutable, sino que **la referencia no puede cambiar**.  
 Es decir, si el objeto apuntado es mutable, **puedes modificarlo**.
 
-```kotlin showLineNumbers title="Kotlin: val no impide modificar el contenido"
+```kotlin showLineNumbers title="Kotlin: 'val' no impide modificar el contenido"
 val lista = mutableListOf(1, 2, 3)
-lista.add(4)  // ✅ Esto es válido: el contenido cambia, no la referencia
-lista = mutableListOf(5, 6, 7) // 🔥 Error: no se puede reasignar un val
+lista.add(4)                      // ✅ Válido: se modifica el contenido, no la referencia
+lista = mutableListOf(5, 6, 7)    // 🔥 Error: no se puede reasignar un 'val'
 ```
 
 En cambio, en lenguajes como **Rust**, la inmutabilidad por defecto **sí aplica al contenido**, no solo a la referencia:
 
-```rust showLineNumbers title="Inmutabilidad en Rust: let vs let mut"
+```rust showLineNumbers title="Rust: inmutabilidad por defecto"
 let mut lista = vec![1, 2, 3];
-lista.push(4); // ✅ Solo si fue declarada con 'mut'
+lista.push(4); // ✅ Solo si fue declarada con `mut`
 
 let lista_fija = vec![1, 2, 3];
-lista_fija.push(4); // 🔥 Error: no se puede modificar
+lista_fija.push(4); // 🔥 Error: no se puede modificar un valor inmutable
 ```
 
 :::
 
 :::tip ¡Prefiere `val`!
 
-Siempre que sea posible, **prefiere `val` en lugar de `var`**.
-La inmutabilidad no solo mejora la legibilidad y el mantenimiento del código, sino que **facilita el razonamiento formal** sobre su comportamiento.
+Siempre que sea posible, **prefiere `val` en lugar de `var`**.  
+La inmutabilidad no solo mejora la legibilidad y el mantenimiento del código, sino que también **facilita el razonamiento formal** sobre su comportamiento.  
 Usa `var` únicamente cuando realmente necesites que el valor de una variable **cambie a lo largo del tiempo**.
 
 ```kotlin showLineNumbers title="Expresividad e intención: mejor con val que con var"
-// ✅ Mejor con val: expresa intención, el valor no cambia
+// ✅ Mejor con val: expresa intención clara, el valor no cambia
 val basePower = 42
 val bonus = 8
 val total = basePower + bonus
 
-// 🔶 Menos claro con var: sugiere que el valor puede cambiar
+// 🔶 Menos claro con var: sugiere que el valor podría cambiar
 var total = 42
 total += 8
 ```
 
-En el primer caso, `total` es el resultado de una operación fija y conocida.
-En el segundo, el uso de `var` podría hacer pensar que `total` **seguirá cambiando**, aunque no sea así.
+En el primer caso, `total` es el resultado de una operación fija y predecible.  
+En el segundo, el uso de `var` puede dar la impresión de que `total` **seguirá cambiando más adelante**, aunque no sea así.
 
 :::
 
 ## 🧠 Ejercicio práctico: Técnicas ninja con valores
 
-<Exercise>
-    Estás desarrollando una biblioteca para videojuegos que permita definir y mostrar **técnicas especiales de personajes**.  
-    Como primer paso, necesitas una función que construya el nombre completo de una técnica secreta a partir de sus componentes.
+Estás desarrollando una biblioteca para videojuegos que permita definir y mostrar **técnicas especiales de personajes**.  
+Como primer paso, necesitas una función que construya el nombre completo de una técnica secreta a partir de sus componentes.
 
-    Tu tarea es escribir una función llamada `buildTechniqueName` que reciba tres parámetros: el nombre del personaje (`userName`), el tipo de técnica (`techniqueType`) y el nombre del ataque (`attackName`).  
-    El parámetro `techniqueType` debe tener un valor por defecto de `"Ninjutsu"`.
+Tu tarea es escribir una función llamada `buildTechniqueName` que reciba tres parámetros: el nombre del personaje (`userName`), el tipo de técnica (`techniqueType`) y el nombre del ataque (`attackName`).  
+El parámetro `techniqueType` debe tener un valor por defecto de `"Ninjutsu"`.
 
-    ```kotlin showLineNumbers title="🧪 Ejemplos de uso"
-    buildTechniqueName("Naruto", attackName = "Kage Bunshin no Jutsu")
-    // devuelve: "Naruto's Ninjutsu: Kage Bunshin no Jutsu"
+```kotlin showLineNumbers title="🧪 Ejemplos de uso"
+buildTechniqueName("Naruto", attackName = "Kage Bunshin no Jutsu")
+// devuelve: "Naruto's Ninjutsu: Kage Bunshin no Jutsu"
 
-    buildTechniqueName("Sasuke", "Kekkei Genkai", "Amaterasu")
-    // devuelve: "Sasuke's Kekkei Genkai: Amaterasu"
+buildTechniqueName("Sasuke", "Kekkei Genkai", "Amaterasu")
+// devuelve: "Sasuke's Kekkei Genkai: Amaterasu"
+```
+
+<Hint hints={[
+    <>Usa <code>=</code> para definir funciones como una única expresión.</>,
+    <>Puedes usar <code>$variable</code> o <code>${'{expresión}'}</code> para interpolar valores dentro de cadenas.</>
+]} />
+
+<Solution>
+    ```kotlin showLineNumbers title="Construyendo el nombre de una técnica secreta"
+    fun buildTechniqueName(
+        userName: String,
+        techniqueType: String = "Ninjutsu",
+        attackName: String
+    ): String = "$userName's $techniqueType: $attackName"
     ```
-
-    <Hint hints={[
-        <>Usa <code>=</code> para definir funciones como una única expresión.</>,
-        <>Puedes usar <code>$variable</code> o <code>${'{expresión}'}</code> para interpolar valores dentro de cadenas.</>
-    ]} />
-
-    <Solution>
-        ```kotlin showLineNumbers title="Construyendo el nombre de una técnica secreta"
-        fun buildTechniqueName(
-            userName: String,
-            techniqueType: String = "Ninjutsu",
-            attackName: String
-        ): String = "$userName's $techniqueType: $attackName"
-        ```
-    </Solution>
-</Exercise>
+</Solution>
 
 ## 🎯 Conclusiones
 
-En esta lección exploramos dos pilares fundamentales de cualquier lenguaje de programación: las **funciones** y las **variables**. Aprendimos cómo se declaran en Kotlin, cómo se comportan y cómo aprovechar sus propiedades y convenciones para escribir código más expresivo, seguro y legible.
+En esta lección exploramos dos pilares fundamentales de cualquier lenguaje de programación: las **funciones** y las **variables**.  
+Aprendimos cómo se declaran en Kotlin, cómo se comportan, y cómo aprovechar sus propiedades y convenciones para escribir código más expresivo, seguro y legible.
 
-Kotlin promueve un estilo claro, pragmático y expresivo, favoreciendo la **inferencia de tipos**, la **sintaxis de una sola expresión** y una fuerte orientación hacia la **inmutabilidad**. Su distinción entre referencias **mutables** (`var`) e **inmutables** (`val`) no es solo una cuestión de estilo, sino una decisión de diseño que impulsa la escritura de código **predecible** y **menos propenso a errores**.
+Kotlin promueve un estilo claro, pragmático y expresivo, favoreciendo la **inferencia de tipos**, la **sintaxis de una sola expresión**, y una fuerte orientación hacia la **inmutabilidad**.  
+Su distinción entre referencias **mutables** (`var`) e **inmutables** (`val`) no es solo una cuestión de estilo, sino una decisión de diseño que impulsa la escritura de código **predecible** y **menos propenso a errores**.
 
 ### 🔑 Puntos clave
 
-- Las funciones pueden declararse con bloques `{ ... }` o como **expresiones únicas** `= ...`, permitiendo estilos más concisos y expresivos.
-- La **inferencia de tipos** reduce redundancias, pero los tipos explícitos siguen siendo recomendables en interfaces públicas.
-- Kotlin diferencia claramente entre **`val` (inmutable)** y **`var` (mutable)**, y promueve el uso de `val` por defecto.
-- La inmutabilidad de `val` se aplica a la **referencia**, no al contenido del objeto.
+- Las funciones pueden declararse con bloques `{ ... }` o como **expresiones únicas** (`= ...`), lo que permite estilos más concisos y expresivos.
+- La **inferencia de tipos** reduce redundancias, aunque se recomienda usar tipos explícitos en funciones públicas.
+- Kotlin diferencia claramente entre **`val` (sólo lectura)** y **`var` (lectura y escritura)**, y promueve el uso de `val` por defecto.
+- La inmutabilidad de `val` se refiere a la **referencia**, no al contenido del objeto.
 - Seguir la convención `camelCase` mejora la legibilidad y coherencia del código.
 
 ### 🧰 ¿Qué nos llevamos?
 
-Estas herramientas forman la base para escribir funciones reutilizables, expresivas y seguras, con una sintaxis que promueve la claridad desde la primera línea.
-**En el contexto de bibliotecas de software, funciones y variables no son detalles de implementación: forman la interfaz pública de la biblioteca**, y por tanto, deben ser diseñadas con especial cuidado.
+Estas herramientas forman la base para escribir funciones reutilizables, expresivas y seguras, con una sintaxis que promueve la claridad desde la primera línea.  
+**En el diseño de bibliotecas, funciones y variables no son detalles internos: forman parte de la interfaz pública**, y por tanto, deben ser pensadas con especial cuidado.
 
-Entender cómo y cuándo usar `val`, `var`, y cómo estructurar funciones no solo permite escribir buen código: **es clave para construir APIs claras, idiomáticas y fáciles de mantener**.
+Saber cuándo usar `val`, `var`, y cómo estructurar funciones no solo permite escribir buen código: **es clave para construir APIs claras, idiomáticas y fáciles de mantener**.
 
-A medida que avancemos en el curso, aplicaremos estos fundamentos al diseñar estructuras de datos, operadores personalizados, y componentes que comuniquen su intención de forma precisa y robusta.
-Ahora que dominas las bases, tu código puede comenzar a hablar de forma idiomática en Kotlin.
+A medida que avancemos en el curso, aplicaremos estos fundamentos al diseño de estructuras de datos, operadores personalizados y componentes que comuniquen su intención de forma precisa y robusta.  
+Ahora que dominas las bases, tu código puede empezar a hablar en un Kotlin claro, idiomático y expresivo.
 
 <div className="language-card-container">
     <LanguageCards.PythonCard link="/docs/type-fundamentals/basics/functions-and-variables/py" />    
 </div>
 
-## 📖 Referencias
+## 📖 ¿Con ganas de más?
 
-### 🔥 Recomendadas
+<ReferenceList title="🔥 Referencias recomendadas" items={[
+    <WebPage
+        title="Basic syntax"
+        url="https://kotlinlang.org/docs/basic-syntax.html"
+        location="la documentación oficial de Kotlin"
+    >
+        Resume funciones, variables y control de flujo con ejemplos claros. Útil como repaso general, aunque abarca más temas de los vistos en esta lección.
+    </WebPage>
+]} />
 
-- [🌐 Basic syntax](https://kotlinlang.org/docs/basic-syntax.html) de **la documentación oficial de Kotlin**: Resume funciones, variables y control de flujo con ejemplos claros. Útil como repaso general, aunque abarca más temas de los vistos en esta lección.
-
-### 🔹 Adicionales
-
-- 📚 *"Defining and calling functions"* (pp. 44–66) en *Kotlin in Action* de **Dmitry Jemerov y Svetlana Isakova**: Aborda funciones idiomáticas en Kotlin, con argumentos nombrados, valores por defecto y funciones de extensión. Relevante por mostrar cómo estas herramientas mejoran el diseño de funciones en bibliotecas. Las funciones de extensión se explorarán más adelante en el curso.
+<ReferenceList title="🔹 Referencias complementarias" items={[
+    <Book
+        chapter="Defining and calling functions"
+        pages={[44, 66]}
+        book="Kotlin in Action"
+        author="Dmitry Jemerov y Svetlana Isakova"
+    >
+        Aborda funciones idiomáticas en Kotlin, con argumentos nombrados, valores por defecto y funciones de extensión. Relevante por mostrar cómo estas herramientas mejoran el diseño de funciones en bibliotecas. Las funciones de extensión se explorarán más adelante en el curso.
+    </Book>,
+    <WebPage
+        title="Coding Conventions | Kotlin"
+        url="https://kotlinlang.org/docs/coding-conventions.html"
+        location="la documentación oficial de Kotlin"
+    >
+        Guía oficial de estilo para escribir código Kotlin claro, idiomático y mantenible. Se recomienda como una <b>referencia rápida</b>, no para leerla completa de una vez. A lo largo del curso iremos explorando los elementos más relevantes según el contexto.
+    </WebPage>
+]} />

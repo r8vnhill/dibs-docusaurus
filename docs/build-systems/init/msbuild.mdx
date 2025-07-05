@@ -76,23 +76,98 @@ A continuación, encontrarás scripts específicos para instalar estas herramien
         .\Install-CSharpDependencies.ps1
         ```
     </TabItem>
-    {/* region : macOS ----------------------------------------------------------------------------- */}
     <TabItem value="macOS" label="macOS">
+        ```bash showLineNumbers title="scripts/macos/install_csharp_dependencies.sh"
+        #!/usr/bin/env bash
 
-    ```bash showLineNumbers title=""
+        set -euo pipefail
 
-    ```
+        function test_installed() {
+            local command=$1
 
+            if ! output="$("$command" --version 2>&1)"; then
+                echo "❌ Failed to run '$command --version'"
+                exit 1
+            fi
+
+            if [[ "$output" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+                return 0
+            else
+                echo "❌ '$command' did not return a valid version. Output was:"
+                echo "$output"
+                exit 1
+            fi
+        }
+
+        function install_csharp_dependencies() {
+            echo "🍺 Installing .NET SDK using Homebrew..."
+            brew install --cask dotnet-sdk
+
+            echo "🔍 Verifying installation..."
+            test_installed dotnet
+
+            echo "✅ .NET SDK is installed successfully."
+        }
+
+        install_csharp_dependencies
+        ```
+
+        Guarda este script como `install_csharp_dependencies.sh` y ejecútalo:
+
+        ```bash showLineNumbers title="En la terminal"
+        bash install_csharp_dependencies.sh
+        ```
     </TabItem>
-    {/* endregion macOS ---------------------------------------------------------------------------- */}
-
-    {/* region : Ubuntu/Debian --------------------------------------------------------------------- */}
     <TabItem value="Ubuntu/Debian" label="Ubuntu/Debian">
+        ```bash showLineNumbers title="scripts/linux/install_csharp_dependencies.sh"
+        #!/usr/bin/env bash
 
-    ```bash showLineNumbers title=""
+        set -euo pipefail
 
-    ```
+        function test_installed() {
+            local command=$1
 
+            if ! output="$("$command" --version 2>&1)"; then
+                echo "❌ Failed to run '$command --version'"
+                exit 1
+            fi
+
+            if [[ "$output" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+                return 0
+            else
+                echo "❌ '$command' did not return a valid version. Output was:"
+                echo "$output"
+                exit 1
+            fi
+        }
+
+        function install_csharp_dependencies() {
+            echo "📦 Adding Microsoft package feed..."
+
+            # Add Microsoft package signing key
+            wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb \
+                -O packages-microsoft-prod.deb
+            sudo dpkg -i packages-microsoft-prod.deb
+            rm packages-microsoft-prod.deb
+
+            # Install required dependencies
+            sudo apt-get update
+            sudo apt-get install -y apt-transport-https dotnet-sdk-9.0
+
+            echo "🔍 Verifying installation..."
+            test_installed dotnet
+
+            echo "✅ .NET SDK is installed successfully."
+        }
+
+        install_csharp_dependencies
+        ```
+
+        Guarda este script como `install_csharp_dependencies.sh` y ejecútalo:
+
+        ```bash showLineNumbers title="En la terminal"
+        bash install_csharp_dependencies.sh
+        ```
     </TabItem>
 </BoxedTabs>
 
@@ -106,10 +181,10 @@ Esto generará automáticamente una estructura de proyecto basada en MSBuild, co
     <TabItem value="Windows" label="Windows">
         ```powershell showLineNumbers title="scripts/windows/Initialize-CSharpProject.ps1"
         function Initialize-CSharpProject([string] $ProjectName) {
-            # Create a new C# console project with the specified name
+            Write-Host "🛠️ Creating new C# console project: $ProjectName" -ForegroundColor Cyan
             dotnet new console -n $ProjectName
 
-            # Change the current working directory to the newly created project folder
+            Write-Host "📁 Changing directory to '$ProjectName'" -ForegroundColor Cyan
             Push-Location $ProjectName
         }
 
@@ -125,7 +200,21 @@ Esto generará automáticamente una estructura de proyecto basada en MSBuild, co
 
     <TabItem value="macOS" label="macOS">
         ```bash showLineNumbers title="scripts/macos/initialize_csharp_project.sh"
+        #!/usr/bin/env bash
 
+        set -euo pipefail
+
+        function initialize_csharp_project() {
+            local project_name=$1
+
+            echo "🛠️ Creating new C# console project: $project_name"
+            dotnet new console -n "$project_name"
+
+            echo "📁 Changing directory to '$project_name'"
+            pushd "$project_name"
+        }
+
+        initialize_csharp_project "EchoAppCSharp"
         ```
 
         Guarda este script como `initialize_csharp_project.sh` y ejecútalo:
@@ -137,7 +226,21 @@ Esto generará automáticamente una estructura de proyecto basada en MSBuild, co
 
     <TabItem value="Ubuntu/Debian" label="Ubuntu/Debian">
         ```bash showLineNumbers title="scripts/linux/initialize_csharp_project.sh"
-        
+        #!/usr/bin/env bash
+
+        set -euo pipefail
+
+        function initialize_csharp_project() {
+            local project_name=$1
+
+            echo "🛠️ Creating new C# console project: $project_name"
+            dotnet new console -n "$project_name"
+
+            echo "📁 Changing directory to '$project_name'"
+            pushd "$project_name"
+        }
+
+        initialize_csharp_project "EchoAppCSharp"
         ```
 
         Guarda este script como `initialize_csharp_project.sh` y ejecútalo:
@@ -296,8 +399,6 @@ Esta lección no se trató solo de escribir `Console.WriteLine`, sino de entende
 Nos llevamos la capacidad de iniciar proyectos bien estructurados y el conocimiento para ajustarlos a nuestras necesidades. Este control es clave al diseñar bibliotecas reutilizables y mantenibles, que es el enfoque central de este curso.
 
 En próximas lecciones, construiremos sobre esta base para explorar temas como pruebas, publicación, organización modular y más.
-
-{/* “Hello, C#! Welcome, .NET!” In C 12 and .NET 8 - Modern Cross-Platform Development Fundamentals: Start Building Websites and Services with ASP.NET Core 8, Blazor, and EF Core 8, 1st ed., 1–52. Birmingham: Packt Publishing Limited, 2023. */}
 
 ## 📖 ¿Con ganas de más?
 

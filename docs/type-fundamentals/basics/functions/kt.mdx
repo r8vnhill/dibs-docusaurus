@@ -1,0 +1,337 @@
+---
+title: "Declaración de funciones"
+sidebar_label: "Funciones"
+---
+
+import ReadingTime from '@site/src/components/reading-time/ReadingTime';
+import Solution from '@site/src/components/exercise/Solution';
+import BoxedTabs from '@site/src/components/cajitas/BoxedTabs';
+import TabItem from '@theme/TabItem';
+import Box from '@site/src/components/cajitas/Box';
+
+<ReadingTime multiplier={2}/>
+
+Las funciones son una herramienta fundamental para construir software reutilizable, legible y organizado. En Kotlin, declarar funciones es sencillo y expresivo, gracias a su sintaxis concisa y características como parámetros con valores por defecto, funciones de una sola expresión e inferencia de tipos.
+
+En esta lección aprenderás a declarar funciones en Kotlin, entender cómo funciona `vararg` para aceptar múltiples argumentos y cuándo conviene especificar tipos de retorno. Verás también cómo aplicar funciones estándar como `map` y `fold`, y conocerás las diferencias entre colecciones como `Array` y `List`.
+
+No es necesario dominar todos los detalles de inmediato: a medida que avancemos en el curso, retomaremos y profundizaremos los elementos más relevantes.
+
+## 🧩 Funciones en Kotlin
+
+Una **función** en Kotlin es un bloque de código reutilizable que realiza una tarea específica. La sintaxis básica para declarar una función es la siguiente:
+
+```kotlin title="Estructura general"
+fun functionName(param1: Type1, param2: Type2 = defaultValue, ...): ReturnType {
+    // Cuerpo de la función
+    return result
+}
+```
+
+:::info Explicación de la sintaxis
+
+- **`fun`**: Palabra clave utilizada para declarar una función.
+- **`functionName`**: Nombre descriptivo que identifica la función.
+- **`param1`, `param2`**: Parámetros que recibe la función, cada uno con su tipo correspondiente.
+  - Las funciones pueden no tener parámetros si no se requieren.
+  - También pueden incluir parámetros con valores predeterminados (opcionales).
+- **`ReturnType`**: Tipo del valor que retorna la función.
+  - Si no retorna ningún valor útil, se utiliza el tipo especial `Unit`, que puede omitirse por ser implícito.
+- **Cuerpo de la función**: Conjunto de instrucciones que definen su comportamiento.
+
+:::
+
+### ➕ Ejemplo: Sumar dos números
+
+```kotlin showLineNumbers title="Versión con cuerpo de bloque (functions/src/main/kotlin/cl/ravenhill/math/add.kt)"
+fun add(a: Int, b: Int): Int {
+    return a + b
+}
+```
+
+Si la función contiene solo una expresión, puedes usar una forma más concisa mediante **asignación directa**:
+
+```kotlin showLineNumbers title="Versión con asignación directa y tipo explícito (functions/src/main/kotlin/cl/ravenhill/math/add.kt)"
+fun add(a: Int, b: Int): Int = a + b
+```
+
+Y aún más, Kotlin puede **inferir el tipo de retorno** automáticamente:
+
+```kotlin showLineNumbers title="Versión con inferencia de tipo (functions/src/main/kotlin/cl/ravenhill/math/add.kt)"
+fun add(a: Int, b: Int) = a + b
+```
+
+Este estilo produce código más breve, pero deberías usarlo con cuidado.
+
+<details>
+    <summary>
+        Si vienes de Scala...
+    </summary>
+    
+    En Kotlin, **la palabra clave `return` es obligatoria** cuando usas el bloque clásico `{ ... }`.  
+    Esto contrasta con Scala, donde **la última expresión de una función se devuelve automáticamente** sin necesidad de `return`.
+
+    En Kotlin, ese comportamiento implícito **solo se aplica** cuando utilizas la sintaxis de una sola expresión (`= ...`).    
+</details>
+
+::::info Inferencia de tipos
+
+Kotlin es un lenguaje con **inferencia de tipos**, lo que significa que el compilador puede deducir el tipo de una variable o expresión a partir del contexto.  
+En el ejemplo anterior, como la función consiste en una sola expresión, **el tipo de retorno se infiere automáticamente**.
+
+:::warning No abuses de la inferencia
+
+Aunque la inferencia puede hacer el código más limpio y conciso, **no siempre conviene omitir los tipos**.  
+En funciones **públicas** o con lógica **más compleja**, declarar el tipo explícitamente mejora la **claridad**, sirve como **documentación implícita** y facilita la **mantenibilidad** del código.
+
+:::
+
+::::
+
+:::::tip Estilo de nombres
+
+En Kotlin, **las funciones y variables deben nombrarse usando la convención `camelCase`**. Esto significa:
+
+- El nombre comienza con **minúscula**.
+- Las palabras siguientes se escriben **pegadas**, iniciando con **mayúscula**.
+
+✅ Ejemplos correctos:
+- `calculateTotal`
+- `printMessage`
+- `main`
+
+Usar un estilo de nombres consistente **mejora la legibilidad** y facilita mantener un código coherente con las prácticas idiomáticas de Kotlin.
+
+::::danger Estilos incorrectos
+
+Evita estilos que provienen de otros lenguajes o hábitos anteriores:
+
+- `CalculateTotal` → ❌ **PascalCase**, reservado para **clases** y **tipos**, no para funciones.
+- `calculate_total` → ❌ **snake_case**, común en Python, **no se utiliza** en Kotlin.
+- `calculate-total` → ❌ **kebab-case**, **inválido** como identificador en Kotlin.
+- `CALCULATE_TOTAL` → ❌ Reservado para **constantes** y **enumeraciones**, no para funciones ni variables mutables.
+
+:::note ¿Y `val`?
+
+Aunque `val` define una variable inmutable, eso **no significa que sea una constante**.  
+En Kotlin, los nombres completamente en mayúsculas como `CALCULATE_TOTAL` están reservados para **constantes reales**, es decir, valores **conocidos y fijos en tiempo de compilación**.
+
+Ampliaremos esta idea más adelante, cuando veamos **definiciones estáticas** y cómo Kotlin las maneja.
+
+:::
+
+::::
+
+:::::
+
+### 🔢 Funciones variádicas (`vararg`)
+
+En Kotlin puedes definir funciones que aceptan una **cantidad variable de argumentos** usando la palabra clave `vararg`.  
+Esto permite invocar la función con **cero, uno o más argumentos** del mismo tipo, de manera similar a cómo funciona `*args` en Python o `...args` en JavaScript.
+
+```kotlin showLineNumbers title="Ejemplo: sumar múltiples números"
+fun sumAll(vararg nums: Int): Int =
+    nums.sum()
+```
+
+<details>
+    <summary>
+        `sum()`
+    </summary>
+
+    La función [`sum()`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/sum.html) es una extensión que suma todos los elementos de un arreglo.
+
+    En el caso de `IntArray`, su firma es:
+
+    ```kotlin
+    fun IntArray.sum(): Int
+    ```
+
+    En nuestro ejemplo, esto se traduce a `nums[0] + nums[1] + ... + nums[n-1]`.
+
+    También se puede usar `sum()` con otros tipos de arreglos primitivos (`DoubleArray`, `FloatArray`, etc.), **arreglos genéricos** de tipos primitivos (`Array<Int>`, `Array<Double>`, etc.) e **iterables** de tipos primitivos como `List<Int>`, `Set<Double>`, etc.
+
+    La versión generalizada tiene la siguiente forma:
+
+    ```kotlin
+    fun Array<out Double>.sum(): Double
+    fun Array<out Int>.sum(): Int
+    ...
+    fun Iterable<Double>.sum(): Double
+    fun Iterable<Int>.sum(): Int
+    ...
+    ```
+
+    donde `out` indica que el arreglo es covariante, siguiendo el principio get-put.[^1]
+</details>
+
+[^1]: El principio get-put establece que un tipo covariante puede ser usado como un tipo de retorno (`out`) pero no como un tipo de entrada (`in`). En este caso, `out` indica que el arreglo solo se usa para obtener valores, no para insertarlos.
+
+```kotlin showLineNumbers title="Invocación de la función"
+sumAll(1, 2, 3, 4)  // devuelve 10
+sumAll()            // devuelve 0
+```
+
+Si tienes un arreglo de elementos del mismo tipo, puedes **desempaquetarlo** usando `*` al invocarlo:
+
+```kotlin title="Desempaquetando un arreglo"
+val extras = intArrayOf(5, 6)
+sumAll(1, 2, *extras) // devuelve 14
+```
+
+:::tip Hack: Uno o más argumentos
+
+Si necesitas que la función reciba **al menos un argumento obligatorio**, puedes declararlo como parámetro separado y luego usar `vararg` para los demás.
+
+Una forma útil de entenderlo es pensar en expresiones regulares:  
+- El símbolo `*` indica “**cero o más** repeticiones”,  
+- Mientras que `+` indica “**una o más** repeticiones”.
+
+En este contexto, el parámetro obligatorio representa el `+`, y `vararg` representa el `*`.  
+Juntos, expresan la idea de “**uno o más argumentos**”.
+
+```kotlin showLineNumbers title="Al menos un argumento requerido"
+fun sumTo(first: Int, vararg rest: Int): Int =
+    rest.fold(first) { acc, i -> acc + i }
+```
+
+<details>
+    <summary>
+        `fold()`
+    </summary>
+
+    La función [`fold()`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/fold.html) es una extensión que aplica una operación acumulativa sobre los elementos de una colección o arreglo, comenzando desde un valor inicial.
+
+    En el caso de `IntArray`, su firma es:
+
+    ```kotlin
+    fun IntArray.fold(initial: Int, operation: (acc: Int, Int) -> Int): Int
+    ```
+
+    En nuestro ejemplo, esto se traduce a una suma progresiva como `first + rest[0] + rest[1] + ...`.
+
+    Es especialmente útil para realizar operaciones como **suma**, **producto**, **concatenación**, o construir estructuras más complejas, sin necesidad de escribir bucles manuales.
+
+    También se puede usar `fold()` con otros tipos de arreglos primitivos (`DoubleArray`, `FloatArray`, etc.), **arreglos genéricos** (`Array<T>`) e **iterables** como `List<T>` o `Set<T>`.
+
+    La versión generalizada tiene la siguiente forma:
+
+    ```kotlin
+    fun <T, R> Array<out T>.fold(initial: R, operation: (acc: R, T) -> R): R
+    fun <T, R> Iterable<T>.fold(initial: R, operation: (acc: R, T) -> R): R
+    ```
+
+    donde `R` es el tipo del acumulador y `T` el tipo de los elementos. `out` indica que el arreglo es covariante, lo que significa que puede contener subtipos de `T`.
+</details>
+
+```kotlin showLineNumbers title="Invocación de la función"
+sumTo(1)                                        // devuelve 1
+sumTo(1, 2, 3, 4)                               // devuelve 10
+sumTo(first = 1, rest = intArrayOf(2, 3, 4))    // devuelve 10
+```
+
+Este mismo patrón puede aplicarse a funciones que reciban 2 o más parámetros obligatorios, seguidos de un número variable de argumentos opcionales.
+
+:::
+
+:::info `vararg` vs. `Array`
+
+En Kotlin, `vararg` es una forma conveniente de permitir que una función reciba **una cantidad variable de argumentos**. Internamente, el compilador convierte esos argumentos en un arreglo del tipo correspondiente (`Array<T>`, `IntArray`, etc.).
+
+Esto significa que:
+
+- Usar `vararg` es **azúcar sintáctico** sobre una función que acepta un arreglo.
+- Puedes seguir llamando a la función con un arreglo existente usando el operador `*` para desempaquetarlo.
+
+```kotlin showLineNumbers title="Usando vararg vs. pasando un arreglo"
+fun sumAll(vararg nums: Int): Int = nums.sum()
+
+val valores = intArrayOf(1, 2, 3)
+sumAll(*valores)  // ✅ correcto: desempaquetado con *
+```
+
+Kotlin optimiza tipos primitivos como `Int`, `Double`, etc., usando `IntArray`, `DoubleArray`, etc., en lugar de `Array<Int>`, para mejorar el rendimiento y evitar boxing innecesario.
+
+:::
+
+<details>
+    <summary>
+        `Array<T>` vs. `List<T>`
+    </summary>
+
+    Tanto `Array<T>` como `List<T>` representan **colecciones de tamaño fijo** e **inmutables en cuanto a estructura** (es decir, no puedes agregar ni quitar elementos), pero se usan en contextos distintos:
+
+    - `Array<T>` es una **estructura de bajo nivel**, más cercana al funcionamiento de los arreglos en lenguajes como Java.
+    - `List<T>` es parte de la API de colecciones de Kotlin, más expresiva y flexible para la programación funcional.
+
+    | Característica         | `Array<T>`                          | `List<T>`                          |
+    |------------------------|-------------------------------------|------------------------------------|
+    | Mutable                | Sí (`array[i] = ...`)               | No (`List<T>` es inmutable)        |
+    | Tamaño fijo            | Sí                                  | Sí (en `List`, no en `MutableList`)|
+    | Posiciones accesibles  | Por índice (`array[i]`)             | Por índice (`list[i]`)             |
+    | Métodos funcionales    | Limitados                           | Amplia API funcional               |
+    | Uso común              | Eficiencia, interoperabilidad con Java | Estilo idiomático, programación funcional |
+    | Conversión             | `array.toList()`                    | `list.toTypedArray()`              |
+
+    :::tip En resumen
+
+    - Usa `List<T>` para la mayoría de los casos, sobre todo si buscas **inmutabilidad lógica** y una API más rica y expresiva para manipulación de datos.
+    - Usa `Array<T>` si necesitas interoperar con código Java, o si el rendimiento al acceder/modificar por índice es crítico.
+
+    :::
+</details>
+
+<Box>
+    ## 🧠 Ejercicio práctico: Duplicar niveles de poder
+
+    Vamos a practicar la declaración de funciones en Kotlin aplicando una transformación sobre una lista.  
+    Supón que tienes una lista de niveles de poder (`Int`) y quieres duplicar cada uno de ellos usando `map`.
+
+    Como recordatorio, `map` aplica una función a cada elemento de una colección y devuelve una nueva colección con los resultados:
+
+    ```kotlin
+    fun <T, R> Iterable<T>.map(transform: (T) -> R): List<R>
+    fun IntArray.map(transform: (Int) -> R): List<R>
+    ```
+
+    Tu tarea es definir una función llamada `doublePowers` que reciba una lista de enteros (`List<Int>`) o como una función variadica y devuelva una nueva lista con cada valor duplicado.
+
+    ```kotlin showLineNumbers title="🧪 Ejemplo de uso"
+    doublePowers(listOf(5, 10, 15)) 
+    // devuelve: [10, 20, 30]
+    ```
+
+    <Solution>
+        <BoxedTabs>
+            <TabItem value="Lista" label="Input como lista">
+                ```kotlin showLineNumbers title="Solución: Input como lista"
+                fun doublePowers(powers: List<Int>): List<Int> =
+                    powers.map { it * 2 }
+                ```
+            </TabItem>
+            <TabItem value="Vararg" label="Input como vararg">
+                ```kotlin showLineNumbers title="Solución: Input como vararg"
+                fun doublePowers(vararg powers: Int): List<Int> =
+                    powers.map { it * 2 }
+                ```
+            </TabItem>
+        </BoxedTabs>
+    </Solution>
+</Box>
+
+## 🎯 Conclusiones
+
+En esta lección conocimos la sintaxis básica para declarar funciones en Kotlin, un componente esencial para estructurar código reutilizable, expresivo y mantenible. También exploramos algunas variantes idiomáticas como la inferencia de tipo, las funciones variádicas y la diferencia entre colecciones como `Array` y `List`.
+
+### 🔑 Puntos clave
+
+- Las funciones en Kotlin se declaran con la palabra clave `fun`, y pueden tener parámetros con valores por defecto.
+- El tipo de retorno puede inferirse automáticamente si la función es de una sola expresión.
+- `vararg` permite definir funciones que aceptan múltiples argumentos del mismo tipo.
+- Es posible requerir al menos un argumento junto a `vararg` combinando ambos en la firma.
+- `Array<T>` y `List<T>` son colecciones que pueden parecer similares pero tienen usos y propiedades distintas.
+- Kotlin favorece un estilo conciso, pero también claro y explícito cuando la función es pública o compleja.
+
+### 🧰 ¿Qué nos llevamos?
+
+Esta lección es una primera introducción al sistema de funciones de Kotlin. No es necesario memorizar todos los elementos de inmediato: puedes volver aquí como referencia rápida cuando lo necesites. A lo largo del curso iremos retomando estos conceptos y profundizando en los aspectos más relevantes según el contexto de cada unidad.

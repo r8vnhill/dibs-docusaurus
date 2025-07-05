@@ -1,65 +1,177 @@
 ---
 title: Tipos suma como enumeraciones en Python
 ---
+
 import ReadingTime from '@site/src/components/reading-time/ReadingTime'
 import GithubRepoLink from '@site/src/components/GithubRepoLink'
+import Explanation from '@site/src/components/admonitions/Explanation'
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
+import ReferenceList from '@site/src/components/references/ReferenceList'
+import WebPage from '@site/src/components/references/WebPage'
 
 <ReadingTime />
 <GithubRepoLink user="r8vnhill" repo="python-dibs"/>
 
-## 🐍 Comparación: Enumeraciones en Python
+Cuando diseñamos una biblioteca, muchas veces necesitamos representar **una entre varias alternativas posibles**: por ejemplo, el estado de una conexión, un nivel de log, o un tipo de operación. Estas situaciones corresponden a lo que en teoría de tipos se conoce como **tipos suma**.
 
-En Python, también podemos representar tipos suma usando enumeraciones mediante el módulo estándar [`enum`](https://docs.python.org/3/library/enum.html). Esta técnica se usa para representar conjuntos fijos de alternativas, de forma similar a `enum class` en Kotlin.
+Python ofrece una forma práctica de modelar estos casos mediante **enumeraciones**, a través del módulo estándar `enum`. Aunque no ofrece garantías de exhaustividad como Kotlin, su sintaxis flexible y su integración con `match` (desde Python 3.10) permiten expresar estos conceptos de manera clara y mantenible.
 
-### ✅ Alternativas cerradas
+En esta lección exploraremos cómo usar `Enum` para representar decisiones finitas, cómo integrarlas con `match`, y qué diferencias clave existen respecto a su contraparte en Kotlin.
 
-```python
-from enum import Enum
+## 🐍 Enumeraciones en Python
 
+Python ofrece soporte para enumeraciones a través del módulo estándar `enum`. Las enumeraciones (o `Enum`) permiten definir un conjunto **nombrado** de valores constantes que son instancias únicas y comparables entre sí.
+
+```python showLineNumbers title="Definir una enumeración (type-fundamentals/algebraic_types/sum/enum/log.py)"
+from enum import Enum, auto
+
+class LogLevel(Enum):
+    INFO = auto()
+    WARNING = auto()
+    ERROR = auto()
+```
+
+<Explanation>
+    - `Enum` es una clase base que convierte cada miembro (`INFO`, `WARNING`, etc.) en una instancia única de la enumeración.
+    - `auto()` asigna automáticamente un valor entero creciente a cada miembro, comenzando en 1. Puedes usar valores explícitos si lo prefieres, como `INFO = 1`, `WARNING = 2`, etc., pero `auto()` es más limpio y evita errores de asignación manual.
+</Explanation>
+
+### 📝 Ejemplo de uso
+
+Un caso común para enumeraciones es representar niveles de log.  
+Veamos cómo podemos usar `LogLevel` en una función para imprimir mensajes con distintos niveles de severidad:
+
+```python showLineNumbers title="Implementación de un logger simple (type-fundamentals/algebraic_types/sum/enum/log.py)"
+import sys
+
+def log(level: LogLevel, message: str) -> None:
+    if level is LogLevel.ERROR:
+        print(f"[{level.name}] {message}", file=sys.stderr)
+    else:
+        print(f"[{level.name}] {message}")
+```
+
+<Explanation>
+    - La función `log` recibe un `LogLevel` y un mensaje, e imprime ese mensaje con el nivel correspondiente.
+    - Se usa `level.name` para obtener el nombre del nivel (`INFO`, `WARNING`, `ERROR`), que se incluye entre corchetes.
+    - Si el nivel es `ERROR`, el mensaje se envía a la salida de error estándar (`sys.stderr`), lo cual es útil para distinguir errores de mensajes normales.
+    - En los demás casos, el mensaje se imprime por la salida estándar (`sys.stdout`).
+</Explanation>
+
+<details>
+    <summary>
+        ¿Qué es `file`?
+    </summary>
+    
+    
+    El argumento `file` de `print` permite redirigir la salida a un flujo específico.  
+    Aunque el nombre `file` puede sonar confuso, también se utiliza para representar flujos como `sys.stdout` y `sys.stderr`.
+
+    Además de esos flujos predefinidos, puedes pasar cualquier objeto que tenga un método `.write(string)`, como un archivo abierto en modo texto:
+
+    ```python showLineNumbers title="Redirigir a un archivo"
+    with open("log.txt", "w") as f:
+        print("Mensaje de log", file=f)
+    ```
+
+    Esto permite redirigir mensajes a archivos u otros destinos personalizados.
+</details>
+
+Puedes llamar a esta función así:
+
+```python showLineNumbers title="Llamada a la función log (type-fundamentals/algebraic_types/sum/enum/log.py)"
+log(LogLevel.INFO, "Thank you Mario!")
+log(LogLevel.ERROR, "But our princess is in another castle!")
+```
+
+Y verás:
+
+```plaintext
+[INFO] Thank you Mario!
+[ERROR] But our princess is in another castle!
+```
+
+## 🧪 `match` en Python y exhaustividad parcial
+
+Python 3.10 introdujo `match`, una construcción similar a `switch` o `when`, que permite realizar **pattern matching** sobre objetos. Es útil para manejar enumeraciones de forma clara, aunque —a diferencia de Kotlin— **no exige cubrir todos los casos posibles**.
+
+```python showLineNumbers title="Uso de match con Enum (type-fundamentals/algebraic_types/sum/enum/connection.py)"
 class ConnectionState(Enum):
-    CONNECTED = 1
-    DISCONNECTED = 2
-    IN_PROGRESS = 3
+    CONNECTED = auto()
+    DISCONNECTED = auto()
+    IN_PROGRESS = auto()
+
+
+def handle_connection(state: ConnectionState) -> str:
+    match state:
+        case ConnectionState.CONNECTED:
+            return "Connection established successfully."
+        case ConnectionState.DISCONNECTED:
+            return "Connection has been lost."
+        case ConnectionState.IN_PROGRESS:
+            return "Connection is currently being established."
+        case _:  # Python does not enforce exhaustiveness checking
+            raise ValueError(f"Invalid connection state: {state}")
 ```
 
-Aquí definimos un conjunto cerrado de alternativas. Cada miembro de `ConnectionState` es una instancia única del enumerado, similar a lo que ocurre en Kotlin.
+<Explanation>
+    - Usamos `match` para evaluar el estado de la conexión y devolver un mensaje correspondiente.
+    - Aunque se cubren explícitamente los tres casos posibles, Python **no obliga** a cubrir todas las variantes de la enumeración.
+    - Por eso incluimos un caso comodín (`case _:`), que actúa como una red de seguridad si se introduce un nuevo estado en el futuro.
+    - A diferencia de Kotlin, donde el compilador impone el chequeo exhaustivo con `when`, en Python esta responsabilidad recae en la persona que escribe el código.
+</Explanation>
 
-### 🚦 Control de flujo exhaustivo (¡no disponible!)
+## 🆚 Resumen comparativo
 
-Python **no tiene verificación exhaustiva** como la que ofrece el compilador de Kotlin. Si escribimos una función que opera sobre `ConnectionState`, podemos olvidarnos fácilmente de manejar un caso sin que el intérprete nos lo advierta:
+| **Aspecto**                        | **Kotlin (`enum class`)**                                                               | **Python (`Enum`)**                                                                 |
+|-----------------------------------|------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| **Definición**                    | `enum class LogLevel { ... }`                                                           | `class LogLevel(Enum): ...`                                                         |
+| **Comparación**                   | `level == LogLevel.INFO`                                                                | `level is LogLevel.INFO`                                                            |
+| **Uso en `when` / `match`**       | `when(level)` exige cobertura exhaustiva (con advertencia si falta un caso)             | `match` en Python 3.10+ no exige cobertura completa por defecto                     |
+| **Control de exhaustividad**      | ✔️ Soportado en `when`                                                                  | ❌ No obligatorio en `match`                                                        |
+| **Extensibilidad**                | Limitada: no se pueden heredar nuevas variantes                                          | Limitada, pero se puede usar herencia dentro de `Enum` con cuidado                  |
+| **Serialización**                | ✔️ Facilita serialización en JSON/XML con nombres estables                              | ✔️ Serializable si se usan valores simples                                           |
+| **Casos de uso ideales**          | Estados finitos sin datos adicionales                                                    | Estados finitos con o sin datos adicionales                                         |
 
-```python
-def describe_state(state: ConnectionState) -> str:
-    if state == ConnectionState.CONNECTED:
-        return "Connected!"
-    elif state == ConnectionState.DISCONNECTED:
-        return "Disconnected!"
-    # ¿Y si olvidamos IN_PROGRESS?
-```
+<ProCons>
+    <Pros title="Ventajas de Python">
+        - Sintaxis más flexible.
+        - Se puede extender con clases base adicionales si es necesario.
+        - Posibilidad de usar `match` para inspección estructural.
+    </Pros>
+    <Cons title="Limitaciones de Python">
+        - Sin control exhaustivo automático; puedes olvidar casos sin advertencias.
+        - Menor integración con herramientas de análisis estático sin ayudas externas.
+    </Cons>
+</ProCons>
 
-> ⚠️ En Kotlin, esto causaría un *error o advertencia de compilación* al usar `when`. En Python, el error sólo aparecería en tiempo de ejecución si ese caso se presenta.
+## 🎯 Conclusiones
 
-### 🧠 Comparación de características
+Las enumeraciones en Python permiten representar de forma explícita y segura un conjunto finito de valores posibles, lo que las convierte en una herramienta útil para modelar **tipos suma simples**. Su integración con `match` a partir de Python 3.10 mejora la legibilidad del código, aunque la falta de verificación de exhaustividad exige disciplina por parte de quien escribe.
 
-{/* <ProCons>
+Si bien Kotlin ofrece mayor seguridad a través de controles estáticos, Python compensa con flexibilidad y expresividad, manteniéndose fiel a su enfoque dinámico y pragmático.
 
-<Pros title="Ventajas de Python">
-- Definición sencilla usando la biblioteca estándar.
-- Fácil de serializar o extender dinámicamente en algunos casos.
+### 🔑 Puntos clave
 
-<Cons title="Desventajas respecto a Kotlin">
-- No hay verificación exhaustiva: puedes olvidar un caso y el error pasará desapercibido hasta el tiempo de ejecución.
-- No hay soporte nativo para desestructuración ni integración con expresiones similares a `when`.
-- No se puede restringir el conjunto de alternativas fuera de la definición tan estrictamente como en Kotlin (por ejemplo, con `sealed`).
+- `Enum` en Python permite definir variantes nombradas de forma simple y legible.
+- `auto()` facilita la asignación automática de valores únicos.
+- `print(..., file=...)` puede redirigir la salida a `stderr`, `stdout` o cualquier flujo que implemente `.write()`.
+- `match` permite estructurar lógica de control de forma clara, pero no exige cubrir todos los casos.
+- Es buena práctica incluir un `case _` para capturar estados no previstos, especialmente si el `Enum` puede crecer.
 
-</ProCons> */}
+### 🧰 ¿Qué nos llevamos?
 
-### 🔍 ¿Qué puede hacer Kotlin que Python no?
+Aprender a usar enumeraciones en Python nos ayuda a escribir código más claro, mantenible y seguro. Aunque el lenguaje no impone restricciones estrictas como Kotlin, podemos adoptar **buenas prácticas** que nos ayuden a anticipar errores y a comunicar mejor nuestras intenciones.  
+En el contexto del diseño de bibliotecas, utilizar `Enum` permite exponer APIs más robustas, con tipos controlados y documentación implícita sobre los valores válidos que se esperan.
 
-* **Verificación exhaustiva en tiempo de compilación** usando `when`: garantiza que todos los casos de una enumeración estén cubiertos.
-* **Compatibilidad con `sealed class`** para evolucionar hacia tipos suma con datos asociados.
-* **Context-sensitive resolution** para escribir menos sin perder seguridad.
+## 📖 ¿Con ganas de más?
 
----
-
-Esta comparación refuerza por qué `enum class` es una herramienta poderosa en Kotlin al diseñar bibliotecas seguras y expresivas. Aunque Python permite representar tipos suma con `Enum`, su enfoque dinámico lo vuelve más propenso a errores silenciosos y omisiones en tiempo de ejecución.
+<ReferenceList title="🔥 Referencias recomendadas" items={[
+    <WebPage
+        title="Enum HOWTO"
+        url="https://docs.python.org/3/howto/enum.html"
+        location="la documentación oficial de Python"
+    >
+        Este documento explica el uso de la clase <code>Enum</code> en Python, diseñada para representar conjuntos de constantes simbólicas con valores únicos. Enum permite una representación más clara y segura en el código, comparado con variables globales. Se detallan diferentes tipos de enumeraciones (<code>Enum</code>, <code>IntEnum</code>, <code>StrEnum</code>, <code>Flag</code>, <code>IntFlag</code>), su creación, manipulación, personalización y casos de uso, como combinación de valores con operadores bit a bit, acceso programático, métodos personalizados, soporte para <code>auto()</code>, alias, unicidad, serialización (<code>pickle</code>), y su interacción con clases como <code>dataclass</code>. También se incluyen ejemplos prácticos y recetas avanzadas para extender o adaptar el comportamiento de enumeraciones.
+    </WebPage>
+]} />
