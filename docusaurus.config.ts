@@ -84,8 +84,8 @@ const config: Config = {
                     position: 'left',
                 },
                 {
-                    href: 'https://github.com/r8vnhill/dibs',
-                    label: 'GitHub',
+                    href: 'https://gitlab.com/r8vnhill/dibs',
+                    label: 'Source',
                     position: 'right',
                 },
             ],

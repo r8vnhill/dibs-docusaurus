@@ -6,25 +6,36 @@ import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import ReadingTime from '@site/src/components/reading-time/ReadingTime'
 import ExcludeFromReadingTime from '@site/src/components/reading-time/ExcludeFromReadingTime'
-import GithubRepoLink from '@site/src/components/git/GithubRepoLink'
 import * as LanguageCards from '@site/src/components/cards/LanguageCard'
+import GithubRepo from '@site/src/components/git/GithubRepo';
+import GitlabRepo from '@site/src/components/git/GitlabRepo';
+import RepoLinks from '@site/src/components/git/RepoLinks';
+import Box from '@site/src/components/cajitas/Box';
+import Hint from '@site/src/components/exercise/Hint';
+import Solution from '@site/src/components/exercise/Solution';
+import ReferenceList from '@site/src/components/references/ReferenceList';
+import Book from '@site/src/components/references/Book';
+import WebPage from '@site/src/components/references/WebPage';
 
 <ReadingTime />
-<GithubRepoLink user="r8vnhill" repo="algebraic-data-types-kt"/>
+<RepoLinks children={[
+    <GitlabRepo user="r8vnhill" repo="algebraic-data-types-kt" />,
+    <GithubRepo user="r8vnhill" repo="algebraic-data-types-kt" />,
+]} />
 
-Cuando diseñamos bibliotecas, muchas veces necesitamos representar **una entre varias alternativas posibles**: por ejemplo, el estado de una conexión, un nivel de log, o un resultado predecible como `OK` o `ERROR`. Estas situaciones corresponden a lo que en teoría de tipos se conoce como un **tipo suma**: una estructura que encapsula **una única alternativa válida** entre varias opciones posibles.
+Cuando diseñamos bibliotecas, a menudo necesitamos representar **una entre varias alternativas posibles**: por ejemplo, el estado de una conexión, un nivel de log o un resultado esperable como `OK` o `ERROR`. Estas situaciones corresponden a lo que, en teoría de tipos, se conoce como un **tipo suma**: una estructura que encapsula **una única alternativa válida** entre múltiples opciones.
 
-Kotlin nos ofrece una herramienta directa para modelar estos tipos: las **enumeraciones** (`enum class`). A diferencia de soluciones más frágiles como usar `String`, las enumeraciones permiten que el compilador garantice que:
+Kotlin nos ofrece una herramienta directa para modelar estos tipos: las **enumeraciones** (`enum class`). A diferencia de soluciones más frágiles como el uso de `String`, las enumeraciones permiten que el compilador garantice que:
 
-- solo se usen valores válidos,
-- todos los casos estén cubiertos en estructuras como `when`,
+- solo se utilicen valores válidos;
+- todos los casos estén cubiertos en estructuras como `when`;
 - y que el código sea más claro, expresivo y mantenible.
 
-En esta lección aprenderemos cómo las enumeraciones pueden ayudarnos a representar tipos suma de forma segura e idiomática, explorando sus usos más comunes, ventajas prácticas, y el soporte que ofrece el compilador de Kotlin para mejorar la confiabilidad de nuestras bibliotecas.
+En esta lección aprenderemos cómo las enumeraciones pueden ayudarnos a representar tipos suma de forma segura e idiomática, explorando sus usos más comunes, ventajas prácticas y el soporte que ofrece el compilador de Kotlin para mejorar la confiabilidad de nuestras bibliotecas.
 
 ## 🎯 Motivación
 
-Supongamos que estás diseñando una biblioteca para representar el **estado de una conexión de red**. Algunos posibles estados son `Connected`, `Disconnected` o `InProgress`. ¿Cómo podrías modelarlos de forma **segura y expresiva**?
+Supongamos que estás diseñando una biblioteca para representar el **estado de una conexión de red**. Algunos posibles estados podrían ser `Connected`, `Disconnected` o `InProgress`. ¿Cómo podrías modelarlos de forma **segura y expresiva**?
 
 Una solución frágil sería usar una `String`:
 
@@ -32,7 +43,7 @@ Una solución frágil sería usar una `String`:
 val state = "Connected"
 ```
 
-Pero esto permite errores sutiles, como:
+Pero esto permite errores sutiles como:
 
 ```kotlin showLineNumbers
 val state = "Connnected" // error silencioso: compila, pero está mal escrito
@@ -40,12 +51,12 @@ val state = "Connnected" // error silencioso: compila, pero está mal escrito
 
 ## 🔢 Enumeraciones
 
-Las **enumeraciones** son una forma de representar un **tipo suma** en Kotlin. Permiten definir un conjunto cerrado de valores posibles, lo que mejora la seguridad y la legibilidad del código.
+Las **enumeraciones** son una forma de representar un **tipo suma** en Kotlin. Permiten definir un conjunto cerrado de valores posibles, lo que mejora la seguridad y la legibilidad del código.  
 Además, el compilador puede verificar que solo se usen valores válidos, evitando errores comunes como cadenas mal escritas o valores no válidos.
 
-Conceptualmente, si un tipo suma $S$ tiene $N$ alternativas $S = A_1 + A_2 + ... + A_N$, podemos representarlo como una enumeración `enum class` en Kotlin:
+Conceptualmente, si un tipo suma $S$ tiene $N$ alternativas $S = A_1 + A_2 + \dots + A_N$, podemos representarlo como una enumeración `enum class` en Kotlin:
 
-```kotlin showLineNumbers title="Tipo suma como enumeración"
+```kotlin title="Tipo suma como enumeración"
 enum class TipoSuma {
     ALTERNATIVA_1,
     ALTERNATIVA_2,
@@ -96,22 +107,14 @@ Por convención, los nombres de los casos de un `enum class` se escriben en may�
     ```
 
     Esta notación destaca sus propiedades algebraicas, lo cual es útil para analizar el número total de valores posibles, razonar sobre equivalencias entre tipos, o construir transformaciones seguras entre estructuras de datos.
-
-    Además, el símbolo `|` puede ser **más ambiguo** en algunos lenguajes como **Scala 3** o **Python**, donde también se usa para representar **tipos unión** entre clases o interfaces, no necesariamente disjuntos:
-
-    ```scala
-    def parse(input: String): Int | String = ???
-    ```
-
-    En estos contextos, `|` denota simplemente que el valor puede ser de **uno u otro tipo**, sin requerir que las alternativas estén en un conjunto cerrado como en un tipo suma clásico.
 </details>
 
 ## 📦 Uso habitual en bibliotecas
 
 Los `enum class` son especialmente útiles para representar:
 
-- **Estados finitos** (como el estado de una conexión, sesión o flujo de trabajo).
-- **Modos de operación** (por ejemplo, modo oscuro/claro, lectura/escritura).
+- **Estados finitos** (por ejemplo, estado de una conexión, sesión o flujo de trabajo).
+- **Modos de operación** (como modo oscuro/claro, lectura/escritura).
 - **Resultados controlados** (como `OK`, `ERROR`, `TIMEOUT`, etc.).
 
 Veamos un ejemplo típico:
@@ -138,9 +141,9 @@ fun main() {
 ```
 
 <Explanation>
-    Hemos definido un conjunto cerrado de niveles de log (`LogLevel`) usando `enum class`.  
-    Luego, lo usamos como parámetro en una función `log` que actúa de forma distinta según el valor recibido.  
-    Esto garantiza que **solo valores válidos y conocidos** pueden ser usados, evitando errores como cadenas mal escritas y habilitando el chequeo en tiempo de compilación.
+    Definimos un conjunto cerrado de niveles de log (`LogLevel`) usando `enum class`.  
+    Luego, lo usamos como parámetro en la función `log`, que actúa de forma distinta según el valor recibido.  
+    Esto garantiza que **solo valores válidos y conocidos** pueden utilizarse, evitando errores como cadenas mal escritas y habilitando el chequeo en tiempo de compilación.
 </Explanation>
 
 ## 🧪 `when` exhaustivo
@@ -164,13 +167,13 @@ fun messageForState(state: ConnectionState): String = when (state) {
 ```
 
 <Explanation>
-    El uso de `when` con `enum class` nos permite escribir código **más seguro y explícito**, porque el compilador sabe exactamente cuántos casos hay que cubrir.  
-    Si omitimos alguna alternativa, el compilador mostrará un **error o advertencia**, obligándonos a completar todos los casos definidos en la enumeración.  
+    El uso de `when` con `enum class` permite escribir código **más seguro y explícito**, porque el compilador sabe exactamente cuántos casos hay que cubrir.  
+    Si omitimos alguna alternativa, se mostrará un **error** que obliga a completar todos los casos definidos.
 
-    Esto es posible porque las `enum class` definen un **conjunto cerrado** de valores: no es posible que existan más casos fuera de los que ya están listados en la definición.  
-    Gracias a esta propiedad, evitamos errores sutiles como olvidarse de manejar un caso nuevo al extender una enumeración.  
+    Esta propiedad se debe a que `enum class` define un **conjunto cerrado** de valores, por lo que no pueden existir casos fuera de los listados.  
+    Gracias a esto, evitamos errores sutiles como olvidar manejar una nueva alternativa al modificar una enumeración existente.
 
-    Además, este enfoque mejora la **legibilidad**, porque cualquier persona que lea el código puede ver de forma explícita qué ocurre en cada situación posible, sin ambigüedades ni valores "mágicos".
+    Además, mejora la **legibilidad**, ya que cualquier persona puede ver explícitamente qué ocurre en cada caso, sin ambigüedades ni valores mágicos.
 </Explanation>
 
 <details>
@@ -186,25 +189,99 @@ fun messageForState(state: ConnectionState): String = when (state) {
     }
     ```
 
-    Esto mejora la legibilidad y reduce el ruido visual cuando el tipo ya es conocido.
+    Esta capacidad mejora la **legibilidad** y reduce el **ruido visual** cuando el tipo ya es conocido.
 
-    Sin embargo, es importante tener en cuenta que esta característica es **experimental** y puede cambiar en futuras versiones de Kotlin.
+    :::warning Experimental
+
+    Sin embargo, ten en cuenta que esta característica es **experimental** y puede cambiar en futuras versiones de Kotlin.  
     Para más información, puedes consultar la [documentación oficial](https://kotlinlang.org/docs/whatsnew22.html#preview-of-context-sensitive-resolution).
+
+    :::
 </details>
+
+<Box>
+    ## 🎨 Ejercicio: prioridades de tareas
+
+    Estás diseñando una biblioteca que representa la prioridad de tareas en un sistema. Las prioridades se dividen en cinco niveles:
+
+    - `LOW`
+    - `MEDIUM`
+    - `HIGH`
+    - `CRITICAL`
+    - `BLOCKER`
+
+    Define un `enum class` que modele estas prioridades y escribe una función `colorFor` que, dado un valor de prioridad, retorne el color sugerido para mostrarla:
+
+    | Prioridad             | Color sugerido |
+    |----------------------|----------------|
+    | LOW, MEDIUM          | `"green"`      |
+    | HIGH                 | `"orange"`     |
+    | CRITICAL, BLOCKER    | `"red"`        |
+
+    <details>
+        <summary>
+            Ejemplo de uso
+        </summary>
+        
+        ```kotlin showLineNumbers
+        fun main() {
+            // Example usage of TaskPriority and colorFor function
+            val task1 = TaskPriority.LOW
+            val task2 = TaskPriority.HIGH
+            val task3 = TaskPriority.BLOCKER
+
+            println("Task 1 priority: $task1, color: ${colorFor(task1)}") // green
+            println("Task 2 priority: $task2, color: ${colorFor(task2)}") // orange
+            println("Task 3 priority: $task3, color: ${colorFor(task3)}") // red
+        }
+        ```
+    </details>
+    <Hint hints={[
+        <>
+            Puedes agrupar varias condiciones en el <code>when</code> usando <code>,</code> para manejar múltiples casos con la misma lógica.
+        </>
+    ]}/>
+
+    <Solution>
+        ```kotlin showLineNumbers title="sum/src/main/kotlin/cl/ravenhill/task/TaskPriority.kt"
+        enum class TaskPriority {
+            LOW,
+            MEDIUM,
+            HIGH,
+            CRITICAL,
+            BLOCKER
+        }
+
+        fun colorFor(priority: TaskPriority): String = when (priority) {
+            TaskPriority.LOW, TaskPriority.MEDIUM -> "green"
+            TaskPriority.HIGH -> "orange"
+            TaskPriority.CRITICAL, TaskPriority.BLOCKER -> "red"
+        }
+        ```
+
+        <Explanation>
+            En esta solución definimos un `enum class` llamado `TaskPriority` con cinco niveles posibles, representando un **tipo suma** donde solo una alternativa es válida a la vez.
+
+            La función `colorFor` utiliza una estructura `when` exhaustiva para asignar un color a cada grupo de prioridades. Gracias a que `TaskPriority` es un conjunto cerrado de alternativas, el compilador puede verificar que todas las ramas del `when` están cubiertas.
+
+            También aprovechamos la capacidad de Kotlin para **agrupar múltiples alternativas en una sola rama** del `when` usando comas (`LOW, MEDIUM`), lo que permite escribir código más limpio y mantener una lógica clara cuando varias alternativas comparten el mismo comportamiento.
+        </Explanation>
+    </Solution>
+</Box>
 
 ## 🎯 Conclusiones
 
-Las enumeraciones (`enum class`) son una herramienta fundamental para representar tipos suma en Kotlin. Al modelar conjuntos finitos de alternativas conocidas, nos permiten escribir código **más seguro, expresivo y fácil de mantener**. Esta estructura es especialmente útil en bibliotecas que requieren representar **estados, modos o categorías cerradas**, donde cada valor tiene un significado claro y exclusivo.
+Las enumeraciones (`enum class`) son una herramienta fundamental para representar **tipos suma** en Kotlin. Al modelar conjuntos finitos de alternativas conocidas, nos permiten escribir código **más seguro, expresivo y fácil de mantener**. Esta estructura resulta especialmente útil en bibliotecas que requieren representar **estados, modos o categorías cerradas**, donde cada valor tiene un significado claro y exclusivo.
 
-El soporte del compilador para el **chequeo exhaustivo** en expresiones `when` sobre enumeraciones refuerza la corrección del código al alertar sobre casos no manejados. Y con la incorporación de **context-sensitive resolution** en versiones recientes de Kotlin, se mejora aún más la legibilidad del código al reducir el ruido sintáctico.
+El soporte del compilador para el **chequeo exhaustivo** en expresiones `when` refuerza la corrección del código al alertar sobre casos no manejados. Además, con la incorporación de **context-sensitive resolution** en versiones recientes de Kotlin, se mejora aún más la legibilidad al reducir el ruido sintáctico en contextos donde el tipo es evidente.
 
 ### 🔑 Puntos clave
 
-* Las enumeraciones modelan **tipos suma** con un conjunto cerrado de alternativas.
-* Ofrecen mayor **seguridad en tiempo de compilación**, evitando errores como valores mal escritos o no válidos.
-* Permiten aprovechar el **chequeo exhaustivo** del compilador con expresiones `when`.
-* Son ideales cuando las alternativas son fijas y **no requieren datos asociados**.
-* Desde Kotlin 2.2+, se pueden usar sin prefijo en contextos con tipo conocido gracias a **context-sensitive resolution**.
+- Las enumeraciones modelan **tipos suma** con un conjunto cerrado de alternativas.
+- Ofrecen mayor **seguridad en tiempo de compilación**, evitando errores como valores mal escritos o no válidos.
+- Permiten aprovechar el **chequeo exhaustivo** del compilador con expresiones `when`.
+- Son ideales cuando las alternativas son fijas y **no requieren datos asociados**.
+- Desde Kotlin 2.2+, se pueden usar sin prefijo en contextos donde el tipo es claro gracias a la **context-sensitive resolution**.
 
 ### 🧰 ¿Qué nos llevamos?
 
@@ -217,9 +294,23 @@ A partir de esta lección, comprendemos cómo y cuándo utilizar `enum class` pa
 
     ## 📖 ¿Con ganas de más?
 
-    ### 🔥 Referencias recomendadas
-
-    - 📕 "Item 41: Use Enum to Represent a List of Values." (pp. 249-255) en *Effective Kotlin: Best Practices, 2nd ed.* por **Marcin Moskała**: Explica cómo usar `enum class` para representar conjuntos fijos de valores, destacando sus ventajas en términos de serialización, iteración, ordenación y extensión con propiedades o funciones específicas por ítem. También compara `enum` con `sealed class`, señalando que las primeras son preferibles para representar valores constantes simples, mientras que las segundas son más adecuadas cuando se prevé agregar datos o lógica más compleja a cada caso.
-
-    {/* ### 🔹 Referencias adicionales */}
+    <ReferenceList title="🔥 Referencias recomendadas" items={[
+        <Book
+            chapter="Item 41: Use Enum to Represent a List of Values"
+            book="Effective Kotlin: Best Practices, 2nd ed."
+            author="Marcin Moskała"
+            pages={[249, 255]}
+        >
+            Explica cómo usar <code>enum class</code> para representar conjuntos fijos de valores, destacando sus ventajas en términos de serialización, iteración, ordenación y extensión con propiedades o funciones específicas por ítem. También compara <code>enum</code> con <code>sealed class</code>, señalando que las primeras son preferibles para representar valores constantes simples, mientras que las segundas son más adecuadas cuando se prevé agregar datos o lógica más compleja a cada caso.
+        </Book>,
+    ]}  />
+    <ReferenceList title="🔹 Referencias adicionales" items={[
+        <WebPage
+            title="Enum Classes"
+            url="https://kotlinlang.org/docs/enum-classes.html"
+            location="la documentación oficial de Kotlin"
+        >
+            Este recurso explica cómo las <code>enum class</code> en Kotlin permiten representar alternativas mutuamente excluyentes de manera segura y expresiva. Se abordan aspectos clave como la definición de constantes con propiedades, el uso de clases anónimas para personalizar el comportamiento de cada constante, y la implementación de interfaces. También se detallan las utilidades integradas para trabajar con constantes (<code>entries</code>, <code>valueOf</code>, <code>name</code>, <code>ordinal</code>) y se introducen mejoras recientes como <code>enumEntries&lt;T&gt;()</code>, que reemplaza a <code>enumValues&lt;T&gt;()</code> por motivos de eficiencia. Es una referencia esencial para comprender cómo las enumeraciones en Kotlin pueden actuar como tipos suma extensibles y mantenibles.
+        </WebPage>,
+    ]}  />
 </ExcludeFromReadingTime>
