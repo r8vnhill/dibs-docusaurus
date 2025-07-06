@@ -12,7 +12,7 @@ import styles from "./WebPage.module.css";
  * @property children - Optional descriptive content rendered below the link.
  */
 export interface WebPageProps {
-  title: string;
+  title: React.ReactNode;
   url: string;
   location: string;
   className?: string;
