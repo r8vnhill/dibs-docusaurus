@@ -5,47 +5,55 @@ import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
 import ExcludeFromReadingTime from '@site/src/components/reading-time/ExcludeFromReadingTime'
 import ReadingTime from '@site/src/components/reading-time/ReadingTime'
 import Explanation from '@site/src/components/admonitions/Explanation'
-import GithubRepoLink from '@site/src/components/git/GithubRepoLink'
+import RepoLinks from '@site/src/components/git/RepoLinks'
+import GitlabRepo from '@site/src/components/git/GitlabRepo'
+import GithubRepo from '@site/src/components/git/GithubRepo'
+import ReferenceList from '@site/src/components/references/ReferenceList'
+import Video from '@site/src/components/references/Video'
+import WebPage from '@site/src/components/references/WebPage'
 
 <ReadingTime />
-<GithubRepoLink user="r8vnhill" repo="swift-dibs" />
+<RepoLinks children={[
+  <GitlabRepo user="r8vnhill" repo="swift-dibs" />,
+  <GithubRepo user="r8vnhill" repo="swift-dibs" />,
+]} />
 
-Swift está diseñado para permitirte comenzar rápido. A diferencia de otros lenguajes donde siempre debes definir una función `main`, en Swift puedes escribir código directamente en un archivo llamado `main.swift`, y ese será automáticamente el punto de entrada del programa.
+Swift está diseñado para permitirte comenzar rápidamente. A diferencia de otros lenguajes en los que siempre debes definir una función `main`, en Swift puedes escribir código directamente en un archivo llamado `main.swift`, que será automáticamente reconocido como el punto de entrada del programa.
 
-Esto simplifica la escritura de scripts y herramientas pequeñas, sin sacrificar la posibilidad de estructurar programas más complejos gracias al uso de anotaciones como `@main`. En esta lección, exploraremos ambas formas de definir el punto de entrada en Swift: la implícita (mediante código a nivel superior) y la estructurada (usando `@main`). También aprenderás cómo recibir argumentos desde la línea de comandos, una herramienta clave para hacer tus programas más versátiles.
+Esto simplifica la escritura de scripts y herramientas pequeñas, sin sacrificar la posibilidad de estructurar programas más complejos mediante anotaciones como `@main`. En esta lección exploraremos ambas formas de definir el punto de entrada en Swift: la implícita (mediante código a nivel superior) y la estructurada (usando `@main`). También aprenderás cómo recibir argumentos desde la línea de comandos, una herramienta clave para crear programas más versátiles.
 
-Esta sección te prepara para escribir tanto pequeños scripts como aplicaciones modulares más avanzadas, manteniendo un enfoque idiomático y reutilizable en el desarrollo de bibliotecas de software.
+Esta sección te prepara para escribir desde pequeños scripts hasta aplicaciones modulares más avanzadas, manteniendo siempre un enfoque idiomático y reutilizable en el desarrollo de bibliotecas de software.
 
 ## 🛠️ ¿Cómo ejecutar estos ejemplos?
 
-Para poder ejecutar los ejemplos mostrados, es útil saber cómo crear un proyecto básico en Swift y cómo estructurarlo en módulos reutilizables. Estos recursos te guiarán paso a paso:
+Para ejecutar los ejemplos mostrados, es útil saber cómo crear un proyecto básico en Swift y estructurarlo en módulos reutilizables. Los siguientes recursos te guiarán paso a paso:
 
 - 📦 [Crear un Proyecto Básico en Swift](/docs/build-systems/init/swift)  
-  Aprende a iniciar un proyecto desde cero usando Swift Package Manager.
+  Aprende a iniciar un proyecto desde cero con Swift Package Manager.
 - 🧩 [Modularizar tu Proyecto Swift](/docs/build-systems/modular-design/swift)  
-  Descubre cómo dividir tu código en módulos separados para mejorar la organización, reutilización y mantenibilidad.
+  Descubre cómo dividir tu código en módulos para mejorar la organización, reutilización y mantenibilidad.
 
 ## 🧬 Declaración de `main` en Swift
 
 En Swift, **no necesitas declarar una función `main` de forma explícita** cuando escribes scripts o aplicaciones sencillas. El archivo `main.swift` se considera automáticamente el punto de entrada, y **todo el código que escribas a nivel superior se ejecuta directamente**.
 
-```swift showLineNumbers title="Script Swift simple (Sources/TypeFundamentals/main.swift)"
+```swift showLineNumbers title="main.swift — ejecución directa sin función main"
 print("What cannot change can only be broken.")
 ```
 
-Luego, puedes ejecutar este script directamente desde la terminal:
+Este ejemplo[^1] muestra cómo ejecutar un script simple directamente desde la terminal sin necesidad de definir una función `main`:
 
 ```bash title="Desde la terminal"
 swift run TypeFundamentals
 ```
 
-## 🧳 Accediendo a argumentos de línea de comandos
+[^1]: Inspirado en *Tokyo Ghoul*.
 
-Al igual que en Kotlin, Swift permite recibir **argumentos desde la terminal** para modificar dinámicamente el comportamiento de un programa. Esto es útil para crear herramientas reutilizables, probar componentes con distintos datos, o construir scripts de ejemplo.
+## 🎯 Argumentos desde la terminal
+
+Swift permite recibir **argumentos desde la terminal** para modificar dinámicamente el comportamiento de un programa. Esto es útil para crear herramientas reutilizables, probar componentes con distintos datos o construir scripts de ejemplo.
 
 ```swift showLineNumbers title="Script Swift con argumentos (Sources/TypeFundamentals/main.swift)"
-import Foundation
-
 let args = CommandLine.arguments.dropFirst()
 
 if args.isEmpty {
@@ -57,125 +65,125 @@ if args.isEmpty {
 ```
 
 <Explanation>
+    Este script lee los argumentos desde la línea de comandos y genera un mensaje personalizado.
 
-Este script lee los argumentos de la línea de comandos y genera un mensaje personalizado según el input recibido.
+    - **`CommandLine.arguments`** es un arreglo de cadenas que incluye todos los argumentos con los que se invocó el programa. El primer elemento (`arguments[0]`) corresponde al nombre del ejecutable.
+    - **`dropFirst()`** descarta ese primer elemento para obtener solo los argumentos útiles.
+    - Si no se entregan argumentos, se muestra un mensaje predeterminado.
+    - Si hay uno o más, se concatenan y se genera una respuesta personalizada.
 
-- **`CommandLine.arguments`** es un arreglo de cadenas que incluye todos los argumentos con los que fue invocado el programa. El primer elemento (`arguments[0]`) corresponde al nombre del ejecutable.
-- **`dropFirst()`** se usa para ignorar ese primer elemento y trabajar solo con los argumentos reales.
-- Si no se entregan argumentos, el programa imprime un mensaje predeterminado.
-- Si se entregan uno o más, los concatena y muestra una respuesta personalizada.
-
+    Este enfoque es equivalente al uso de `main(args: Array<String>)` en otros lenguajes como Kotlin, pero sin necesidad de declarar una función `main`.
 </Explanation>
 
-
-Esta técnica es equivalente al uso de `main(args: Array<String>)` en Kotlin, aunque Swift no requiere una función explícita `main`: simplemente coloca el código en `main.swift` y comienza desde ahí.
-
-Para ejecutar este script, puedes usar el comando:
+Puedes ejecutar el script con:
 
 ```bash title="Desde la terminal"
 swift run TypeFundamentals Syrio Forel
 ```
 
 <details>
+    <summary>
+        Compatibilidad con sistemas de ejecución
+    </summary>
 
-<summary>Compatibilidad con sistemas de ejecución</summary>
+    En Swift, puedes definir el punto de entrada del programa utilizando un tipo anotado con `@main`, como una `struct` o `class`.  
+    Este enfoque es útil cuando quieres estructurar tu aplicación de forma más formal o integrarla con herramientas de ejecución externas.
 
-En Swift, puedes definir el punto de entrada de un programa utilizando un tipo estructural anotado con `@main`, como una `struct` o una `class`. Este enfoque es especialmente útil cuando deseas una estructura más formal y compatible con herramientas de ejecución más exigentes.
-
-```swift showLineNumbers title="Estructura con @main (Sources/TypeFundamentals/main.swift)"
-@main
-struct Launcher {
-    static func main() {
-        print("Static main detected.")
+    ```swift showLineNumbers title="Estructura con @main (Sources/TypeFundamentals/main.swift)"
+    @main
+    struct Launcher {
+        static func main() {
+            print("Static main detected.")
+        }
     }
-}
-```
+    ```
 
-:::info ¿Qué es un tipo estructural?
+    :::info ¿Qué es `@main`?
 
-Un **tipo estructural** en Swift es cualquier tipo que define una estructura clara de datos y comportamiento, como `struct`, `class` o `enum`. En el contexto de `@main`, se espera que el tipo tenga un método `static func main()` que actúe como punto de entrada del programa.
+    La anotación `@main` indica que ese tipo define el **punto de entrada** del programa.  
+    Se espera que incluya un método `static func main()` que se ejecute al iniciar el programa, como en Java (`public static void main`) o Kotlin (`@JvmStatic`).
 
-Esto permite que Swift compile el programa en un binario ejecutable que puede ser invocado desde la línea de comandos o herramientas externas, similar a cómo funciona el método `public static void main` en Java o Kotlin con `@JvmStatic`.
+    Puedes usar `@main` con una `struct`, `class` o `enum`.
 
-:::
+    :::
 
-:::danger Error: `'main' attribute cannot be used in a module that contains top-level code`
+    :::danger Error común: `'main' attribute cannot be used in a module that contains top-level code`
 
-Swift no permite combinar la anotación `@main` con **código a nivel superior** (es decir, fuera de funciones, clases o estructuras) dentro del mismo archivo. Esto incluye incluso **líneas en blanco o comentarios mal ubicados**.
+    Swift **no permite combinar `@main` con código a nivel superior** (fuera de funciones o clases) en el mismo archivo.  
+    Esto incluye incluso líneas vacías, comentarios sueltos o `print()` fuera de estructuras.
 
-✅ Asegúrate de que el archivo que contiene el tipo con `@main` **no tenga ningún otro código fuera de ese tipo**.
+    ✅ Asegúrate de que el archivo que contiene el tipo con `@main` **no tenga ningún otro código fuera de ese tipo**.
 
-:::
+    :::
 
 </details>
 
-## 📊 Resumen comparativo
+## 🆚 Resumen comparativo
 
 | Característica                        | Kotlin                                                                 | Swift                                                                 |
 |--------------------------------------|------------------------------------------------------------------------|-----------------------------------------------------------------------|
 | ¿Requiere una función `main` explícita? | ✅ Sí, siempre debe declararse una función `main`                      | ❌ No, el archivo `main.swift` ejecuta directamente el código         |
 | Forma básica de punto de entrada      | `fun main()` o `fun main(args: Array<String>)`                         | Código a nivel superior en `main.swift`                               |
 | Recepción de argumentos por consola   | `args: Array<String>`                                                  | `CommandLine.arguments`                                               |
-| Herramienta de ejecución              | Gradle (`./gradlew :app:run --args="..."`)                             | SwiftPM (`swift run NombreDelTarget`)                                 |
-
-### ✅ Beneficios / ❌ Limitaciones
+| Herramienta de ejecución              | Gradle (`./gradlew :moduleName:run --args="..."`)                             | SwiftPM (`swift run TargetName`)                                 |
 
 <ProCons>
-
-<Pros>
-
-- Permite escribir scripts simples sin declarar funciones o clases.
-- Sintaxis más directa y concisa para casos rápidos o exploratorios.
-- El soporte de `@main` permite compatibilidad con binarios más estructurados.
-
-</Pros>
-
-<Cons>
-
-- Menos explícito: el punto de entrada puede ser implícito, lo que puede generar confusión en proyectos grandes.
-- Errores sutiles si se mezcla `@main` con código a nivel superior en el mismo archivo.
-
-</Cons>
-
+    <Pros title="Beneficios de Swift">
+        - Permite escribir scripts simples sin declarar funciones o clases.
+        - Sintaxis más directa y concisa para casos rápidos o exploratorios.
+        - El soporte de `@main` permite compatibilidad con binarios más estructurados.
+    </Pros>
+    <Cons title="Limitaciones de Swift">
+        - Menos explícito: el punto de entrada puede ser implícito, lo que puede generar confusión en proyectos grandes.
+        - Errores sutiles si se mezcla `@main` con código a nivel superior en el mismo archivo.
+    </Cons>
 </ProCons>
 
 ## 🎯 Conclusiones
 
-En esta lección exploramos cómo se declara y estructura el punto de entrada en programas escritos en Swift, destacando su naturaleza más flexible y concisa en comparación con otros lenguajes como Kotlin o Java.
+En esta lección exploramos cómo declarar y estructurar el punto de entrada en programas escritos en Swift, y cómo esta forma resulta más flexible y concisa que en lenguajes como Kotlin o Java.
 
-Swift permite una experiencia de scripting más directa al ejecutar código ubicado en `main.swift` sin necesidad de funciones explícitas. Esta simplicidad lo hace ideal para scripts, experimentación y prototipado rápido, mientras que el uso de `@main` permite adoptar una estructura más tradicional cuando se necesita mayor control o integración con sistemas de ejecución avanzados.
+Swift permite una experiencia de scripting más directa gracias a la ejecución de código ubicado directamente en `main.swift`, sin necesidad de definir funciones explícitas. Esta simplicidad lo hace ideal para scripts, experimentación y prototipado rápido. Por otro lado, el uso de `@main` ofrece una estructura más tradicional cuando se requiere mayor control o integración con sistemas de ejecución más complejos (como pruebas, empaquetado o interoperabilidad con C).
 
-También aprendimos a manejar argumentos desde la línea de comandos, una técnica esencial para construir programas reutilizables, interactivos y fáciles de testear.
+También aprendimos a manejar argumentos desde la línea de comandos, una técnica esencial para construir herramientas reutilizables, interactivas y fáciles de testear.
 
 ### 🔑 Puntos clave
 
-- Swift **no requiere una función `main` explícita**: basta con colocar código en el archivo `main.swift`.
-- El acceso a los argumentos de línea de comandos se hace mediante `CommandLine.arguments`, ignorando el nombre del ejecutable con `dropFirst()`.
-- Se puede usar `@main` con un `struct`, `class` o `enum` que defina un `static func main()` como punto de entrada alternativo.
-- Swift prohíbe el uso de `@main` en archivos que contengan código a nivel superior.
-- La simplicidad de `main.swift` facilita la escritura de scripts, pero puede volverse ambigua en proyectos más grandes si no se organiza con cuidado.
+- Se puede escribir código directamente en `main.swift` sin definir una función `main`.
+- El acceso a argumentos desde la terminal se hace con `CommandLine.arguments.dropFirst()`.
+- Se puede usar `@main` con una `struct`, `class` o `enum` que defina `static func main()` como punto de entrada.
+- No es posible combinar `@main` con código a nivel superior en el mismo archivo.
+- `main.swift` es ideal para scripts, pero requiere una organización cuidadosa en proyectos grandes.
 
 ### 🧰 ¿Qué nos llevamos?
 
-Swift ofrece una entrada al programa mucho más sencilla que muchos lenguajes tradicionales, pero eso viene con ciertos compromisos:
+Swift ofrece un punto de entrada más sencillo que muchos lenguajes tradicionales, lo que reduce el ruido sintáctico y permite una experiencia de desarrollo fluida desde el primer momento.
 
-- Para scripts y herramientas rápidas, Swift brilla por su **bajo ruido sintáctico** y **fluidez**.
-- Para aplicaciones más estructuradas, su sistema basado en `@main` y tipos estructurales permite mantener un diseño robusto.
-- Comprender las reglas sobre `main.swift`, `@main` y `CommandLine.arguments` es esencial para evitar errores y sacarle el máximo provecho tanto a proyectos pequeños como a aplicaciones modulares más complejas.
+- Para scripts o herramientas pequeñas, destaca por su **inmediatez y expresividad**.
+- Para aplicaciones estructuradas, `@main` permite un diseño más robusto y explícito.
+- Conocer las diferencias entre `main.swift`, `@main` y `CommandLine.arguments` es clave para aplicar la opción adecuada en cada caso.
 
-El diseño de Swift refleja una decisión deliberada: permitir a quien desarrolla comenzar de forma inmediata sin sacrificar la posibilidad de escalar hacia estructuras formales. Esta elección lo convierte en un lenguaje pragmático y adaptable para la creación de bibliotecas reutilizables, scripts, y herramientas de línea de comandos.
+El diseño de Swift refleja una decisión consciente: **permitir comenzar con sencillez, pero sin renunciar a la escalabilidad**. Esto lo convierte en una excelente opción tanto para scripts como para bibliotecas y herramientas modulares reutilizables.
 
-<ExcludeFromReadingTime>
+## 📖 ¿Con ganas de más?
 
-## 📖 Referencias
-
-### 🔥 Recomendadas
-
-- [🌐 "#1 Swift Programming - Application Entry Point - Main Function"](https://youtu.be/onM2HuDacic) en *YouTube* por **Davids Videos**: Este video explica cómo definir el punto de entrada de una aplicación en Swift. Comienza mostrando el uso tradicional del archivo `main.swift`, donde el compilador espera encontrar el código de inicio, y luego presenta una alternativa mediante el uso de la anotación @main en una estructura o clase que implemente una función `static func main()`. También se aclaran las restricciones de Swift respecto al uso de expresiones a nivel superior fuera del archivo principal, y se muestra cómo evitar conflictos si hay múltiples anotaciones `@main`. Es una guía práctica útil para quienes desean personalizar el archivo de entrada, como en proyectos que usan `entry-point.swift`.
-
-
-{/* ### 🔹 Adicionales */}
-
-{/* - [📚]() */}
-
-</ExcludeFromReadingTime>
+<ReferenceList title="🔥 Referencias recomendadas" items={[
+    <Video
+        title="#1 Swift Programming - Application Entry Point - Main Function"
+        url="https://youtu.be/onM2HuDacic"
+        duration="4m29s"
+        location="YouTube"
+        author="Davids Videos"
+    >
+        Este video explica cómo definir el punto de entrada de una aplicación en Swift. Comienza mostrando el uso tradicional del archivo <code>main.swift</code>, donde el compilador espera encontrar el código de inicio, y luego presenta una alternativa mediante el uso de la anotación <code>@main</code> en una estructura o clase que implemente una función <code>static func main()</code>. También se aclaran las restricciones de Swift respecto al uso de expresiones a nivel superior fuera del archivo principal, y se muestra cómo evitar conflictos si hay múltiples anotaciones <code>@main</code>.
+    </Video>
+]}  />
+<ReferenceList title="🔹 Referencias adicionales" items={[
+    <WebPage
+        title=<code>arguments</code>
+        url="https://developer.apple.com/documentation/swift/commandline/arguments"
+        location="Apple Developer"
+    >
+        Explica cómo acceder a los argumentos de línea de comandos en Swift usando <code>CommandLine.arguments</code>. Describe su uso en programas ejecutables, donde el primer argumento corresponde al nombre del programa, y muestra un ejemplo práctico de cómo procesar argumentos para construir una herramienta simple. Compatible con múltiples plataformas (macOS, iOS, watchOS, etc.).
+    </WebPage>
+]}  />
