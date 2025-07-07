@@ -1,51 +1,19 @@
 import React from "react";
-import ExcludeFromReadingTime from "../reading-time/ExcludeFromReadingTime";
 import styles from "./Book.module.css";
 
 type PageRange = [number, number];
 
-/**
- * Props for the {@link Book} reference component.
- *
- * @property chapter - The title of the chapter or section being referenced.
- * @property pages - A page range in the format `"start-end"` (e.g., `"10-20"`).
- * @property book - The title of the book.
- * @property author - The name of the book's author(s).
- * @property className - Optional CSS class for custom styling.
- * @property icon - Optional icon (React node) to show before the reference. Defaults to 📕.
- * @property children - Optional description or notes rendered below the reference.
- */
-export interface BookProps {
-  chapter: string;
+type BookProps = {
+  chapter: React.ReactNode;
   pages: PageRange;
-  book: string;
-  author: string;
+  book: React.ReactNode;
+  author: React.ReactNode;
+  authors?: React.ReactNode[];
   className?: string;
   icon?: React.ReactNode;
   children?: React.ReactNode;
 }
 
-/**
- * Renders a reference to a chapter in a book.
- *
- * This component is designed for consistent citation of book chapters, including optional
- * iconography and extra descriptive content.
- * The page range is formatted with an en-dash (–) and validated strictly.
- *
- * Wrapped in {@link ExcludeFromReadingTime} to avoid polluting reading time analytics.
- *
- * @example
- * ```tsx
- * <Book
- *   chapter="Introduction to Gradle"
- *   pages={[1, 10]}
- *   book="Gradle in Action"
- *   author="Benjamin Muschko"
- * >
- *   A concise intro to Gradle and its core principles.
- * </Book>
- * ```
- */
 const Book = React.memo(({
   chapter,
   pages,

@@ -1,30 +1,21 @@
 import React from "react";
+import clsx from "clsx";
 import styles from "./WebPage.module.css";
 
-/**
- * Props for the {@link WebPage} component.
- *
- * @property title - The name or title of the linked web resource.
- * @property url - The URL the title links to. Opens in a new tab.
- * @property location - A short label or source (e.g., domain or organization) where the content is hosted.
- * @property className - Optional CSS class for custom styling of the container.
- * @property icon - Optional icon (React node) shown before the link. Defaults to 🌐.
- * @property children - Optional descriptive content rendered below the link.
- */
-export interface WebPageProps {
+type WebPageProps = {
   title: React.ReactNode;
   url: string;
   location: string;
+  author?: React.ReactNode;
   className?: string;
   icon?: React.ReactNode;
   children?: React.ReactNode;
-}
+};
 
 /**
- * Renders a link to a web page with an optional icon, location label, and description.
+ * Renders a consistent and accessible preview of an external web page.
  *
- * This component is useful for referencing external articles, documentation,
- * or resources in a consistent and accessible way.
+ * Useful for referencing documentation, articles, or learning resources.
  *
  * @example
  * ```tsx
@@ -37,28 +28,42 @@ export interface WebPageProps {
  * </WebPage>
  * ```
  */
-const WebPage: React.FC<WebPageProps> = ({
-  title,
-  url,
-  location,
-  className = "",
-  icon = "🌐",
-  children,
-}) => {
-  if (!title || !url || !location) {
-    throw new Error("WebPage: 'title', 'url', and 'location' are required props.");
-  }
+const WebPage: React.FC<WebPageProps> = React.memo(
+  ({ title, url, location, author, className, icon = "🌐", children }) => {
+    if (!title || !url || !location) {
+      console.warn(
+        "WebPage: Missing one or more required props: title, url, location."
+      );
+      return null;
+    }
 
-  return (
-    <div className={`${styles.webPage} ${className}`.trim()}>
-      <span className={styles.icon}>{icon}</span>{' '}
-      <a href={url} target="_blank" rel="noopener noreferrer" className={styles.title}>
-        “{title}”
-      </a> en{' '}
-      <span className={styles.location}>{location}</span>:
-      {children && <div className={styles.description}>{children}</div>}
-    </div>
-  );
-};
+    return (
+      <div className={clsx(styles.webPage, className)}>
+        <span className={styles.icon}>{icon}</span>{" "}
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.title}
+        >
+          “{title}”
+        </a>{" "}
+        en <span className={styles.location}>{location}</span>
+        {author && (
+          <span className={styles.author}>
+            {" "}
+            por <span className={styles.authorName}>{author}</span>
+          </span>
+        )}
+        {children && (
+          <>
+            {":"}
+            <div className={styles.description}>{children}</div>
+          </>
+        )}
+      </div>
+    );
+  }
+);
 
 export default WebPage;

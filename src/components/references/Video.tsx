@@ -1,5 +1,5 @@
-import React from 'react';
-import styles from './Video.module.css';
+import React from "react";
+import styles from "./Video.module.css";
 
 /**
  * Props for the `Video` component, representing a video reference entry.
@@ -39,34 +39,42 @@ export interface VideoProps {
  * @param icon - Optional icon (defaults to 🎥).
  * @param children - Optional description or extra content.
  */
-const Video = React.memo(({
-  title,
-  url,
-  duration,
-  location,
-  author,
-  className = '',
-  icon = '🎥',
-  children,
-}: VideoProps) => {
-    if (!title || !url || !duration || !location || !author) {
-        throw new Error(
+const Video = React.memo(
+  ({
+    title,
+    url,
+    duration,
+    location,
+    author,
+    className = "",
+    icon = "🎥",
+    children,
+  }: VideoProps) => {
+    if (!title?.trim() || !url || !duration || !location || !author) {
+      console.warn(
         "Video: 'title', 'url', 'duration', 'location' and 'author' are required props."
-        );
+      );
+      return null;
     }
-    
-  return (
-    <div className={`${styles.video} ${className}`.trim()}>
-      <span className={styles.icon}>{icon}</span>{' '}
-      <a href={url} target="_blank" rel="noopener noreferrer" className={styles.title}>
-        “{title}”
-      </a>{' '}
-      <span className={styles.duration}>({duration})</span> en{' '}
-      <span className={styles.location}>{location}</span> por{' '}
-      <span className={styles.author}>{author}</span>:
-      {children && <div className={styles.description}>{children}</div>}
-    </div>
-  );
-});
+
+    return (
+      <div className={`${styles.video} ${className}`.trim()}>
+        <span className={styles.icon}>{icon}</span>{" "}
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.title}
+        >
+          “{title}”
+        </a>{" "}
+        <span className={styles.duration}>({duration})</span> en{" "}
+        <span className={styles.location}>{location}</span> por{" "}
+        <span className={styles.author}>{author}</span>:
+        {children && <div className={styles.description}>{children}</div>}
+      </div>
+    );
+  }
+);
 
 export default Video;
