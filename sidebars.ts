@@ -27,7 +27,7 @@ const sidebars: SidebarsConfig = {
                     },
                     items: [
                         'type-fundamentals/basics/functions/kt',
-                        'type-fundamentals/basics/functions-and-variables/kt',
+                        'type-fundamentals/basics/variables/kt',
                         'type-fundamentals/basics/conditional-expressions/kt',
                         'type-fundamentals/basics/cycles/kt',
                         'type-fundamentals/basics/main/kt',
