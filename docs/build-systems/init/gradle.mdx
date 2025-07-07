@@ -1,100 +1,73 @@
 ---
 title: Creando un Proyecto Básico con Gradle
 ---
-import GitHubRepoLink from "@site/src/components/git/GithubRepoLink";
+import GitHubRepoLink from "@site/src/components/git/GitHubRepoLink";
 import References from "@site/src/components/ReferencesComponent";
-import ReadingTime from '@site/src/components/ReadingTime';
+import ReadingTime from '@site/src/components/reading-time/ReadingTime';
 import * as LanguageCards from '@site/src/components/cards/LanguageCard'
 import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
 import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
 import TabItem from '@theme/TabItem'
 import Explanation from '@site/src/components/admonitions/Explanation'
+import RepoLinks from '@site/src/components/git/RepoLinks';
+import GitLabRepo from '@site/src/components/git/GitLabRepo';
+import GitHubRepo from '@site/src/components/git/GitHubRepo';
+import InitializeGradleProjectPs from '@site/src/components/mdx/build-systems/init/gradle/InitializeGradleProjectPs';
+import InitializeGradleProjectSh from '@site/src/components/mdx/build-systems/init/gradle/InitializeGradleProjectSh';
+import ReferenceList from '@site/src/components/references/ReferenceList';
+import WebPage from '@site/src/components/references/WebPage';
 
-<ReadingTime/>
-<GitHubRepoLink repo={"echo-app-kt"} user={"r8vnhill"} />
+<ReadingTime multiplier={2} />
+<RepoLinks>
+    <GitLabRepo repo={"echo-app-kt"} user={"r8vnhill"} />
+    <GitHubRepo repo={"echo-app-kt"} user={"r8vnhill"} />
+</RepoLinks>
 
-Antes de poder automatizar tareas, compilar bibliotecas o aplicar convenciones reutilizables, necesitamos tener una estructura de proyecto bien definida. En esta lección aprenderás a crear tu primer proyecto con **Gradle**, usando el **Kotlin DSL**, que nos permitirá configurar todo el entorno de construcción con el mismo lenguaje en el que desarrollamos nuestras bibliotecas.
+Gradle es una herramienta de automatización moderna y flexible que permite compilar, testear y empaquetar proyectos de software de manera declarativa. Es ampliamente utilizada en el desarrollo de aplicaciones y bibliotecas en JVM (Java, Kotlin, Scala), y es la base del sistema de construcción de Android.
 
-A lo largo de esta unidad construiremos una pequeña aplicación llamada `echo-app`, que dependerá de una biblioteca definida por nosotrxs. Esta aplicación recibirá parámetros desde la línea de comandos y mostrará un mensaje con la fecha y hora actual. Esta estructura nos permitirá trabajar con múltiples módulos y comenzar a aplicar gradualmente conceptos como tareas personalizadas, análisis estático y publicación.
+En esta lección aprenderás a crear un proyecto básico con Gradle desde cero, usando la herramienta `gradle init`. Este proceso inicial es fundamental para establecer una estructura de proyecto coherente, reproducible y escalable. También te familiarizarás con conceptos esenciales como el wrapper, el lenguaje de scripting (Kotlin DSL) y las convenciones que seguiremos en el resto del curso.
 
-El objetivo de esta lección es guiarte paso a paso en la creación de un proyecto básico, utilizando `gradle init` y seleccionando las opciones adecuadas para que el resultado sea coherente con los requerimientos de una biblioteca bien organizada.
+:::warning Prerequisitos
 
-## 📁 Paso 1: Crear el Directorio del Proyecto
+Esta lección asume que ya seguiste los pasos descritos en la sección [Herramientas necesarias y recomendadas](/docs/installation)
 
-Comienza creando un nuevo directorio para tu proyecto y luego accede a él:
+Si aún no has realizado esa configuración, te recomendamos completarla antes de continuar.
+
+:::
+
+
+## 📂 Paso 1: Inicializar el Proyecto Gradle
+
+Primero, crea la estructura base del proyecto utilizando el script correspondiente a tu sistema operativo:
 
 <BoxedTabs groupId={"os"}>
-  <TabItem value="Windows" label="Windows">
-    ```powershell
-    "echo-app" | ForEach-Object {
-        New-Item -Path $_ -ItemType Directory -Force && `
-            Set-Location -Path $_
-    }
-    ```
-
-    <Explanation>
-      Este bloque de PowerShell crea un directorio llamado `echo-app` y luego cambia el directorio actual para ubicarse dentro de él.
-
-      - `"echo-app"` genera un único valor en la secuencia (el nombre del proyecto).
-      - `ForEach-Object { ... }` aplica el bloque de código a cada valor recibido.
-      - `New-Item -Path $_ -ItemType Directory -Force` crea el directorio si no existe. La opción `-Force` evita errores si el directorio ya está presente.
-      - `Set-Location -Path $_` cambia al directorio recién creado.
-
-      Esta combinación es útil en scripts porque permite trabajar con nombres definidos dinámicamente, manteniendo un flujo declarativo y reutilizable en PowerShell.
-    </Explanation>
-  </TabItem>
-
-  <TabItem value="Windows (corto)" label="Windows (corto)">
-    ```powershell
-    "echo-app" | % { md $_ -f && cd $_ }
-    ```
-
-    <Explanation>
-      Este comando de PowerShell es una versión abreviada para crear y acceder a un directorio llamado `echo-app`.
-
-      - `"echo-app"` envía el nombre del directorio mediante una canalización (`|`).
-      - `%` es un alias de `ForEach-Object`, que ejecuta el bloque `{ ... }` sobre cada valor recibido.
-      - `md $_ -f` es un alias de `mkdir`, y la opción `-f` evita errores si el directorio ya existe.
-      - `cd $_` cambia al directorio recién creado.
-
-      Este estilo es más conciso y útil para tareas rápidas en la terminal, aunque puede resultar menos claro para personas que no estén familiarizadas con los alias de PowerShell.
-    </Explanation>
-  </TabItem>
-
-  <TabItem value="Linux/macOS" label="Linux/macOS">
-    ```bash
-    dir="echo-app"; mkdir -p "$dir" && cd "$dir"
-    ```
-
-    <Explanation>
-      Esta línea crea un directorio llamado `echo-app` y luego cambia al interior de ese directorio, todo en una sola instrucción:
-
-      - `dir="echo-app"` define una variable con el nombre del directorio, evitando repetirlo y permitiendo modificarlo fácilmente si es necesario.
-      - `mkdir -p "$dir"` crea el directorio si no existe. La opción `-p` previene errores si ya está creado.
-      - `&& cd "$dir"` cambia al directorio **solo si la creación fue exitosa**.
-
-      Esta forma es directa, clara y recomendada tanto para uso interactivo como para scripts simples en Bash o Zsh.
-    </Explanation>
-  </TabItem>
+    <TabItem value="Windows" label="Windows">
+        <InitializeGradleProjectPs />
+    </TabItem>
+    <TabItem value="macOS" label="macOS">
+        <InitializeGradleProjectSh os="unix" />
+    </TabItem>
+    <TabItem value="Ubuntu/Debian" label="Ubuntu/Debian">
+        <InitializeGradleProjectSh os="unix" />
+    </TabItem>
 </BoxedTabs>
 
-## 🧩 Paso 2: Inicializar el Proyecto con Gradle
+:::tip ¿Qué es `gradle init`?
 
-Ejecuta el siguiente comando para comenzar la configuración del proyecto:
+El comando `gradle init` es una utilidad interactiva que te permite **crear rápidamente la estructura básica de un proyecto Gradle**. Mediante un asistente paso a paso, puedes elegir:
 
-```bash
-gradle init
-```
+- El tipo de proyecto (aplicación, biblioteca, básico, etc.)
+- El lenguaje de script para la configuración (`Kotlin` o `Groovy`)
+- El nombre del proyecto
+- Si deseas usar nuevas APIs experimentales
 
-Este comando te guiará paso a paso por un asistente interactivo donde podrás definir aspectos clave como el tipo de proyecto, el lenguaje de scripting y el nombre del módulo. Es una forma rápida y flexible de generar la estructura base sin tener que crear los archivos manualmente.
+Este comando es ideal para iniciar proyectos desde cero sin tener que escribir los archivos manualmente, asegurando que todo esté estructurado de acuerdo a las convenciones de Gradle.
 
-## 🧠 Paso 3: Elegir el Tipo de Proyecto
+:::
 
-En este paso, Gradle te preguntará qué tipo de proyecto deseas crear. Para comenzar con una base simple y flexible, selecciona la opción:
+## 🧠 Paso 2: Elegir el Tipo de Proyecto
 
-**`4: Basic (build structure only)`**
-
-Esta opción genera la estructura mínima de un proyecto sin incluir lógica de aplicación, lo que nos permite definirla desde cero según las necesidades del curso.
+Durante la inicialización, Gradle te preguntará qué tipo de proyecto deseas generar.  
 
 ```text
 Select type of build to generate:
@@ -107,18 +80,53 @@ Enter selection (default: Application) [1..4]
 > 4
 ```
 
-## 🏷️ Paso 4: Asignar un Nombre al Proyecto
+<Explanation>
+    Para comenzar con una base **simple, limpia y flexible**, selecciona la opción:
 
-Gradle te pedirá que indiques el nombre del proyecto. Si presionas Enter sin escribir nada, usará por defecto el nombre de la carpeta actual (en este caso, `echo-app`), lo cual es perfectamente adecuado para este ejercicio.
+    **`4: Basic (build structure only)`**
+
+    Esta opción crea únicamente la estructura mínima del proyecto, sin incluir código de aplicación, permitiéndonos definirla desde cero de acuerdo con los objetivos del curso.
+</Explanation>
+
+En un caso real, probablemente elegirías `1: Application` o `2: Library`, pero aquí construiremos todo desde la base para entender mejor cómo funciona Gradle.
+
+## 🏷️ Paso 3: Asignar un Nombre al Proyecto
+
+Gradle te pedirá que asignes un nombre al proyecto.  
+Si presionas Enter sin escribir nada, se usará por defecto el nombre del directorio actual, que en este caso es `echo-app`.
 
 ```text
 Project name (default: echo-app):
 ```
 
-## 🧾 Paso 5: Elegir el Lenguaje de Script (DSL)
+::::info Explicación
 
-En este paso, Gradle te pedirá que selecciones el lenguaje para los archivos de configuración del proyecto.  
-En este curso trabajaremos con **Kotlin DSL**, así que elige la opción **`1: Kotlin`**.
+El nombre del proyecto se utiliza internamente por Gradle para identificar este módulo o subproyecto.  
+También se refleja en archivos como `settings.gradle.kts`, donde aparecerá como:
+
+```kotlin
+rootProject.name = "echo-app"
+```
+
+Este valor no tiene impacto directo en los nombres de paquetes o clases, pero **sí influye en la generación de artefactos**, como por ejemplo `echo-app.jar`, y en la identificación del módulo dentro de proyectos multi-módulo o al publicar a repositorios como Maven Central.
+
+:::tip Usa kebab-case
+
+Se recomienda utilizar **nombres cortos, en minúsculas y con guiones (`kebab-case`)**, ya que:
+
+- Es el estilo convencional para artefactos en Maven Central y otros repositorios públicos.
+- Facilita la lectura en entornos donde los nombres de los archivos o módulos aparecen frecuentemente (por ejemplo, `cl.ravenhill:echo-app:1.0.0`).
+
+:::
+
+::::
+
+## 🧾 Paso 4: Elegir el Lenguaje de Script (DSL)
+
+Gradle te pedirá que elijas el lenguaje con el que se escribirán los archivos de configuración del proyecto.  
+En este curso trabajaremos con **Kotlin DSL**, por lo que debes seleccionar la opción:
+
+**`1: Kotlin`**
 
 ```text
 Select build script DSL:
@@ -129,157 +137,172 @@ Enter selection (default: Kotlin) [1..2]
 > 1
 ```
 
-## 🧪 Paso 6: Usar o No Nuevas APIs Experimentales
+:::info Explicación
 
-Gradle puede preguntarte si deseas generar el proyecto utilizando **nuevas APIs y comportamientos** que podrían cambiar en futuras versiones.
+Gradle permite definir la configuración del proyecto usando dos lenguajes de scripting:
 
-Para este curso, selecciona **no**, ya que optar por la opción estable nos garantiza un entorno más predecible y compatible con la documentación actual.
+- **Groovy DSL** (usado históricamente desde las primeras versiones de Gradle)
+- **Kotlin DSL** (introducido como alternativa moderna y con mejor soporte estático)
+
+En este curso utilizamos **Kotlin DSL** porque:
+
+- Es más expresivo y seguro gracias al tipado estático.
+- Ofrece mejor autocompletado e integración con IDEs como IntelliJ o VS Code.
+- Es consistente con el lenguaje principal que usaremos para desarrollar las bibliotecas.
+
+Ambos DSLs son equivalentes en términos de capacidades, pero el estilo y la experiencia de desarrollo con Kotlin DSL se alinean mejor con proyectos modernos y profesionales.
+
+:::
+
+## 🧪 Paso 5: Usar o No Nuevas APIs Experimentales
+
+Gradle preguntará si deseas generar el proyecto utilizando **nuevas APIs y comportamientos que podrían cambiar en futuras versiones**.
+
+Para este curso, selecciona **`no`**, ya que preferimos una configuración más estable y predecible:
 
 ```text
 Generate build using new APIs and behavior (some features may change in the next minor release)? (default: no) [yes, no]
 > no
 ```
 
+:::info Explicación
+
+Gradle introduce ocasionalmente **nuevas APIs y convenciones** como parte de su evolución.  
+Al optar por habilitarlas (`yes`), estás generando un proyecto con lo más reciente en cuanto a estructura y comportamiento, pero también:
+
+- **Podrías enfrentarte a cambios no compatibles** en futuras actualizaciones menores.
+- La documentación y los plugins aún podrían no estar completamente adaptados.
+
+En contextos de aprendizaje, producción o documentación, lo más recomendable es usar la opción **estable (`no`)**, que garantiza:
+
+- Mayor compatibilidad con herramientas y ejemplos existentes.
+- Comportamiento más predecible entre versiones de Gradle.
+
+:::
+
 ## 🗂️ Estructura del Proyecto Generado
 
-Una vez que completes los pasos anteriores, Gradle generará una estructura básica de proyecto como la siguiente:
+Después de completar el asistente de `gradle init`, se generará una estructura mínima pero funcional que permite compilar y configurar el proyecto desde el primer momento:
 
 ```mermaid
 graph LR
-    A[📁 ./echo-app/]
+    subgraph EchoApp [📂 echo-app]
+        direction LR
 
-    A1[📝 .gitattributes]
-    A2[📝 .gitignore]
-    A3[⚙️ build.gradle.kts]
-    A4[🚀 gradlew]
-    A5[🚀 gradlew.bat]
-    A6[⚙️ settings.gradle.kts]
-    A --> A1
-    A --> A2
-    A --> A3
-    A --> A4
-    A --> A5
-    A --> A6
-
-    subgraph DotGradle [📂 .gradle]
-        G1[📦 archivos internos]
-    end
-    A --> G1
-
-    subgraph GradleConfig [📂 gradle]
-        A81[🧩 libs.versions.toml]
-        subgraph GradleWrapper [📂 wrapper]
-            A821[📦 gradle-wrapper.jar]
-            A822[📝 gradle-wrapper.properties]
+        subgraph DotGradle [📂 .gradle]
+            direction TB
+            G1[📦 archivos internos]
         end
+
+        subgraph Gradle [📂 gradle]
+            direction TB
+
+            subgraph Wrapper [📂 wrapper]
+                direction LR
+                GradleWrapperJar[📦 gradle-wrapper.jar]
+                GradleWrapperProperties[📝 gradle-wrapper.properties]
+            end
+
+            LibsVersionsToml[🧩 libs.versions.toml]
+        end
+
+        GitAttributes[📝 .gitattributes y .gitignore]
+        BuildGradle[⚙️ build.gradle.kts, gradle.properties y settings.gradle.kts]
+        GradleWrapper[🚀 gradlew y gradlew.bat]
     end
-    A --> A81
-    A --> A821
-    A --> A822
 ```
 
 :::info Explicación de la Estructura del Proyecto
 
-Al inicializar el proyecto con Gradle, se genera una estructura mínima pero completa que incluye archivos clave para configurar, construir y compartir tu aplicación o biblioteca.
+Gradle genera una estructura estándar que permite mantener proyectos bien organizados, reproducibles y compatibles con herramientas modernas. Aquí un desglose de los elementos más relevantes:
 
-- **📁 `./echo-app/`**: Carpeta raíz del proyecto.
-- **📄 `.gitattributes` / `.gitignore`**: Archivos de control de versiones usados por Git para definir reglas de formato y exclusión.
-- **⚙️ `build.gradle.kts`**: Script principal de Gradle donde se definen tareas, dependencias y configuración del proyecto, usando Kotlin DSL.
-- **🚀 `gradlew` / `gradlew.bat`**: Scripts ejecutables del wrapper de Gradle para Unix y Windows. Permiten ejecutar Gradle sin requerir instalación global.
-- **⚙️ `settings.gradle.kts`**: Archivo donde se declara el nombre del proyecto y se configuran subproyectos en configuraciones multi-módulo.
-- **🗂️ `.gradle/`**: Carpeta interna donde Gradle guarda archivos temporales y de estado.
-- **📁 `gradle/`**: Carpeta de configuración general de Gradle.
-  - **🧩 `libs.versions.toml`**: Archivo opcional para centralizar y versionar dependencias usando el sistema de versiones compartidas de Gradle.
-  - **📁 `wrapper/`**: Contiene los archivos del *Gradle Wrapper*.
-    - **📦 `gradle-wrapper.jar`**: Ejecutable del wrapper de Gradle.
-    - **📝 `gradle-wrapper.properties`**: Archivo que define la versión de Gradle que debe usarse en el proyecto.
+- **📁 `echo-app/`**: Directorio raíz del proyecto.
+    - **📁 `.gradle/`**: Carpeta interna usada por Gradle para almacenar datos temporales, cachés y metainformación de builds.
+    - **📁 `gradle/`**: Contiene configuraciones globales del proyecto.
+        - **📁 `wrapper/`**: Incluye los archivos necesarios para usar Gradle sin depender de una instalación global.
+            - **📦 `gradle-wrapper.jar`**: Código ejecutable del wrapper.
+            - **📝 `gradle-wrapper.properties`**: Define la versión de Gradle a utilizar.
+        - **🧩 `libs.versions.toml`**: Permite declarar versiones centralizadas de dependencias si se usa la versión catalog de Gradle.
+    - **📝 `.gitattributes` y `.gitignore`**: Archivos para control de versiones. Ayudan a excluir archivos temporales y mantener consistencia entre plataformas.
+    - **⚙️ `build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`**:
+        - `build.gradle.kts`: Archivo principal de configuración del build (usando Kotlin DSL).
+        - `settings.gradle.kts`: Declara el nombre del proyecto y, en builds multi-módulo, los subproyectos.
+        - `gradle.properties`: Archivo de configuración para definir propiedades comunes al proyecto.
+    - **🚀 `gradlew` y `gradlew.bat`**: Scripts del wrapper para ejecutar Gradle desde cualquier entorno (Unix/Windows), sin necesidad de instalación previa.
 
-Esta estructura permite comenzar rápidamente con un entorno reproducible, portable y preparado para crecer hacia configuraciones más avanzadas como proyectos multi-módulo o bibliotecas publicables.
+Esta estructura asegura portabilidad, reproducibilidad y una base profesional para construir bibliotecas, aplicaciones o herramientas complejas.
 
 :::
 
 :::tip Actualizando el Wrapper de Gradle
 
-Puedes actualizar la versión del wrapper de Gradle que está en el archivo de propiedades (`gradle-wrapper.properties`) con el comando:
+Puedes actualizar la versión del wrapper de Gradle modificando automáticamente el archivo `gradle/wrapper/gradle-wrapper.properties` usando el siguiente comando:
 
 ```bash
-./gradlew wrapper --gradle-version=latest # Actualiza a la última versión de Gradle
+./gradlew wrapper --gradle-version=latest
 ```
 
-También puedes especificar una versión específica de Gradle:
+Esto descargará y configurará la **última versión estable** de Gradle disponible.
+
+También puedes fijar una versión específica:
 
 ```bash
-./gradlew wrapper --gradle-version="8.13.0"  # Actualiza a una versión específica de Gradle
+./gradlew wrapper --gradle-version=8.13.0
 ```
+
+Esto garantiza que todas las personas que trabajen en el proyecto usen exactamente la misma versión, lo cual mejora la reproducibilidad y evita inconsistencias entre entornos.
 
 :::
-
-## ▶️ Paso 7: Ejecutar una Tarea Básica
-
-Ejecuta la siguiente tarea predefinida para verificar que todo esté funcionando como se espera:
-
-```bash
-./gradlew tasks
-```
-
-Este comando debe mostrar una lista organizada de tareas disponibles en el proyecto, agrupadas por categorías como *Build tasks*, *Help tasks*, etc.
-
-Si ves este listado sin errores, significa que:
-
-- Gradle está correctamente configurado.
-- El proyecto fue creado exitosamente.
-- El *wrapper* (`./gradlew`) funciona correctamente.
-
-:::tip ¿Qué pasa si algo falla?
-
-Si ves errores relacionados con el comando `gradle` o `./gradlew`, verifica lo siguiente:
-
-- Estás en el directorio raíz del proyecto (`echo-app`).
-- El archivo `gradlew` tiene permisos de ejecución (en Linux/macOS puedes usar `chmod +x ./gradlew`).
-- Tienes una versión de Java instalada (puedes verificarla con `java -version`).
-
-:::
-
-A partir de aquí, puedes comenzar a extender el proyecto con módulos, tareas personalizadas y configuraciones más complejas, sabiendo que la base es sólida y funcional.
 
 ## 🎯 Conclusiones
 
-Iniciar un proyecto correctamente es el primer paso para construir software robusto, automatizable y mantenible. En esta lección aprendimos a crear un proyecto básico con Gradle usando el Kotlin DSL, sentando las bases para una estructura de desarrollo moderna y escalable.
+Iniciar un proyecto con Gradle es mucho más que generar archivos automáticamente: es dar el primer paso hacia una forma profesional, reproducible y automatizada de construir software.
+
+En esta lección aprendiste a crear desde cero una estructura de proyecto bien organizada, compatible con buenas prácticas modernas y pensada para escalar. También comprendiste cómo funciona el comando `gradle init`, sus decisiones clave y cómo aprovechar al máximo las herramientas que Gradle pone a tu disposición desde el comienzo.
 
 ### 🔑 Puntos clave
 
-- Gradle permite inicializar proyectos fácilmente con `gradle init`, guiándote en cada decisión importante (tipo de proyecto, nombre, DSL, etc.).
-- Elegimos **Kotlin DSL** para mantener consistencia entre el lenguaje de desarrollo y el de configuración.
-- La estructura generada por Gradle incluye archivos esenciales como `build.gradle.kts`, `settings.gradle.kts` y el wrapper, lo que garantiza portabilidad y consistencia entre entornos.
-- Verificar la instalación mediante `./gradlew tasks` permite asegurarse de que todo funciona antes de avanzar hacia tareas más complejas.
+- `gradle init` es una forma flexible y guiada de iniciar proyectos desde cero.
+- Elegimos la opción **Basic** para construir una estructura mínima sin lógica de aplicación predefinida.
+- El nombre del proyecto debe seguir el estilo `kebab-case`, especialmente si el proyecto se publicará como biblioteca.
+- Utilizamos **Kotlin DSL** por su seguridad, expresividad y mejor integración con el lenguaje que usaremos.
+- Optamos por **no usar APIs experimentales**, priorizando estabilidad y compatibilidad con documentación existente.
+- Gradle genera automáticamente archivos clave como `build.gradle.kts`, `settings.gradle.kts`, el wrapper (`gradlew`) y carpetas de configuración como `.gradle/` y `gradle/wrapper/`.
 
 ### 🧰 ¿Qué nos llevamos?
 
-Crear un proyecto con una estructura clara y reproducible no es solo una cuestión técnica: es una decisión que impacta directamente en la calidad, mantenibilidad y colaboración futura de tu biblioteca. Al usar Gradle con Kotlin DSL, no solo alineamos las herramientas con el lenguaje de desarrollo, sino que también adoptamos prácticas que favorecen la automatización, la coherencia y la evolución controlada del proyecto.
+Crear un proyecto con una estructura clara y reproducible no es solo una decisión técnica: es una declaración de intención sobre cómo queremos trabajar.
 
-Este primer paso puede parecer simple, pero sienta las bases para todo lo que construiremos a lo largo de la unidad. A partir de aquí, ya no solo estaremos escribiendo código: estaremos construyendo sistemas que se configuran, validan y despliegan de forma profesional.
+Elegir buenas convenciones desde el inicio —como el uso de `kebab-case`, el wrapper, y un DSL con tipado estático— nos prepara para colaborar mejor, evitar errores comunes y facilitar la automatización de tareas. Gradle, al ofrecer una base sólida y portable desde el primer paso, nos permite enfocarnos en construir código de calidad sin preocuparnos por configuraciones frágiles o manuales.
+
+Este primer paso, aunque sencillo, sienta las bases para todo lo que construiremos en las siguientes lecciones. A partir de aquí, no solo escribirás código: estarás diseñando sistemas que se configuran, validan y despliegan de manera confiable y profesional.
 
 <div className="language-card-container">
-  <LanguageCards.CMakeCard link="/docs/build-systems/init/cmake" />
-  <LanguageCards.MesonCard link="/docs/build-systems/init/meson" />
-  <LanguageCards.MSBuildCard link="/docs/build-systems/init/msbuild" />
-  <LanguageCards.CabalCard link="/docs/build-systems/init/cabal" />
-  <LanguageCards.NxCard link="/docs/build-systems/init/nx" />
-  <LanguageCards.MavenCard link="/docs/build-systems/init/maven" />
-  <LanguageCards.UvCard link="/docs/build-systems/init/uv" />
-  <LanguageCards.RubyCard link="/docs/build-systems/init/ruby" />
-  <LanguageCards.CargoCard link="/docs/build-systems/init/cargo" />
-  <LanguageCards.SbtCard link="/docs/build-systems/init/sbt" />
-  <LanguageCards.SwiftCard link="/docs/build-systems/init/swift" />
+    <LanguageCards.CMakeCard link="/docs/build-systems/init/cmake" />
+    <LanguageCards.MesonCard link="/docs/build-systems/init/meson" />
+    <LanguageCards.MSBuildCard link="/docs/build-systems/init/msbuild" />
+    <LanguageCards.CabalCard link="/docs/build-systems/init/cabal" />
+    <LanguageCards.NxCard link="/docs/build-systems/init/nx" />
+    <LanguageCards.MavenCard link="/docs/build-systems/init/maven" />
+    <LanguageCards.UvCard link="/docs/build-systems/init/uv" />
+    <LanguageCards.RubyCard link="/docs/build-systems/init/ruby" />
+    <LanguageCards.CargoCard link="/docs/build-systems/init/cargo" />
+    <LanguageCards.SbtCard link="/docs/build-systems/init/sbt" />
+    <LanguageCards.SwiftCard link="/docs/build-systems/init/swift" />
 </div>
 
 
-## 📖 Referencias
+## 📖 ¿Con ganas de más?
 
-### 🔥 Recomendadas
-
-- 🌐 Building Kotlin Applications Sample. (s. f.). Recuperado 31 de marzo de 2025, de https://docs.gradle.org/current/samples/sample_building_kotlin_applications.html
-
-### 🔹 Adicionales
-
-- 🌐 Configurar un proyecto Gradle—AWS SDK for Java 2.x. (s. f.). Recuperado 4 de abril de 2025, de https://docs.aws.amazon.com/es_es/sdk-for-java/latest/developer-guide/setup-project-gradle.html
+<ReferenceList 
+    title="🔥 Referencias recomendadas"
+    items={[
+        <WebPage
+            title="Building Java Applications Sample"
+            url="https://docs.gradle.org/current/samples/sample_building_java_applications.html"
+            location="la documentación oficial de Gradle"
+        >
+            Muestra paso a paso cómo generar un proyecto desde cero con estructura modular, configuración en Kotlin DSL, y soporte para pruebas con JUnit. Incluye instrucciones para compilar, ejecutar y empaquetar la aplicación, así como para publicar un <i>Build Scan</i> y entender la estructura del proyecto generada automáticamente por Gradle. Ideal como referencia práctica para aprender las convenciones y funcionalidades básicas de Gradle en proyectos reales.
+        </WebPage>
+    ]}
+/>
