@@ -1,48 +1,49 @@
-import React from 'react';
-import styles from './Solution.module.css';
+import React from "react";
+import styles from "./Solution.module.css";
 
 /**
- * The `SolutionProps` interface defines the expected properties for the `Solution` component. It is used to pass
- * children elements to the component, which are rendered within the expandable section.
+ * Props for the `<Solution />` component.
+ *
+ * This component renders a collapsible section intended to show one or more solutions to a problem.
+ * It allows optional customization of the summary label and whether the section is expanded by
+ * default.
  */
 interface SolutionProps {
-    title?: string;
-    children: React.ReactNode;
+  /**
+   * The solution content to be displayed inside the section.
+   */
+  children: React.ReactNode;
+  /**
+   * Optional custom label for the `<summary>` element.
+   */
+  summary?: string;
+  /**
+   * Whether the `<details>` element is expanded initially.
+   */
+  defaultOpen?: boolean;
 }
 
 /**
- * The `Solution` component is used to display a collapsible section that reveals the solution to a problem.
- * It uses the HTML `<details>` element to provide a summary and expandable content.
- * This component is styled using an external CSS module for light and dark themes.
+ * A collapsible section for displaying a solution to a problem.
  *
- * ## Props:
- * - `children`: The content that will be displayed inside the expandable section when the user clicks on the summary.
+ * This component renders a styled `<details>` element with a customizable summary and content. It's
+ * typically used in educational or documentation contexts to optionally reveal the solution to an
+ * exercise.
  *
- * ## Usage Example:
- *
- * ```tsx
- * <Solution>
- *   <p>This is the solution to the problem.</p>
- * </Solution>
- * ```
- *
- * When rendered, this component shows a clickable "Solución" heading. When clicked, it reveals the content passed as
- * `children`.
- *
- * @param {SolutionProps} props - The properties passed to the component.
- * @param {React.ReactNode} props.children - The solution content that will be displayed when expanded.
- *
- * @returns {React.ReactNode} The `Solution` component.
+ * @param children - The content of the solution to be revealed.
+ * @param summary - Optional text for the summary. Defaults to `"Solución"`.
+ * @param defaultOpen - Whether the details element should be open by default. Defaults to `false`.
+ * @returns A styled React element representing the collapsible solution section.
  */
-const Solution: React.FC<SolutionProps> = ({ title, children }: SolutionProps): React.ReactNode => {
-    return (
-        <details className={styles.solution}>
-            <summary className={styles.summary}>
-                {title ? <strong>{`Solución ${title}`}</strong> : <strong>Solución</strong>}
-            </summary>
-            <div className={styles.content}>{children}</div>
-        </details>
-    );
-};
-
-export default Solution;
+export default function Solution({
+  children,
+  summary = "Solución",
+  defaultOpen = false,
+}: SolutionProps): React.ReactElement {
+  return (
+    <details className={styles.solution} open={defaultOpen}>
+      <summary className={styles.summary}>{summary}</summary>
+      <div className={styles.content}>{children}</div>
+    </details>
+  );
+}

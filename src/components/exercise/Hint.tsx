@@ -1,47 +1,57 @@
-import React from 'react';
-import styles from './Hint.module.css';
+import React from "react";
+import styles from "./Hint.module.css";
 
 /**
- * The `HintProps` interface defines the properties expected by the `Hint` component. It provides an array of hints that
- * will be displayed as a list inside the collapsible section.
+ * Props for the `Hint` component.
+ *
+ * Defines the interface used to render a collapsible list of hints or tips.
  */
 interface HintProps {
-    hints: string[];
+  /**
+   * An array of React nodes, each representing a hint item.
+   */
+  hints: React.ReactNode[];
+  /**
+   * Optional custom summary text shown in the `<summary>` tag.
+   */
+  summary?: string;
+  /**
+   * Whether the details element is expanded by default.
+   */
+  defaultOpen?: boolean;
 }
 
 /**
- * The `Hint` component is a collapsible section that displays a list of hints. It uses the HTML `<details>` and
- * `<summary>` elements to allow users to expand and view the hints. The component is styled using a CSS module for
- * visual consistency.
+ * Renders a collapsible list of hints inside a `<details>` element.
  *
- * ## Props:
- * - `hints`: An array of hints (`string[]`) that will be displayed as a list. The component will adjust the label
- *   "Ver hints" or "Ver hint" depending on whether there is more than one hint.
+ * This component is useful for progressively revealing tips or hints, such as in exercises or
+ * documentation.
+ * It pluralizes the summary label if more than one hint is provided.
  *
- * ## Usage Example:
+ * @param hints - An array of hint elements to display inside the list.
+ * @param summary - Optional text for the `<summary>` element. Defaults to `"Ver hint"`.
+ * @param defaultOpen - Whether the hint box should be expanded by default. Defaults to `false`.
  *
- * ```tsx
- * <Hint hints={['Try breaking the problem down', 'Check the edge cases', 'Think about performance']} />
- * ```
- *
- * In this example, the `Hint` component will display a collapsible section with the label "Ver hints". Once expanded, it will show each hint as a list item.
- *
- * @param {HintProps} props - The properties passed to the `Hint` component.
- *
- * @returns {React.ReactElement} A `details` element that contains a summary and a list of hints.
+ * @returns A React element representing the hint box.
  */
+export default function Hint({
+  hints,
+  summary = "Ver hint",
+  defaultOpen = false,
+}: HintProps): React.ReactElement {
+  const isPlural = hints.length > 1;
+  const title = `${summary}${isPlural ? "s" : ""}`;
 
-const Hint: React.FC<HintProps> = ({ hints }: HintProps): React.ReactElement => {
-    return (
-        <details className={styles.hint}>
-            <summary className={styles.summary}>Ver hint{hints.length > 1 ? 's' : ''}</summary>
-            <ul className={styles.hintList}>
-                {hints.map((hint, index) => (
-                    <li key={index} className={styles.hintItem}>{hint}</li>
-                ))}
-            </ul>
-        </details>
-    );
-};
-
-export default Hint;
+  return (
+    <details className={styles.hint} open={defaultOpen}>
+      <summary className={styles.summary}>{title}</summary>
+      <ul className={styles.hintList}>
+        {hints.map((hint, index) => (
+          <li key={index} className={styles.hintItem}>
+            {hint}
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}

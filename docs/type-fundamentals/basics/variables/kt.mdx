@@ -2,24 +2,32 @@
 title: Declaración de variables
 sidebar_label: Variables
 ---
-import ReadingTime from '@site/src/components/reading-time/ReadingTime'
+import Box from '@site/src/components/cajitas/Box'
 import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
-import Tabs from '@theme/Tabs'
-import TabItem from '@theme/TabItem'
-import Exercise from '@site/src/components/exercise/Exercise'
-import Solution from '@site/src/components/exercise/Solution'
-import Hint from '@site/src/components/exercise/Hint'
+
 import Definition from '@site/src/components/Definition'
 import Corollary from '@site/src/components/Corollary'
-import GitHubRepoLink from '@site/src/components/git/GitHubRepoLink'
-import * as LanguageCards from '@site/src/components/cards/LanguageCard'
+
 import Explanation from '@site/src/components/admonitions/Explanation'
-import ReferenceList from '@site/src/components/references/ReferenceList'
-import Book from '@site/src/components/references/Book'
-import WebPage from '@site/src/components/references/WebPage'
-import RepoLinks from '@site/src/components/git/RepoLinks'
-import GitLabRepo from '@site/src/components/git/GitLabRepo'
+
+import * as LanguageCards from '@site/src/components/cards/LanguageCard'
+
+import Hint from '@site/src/components/exercise/Hint'
+import Solution from '@site/src/components/exercise/Solution'
+
 import GitHubRepo from '@site/src/components/git/GitHubRepo'
+import GitHubRepoLink from '@site/src/components/git/GitHubRepoLink'
+import GitLabRepo from '@site/src/components/git/GitLabRepo'
+import RepoLinks from '@site/src/components/git/RepoLinks'
+
+import ReadingTime from '@site/src/components/reading-time/ReadingTime'
+
+import Book from '@site/src/components/references/Book'
+import ReferenceList from '@site/src/components/references/ReferenceList'
+import WebPage from '@site/src/components/references/WebPage'
+
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 
 <ReadingTime />
 <RepoLinks children={[
@@ -27,14 +35,24 @@ import GitHubRepo from '@site/src/components/git/GitHubRepo'
     <GitHubRepo user="r8vnhill" repo="intro-kt" />,
 ]}  />
 
-TODO: Introducción
+Las variables son uno de los conceptos más básicos de un lenguaje de programación, pero en Kotlin no se limitan a ser simples contenedores de datos: son **propiedades** que pueden incluir lógica de acceso, validación y encapsulamiento.  
+
+Este enfoque convierte incluso a las declaraciones más simples en **herramientas poderosas de diseño**, especialmente cuando estás creando bibliotecas reutilizables.
+
+En esta lección aprenderás a:
+
+- Declarar variables con `val` y `var`, y entender las diferencias entre **referencias inmutables** y **mutables**.
+- Encapsular correctamente el acceso a los datos usando **getters y setters personalizados**.
+- Proteger las invariantes internas de tus estructuras, sin perder expresividad hacia quienes usan tu API.
+
+Todo esto con un enfoque práctico y centrado en **buenas prácticas de diseño**, que te ayudarán a escribir código claro, seguro y mantenible.
 
 ## 📦 Declaración de variables
 
 En Kotlin puedes declarar variables de dos formas:
 
-- `val` → **solo lectura**: su valor no puede reasignarse una vez inicializado.  
-- `var` → **lectura y escritura**: su valor puede modificarse después de su declaración.
+- `val` → **de solo lectura**: su valor no puede reasignarse una vez inicializado.  
+- `var` → **lectura y escritura**: su valor puede cambiar después de la declaración.
 
 ```kotlin title="Sintaxis general"
 val o var nombreVariable: Tipo = valor
@@ -42,15 +60,18 @@ val o var nombreVariable: Tipo = valor
 
 :::tip Inferencia de tipos
 
-En ambos casos puedes omitir el tipo si el compilador puede inferirlo a partir del valor asignado.  
+En variables locales o privadas, puedes omitir el tipo si el compilador puede inferirlo a partir del valor asignado.  
 Esto mejora la legibilidad sin perder seguridad de tipos.
+
+Sin embargo, en bibliotecas es recomendable declarar explícitamente el tipo de las propiedades y funciones públicas,  
+ya que esto hace más robusta la API, facilita el mantenimiento y evita cambios accidentales en la firma pública.
 
 :::
 
 ### 🔒 Sólo lectura (`val`)
 
 Usa `val` cuando **la referencia** de la variable no cambiará después de su asignación.  
-Una vez inicializada, no podrás asignarle otro valor.
+Una vez inicializada, no podrás volver a asignarle otro valor.
 
 ```kotlin showLineNumbers title="Variables de solo lectura"
 val master = "Goomoonryong"
@@ -62,17 +83,17 @@ student = "Shi-Ho Lee"  // 🔥 Error: la referencia no puede cambiar
 ```
 
 <Explanation>
-    - **`master`** es una variable declarada con `val` e inicializada de inmediato. Reasignarla produce un error de compilación.
-    - **`student`** también es una `val`, pero se inicializa más adelante. Kotlin permite esta asignación diferida siempre que ocurra solo una vez.
+    - **`master`** se declara con `val` e inicia de inmediato. Reasignarla provoca un error de compilación.
+    - **`student`** también es una `val`, pero se inicializa después. Kotlin permite esta asignación diferida, siempre que sea una única vez.
 </Explanation>
 
-A lo largo del curso nos referiremos a estas variables como **constantes referenciales** o **propiedades de solo lectura**: su referencia no puede cambiar una vez asignada.
+A lo largo del curso nos referiremos a estas variables como **referencias inmutables** o **propiedades de solo lectura**: su referencia no puede cambiar una vez asignada.
 
 Esto **no implica** que el valor al que apuntan sea inmutable.  
-Por ejemplo, una variable `val` puede referirse a una lista mutable. Aunque no puedas reasignar la variable, sí puedes modificar el contenido de la lista.
+Por ejemplo, una variable `val` puede referirse a una lista mutable: aunque no puedas cambiar la referencia, sí puedes modificar el contenido de la lista.
 
-Más adelante hablaremos de las **constantes en tiempo de compilación**, que se declaran con `const val` y cuyo valor debe conocerse de antemano.  
-Por ahora, basta con distinguir entre variables **mutables** (`var`) y **referencias inmutables** (`val`).
+Más adelante hablaremos de las **constantes en tiempo de compilación**, declaradas con `const val`, cuyo valor debe conocerse en tiempo de compilación.  
+Por ahora, basta con distinguir entre **referencias mutables** (`var`) y **referencias inmutables** (`val`).
 
 ### 🔓 Lectura y escritura (`var`)
 
@@ -80,7 +101,7 @@ Usa `var` cuando necesites **modificar el valor o cambiar la referencia** de una
 
 ```kotlin showLineNumbers title="Variables de lectura y escritura"
 var technique = "Black Heaven & Earth"
-technique = "Soul-Crushing Strike"     // ✅ Correcto: la referencia cambia a otra técnica
+technique = "Soul-Crushing Strike"     // ✅ Correcto: se cambia la técnica referenciada
 
 var energy = 10
 energy = energy + 5                    // ✅ Correcto: suma explícita
@@ -89,8 +110,8 @@ energy++                               // ✅ Incremento en 1
 ```
 
 <Explanation>
-    - **`technique`** es una variable mutable: aquí su referencia cambia libremente de una técnica a otra.
-    - **`energy`** muestra distintas formas válidas de actualizar un valor numérico mutable: suma directa, operación compuesta (`+=`) e incremento (`++`).
+    - **`technique`** es una variable mutable: su referencia puede actualizarse a distintas técnicas.
+    - **`energy`** demuestra varias formas de modificar valores numéricos mutables: reasignación directa, operación compuesta (`+=`) e incremento (`++`).
 </Explanation>
 
 :::danger Inmutabilidad referencial ≠ inmutabilidad profunda
@@ -138,62 +159,153 @@ En el segundo, el uso de `var` puede dar la impresión de que `total` **seguirá
 
 :::
 
-## 🧠 Ejercicio práctico: Técnicas ninja con valores
+### 🔄 ¿Cuándo usar `var`?
 
-Estás desarrollando una biblioteca para videojuegos que permita definir y mostrar **técnicas especiales de personajes**.  
-Como primer paso, necesitas una función que construya el nombre completo de una técnica secreta a partir de sus componentes.
+Aunque **`val` debe ser tu primera opción**, hay situaciones justificadas donde el uso de `var` es adecuado:
 
-Tu tarea es escribir una función llamada `buildTechniqueName` que reciba tres parámetros: el nombre del personaje (`userName`), el tipo de técnica (`techniqueType`) y el nombre del ataque (`attackName`).  
-El parámetro `techniqueType` debe tener un valor por defecto de `"Ninjutsu"`.
+- Cuando una **variable cambia como parte del estado interno** de una clase mutable.
+- Si estás **acumulando resultados** a lo largo de un bucle o una función.
+- Al implementar **algoritmos imperativos** donde el cambio de estado es más natural o legible.
+- En **tests o scripts** donde la claridad y simplicidad pueden pesar más que la inmutabilidad.
 
-```kotlin showLineNumbers title="🧪 Ejemplos de uso"
-buildTechniqueName("Naruto", attackName = "Kage Bunshin no Jutsu")
-// devuelve: "Naruto's Ninjutsu: Kage Bunshin no Jutsu"
+## 🧱 Propiedades en Kotlin: más que campos
 
-buildTechniqueName("Sasuke", "Kekkei Genkai", "Amaterasu")
-// devuelve: "Sasuke's Kekkei Genkai: Amaterasu"
+En Kotlin, `val` y `var` no solo declaran campos como en otros lenguajes:  
+en realidad definen **propiedades** con acceso controlado a través de **getters y setters**.
+
+Esto permite encapsular lógica sin perder expresividad:
+
+```kotlin showLineNumbers title="Propiedades en Kotlin"
+val soloLectura: Tipo = inicializador
+    get() = campoPersonalizado // Getter implícito o redefinido
+
+var lecturaEscritura: Tipo = inicializador
+    get() = campoPersonalizado
+    set(value) {
+        // lógica adicional antes de asignar
+        field = value
+    }
 ```
 
-<Hint hints={[
-    <>Usa <code>=</code> para definir funciones como una única expresión.</>,
-    <>Puedes usar <code>$variable</code> o <code>${'{expresión}'}</code> para interpolar valores dentro de cadenas.</>
-]} />
+<Explanation>
+    - `val` genera solo un **getter**, lo que impide modificar la propiedad desde fuera.
+    - `var` genera tanto **getter como setter**, permitiendo control total sobre la lectura y escritura.
+    - Puedes personalizar estos métodos si necesitas validación, transformación u otros efectos colaterales.
+</Explanation>
 
-<Solution>
-    ```kotlin showLineNumbers title="Construyendo el nombre de una técnica secreta"
-    fun buildTechniqueName(
-        userName: String,
-        techniqueType: String = "Ninjutsu",
-        attackName: String
-    ): String = "$userName's $techniqueType: $attackName"
-    ```
-</Solution>
+En el contexto de **bibliotecas**, esto permite definir APIs que exponen información de forma segura, mientras internamente conservan flexibilidad para evolucionar o proteger invariantes.
+
+### 🧪 Ejemplo práctico: Exponer listas inmutables con un campo de respaldo
+
+Cuando desarrollas una biblioteca, es común tener estructuras internas que deben mantenerse mutables, pero que **no deben exponerse directamente** a quienes consumen tu API.  
+Kotlin permite resolver esto mediante un **campo de respaldo**:
+
+```kotlin showLineNumbers title="Battle.kt"
+private val _party: MutableList<String> = mutableListOf("Balthier", "Vaan")
+
+val party: List<String>
+    get() = _party
+```
+
+<Explanation>
+    - **`_party`** es un campo de respaldo: una propiedad privada que contiene los datos reales y permite modificaciones internas.
+    - **`party`** es una propiedad pública de solo lectura que expone **una vista inmutable** de la lista.
+    - Al devolver `List<String>`, evitamos que otrxs puedan modificar el contenido desde fuera de la biblioteca.
+</Explanation>
+
+Este patrón es común en bibliotecas bien diseñadas: **exponer lo mínimo necesario** mientras se **protegen las invariantes internas**.
+
+:::tip Conversión implícita de mutabilidad
+
+En Kotlin, cuando una función o propiedad devuelve una `MutableList<T>` pero declara su tipo como `List<T>`, el compilador **permite esta conversión implícitamente**.  
+
+Esto es útil al desarrollar bibliotecas: puedes mantener una estructura mutable internamente (`MutableList<String>`) y exponer solo una **vista inmutable** (`List<String>`) al exterior, sin necesidad de copiar los datos o envolver la lista manualmente.
+
+:::
+
+### 🧪 Ejemplo práctico: Encapsular lógica de asignación en el setter
+
+Cuando diseñamos una biblioteca, puede ser necesario que ciertos valores no se asignen directamente, sino que pasen por validaciones o transformaciones. Esto se logra mediante un `setter` personalizado.
+
+```kotlin showLineNumbers title="Config.kt"
+var version: String = "1.0.0"
+    set(value) {
+        require(Regex("""\d+\.\d+\.\d+""").matches(value)) {
+            "Version must be in the format X.Y.Z where X, Y, and Z are integers."
+        }
+        field = value
+    }
+```
+
+<Explanation>
+    - La propiedad `version` usa un `setter` personalizado para validar el formato antes de asignar el nuevo valor.
+    - Esta validación protege a la biblioteca de estados inválidos.
+    - A quienes consumen la API les parece una propiedad normal, pero internamente se aplican reglas.
+</Explanation>
+
+Este patrón permite crear APIs **intuitivas pero seguras**, combinando accesibilidad con control sobre las invariantes internas.
+
+<Box>
+    ## 🧩 Ejercicio de cierre: Controlar el nivel de dificultad desde el motor
+
+    Supón que estás diseñando una biblioteca para un motor de juego.  
+    Quieres exponer el **nivel de dificultad actual** para que otras personas puedan consultarlo, pero **solo el motor** debe poder modificarlo.
+
+    Declara una propiedad `difficultyLevel` que:
+
+    - Sea de tipo `String`.
+    - Permita valores como `"easy"`, `"normal"` o `"hard"`.
+    - Pueda leerse públicamente desde cualquier parte.
+    - Solo pueda modificarse **desde dentro del módulo**, y con validación.
+
+    <Hint
+        hints={[
+            <>Puedes declarar el setter como <code>private set</code> para limitar su acceso de escritura a este archivo.</>,
+            <>Puedes usar el operador <code>in</code> para verificar que un valor se encuentre dentro de una lista de la forma <code>x in listOf(...)</code>.</>
+        ]}
+    />
+
+    <Solution>
+        ```kotlin showLineNumbers title="Engine.kt"
+        var difficultyLevel: String = "normal"
+            private set(value) {
+                require(value in listOf("easy", "normal", "hard")) {
+                    "Difficulty level must be one of: easy, normal, hard."
+                }
+                field = value
+            }
+        ```
+
+        <Explanation>
+            - La propiedad `difficultyLevel` es **pública para lectura**, pero su **setter es privado**, lo que significa que solo puede modificarse desde el mismo archivo.
+            - La función `require` se asegura de que solo se asignen valores válidos. Si se intenta asignar un valor distinto, se lanza una excepción.
+            - Este patrón es útil cuando queremos **proteger las invariantes del estado** de la aplicación sin exponer directamente los mecanismos internos de control.
+        </Explanation>
+    </Solution>
+</Box>
 
 ## 🎯 Conclusiones
 
-En esta lección exploramos dos pilares fundamentales de cualquier lenguaje de programación: las **funciones** y las **variables**.  
-Aprendimos cómo se declaran en Kotlin, cómo se comportan, y cómo aprovechar sus propiedades y convenciones para escribir código más expresivo, seguro y legible.
+A lo largo de esta lección aprendiste a declarar variables en Kotlin, diferenciando claramente entre referencias **inmutables** (`val`) y **mutables** (`var`). Exploramos cuándo conviene usar cada una y cómo Kotlin promueve el uso de propiedades en lugar de simples campos, lo que permite definir lógica de acceso segura, validaciones y encapsulamiento.
 
-Kotlin promueve un estilo claro, pragmático y expresivo, favoreciendo la **inferencia de tipos**, la **sintaxis de una sola expresión**, y una fuerte orientación hacia la **inmutabilidad**.  
-Su distinción entre referencias **mutables** (`var`) e **inmutables** (`val`) no es solo una cuestión de estilo, sino una decisión de diseño que impulsa la escritura de código **predecible** y **menos propenso a errores**.
+También descubriste que `val` no significa que el contenido sea inmutable —solo que la **referencia no puede cambiar**—, y que las propiedades pueden tener **getters y setters personalizados**, lo cual es fundamental al diseñar bibliotecas robustas y seguras.
 
 ### 🔑 Puntos clave
 
-- Las funciones pueden declararse con bloques `{ ... }` o como **expresiones únicas** (`= ...`), lo que permite estilos más concisos y expresivos.
-- La **inferencia de tipos** reduce redundancias, aunque se recomienda usar tipos explícitos en funciones públicas.
-- Kotlin diferencia claramente entre **`val` (sólo lectura)** y **`var` (lectura y escritura)**, y promueve el uso de `val` por defecto.
-- La inmutabilidad de `val` se refiere a la **referencia**, no al contenido del objeto.
-- Seguir la convención `camelCase` mejora la legibilidad y coherencia del código.
+- `val` declara **referencias inmutables**, ideales para expresar valores que no cambian.
+- `var` permite **referencias mutables**, útiles para modelar cambios de estado.
+- Kotlin trata las variables como **propiedades**, no como campos directos, lo que habilita control total mediante getters y setters.
+- Es posible encapsular estructuras mutables internas usando **campos de respaldo** (`private val _campo`) y exponer vistas inmutables.
+- Los `setters` personalizados permiten **validar y controlar el acceso** de forma declarativa y segura.
+- Al diseñar bibliotecas, es clave **exponer lo mínimo necesario** y proteger las invariantes internas.
 
 ### 🧰 ¿Qué nos llevamos?
 
-Estas herramientas forman la base para escribir funciones reutilizables, expresivas y seguras, con una sintaxis que promueve la claridad desde la primera línea.  
-**En el diseño de bibliotecas, funciones y variables no son detalles internos: forman parte de la interfaz pública**, y por tanto, deben ser pensadas con especial cuidado.
+El diseño cuidadoso de variables y propiedades marca la diferencia entre una biblioteca frágil y una robusta. En Kotlin, las herramientas como `val`, `var`, getters y setters personalizados, y campos de respaldo te permiten **controlar el acceso a la información**, **proteger el estado interno** y **hacer que tu API sea segura e intuitiva para otras personas**.
 
-Saber cuándo usar `val`, `var`, y cómo estructurar funciones no solo permite escribir buen código: **es clave para construir APIs claras, idiomáticas y fáciles de mantener**.
+Adoptar la inmutabilidad por defecto con `val` no solo mejora la legibilidad, sino que también facilita el mantenimiento y reduce errores sutiles. En cambio, usar `var` debe ser una decisión deliberada, motivada por una necesidad real de cambio de estado.
 
-A medida que avancemos en el curso, aplicaremos estos fundamentos al diseño de estructuras de datos, operadores personalizados y componentes que comuniquen su intención de forma precisa y robusta.  
-Ahora que dominas las bases, tu código puede empezar a hablar en un Kotlin claro, idiomático y expresivo.
+En resumen: **escribe tus variables pensando en cómo serán usadas, qué deben permitir y qué deben evitar**. Esa es la base de un buen diseño de bibliotecas.
 
 <div className="language-card-container">
     <LanguageCards.PythonCard link="/docs/type-fundamentals/basics/functions-and-variables/py" />    
@@ -201,30 +313,14 @@ Ahora que dominas las bases, tu código puede empezar a hablar en un Kotlin clar
 
 ## 📖 ¿Con ganas de más?
 
+{/* Kotlin Help. “Properties | Kotlin.” Accessed July 8, 2025. https://kotlinlang.org/docs/properties.html. */}
+
 <ReferenceList title="🔥 Referencias recomendadas" items={[
     <WebPage
-        title="Basic syntax"
-        url="https://kotlinlang.org/docs/basic-syntax.html"
+        title="Properties"
+        url="https://kotlinlang.org/docs/properties.html"
         location="la documentación oficial de Kotlin"
     >
-        Resume funciones, variables y control de flujo con ejemplos claros. Útil como repaso general, aunque abarca más temas de los vistos en esta lección.
-    </WebPage>
-]} />
-
-<ReferenceList title="🔹 Referencias complementarias" items={[
-    <Book
-        chapter="Defining and calling functions"
-        pages={[44, 66]}
-        book="Kotlin in Action"
-        author="Dmitry Jemerov y Svetlana Isakova"
-    >
-        Aborda funciones idiomáticas en Kotlin, con argumentos nombrados, valores por defecto y funciones de extensión. Relevante por mostrar cómo estas herramientas mejoran el diseño de funciones en bibliotecas. Las funciones de extensión se explorarán más adelante en el curso.
-    </Book>,
-    <WebPage
-        title="Coding Conventions | Kotlin"
-        url="https://kotlinlang.org/docs/coding-conventions.html"
-        location="la documentación oficial de Kotlin"
-    >
-        Guía oficial de estilo para escribir código Kotlin claro, idiomático y mantenible. Se recomienda como una <b>referencia rápida</b>, no para leerla completa de una vez. A lo largo del curso iremos explorando los elementos más relevantes según el contexto.
+        Explica cómo declarar y usar propiedades (<code>val</code> y <code>var</code>) en Kotlin, incluyendo su sintaxis completa con inicializadores, getters y setters personalizados. Describe cómo controlar la visibilidad de los accesores (<code>private set</code>), cómo usar campos de respaldo (<code>field</code>) para almacenar valores internamente y cómo crear propiedades computadas sin necesidad de almacenamiento. También aborda propiedades con inicialización diferida (<code>lateinit</code>), constantes en tiempo de compilación (<code>const val</code>) y patrones avanzados mediante propiedades delegadas. Ideal para entender cómo Kotlin permite encapsular, validar y exponer estado de forma segura y expresiva.
     </WebPage>
 ]} />
