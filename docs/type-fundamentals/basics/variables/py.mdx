@@ -1,303 +1,300 @@
 ---
-title: Declaración de funciones y variables en Python
+title: Declaración de variables en Python
 ---
 
-import ReadingTime from '@site/src/components/ReadingTime'
+import ReadingTime from '@site/src/components/reading-time/ReadingTime'
 import Explanation from '@site/src/components/admonitions/Explanation'
 import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
 import Definition from '@site/src/components/Definition'
 import References from '@site/src/components/ReferencesComponent'
 import GitHubRepoLink from '@site/src/components/git/GitHubRepoLink'
+import RepoLinks from '@site/src/components/git/RepoLinks'
+import GitLabRepo from '@site/src/components/git/GitLabRepo'
+import GitHubRepo from '@site/src/components/git/GitHubRepo'
+import Box from '@site/src/components/cajitas/Box'
+import ReferenceList from '@site/src/components/references/ReferenceList'
+import WebPage from '@site/src/components/references/WebPage'
+import AuthorList from '@site/src/components/references/AuthorList'
 
 <ReadingTime />
-<GitHubRepoLink user="r8vnhill" repo="python-dibs"/>
+<RepoLinks children={[
+    <GitLabRepo user="r8vnhill" repo="python-dibs" />,
+    <GitHubRepo user="r8vnhill" repo="python-dibs" />
+]}  />
 
-En esta lección exploraremos cómo se **definen funciones y se declaran variables en Python**, enfocándonos en las diferencias clave con Kotlin. Aunque ambos lenguajes permiten escribir código conciso y expresivo, **Python adopta un enfoque mucho más flexible y dinámico**, lo que trae tanto beneficios como desafíos.
+Python permite escribir programas de forma muy libre: puedes declarar variables sin tipos, cambiar sus valores o incluso su tipo en cualquier momento. Esta flexibilidad hace que el lenguaje sea ideal para tareas exploratorias, prototipado y enseñanza inicial. Sin embargo, cuando el objetivo es construir **bibliotecas reutilizables y mantenibles**, esa misma libertad plantea nuevos desafíos.
 
-A lo largo del contenido veremos:
+En esta lección aprenderás cómo se declaran y manipulan variables en Python, y cómo implementar propiedades con lógica de acceso mediante decoradores. También analizaremos en qué se diferencia este modelo del enfoque de Kotlin —más estructurado y expresivo— y qué herramientas del ecosistema pueden ayudarte a recuperar parte de esa expresividad en tus diseños.
 
-- Cómo se definen funciones con y sin anotaciones de tipo.
-- Cómo usar valores por defecto, `*args` y `**kwargs` para construir funciones versátiles.
-- Qué alternativas existen en Python para simular variables inmutables.
-- Qué prácticas se recomiendan al desarrollar bibliotecas o APIs reutilizables.
+Al finalizar, contarás con una base sólida para decidir cuándo y cómo usar las herramientas de Python de forma responsable, entendiendo los beneficios de su flexibilidad y los riesgos de su falta de restricciones.
 
-Este análisis no solo busca enseñar la sintaxis de Python, sino también ayudarte a entender sus **decisiones de diseño** y cómo **adaptar buenas prácticas** al trabajar en proyectos que exigen claridad, mantenibilidad y consistencia.
+## 🐍 Variables en Python
 
-## 🧩 Funciones en Python
-
-En Python, las funciones se definen con la palabra clave `def`, seguida del nombre, los parámetros entre paréntesis y dos puntos (`:`) para iniciar el bloque. A diferencia de Kotlin, **no es obligatorio declarar los tipos de los parámetros ni del valor de retorno**, aunque es posible usar **anotaciones de tipo opcionales**.
-
-### ✅ Con anotaciones de tipo (recomendado)
-
-```python showLineNumbers title="Función con anotaciones de tipo"
-def add(a: int, b: int) -> int:
-    return a + b
-```
-
-- `a: int` y `b: int` indican que los parámetros deben ser enteros.
-- `-> int` especifica que la función debería devolver un entero.
-- Estas anotaciones **no son obligatorias** ni afectan la ejecución: Python **no verificará en tiempo de ejecución** que los valores coincidan con los tipos indicados.
-
-::::warning Esto no convierte a Python en un lenguaje de tipado estático.
-
-El intérprete ejecutará este código incluso si los tipos no coinciden con las anotaciones. Por ejemplo:
-
-```python showLineNumbers title="Python ignorando tipos"
-def multiply(a: int, b: int) -> int:
-    return a * b
-
-
-print(multiply("💥", 3))  # Esto imprime 💥💥💥 en lugar de lanzar un error
-```
-
-Este comportamiento es válido para el intérprete, pero puede generar errores sutiles si no se utiliza con cuidado.
-
-::::
-
-### 🟡 Sin anotaciones de tipo
-
-```python showLineNumbers title="Función sin anotaciones"
-def sum(a, b):
-    return a + b
-```
-
-- Esta forma es completamente válida en Python y común en scripts pequeños o experimentales.
-- Sin embargo, **se pierde claridad** sobre qué se espera recibir o retornar, lo cual puede complicar el mantenimiento y dificultar la integración con herramientas de análisis.
-
-:::tip Ante la duda, usa anotaciones de tipo
-
-Aunque Python no hace cumplir las anotaciones, **usarlas es una buena práctica** cuando escribes funciones reutilizables, públicas o parte de una biblioteca. Te ayuda a detectar errores con herramientas como `mypy`, a mejorar la documentación y a facilitar el trabajo en equipo.
-
-:::
-
-:::info ¿Y si no retorno nada?
-
-Si no necesitas retornar nada, puedes usar `None` como tipo de retorno. Esto es similar a `Unit` en Kotlin.
-
-```python showLineNumbers title="Función sin retorno"
-def do_nothing() -> None:
-    pass
-```
-
-:::
-
-### ✍️ Parámetros con valores por defecto
-
-Al igual que en Kotlin, en Python puedes asignar **valores por defecto a los parámetros** de una función. Esto permite definir funciones más flexibles sin necesidad de múltiples versiones.
-
-```python showLineNumbers title="Función con parámetro opcional"
-def summon(character: str, location: str = "Rivendell") -> str:
-    return f"{character} has been summoned to {location}."
-```
-
-- `summon("Gandalf")` retorna `"Gandalf has been summoned to Rivendell."`
-- `summon("Aragorn", "Minas Tirith")` retorna `"Aragorn has been summoned to Minas Tirith."`
-
-A diferencia de Kotlin, **Python no permite sobrecargar funciones** (es decir, definir varias funciones con el mismo nombre pero distinta firma). Por eso, los **valores por defecto son la forma principal de lograr comportamiento flexible** sin duplicar código.
-
-### 🌟 Parámetros variables con `*args` y `**kwargs`
-
-Python permite definir funciones que aceptan un número **variable de argumentos posicionales** o **de palabras clave (keyword arguments)** usando `*args` y `**kwargs`, respectivamente.
-
-Esto ofrece una gran flexibilidad, especialmente para construir APIs genéricas, decoradores o funciones utilitarias.
-
-#### ✅ Usando `*args`
-
-```python showLineNumbers title="Función con *args y pattern matching"
-def throw_pokeballs(*targets: str | int) -> None:
-    for target in targets:
-        match target:
-            case str():
-                print(f"You threw a Pokéball at {target}!")
-            case int():
-                print(f"You threw a Pokéball at Pokémon #{target}!")
-```
-
-<Explanation>
-    - `*targets` captura todos los argumentos posicionales como una tupla.
-    - La anotación `str | int` indica que los elementos pueden ser cadenas (`"Pikachu"`) o enteros (`25`).
-    - Se usa **pattern matching** (desde Python 3.10) para distinguir el tipo de cada valor y actuar en consecuencia.
-</Explanation>
-
-:::note ¿Por qué `str | int`?
-
-Esta forma de anotar tipos se llama **unión de tipos** y proviene de la **programación funcional**. Indica que un valor puede ser de **uno u otro tipo**, pero no necesariamente ambos a la vez.
-
-Aunque no forma parte del paradigma orientado a objetos tradicional (que se basa en jerarquías y polimorfismo por herencia), este enfoque es muy expresivo y **permite diseñar funciones más concisas y seguras**, especialmente cuando combinamos uniones con `match`.
-
-:::
-
-#### ✅ Usando `**kwargs` (argumentos con nombre)
-
-```python showLineNumbers title="Función con **kwargs"
-def describe_technique(name: str, **details) -> None:
-    print(f"Technique: {name}")
-    for key, value in details.items():
-        print(f"  {key}: {value}")
-```
-
-<Explanation>
-    - `**details` captura todos los argumentos con nombre como un diccionario.
-    - Esto permite pasar información adicional sin definir todos los parámetros de antemano.
-    - Llamar a `describe_technique("Phantom Mirage", speed="extreme", class_type="offensive")` imprimirá cada atributo con su valor.
-    - Este patrón es muy útil para funciones que necesitan aceptar una configuración flexible, como sistemas de habilidades o configuraciones dinámicas.
-</Explanation>
-
-#### ✅ Usando `*args` y `**kwargs` juntos
-
-```python showLineNumbers title="Función con *args y **kwargs"
-def cast_spell(caster: str, *companions: str, **spell_details) -> None:
-    print(f"{caster} begins casting a spell!")
-    if companions:
-        print("Assisted by:", ", ".join(companions))
-    for key, value in spell_details.items():
-        print(f"{key.capitalize()}: {value}")
-```
-
-<Explanation>
-    - `*companions` captura los nombres de otras brujas o personajes que colaboran en el hechizo.
-    - `**spell_details` almacena los atributos del hechizo como un diccionario: elemento, duración, poder, etc.
-    - Llamar a `cast_spell("Akko", "Lotte", "Sucy", element="light", power="unstable")` imprime tanto los asistentes como los detalles del hechizo.
-    - Este patrón es ideal cuando se combinan **parámetros obligatorios**, **listas variables de argumentos** y **configuraciones flexibles**.
-</Explanation>
-
-:::warning Cuidado con el uso excesivo de `*args` y `**kwargs`
-
-`*args` y `**kwargs` son herramientas poderosas para construir funciones extensibles, pero pueden dificultar la comprensión o validación de tipos si se abusa de ellas sin documentación clara.
-
-:::
-
-## 📦 Declaración de variables
-
-En Python, las variables se definen simplemente **asignándoles un valor**, sin necesidad de palabras clave como `val` o `var`.
+A diferencia de Kotlin, Python **no exige declarar el tipo de una variable ni usar palabras clave como `val` o `var`**.  
+Simplemente se asigna un valor a un nombre, y el tipo se deduce automáticamente en tiempo de ejecución.
 
 ```python showLineNumbers title="Variables en Python"
 name = "Emilia"
 mana = 80
 ```
 
-- `name` almacena una cadena (string).
-- `mana` almacena un número entero (int).
+:::info Explicación
 
-### 🔄 Mutabilidad por defecto
+- Las variables se crean en el momento en que se les asigna un valor.
+- El tipo de cada variable se infiere dinámicamente (en este caso, `str` para `name` e `int` para `mana`).
+- No existe una distinción entre referencias mutables e inmutables como `val` y `var` en Kotlin.
+- El concepto de inmutabilidad depende del tipo de objeto (por ejemplo, `int` y `str` son inmutables; `list` y `dict` son mutables).
 
-Todas las variables en Python son **mutables por defecto**: puedes reasignar su valor en cualquier momento.
+:::
 
-```python
-mana = 100  # It can be modified without error
+Esta flexibilidad hace que Python sea más sencillo para principiantes, pero también **puede esconder errores** que en Kotlin serían detectados en tiempo de compilación.
+
+### 🔄 Reasignación libre (mutabilidad de referencia)
+
+En Python, **puedes reasignar una variable en cualquier momento**, sin importar el tipo de dato:
+
+```python showLineNumbers title="Reasignación de variables"
+mana = 100
+mana = 75  # ✅ Reasignación válida
 ```
 
-Esto contrasta con Kotlin, donde puedes declarar una variable como inmutable usando `val`.
+Esto contrasta con Kotlin, donde puedes declarar una variable como inmutable usando `val`, lo que impide cambiar su referencia.
+
+:::info Tipos inmutables y mutables
+
+Aunque Python permite reasignar cualquier variable, **no todos los objetos son mutables**.  
+Tipos como `int`, `float`, `str` o `tuple` son **inmutables**: no se pueden modificar en el lugar, solo reemplazar.  
+En cambio, estructuras como `list`, `dict` o `set` **sí son mutables**, y pueden modificarse directamente.
+
+```python showLineNumbers title="Inmutables vs mutables"
+numbers = [1, 2, 3]   # lista mutable
+numbers.append(4)     # ✅ modificación en el lugar
+
+name = "Emilia"
+name[0] = "A"         # 🔥 Error: los strings son inmutables
+```
+
+:::
 
 ### 🚫 Inmutabilidad por convención
 
-Python **no tiene una sintaxis nativa para declarar variables inmutables**. Algunas prácticas comunes para simular constantes incluyen:
+Python **no ofrece una forma nativa de declarar variables inmutables** como `val` en Kotlin.  
+Sin embargo, existen algunas **convenciones** que ayudan a simular constantes:
 
 #### ✅ Usar mayúsculas por convención
 
-```python
+```python showLineNumbers title="Convención de constantes"
 MAX_MANA = 100
 ```
 
-Esta convención es informal y **no impide modificaciones**, pero se entiende que no debe cambiarse.
+Esta es una convención común en Python para indicar que un valor **no debería cambiarse**, aunque **nada impide modificarlo**.
 
-#### ✅ Encapsular en una función
-
-Puedes encapsular un valor en una función para **simular una constante inmutable**:
-
-```python
-def sanctuary_name() -> str:
-    return "Elior Forest"
-```
-
-Esto evita que el valor sea reasignado directamente, pero sigue siendo **menos directo y más restrictivo** que usar `val` en Kotlin.
-
-### 🔒 Inmutabilidad con `Final` (Python 3.8+)
+#### 🔒 Inmutabilidad con `Final` (Python 3.8+)
 
 Desde Python 3.8, puedes usar [`Final`](https://docs.python.org/3/library/typing.html#typing.Final) del módulo `typing` para declarar que una variable **no debe ser reasignada**.
 
-```python
+```python showLineNumbers title="Declarar una variable inmutable con Final"
 from typing import Final
 
 SPIRIT_NAME: Final[str] = "Puck"
 ```
 
-Esto no cambia el comportamiento en tiempo de ejecución, pero herramientas como `mypy` pueden detectar asignaciones incorrectas:
+Aunque `Final` **no impide la reasignación en tiempo de ejecución**, herramientas de análisis estático como `mypy` pueden detectar usos incorrectos:
 
-```python
-SPIRIT_NAME = "Beatrice"  # ⚠️ mypy: Cannot assign to final variable "SPIRIT_NAME"
+```python showLineNumbers title="Error detectado por mypy"
+SPIRIT_NAME = "Muspel"  # ⚠️ mypy: Cannot assign to final variable "SPIRIT_NAME"
 ```
 
 :::tip Buenas prácticas
 
-Si estás desarrollando bibliotecas o trabajando en proyectos colaborativos, usar `Final` es una forma clara de comunicar la intención de inmutabilidad y evitar errores accidentales.
+Si estás desarrollando bibliotecas o trabajando en proyectos colaborativos, usar `Final` es una forma explícita de comunicar la intención de inmutabilidad.  
+Aunque no impide errores en tiempo de ejecución, ayuda a prevenirlos **de forma anticipada** gracias a herramientas como `mypy` o Pyright.
 
 :::
 
-## ✅ Beneficios / ❌ Limitaciones
+## 🧱 Propiedades con decoradores
+
+A diferencia de Kotlin, donde **todas las variables son propiedades** (ya sea dentro o fuera de una clase), en Python solo puedes declarar **propiedades dentro de clases** y debes definirlas explícitamente con métodos especiales.
+
+```python title="Sintaxis de una propiedad en Python (suponiendo que existe el tipo T)"
+class Foo:
+    __value: T
+
+    @property
+    def value(self) -> T: ...
+    
+    @value.setter
+    def value(self, value: T) -> None: ...
+
+    @value.deleter
+    def value(self) -> None: ...
+```
+
+:::info Explicación de la sintaxis
+
+- `@property` convierte el método `value` en una **propiedad de solo lectura**.
+- `@value.setter` permite asignar un nuevo valor con `obj.value = ...`.
+- `@value.deleter` permite eliminar la propiedad con `del obj.value`.
+- Los tres métodos deben tener el **mismo nombre** (`value`) para formar una única propiedad.
+
+Este enfoque te permite encapsular acceso, validación o lógica de eliminación, de forma similar a los `get()` y `set()` personalizados en Kotlin.
+
+:::
+
+### 📚 Ejemplo práctico: Exponer una lista como inmutable
+
+Supón que estás desarrollando una clase `Author` y deseas que otras personas puedan **consultar** las obras del autor, pero **sin poder modificarlas directamente**.
+
+```python showLineNumbers title="type-fundamentals/basics/variables/author.py"
+class Author:
+    __name: str
+    __works: list[str]
+
+    def __init__(self, name: str, works: list[str]):
+        self.__name = name
+        self.__works = works
+
+    @property
+    def works(self) -> tuple[str, ...]:
+        return tuple(self.__works)
+```
+
+<Explanation>
+    El atributo interno `__works` almacena una lista mutable de obras.  
+    Sin embargo, el método getter lo expone como una tupla, que es inmutable.
+
+    Esto permite que quien use la clase pueda acceder a las obras (`author.works`), pero **no podrá modificarlas directamente**, como reemplazar o agregar elementos.
+
+    Es un patrón útil cuando quieres mantener la **inmutabilidad en la interfaz pública**, sin renunciar a la eficiencia de las listas internamente.
+</Explanation>
+
+### ✏️ Ejemplo práctico: Validar y controlar una propiedad editable
+
+Supón que estás creando una clase `User` y quieres permitir la lectura y edición del nombre, pero validando que **no esté vacío**. Además, quieres poder **eliminar el nombre** si es necesario.
+
+```python showLineNumbers title="type-fundamentals/basics/variables/user.py"
+class User:
+    __name: str
+
+    def __init__(self, name: str):
+        self.__name = name
+
+    @property
+    def name(self) -> str:
+        return self.__name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        if not value.strip():
+            raise ValueError("Name cannot be empty")
+        self.__name = value
+
+    @name.deleter
+    def name(self) -> None:
+        self.__name = "Anonymous"
+```
+
+<Explanation>
+    - `@property` permite acceder a `user.name` como si fuera un atributo común.
+    - `@name.setter` se invoca cuando haces `user.name = "Nuevo nombre"`, y valida que no esté vacío.
+    - `@name.deleter` se activa con `del user.name`, y en lugar de borrar el atributo, lo restablece a `"Anonymous"`.
+
+    Este patrón te permite usar una **sintaxis limpia y natural**, mientras mantienes control sobre la lógica interna.
+</Explanation>
+
+## 🆚 Resumen comparativo
+
+| **Aspecto**                                       | **Kotlin**                                                                               | **Python**                                                                                 |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Declaración**                                   | Requiere `val` o `var` y especificar tipo (opcional con inferencia).                     | Asignación directa sin palabra clave ni tipo declarado.                                    |
+| **Mutabilidad**                                   | `val` (inmutable) y `var` (mutable).                                                     | Todas las variables son mutables por defecto.                                              |
+| **Control de mutabilidad**                        | La referencia puede ser inmutable (`val`), pero el contenido puede ser mutable.          | La mutabilidad depende del tipo del objeto (`int` inmutable, `list` mutable).              |
+| **Constantes**                                    | `val` para referencias constantes, `const val` para constantes en tiempo de compilación. | No hay constantes reales; se usa convención (`MAYÚSCULAS`) o `Final` (desde Python 3.8).   |
+| **Propiedades (dentro de clases)**                | Toda propiedad puede tener `get`/`set` personalizados con acceso controlado.             | Uso explícito de decoradores `@property`, `@setter` y `@deleter`.                          |
+| **Visibilidad del setter**                        | Puede limitarse (ej. `private set`).                                                     | No hay modificadores de acceso; se controla indirectamente con convención o encapsulación. |
+| **Campos de respaldo / backing fields**           | Usa `field` para acceder al valor real en `get`/`set`.                                   | Se accede directamente a atributos privados (ej. `__name`) dentro de métodos.              |
+| **Vista inmutable de estructuras mutables**       | Exponer `List<T>` desde `MutableList<T>` (conversión implícita).                         | Exponer `tuple` desde `list` para garantizar inmutabilidad.                                |
+| **Validación en setters**                         | Se usa en `set(value)` con funciones como `require`.                                     | Se usa en `@setter` con `raise ValueError(...)`.                                           |
+| **Detección de errores en tiempo de compilación** | El compilador verifica asignaciones inválidas (`val`, tipo, etc.).                       | Requiere herramientas externas como `mypy` o Pyright.                                      |
+| **Orientación a inmutabilidad**                   | Fuerte énfasis en inmutabilidad por defecto (`val`).                                     | Enfocado en flexibilidad; la inmutabilidad es opcional y por convención.                   |
 
 <ProCons>
-    <Pros>
-        - Sintaxis simple y flexible para definir funciones y declarar variables.
-        - Soporte opcional de anotaciones de tipo para mejorar documentación y análisis estático.
-        - Parámetros con valores por defecto permiten flexibilidad sin necesidad de sobrecarga.
-        - `Final` y herramientas externas como `mypy` permiten mejorar la seguridad y mantener la intención del código.
-        - `*args` y `**kwargs` permiten diseñar funciones extensibles con interfaces dinámicas.
-        - Pattern matching y uniones de tipo (`|`) acercan a Python a estilos más expresivos y funcionales.
-        - Ideal para prototipado rápido, scripting y desarrollo exploratorio gracias a su baja fricción.
+    <Pros title="Beneficios de Python">
+        - Sintaxis simple y directa para declarar variables sin necesidad de palabras clave adicionales.  
+        Esto reduce el ruido visual y permite concentrarse en la lógica del programa, lo cual es útil en prototipos, scripts o enseñanza.  
+        Aun cuando sacrifica la expresividad explícita de la intención (como distinguir entre `val` y `var`), favorece la fluidez al escribir código rápidamente.
+        - Flexibilidad total para reasignar variables o cambiar tipos en tiempo de ejecución.  
+        Esta libertad es valiosa en escenarios dinámicos como procesamiento de datos, scripting, pruebas rápidas o metaprogramación.  
+        Aunque puede dificultar el seguimiento del flujo de tipos, permite escribir código más adaptable y reutilizable sin rigidez estructural.
+        - Sistema de propiedades mediante decoradores permite encapsular lógica con una sintaxis clara.  
+        Aunque más explícita que en Kotlin, ofrece un control fino sobre lectura, escritura y eliminación de atributos.
+        - Ideal para scripting, prototipado rápido y enseñanza por su bajo nivel de complejidad inicial.  
+        Los principiantes pueden centrarse en conceptos esenciales sin verse abrumados por la sintaxis del lenguaje.
+        - Compatibilidad con anotaciones opcionales (`Final`, tipos) permite reforzar buenas prácticas con herramientas externas.  
+        Esto facilita una adopción progresiva de prácticas robustas sin imponerlas desde el inicio.
     </Pros>
-    <Cons>
-        - El tipado no es obligatorio ni verificado en tiempo de ejecución: **errores de tipo pueden pasar desapercibidos**.
-        - No existe una forma nativa de declarar variables inmutables como `val` en Kotlin.
-        - No se permite la sobrecarga de funciones, lo que puede limitar la expresividad en algunos diseños de APIs.
-        - La inmutabilidad con `Final` no se aplica en tiempo de ejecución y depende de herramientas externas para su utilidad.
-        - Las funciones sin tipos explícitos pueden volverse difíciles de mantener en proyectos grandes o colaborativos.
-        - El uso excesivo de `*args` y `**kwargs` puede afectar la claridad, el autocompletado y el análisis estático.
-        - El sistema de tipos sigue siendo opcional y poco estricto, lo que dificulta la prevención de errores en grandes bases de código si no se aplican prácticas disciplinadas.
+    <Cons title="Limitaciones de Python">
+        - No existe una forma nativa de restringir la reasignación o mutabilidad de variables.  
+            Esto dificulta expresar la intención de inmutabilidad en la interfaz pública de una biblioteca. Aunque existen convenciones (`MAYÚSCULAS`) y herramientas como `Final`, ninguna impone restricciones reales en tiempo de ejecución.
+        - Las garantías de tipo o de estado son opcionales y dependen de herramientas externas.  
+            Python no valida las anotaciones de tipo ni impide errores como asignar un valor inesperado.  
+            Esto puede llevar a fallos en tiempo de ejecución que, en lenguajes como Kotlin, se detectan en compilación.
+        - Las propiedades deben definirse manualmente con decoradores.  
+            Aunque poderosas, requieren más código explícito y repetitivo que en Kotlin, donde cada variable es una propiedad con `get/set` implícitos desde el inicio.
+        - No hay modificadores de acceso reales (`private`, `protected`).  
+            El uso de convenciones como `__atributo` ayuda a ocultar implementación, pero no impide el acceso desde fuera. Esto complica la encapsulación y puede dificultar la evolución segura de bibliotecas.
+        - La flexibilidad del lenguaje dificulta razonar formalmente sobre el estado de los objetos.  
+            Al permitir reasignaciones y cambios de tipo en cualquier momento, se vuelve más difícil garantizar invariantes internas o aplicar transformaciones seguras sin pruebas exhaustivas o validaciones adicionales.
+        - La falta de inmutabilidad por defecto complica el estilo funcional.  
+            En programación funcional, la inmutabilidad es clave para componer funciones puras y evitar efectos colaterales.  
+            Como Python permite mutar estructuras y reasignar nombres libremente, es más fácil introducir errores sutiles y más difícil aplicar enfoques funcionales de forma segura y expresiva.
     </Cons>
 </ProCons>
 
 ## 🎯 Conclusiones
 
-Python ofrece una forma muy flexible y accesible de definir funciones y declarar variables. Aunque permite adoptar un estilo cercano al de lenguajes con tipado estático (como Kotlin) mediante anotaciones y herramientas externas, su naturaleza dinámica implica que esa seguridad no es obligatoria ni garantizada en tiempo de ejecución.
+A lo largo de esta lección exploramos cómo se declaran y gestionan las variables en Python, y cómo este modelo difiere profundamente del enfoque expresivo y seguro de Kotlin.
 
-Comprender estas diferencias es clave al portar ideas entre lenguajes o al diseñar bibliotecas reutilizables, donde la claridad y la seguridad del código son tan importantes como la concisión.
+Python privilegia la **simplicidad y flexibilidad**, permitiendo reasignaciones sin restricciones y eliminando la necesidad de palabras clave como `val` o `var`. Esto facilita la escritura de código rápido y dinámico, especialmente útil en scripts, prototipos y enseñanza. Sin embargo, también **sacrifica garantías** importantes como la inmutabilidad por defecto, la validación de tipos en compilación o el control explícito de visibilidad y mutabilidad.
+
+En contraste con Kotlin, donde cada variable es también una propiedad capaz de encapsular lógica de forma declarativa, en Python se requiere definir manualmente cada aspecto mediante decoradores. Esto otorga poder, pero también impone más esfuerzo y atención al detalle para lograr un diseño robusto.
+
+Finalmente, vimos cómo algunas herramientas del ecosistema —como `Final`, `mypy` o `@property`— permiten recuperar parte de esa expresividad, aunque nunca con la misma fuerza ni inmediatez que en un lenguaje estáticamente tipado y orientado a la inmutabilidad por defecto.
 
 ### 🔑 Puntos clave
 
-- Las funciones en Python se definen con `def` y pueden usar anotaciones de tipo opcionales (`a: int`) para mayor claridad.
-- El tipado no es estricto: Python no verifica que los valores coincidan con los tipos anotados.
-- Los parámetros con valores por defecto reemplazan la necesidad de sobrecarga de funciones.
-- `*args` y `**kwargs` permiten construir funciones altamente flexibles y genéricas.
-- Las variables en Python son mutables por defecto y no existe un equivalente exacto a `val`, aunque `Final` (desde Python 3.8) permite comunicar intención de inmutabilidad.
+- En Python, una variable se crea al asignarle un valor: no necesita declaración previa ni palabra clave.
+- No hay distinción nativa entre variables mutables e inmutables; toda variable puede ser reasignada.
+- La inmutabilidad depende del tipo del objeto (por ejemplo, `int` es inmutable; `list` es mutable).
+- No existe soporte real para constantes, pero se pueden simular con convenciones (`MAYÚSCULAS`) o `Final`.
+- Las propiedades se implementan con decoradores (`@property`, `@setter`, `@deleter`), lo que permite encapsular validaciones y lógica de acceso.
+- Python no impone restricciones, pero sí ofrece herramientas opcionales para lograr mayor seguridad y expresividad.
 
-### 🧾 Tabla comparativa: Python vs Kotlin
+### 🧰 ¿Qué nos llevamos?
 
-| Característica                          | Python                                       | Kotlin                               |
-|----------------------------------------|----------------------------------------------|---------------------------------------|
-| Declaración de funciones               | `def` con tipos opcionales                   | `fun` con tipos obligatorios          |
-| Tipado                                  | Dinámico con anotaciones opcionales          | Estático y obligatorio                |
-| Verificación de tipos en runtime       | ❌ No                                          | ✅ Sí                                 |
-| Variables mutables por defecto         | ✅ Sí (`=`)                                   | ❌ No (`val` es inmutable por defecto)|
-| Inmutabilidad explícita                | `Final` (no forzado en runtime)              | `val` (forzado por el compilador)     |
-| Valores por defecto en parámetros      | ✅ Sí                                         | ✅ Sí                                 |
-| Sobrecarga de funciones                | ❌ No                                         | ✅ Sí                                 |
-| `*args` y `**kwargs`                   | ✅ Soportado con sintaxis especial            | ❌ No directamente                    |
-| Pensado para                           | Flexibilidad y rapidez                       | Seguridad y expresividad              |
+Python ofrece un entorno flexible y accesible, ideal para quienes priorizan rapidez de desarrollo, exploración interactiva o enseñanza. Su sistema de variables permite escribir código sin fricciones, pero a costa de perder garantías que en otros lenguajes —como Kotlin— están integradas desde la base.
 
-## 🧰 ¿Qué nos llevamos?
+Este enfoque **no es malo por sí mismo**, pero **te delega a ti, como quien diseña las bibliotecas, la responsabilidad de proteger tus invariantes**. Tendrás que aplicar disciplina, convenciones, y herramientas adicionales si buscas ofrecer una API segura y mantenible.
 
-Esta lección nos mostró cómo **Python combina flexibilidad con expresividad**, permitiendo escribir funciones potentes con muy poca sintaxis. Pero también nos deja una advertencia: **esa libertad requiere mayor disciplina del equipo desarrollador**, especialmente al escribir bibliotecas o aplicaciones a gran escala.
+Elegir entre flexibilidad y restricciones no es una cuestión de preferencia personal, sino de **adecuación al problema y al contexto**. En un script simple o una exploración de datos, la flexibilidad de Python brilla. En una biblioteca compartida y en evolución, podrías echar de menos las garantías de un sistema como el de Kotlin.
 
-Entender cómo se declaran funciones y variables —y cómo esto difiere del enfoque más estricto de Kotlin— es fundamental para:
+La clave es comprender qué te ofrece cada lenguaje, y cómo usar sus herramientas —y sus límites— a tu favor.
 
-- Escribir código más predecible y mantenible,
-- Compartir funciones con otras personas sin ambigüedad,
-- Diseñar APIs coherentes que resistan el paso del tiempo.
-## 📖 Referencias
+## 📖 ¿Con ganas de más?
 
-### 🔥 Recomendadas
-
-- [🌐 "Guía de funciones de Python con ejemplos"](https://www.freecodecamp.org/espanol/news/guia-de-funciones-de-python-con-ejemplos/) en *"freeCodeCamp"* por **Sebastian J. Bustamante**: Explicación clara y accesible sobre cómo se definen y utilizan funciones en Python, incluyendo sintaxis, parámetros con valores por defecto, paso de argumentos por posición o nombre, ámbito de variables, y comportamiento con objetos mutables. También cubre funciones incorporadas como `max`, `min`, `divmod`, `hex`, `len`, `ord`, `chr` e `input`. Es especialmente relevante para esta lección porque refuerza con ejemplos prácticos los fundamentos que tratamos: **sintaxis de funciones, reutilización de código, comportamiento dinámico del lenguaje y diferencias clave con lenguajes de tipado estático como Kotlin**.
-
-{/* ### 🔹 Adicionales */}
+<ReferenceList title="🔥 Referencias recomendadas" items={[
+    <WebPage
+        title="Python Constants: Improve Your Code’s Maintainability – Real Python"
+        url="https://realpython.com/python-constants/"
+        location="Real Python"
+        author={<AuthorList authors={[
+            { 
+                firstName: "Leodanis", 
+                lastName: "Pozo Ramos", 
+                url: "https://realpython.com/team/lpozoramos/" 
+            }
+        ]}  />}
+    >
+        Este artículo ofrece una guía completa sobre el uso de constantes en Python para mejorar la legibilidad, mantenibilidad y seguridad del código. Explica qué son las constantes, por qué usarlas y cómo implementarlas en proyectos reales, a pesar de que Python no tiene una sintaxis nativa para constantes estrictas. Cubre buenas prácticas, uso de constantes predefinidas y estrategias para organizarlas (como módulos dedicados, archivos de configuración o variables de entorno). Además, presenta técnicas avanzadas para crear constantes verdaderamente inmutables usando clases, <code>@property</code>, <code>namedtuple</code>, <code>@dataclass</code> y más.
+    </WebPage>
+]}  />
