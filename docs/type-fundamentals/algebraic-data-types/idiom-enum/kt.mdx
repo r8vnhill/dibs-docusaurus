@@ -1,11 +1,25 @@
 ---
-title: Uso idiomático de enumeraciones
+title: Modelado avanzado con enumeraciones
+sidebar_label: Enumeraciones avanzadas
 ---
 
 import ReadingTime from '@site/src/components/reading-time/ReadingTime';
 import RepoLinks from '@site/src/components/git/RepoLinks';
 import GitHubRepo from '@site/src/components/git/GitHubRepo';
 import GitLabRepo from '@site/src/components/git/GitLabRepo';
+import Explanation from '@site/src/components/admonitions/Explanation';
+
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons';
+
+import BoxedTabs, { TabItem } from '@site/src/components/cajitas/BoxedTabs';
+import Box from '@site/src/components/cajitas/Box';
+
+import Hint from '@site/src/components/exercise/Hint';
+import Solution from '@site/src/components/exercise/Solution';
+
+import ReferenceList from '@site/src/components/references/ReferenceList';
+import WebPage from '@site/src/components/references/WebPage';
+import AuthorList from '@site/src/components/references/AuthorList';
 
 <ReadingTime />
 <RepoLinks children={[
@@ -13,16 +27,535 @@ import GitLabRepo from '@site/src/components/git/GitLabRepo';
     <GitHubRepo user="r8vnhill" repo="algebraic-data-types-kt" />
 ]}  />
 
-TODO: Introducción, considerando que ya se ha explicado el concepto de enumeración y su uso en Kotlin.
+En Kotlin, una `enum class` no se limita a representar un conjunto finito de etiquetas simbólicas.  
+A diferencia de otros lenguajes donde los enums son simples constantes, en Kotlin pueden tener **propiedades, métodos e incluso lógica especializada en cada instancia**. Esto permite modelar comportamientos complejos de manera clara, expresiva y con un alto grado de encapsulamiento.
 
-## TODO: \<emoji> \<title>
+En esta lección aprenderás a usar enumeraciones como:
 
-{/* TODO 
-    Una enumeración puede tener valores asociados;
-    valores enumerados son constantes referenciales, mutables como singletones.
-*/}
+- **Tipos con estado interno mutable**, útiles para representar componentes que evolucionan (como versiones).
+- **Clases abstractas con comportamiento polimórfico**, donde cada valor define su propia lógica.
+- **Colecciones exhaustivas de estrategias**, reglas o modos de operación, aprovechando su naturaleza cerrada.
 
-```Kotlin showLineNumbers title="some title (and path/to/file)"
-enum class VersionComponent(val identifier: String, var current: Int) {
+También conocerás funciones y propiedades estándar que Kotlin ofrece para trabajar con `enum class` de forma segura y eficiente, como `name`, `entries`, `ordinal` y `valueOf`.
+
+Al finalizar, estarás en condiciones de aplicar enumeraciones como herramientas de modelado avanzadas, en lugar de verlas solo como simples colecciones de valores fijos.
+
+## 🔢 Enumeraciones con estado y comportamiento
+
+Una enumeración en Kotlin no se limita a representar un conjunto fijo de valores.  
+También puede tener **valores asociados**, **propiedades mutables** y **métodos**, lo que permite modelar comportamientos más ricos y con estado.
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="sum/src/main/kotlin/cl/ravenhill/semver/VersionComponent.kt"
+        enum class VersionComponent(val identifier: String, var current: Int) {
+            MAJOR("major", 0),
+            MINOR("minor", 0),
+            PATCH("patch", 0);
+
+            fun bump() {
+                current++
+            }
+
+            fun reset() {
+                current = 0
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="sum/src/main/kotlin/cl/ravenhill/semver/VersionComponent.kt"
+        enum class VersionComponent(val identifier: String, var current: Int) {
+            MAJOR("major", 0),
+            MINOR("minor", 0),
+            PATCH("patch", 0);
+
+            fun bump() {
+                current++
+            }
+
+            fun reset() {
+                current = 0
+            }
+        }
+
+        fun main() {
+            println("🔍 Initial Version State:\n")
+            println("${VersionComponent.MAJOR.identifier}: ${VersionComponent.MAJOR.current}")
+            println("${VersionComponent.MINOR.identifier}: ${VersionComponent.MINOR.current}")
+            println("${VersionComponent.PATCH.identifier}: ${VersionComponent.PATCH.current}")
+
+            println("\n🔧 Performing version updates...\n")
+
+            VersionComponent.MAJOR.bump()
+            VersionComponent.MINOR.bump()
+            VersionComponent.PATCH.bump()
+            VersionComponent.PATCH.bump()
+
+            println("Updated Version State:\n")
+            println("${VersionComponent.MAJOR.identifier}: ${VersionComponent.MAJOR.current}")
+            println("${VersionComponent.MINOR.identifier}: ${VersionComponent.MINOR.current}")
+            println("${VersionComponent.PATCH.identifier}: ${VersionComponent.PATCH.current}")
+
+            println("\n🔄 Resetting all components...\n")
+            VersionComponent.MAJOR.reset()
+            VersionComponent.MINOR.reset()
+            VersionComponent.PATCH.reset()
+
+            println("Version components reset to zero:\n")
+            println("${VersionComponent.MAJOR.identifier}: ${VersionComponent.MAJOR.current}")
+            println("${VersionComponent.MINOR.identifier}: ${VersionComponent.MINOR.current}")
+            println("${VersionComponent.PATCH.identifier}: ${VersionComponent.PATCH.current}")
+        }
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    Cada línea como `MAJOR("major", 0)` declara un valor del enum, y a la vez **invoca el constructor del enum** con los parámetros definidos.  
+    Así, `MAJOR` tendrá `identifier = "major"` y `current = 0`, `MINOR` lo mismo pero con `"minor"`, y así sucesivamente.
+
+    Estas instancias son **singletons** (una sola instancia por valor), pero el campo `current` es mutable, por lo que **si se modifica, el cambio afecta a cualquier lugar donde se use ese valor enum**.
+
+    Esto permite asociar tanto **datos** como **comportamiento** a los valores enumerados, algo que no es posible en lenguajes donde los enums son solo etiquetas constantes.
+</Explanation>
+
+Este patrón puede ser útil para representar **componentes que evolucionan en el tiempo** y requieren comportamiento específico por cada valor enumerado.
+
+:::danger Precaución
+
+Sin embargo, **debe usarse con precaución**: como los valores del enum son instancias únicas, cualquier cambio de estado afecta a todos quienes las compartan. Esto puede romper invariantes si no se maneja cuidadosamente, especialmente en entornos concurrentes o bibliotecas reutilizables.
+
+:::
+
+## 🧬 Enums como clases con comportamiento especializado
+
+:::note Recordatorio: Clases abstractas
+
+Una **clase abstracta** define una interfaz parcial —puede incluir implementación— pero **no puede instanciarse directamente**. Otras clases deben extenderla y **completar sus miembros abstractos**.
+
+:::
+
+En Kotlin, `enum class` puede actuar como una **clase abstracta**, permitiendo que cada uno de sus valores sobrescriba métodos o defina comportamiento propio.  
+Cada valor del enum es una **instancia única** de una subclase anónima[^1] implícita que extiende la clase base del enum.
+
+[^1]: Entraremos en detalle sobre las clases anónimas en Kotlin en una futura lección.
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="sum/src/main/kotlin/cl/ravenhill/semver/ReleaseChannel.kt"
+        enum class ReleaseChannel {
+            STABLE {
+                override val description: String =
+                    "Ready for production use, fully tested and stable"
+            },
+            BETA {
+                override val description: String =
+                    "Version with new features, may contain bugs but is more stable than alpha"
+            },
+            ALPHA {
+                override val description: String =
+                    "Experimental version subject to significant changes"
+            };
+
+            abstract val description: String
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="sum/src/main/kotlin/cl/ravenhill/semver/ReleaseChannel.kt"
+        enum class ReleaseChannel {
+            STABLE {
+                override val description: String =
+                    "Ready for production use, fully tested and stable"
+            },
+            BETA {
+                override val description: String =
+                    "Version with new features, may contain bugs but is more stable than alpha"
+            },
+            ALPHA {
+                override val description: String =
+                    "Experimental version subject to significant changes"
+            };
+
+            abstract val description: String
+        }
+
+        fun main() {
+            println("Release Channels:")
+            println("${ReleaseChannel.STABLE}: ${ReleaseChannel.STABLE.description}")
+            println("${ReleaseChannel.BETA}: ${ReleaseChannel.BETA.description}")
+            println("${ReleaseChannel.ALPHA}: ${ReleaseChannel.ALPHA.description}")
+        }
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    Este patrón permite **asociar lógica diferente a cada valor del enum**.  
+    En este ejemplo:
+
+    - `description` es una propiedad abstracta que **cada valor del enum debe implementar**.
+    - Cada valor (`STABLE`, `BETA`, `ALPHA`) se comporta como una **clase anónima** que sobrescribe esa propiedad.
+    - No se necesita una cláusula `when`, ya que el comportamiento especializado está directamente encapsulado en cada instancia.
+
+    Esto es útil cuando los valores de un enum **no solo representan etiquetas, sino entidades con lógica propia**, como estrategias, reglas de negocio o modos de operación.
+</Explanation>
+
+:::warning `override` y `abstract` explícitos
+
+En Kotlin, la declaración de métodos abstractos y sobrescritos debe ser **explícita**:
+
+- Los métodos sin implementación deben marcarse con `abstract`.
+- Las implementaciones que sobrescriben métodos deben usar `override`.
+
+Esto contrasta con lenguajes como **Scala**, donde `abstract` es implícito (cualquier método sin cuerpo es abstracto) y `override` puede ser opcional en algunos contextos.  
+Kotlin prioriza la claridad y evita ambigüedades forzando al desarrollador a **declarar explícitamente sus intenciones**.
+
+:::
+
+:::tip Uso con interfaces
+
+Como los `enum class` pueden declarar métodos abstractos y sobrescribirlos en cada instancia, **también pueden implementar interfaces**, al igual que las clases.  
+Aunque no profundizaremos aún en este tema, lo retomaremos más adelante cuando exploremos **cómo funcionan las interfaces y la reutilización de comportamiento** en Kotlin.  
+Este debería ser un concepto familiar si has trabajado con otros lenguajes orientados a objetos como Java, C# o Scala (donde se denominan _traits_).[^2]
+
+:::
+
+[^2]: La implementación de interfaces en Kotlin **no es** idéntica a los *traits* de Scala ni a las interfaces de Java o C#, aunque comparten la idea general de reutilizar comportamiento.
+
+## 🧰 Utilidades disponibles en todos los `enum class`
+
+En Kotlin, cada `enum class` viene acompañado de un conjunto de funciones y propiedades útiles que permiten trabajar con sus valores de forma segura y expresiva.  
+Esto resulta especialmente práctico al diseñar bibliotecas reutilizables o construir sistemas donde los estados, niveles o fases deben modelarse de forma clara.
+
+Supongamos que trabajamos en una biblioteca de compilación que define las fases del ciclo de construcción de un proyecto de forma cíclica: Al terminar una fase, se inicia la siguiente, y al llegar al final, se vuelve a la primera.
+
+```kotlin showLineNumbers title="sum/src/main/kotlin/cl/ravenhill/compiler/OptimizationPass.kt"
+enum class OptimizationPass {
+    INLINE_FUNCTIONS, REMOVE_DEAD_CODE, FOLD_CONSTANTS
 }
 ```
+
+Veamos algunas de las cosas que podemos hacer con este `enum`:
+
+### 🏷️ `name: String`
+
+Propiedad que devuelve el **nombre exacto** del valor tal como fue declarado en el `enum`:
+
+```kotlin showLineNumbers title="sum/src/main/kotlin/cl/ravenhill/compiler/OptimizationPass.kt"
+val name: String = OptimizationPass.INLINE_FUNCTIONS.name
+println("${OptimizationPass.INLINE_FUNCTIONS} name: $name")
+// Output: "INLINE_FUNCTIONS name: INLINE_FUNCTIONS"
+```
+
+En este caso, interpolar el valor del enum directamente produce el mismo resultado que acceder a `name`.  
+Esto se debe a que, por defecto, el método `toString()` de un enum en Kotlin devuelve su `name`.
+
+:::warning
+
+Sin embargo, **no debes asumir que esto será siempre cierto**: si el `enum` sobrescribe `toString()`, el resultado puede diferir.  
+Si necesitas acceder al nombre declarado de forma segura y consistente, **usa siempre la propiedad `name`**.
+
+:::
+
+### 📋 `entries: EnumEntries<EnumClass>`
+
+Desde Kotlin 1.9, todos los `enum class` exponen la propiedad `entries`, una lista especializada[^3] que contiene **todos los valores del enum en el orden en que fueron declarados**.
+
+[^3]: `EnumEntries` es un subtipo optimizado de `List`, diseñado específicamente para trabajar con enumeraciones.  
+Permite realizar ciertas operaciones —como verificar si un valor pertenece a la lista (`contains`)— en **tiempo constante**, a diferencia de una lista convencional, donde esa operación sería lineal.
+
+```kotlin showLineNumbers title="sum/src/main/kotlin/cl/ravenhill/compiler/OptimizationPass.kt"
+for (phase in OptimizationPass.entries) {
+    println("> ${phase.name}")
+}
+```
+
+:::tip
+
+Usar `entries` es especialmente útil en bibliotecas y sistemas de construcción donde:
+
+- Necesitas **recorrer todas las fases de un ciclo**, como en un sistema de compilación modular (`INIT`, `COMPILE`, `LINK`, `PACKAGE`).
+- Quieres generar dinámicamente un **menú, selector o documentación** con los modos o configuraciones disponibles (`Mode.entries`, `LogLevel.entries`, etc.).
+- Implementas un validador o visualizador genérico que debe **operar sobre todos los casos de un tipo cerrado**, sin acoplarse a su número o nombres específicos.
+- Usas enums como **plugins o estrategias registradas** (por ejemplo, en una arquitectura de procesamiento por fases o canalizaciones), y quieres evitar mantener listas manuales.
+
+De este modo, `entries` reemplaza listas redundantes, elimina errores por omisión y asegura que tu lógica siempre esté alineada con los valores declarados.
+
+:::
+
+<details>
+    <summary>
+        <code>entries</code> vs <code>values()</code>
+    </summary>
+
+    Antes de Kotlin 1.9, el método `values()` era la forma estándar de obtener todas las constantes de una enumeración.  
+    Este método, heredado de Java, devuelve un **array mutable** con los valores del enum.
+
+    A partir de Kotlin 1.9, se introdujo la propiedad `entries` como **reemplazo preferido**, y `values()` fue **marcado como obsoleto** (`@Deprecated`) para su futura eliminación.
+
+    <ProCons>
+        <Cons title={<>Problemas con <code>values()</code></>}>
+            - Cada llamada a `values()` **crea una nueva copia del array**, lo que puede producir **problemas de rendimiento**, especialmente si se invoca en bucles o métodos frecuentemente utilizados.
+            - Es **difícil de detectar** como cuello de botella, ya que el impacto depende del uso en tiempo de ejecución, no del tamaño del enum.
+            - El resultado es un `Array`, pero la mayoría de las APIs modernas en Kotlin usan `List`, por lo que requiere una conversión explícita.
+            - Se considera un **"bug de diseño" heredado de Java**, ampliamente documentado en propuestas como [JDK-8073381](https://bugs.openjdk.org/browse/JDK-8073381) y mencionado como causa de fugas de memoria o problemas en bibliotecas como `kotlinx.serialization` o el conector MySQL JDBC.
+        </Cons>
+        <Pros title={<>Ventajas de <code>entries</code></>}>
+            - Es una **colección inmutable especializada** (`EnumEntries`), más segura y alineada con la API de Kotlin.
+            - **No requiere crear nuevas instancias** innecesarias.
+            - Permite usar operaciones de colección (`map`, `filter`, etc.) directamente sin conversión.
+            - Mejora la legibilidad e intención del código.
+        </Pros>
+    </ProCons>
+</details>
+
+### 🔢 `ordinal: Int`
+
+Indica **la posición del valor en la declaración**, empezando desde 0:
+
+<BoxedTabs>
+    <TabItem label={"Código esencial"} value={"Código esencial"}>
+        ```kotlin showLineNumbers title="sum/src/main/kotlin/cl/ravenhill/compiler/OptimizationPass.kt"
+        enum class OptimizationPass {
+            INLINE_FUNCTIONS, REMOVE_DEAD_CODE, FOLD_CONSTANTS;
+
+            fun next(): OptimizationPass =
+                entries[(ordinal + 1) % entries.size]
+        }
+        ```
+    </TabItem>
+    <TabItem label={"Código completo"} value={"Código completo"}>
+        ```kotlin showLineNumbers title="sum/src/main/kotlin/cl/ravenhill/compiler/OptimizationPass.kt"
+        enum class OptimizationPass {
+            INLINE_FUNCTIONS, REMOVE_DEAD_CODE, FOLD_CONSTANTS;
+
+            fun next(): OptimizationPass =
+                entries[(ordinal + 1) % entries.size]
+        }
+
+        fun main() {
+            println("Transitions:")
+            OptimizationPass.entries.forEach { phase ->
+                println(buildString {
+                    append(phase.name)
+                    append(" -> ")
+                    append(phase.next().name)
+                })
+            }
+        }
+        ```
+    </TabItem>
+</BoxedTabs>
+
+<Explanation>
+    Cada valor en una `enum class` tiene asociado un índice llamado `ordinal`, que indica su **posición de declaración** empezando desde 0.
+
+    En este ejemplo:
+
+    - `INLINE_FUNCTIONS` tiene `ordinal = 0`,
+    - `REMOVE_DEAD_CODE` tiene `ordinal = 1`,
+    - `FOLD_CONSTANTS` tiene `ordinal = 2`.
+
+    Usamos `ordinal` para avanzar a la siguiente fase aplicando aritmética modular con `entries.size`, lo que permite que la última fase vuelva a la primera y así formar un **ciclo cerrado** de optimizaciones.
+
+    Este patrón es útil para modelar **máquinas de estados cíclicas**, **etapas repetitivas de compilación**, o **modos de operación rotativos** donde no queremos codificar manualmente las transiciones.
+</Explanation>
+
+:::danger Evita usar `ordinal` como ID persistente
+
+No uses `ordinal` como identificador en bases de datos, archivos o protocolos.  
+**Cambiar el orden de los valores en el `enum` modificaría automáticamente su `ordinal`, rompiendo la correspondencia** con los datos almacenados y causando errores difíciles de detectar.
+
+En su lugar, usa `name` o una propiedad explícita como `code` o `id` si necesitas un identificador estable.
+
+:::
+
+### 🔎 `valueOf(value: String): Enum`
+
+Permite obtener una instancia de la enumeración a partir de su nombre como cadena:
+
+```kotlin showLineNumbers title="sum/src/main/kotlin/cl/ravenhill/build/BuildPhase.kt"
+val phase = OptimizationPass.valueOf("INLINE_FUNCTIONS")
+println("Current build phase: ${phase.name}")
+try {
+    OptimizationPass.valueOf("INVALID_PHASE")
+} catch (e: IllegalArgumentException) {
+    println("Caught an exception: ${e.message}")
+}
+```
+
+::::danger Útil, pero a qué costo...
+
+`valueOf` permite construir un valor desde texto externo (por ejemplo, configuración, argumentos, archivos), pero **sacrifica la seguridad de tipos**:  
+- Si el valor no coincide exactamente con ninguno de los nombres definidos, lanza una excepción en tiempo de ejecución.
+- No hay validación del compilador, ya que el argumento es una cadena arbitraria.
+
+Esto debilita uno de los principales beneficios de los tipos suma: **su naturaleza cerrada y verificable en tiempo de compilación**.
+
+:::tip Recomendación
+
+Evita `valueOf` en código interno. Prefiere `when` exhaustivos siempre que sea posible.
+
+:::
+
+::::
+
+<Box>
+    ## 🧩 Ejercicio de cierre: Enums como estrategias de validación
+
+    Imagina que estás diseñando una biblioteca para validar nombres de usuario en distintas plataformas. Cada plataforma tiene **reglas diferentes**:
+
+    * En *Web*: debe tener entre 4 y 12 caracteres, y solo letras o números.
+    * En *Móvil*: debe comenzar con letra y puede contener guiones bajos.
+    * En *Consola*: debe tener exactamente 8 caracteres y no contener vocales.
+
+    Con este fin:
+
+    1. Declara un `enum class` llamado `ValidationPlatform` con los valores `WEB`, `MOBILE` y `CONSOLE`.
+    2. Asigna a cada valor del enum una función `validate(name: String): Boolean` con su lógica correspondiente.
+    3. Agrega una propiedad `description` que explique la validación que aplica cada plataforma.
+    4. Escribe una función `printValidationInfo(name: String)` —fuera del `enum`— que imprima si el nombre es válido en cada plataforma, junto a su descripción.
+
+    <Hint 
+        hints={[
+            <>Usa <b>clases anónimas</b> para implementar la lógica de validación de cada plataforma.</>,
+            <>
+                Puedes usar <code>CharSequence.all &#123; Char -&gt; Boolean &#125;: Boolean</code> —donde <code>String</code> es un subtipo de <code>CharSequence</code>— para verificar que todos los caracteres de una cadena cumplen una condición.
+            </>,
+            <>
+                Como complemento, la función <code>CharSequence.none &#123; Char -&gt; Boolean &#125;: Boolean</code> te ayudará a verificar que <b>ningún</b> carácter cumple una condición.
+            </>,
+            <>
+                La función <code>Char.isLetterOrDigit(): Boolean</code> te ayudará a verificar si un carácter es una letra o un número.
+            </>,
+            <>
+                De la misma forma, <code>Char.isLetter(): Boolean</code> te permitirá verificar si un carácter es una letra.
+            </>
+        ]}
+    />
+    
+    :::important
+
+    **No uses `when`**: cada valor debe encapsular su propia lógica.
+
+    :::
+
+    <Solution>
+        ```kotlin showLineNumbers title="sum/src/main/kotlin/cl/ravenhill/platform/ValidationPlatform.kt"
+        enum class ValidationPlatform {
+            WEB {
+                override val description: String =
+                    "Web platform with strict naming rules: 4-12 characters, alphanumeric only"
+
+                override fun validate(name: String): Boolean =
+                    name.length in 4..12 && name.all { it.isLetterOrDigit() }
+            },
+            MOBILE {
+                override val description: String =
+                    "Mobile platform with flexible naming: first character must be a letter, rest alphanumeric or underscore"
+
+                override fun validate(name: String): Boolean =
+                    name.first().isLetter() && name.all { it.isLetterOrDigit() || it == '_' }
+            },
+            CONSOLE {
+                override val description: String =
+                    "Console platform with unique naming: 8 characters, no vowels allowed"
+
+                override fun validate(name: String): Boolean {
+                    val vowels = "aeiouAEIOU".toSet()
+                    return name.length == 8 && name.none { it in vowels }
+                }
+            };
+
+            abstract val description: String
+
+            abstract fun validate(name: String): Boolean
+        }
+
+        fun printValidationInfo(name: String) {
+            for (platform in ValidationPlatform.entries) {
+                println(buildString {
+                    appendLine("Platform: ${platform.name}")
+                    appendLine("Description: ${platform.description}")
+                    appendLine("Is '$name' valid? ${platform.validate(name)}")
+                })
+            }
+        }
+        ```
+
+        <Explanation>
+            En este ejemplo, modelamos **plataformas de validación de nombres de usuario** usando una `enum class` que actúa como una clase abstracta.
+
+            Cada valor del enum (`WEB`, `MOBILE`, `CONSOLE`) define:
+            
+            - Una **descripción específica** (`description`), sobrescribiendo una propiedad abstracta.
+            - Una función `validate(name: String)` con **reglas de validación diferentes** según la plataforma.
+
+            Este patrón permite encapsular reglas de negocio diferenciadas dentro de cada instancia del `enum`, en lugar de usar condicionales o estructuras `when`.  
+            Es útil cuando los valores del `enum` representan **estrategias, modos o entornos con comportamiento propio**.
+
+            Además, como `entries` contiene todos los valores, podemos recorrerlos para aplicar la validación en cada plataforma sin acoplar nuestro código a un valor específico.
+        </Explanation>
+    </Solution>
+</Box>
+
+## 🎯 Conclusiones
+
+En esta lección exploramos cómo las enumeraciones en Kotlin no se limitan a representar conjuntos finitos de valores constantes, sino que pueden actuar como **clases completas**, con propiedades, estado interno y comportamiento específico por instancia.  
+Esto permite modelar estructuras más expresivas y reutilizables, encapsulando lógica sin depender de condicionales externos.
+
+También revisamos herramientas estándar disponibles para trabajar con `enum class`, como `name`, `entries`, `ordinal` y `valueOf`, junto con sus beneficios y limitaciones. Finalmente, aplicamos estos conceptos para construir una estrategia de validación polimórfica basada en enumeraciones.
+
+### 🔑 Puntos clave
+
+- Un `enum class` puede contener **propiedades mutables, funciones y lógica especializada** por instancia.
+- Las enumeraciones pueden actuar como **clases abstractas**, y cada valor puede sobrescribir miembros distintos.
+- Es posible implementar **interfaces** y usar enumeraciones como estrategias reutilizables o controladores de flujo.
+- La propiedad `entries` (desde Kotlin 1.9) reemplaza a `values()` como la forma preferida y segura de listar valores.
+- Aunque prácticas, funciones como `ordinal` o `valueOf` deben usarse con cuidado en contextos persistentes o externos.
+
+### 🧰 ¿Qué nos llevamos?
+
+Las enumeraciones avanzadas nos enseñan que no todo comportamiento debe modelarse con clases completas o jerarquías complejas.  
+Cuando los casos están cerrados y bien definidos, un `enum class` puede ser una forma compacta, segura y elegante de **representar estrategias, reglas de validación, fases de un sistema, modos de operación o cualquier conjunto fijo de comportamientos diferenciados**.
+
+Este enfoque promueve un diseño **más expresivo, menos propenso a errores y con menor acoplamiento**, al centralizar el comportamiento en las propias instancias del enum.  
+Es una herramienta valiosa para quienes diseñan **librerías reutilizables, DSLs o arquitecturas extensibles**, y un excelente ejemplo de cómo Kotlin fusiona ideas orientadas a objetos con principios de programación funcional.
+
+## 📖 ¿Con ganas de más?
+
+<ReferenceList 
+    title="🔥 Referencias recomendadas"
+    items={[
+        <WebPage
+            title="Working with Enums in Kotlin"
+            url="https://www.baeldung.com/kotlin/enum"
+            location="Baeldung"
+        >
+            Este artículo explora en profundidad las características avanzadas de las enumeraciones en Kotlin. Parte desde conceptos básicos como la definición de enums y su inicialización, hasta aspectos más complejos como clases anónimas por constante, implementación de interfaces, uso de <code>entries</code> en lugar de <code>values</code>, y los riesgos de depender del <code>ordinal</code>. Además, discute cómo extender el comportamiento de enums a través de interfaces o clases selladas, y presenta la distinción entre enums ordinales y no ordinales. Es una referencia práctica y detallada para modelar datos con enums en Kotlin de forma segura y expresiva.
+        </WebPage>
+    ]}
+/>
+
+<ReferenceList
+    title="🔹 Referencias adicionales"
+    items={[
+        <WebPage
+            title="Enum class declaration"
+            url="https://kotlinlang.org/docs/enum-classes.html#enum-class-declaration"
+            location="Kotlin Language Specification"
+        >
+            Explica la estructura y comportamiento de las enum classes en Kotlin. Describe sus propiedades principales (valores predefinidos, herencia de Enum, imposibilidad de heredar o parametrizar), así como sus miembros implícitos como <code>name</code>, <code>ordinal</code>, <code>compareTo</code>, <code>entries</code>, <code>valueOf</code> y <code>values</code>. También se destaca la diferencia entre <code>entries</code> y <code>values</code>, recomendando el uso de <code>entries</code> desde Kotlin 1.9. Incluye ejemplos de enums simples y con lógica específica en cada entrada.
+        </WebPage>,
+        <WebPage
+            title={<>Decommission <code>Enum.values()</code> and replace it with <code>Enum.entries</code></>}
+            url="https://github.com/Kotlin/KEEP/blob/master/proposals/enum-entries.md"
+            location="KEEP - Kotlin Evolution and Enhancement Process"
+            author={<AuthorList authors={[{ firstName: "Vsevolod", lastName: "Tolstopytov", url: "https://github.com/qwwdfsad" }]} />}
+        >
+            Presenta la propuesta oficial para reemplazar <code>Enum.values()</code> por la propiedad <code>Enum.entries</code> en Kotlin, destacando sus ventajas en rendimiento, inmutabilidad y compatibilidad con APIs basadas en colecciones. Se introducen el tipo <code>EnumEntries&lt;E&gt;</code> y una estrategia de transición asistida por el IDE sin romper compatibilidad. La propuesta fue aceptada e implementada como parte de Kotlin 1.9, con un plan gradual de despriorización de <code>values()</code> y apoyo mediante funciones como <code>enumEntries</code>.
+        </WebPage>
+    ]}
+/>
