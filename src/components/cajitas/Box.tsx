@@ -1,6 +1,7 @@
 import React, { ElementType, forwardRef } from "react";
 import clsx from "clsx";
 import styles from "./Box.module.css";
+import { WithClassName } from "../traits/WithClassName";
 
 /**
  * Generic props for a polymorphic `Box` component.
@@ -17,15 +18,8 @@ type BoxProps<T extends ElementType> = {
    * Optional component or HTML tag to render. Defaults to `'div'`.
    */
   as?: T;
-  /**
-   * React children to be rendered inside the Box.
-   */
-  children: React.ReactNode;
-  /**
-   * Optional CSS class name(s) to apply to the Box.
-   */
-  className?: string;
-} & React.ComponentPropsWithoutRef<T>;
+} & React.ComponentPropsWithoutRef<T> &
+  React.PropsWithChildren<WithClassName>;
 
 /**
  * Extracts the `ref` type for a given component or HTML element.

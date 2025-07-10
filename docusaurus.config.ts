@@ -92,7 +92,7 @@ const config: Config = {
         },
         footer: {
             style: 'dark',
-            copyright: `Copyright © ${new Date().getFullYear()} Ignacio Slater M. Built with Docusaurus.`,
+            copyright: `Copyright © ${new Date().getFullYear()} Ignacio Slater-Muñoz. Hecho con Docusaurus.`,
         },
         prism: {
             theme: prismThemes.github,
