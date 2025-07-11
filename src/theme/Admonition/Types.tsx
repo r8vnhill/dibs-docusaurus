@@ -1,19 +1,19 @@
 import React from 'react';
 import AdmonitionTypeNote from '@theme/Admonition/Type/Note';
 import AdmonitionTypeInfo from '@theme/Admonition/Type/Info';
-import AdmonitionTypeDanger from '@theme/Admonition/Type/Danger';
 import AdmonitionTypeCaution from '@theme/Admonition/Type/Caution';
 import type AdmonitionTypes from '@theme/Admonition/Types';
 import Explanation from './Type/Explanation';
 import Warning from './Type/Warning';
 import Tip from './Type/Tip';
+import Danger from './Type/Danger';
 
 const admonitionTypes: typeof AdmonitionTypes = {
   note: AdmonitionTypeNote,
   tip: Tip,
   info: AdmonitionTypeInfo,
   warning: Warning,
-  danger: AdmonitionTypeDanger,
+  danger: Danger,
   explanation: Explanation,
 };
 

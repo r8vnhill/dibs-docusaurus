@@ -1,0 +1,301 @@
+---
+title: Modelado avanzado con enumeraciones en Python
+---
+
+import ReadingTime from '@site/src/components/reading-time/ReadingTime';
+
+import BoxedTabs, { TabItem } from '@site/src/components/cajitas/BoxedTabs';
+import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons';
+
+import RepoLinks from '@site/src/components/git/RepoLinks';
+import GitLabRepo from '@site/src/components/git/GitLabRepo';
+import GitHubRepo from '@site/src/components/git/GitHubRepo';
+
+import ReferenceList from '@site/src/components/references/ReferenceList';
+import WebPage from '@site/src/components/references/WebPage';
+
+import OfficialDocumentation from '@site/src/components/Tooltip/OfficialDocumentation';
+
+<ReadingTime    />
+<RepoLinks children={[
+    <GitLabRepo user="r8vnhill" repo="python-dibs" />,
+    <GitHubRepo user="r8vnhill" repo="python-dibs" />
+]} />
+
+En esta lección profundizamos en el uso de enumeraciones (`Enum`) en Python para modelar **tipos suma con comportamiento**, una técnica común en el diseño de bibliotecas reutilizables y sistemas de automatización.
+
+Hasta ahora, ya sabemos declarar enums simples con `auto()` y usarlos en estructuras de control como `match`. Aquí aprenderemos a:
+
+- Asociar **valores personalizados** a cada caso y acceder a ellos mediante `.name` y `.value`.
+- Iterar sobre los valores de un enum y construir listas legibles o dinámicas.
+- Implementar **comportamiento especializado por caso** mediante métodos que dependen del valor (`self`).
+- Recorrer enums en orden o de forma **circular**, útil en secuencias como fases de compilación o validación.
+- Usar `Flag` para representar **modos de operación combinables**, una técnica muy útil en sistemas de construcción.
+
+Además, compararemos el modelo de enums de Python con el de Kotlin para comprender sus **límites y posibilidades**.
+
+Esta lección amplía las capacidades expresivas de los enums más allá de los casos constantes, permitiendo construir APIs más claras, seguras y fáciles de extender.
+
+:::danger Enum con estado interno mutable
+
+En Kotlin vimos que los valores de un enum pueden tener **propiedades mutables** (`var`) que cambian su estado en tiempo de ejecución.  
+Python **no lo permite de forma segura**: aunque técnicamente es posible modificar atributos, hacerlo viola el principio de inmutabilidad de los enums y puede producir errores sutiles.
+
+:::
+
+## 🛠️ Iterando y accediendo a valores en un `Enum`
+
+En este ejemplo exploramos varias características clave de los `Enum` en Python:
+
+- Cómo definir enumeraciones con valores personalizados (en este caso, descripciones).
+- Cómo iterar sobre sus valores usando `for` o list comprehension.
+- Cómo acceder al nombre (`name`) y al valor asociado (`value`) de cada constante.
+
+```python showLineNumbers title="Definición de enum (type-fundamentals/algebraic_types/sum/enum/compiler.py)"
+from enum import Enum
+
+class OptimizationPass(Enum):
+    INLINE_FUNCTIONS = "Inline functions to reduce call overhead."
+    REMOVE_DEAD_CODE = "Remove code that is never executed."
+    FOLD_CONSTANTS = "Replace expressions with constant values where possible."
+```
+
+```python showLineNumbers title="Iteración y acceso (type-fundamentals/algebraic_types/sum/enum/compiler.py)"
+for phase in OptimizationPass:
+    print(f"Optimization phase: {phase.name} ({phase.value})")
+
+# También se puede generar una lista de strings representativas:
+print([f"{p.name} ({p.value})" for p in OptimizationPass])
+```
+
+:::explanation
+
+Cada valor del enum `OptimizationPass` tiene:
+
+- Un **nombre** (por ejemplo, `INLINE_FUNCTIONS`), accesible con `.name`.
+- Un **valor asociado** (una descripción), accesible con `.value`.
+
+En este caso, `.value` no es un número, sino una cadena personalizada.  
+Esto hace que la enumeración sea más expresiva y útil, especialmente cuando se quiere mostrar información legible o documentar una secuencia de pasos.
+
+El uso de `for` sobre un enum itera sobre todos sus miembros, en el orden en que fueron declarados.  
+Esto permite construir interfaces dinámicas, generar documentación o aplicar lógica en secuencia.
+
+:::
+
+## 🧪 Estrategias de validación con enumeraciones
+
+Este ejemplo muestra cómo usar una enumeración (`Enum`) para representar un tipo suma que encapsula distintas **estrategias de validación de nombres de usuario**.  
+Es una técnica común en el diseño de **librerías reutilizables**, donde cada caso del enum implementa un comportamiento específico mediante un método compartido.
+
+<BoxedTabs>
+  <TabItem label={"Código esencial"} value={"Código esencial"}>
+    ```python showLineNumbers title="type-fundamentals/algebraic_types/sum/enum/validator.py"
+    class ValidationStrategy(Enum):
+        WEB = auto()
+        MOBILE = auto()
+        CONSOLE = auto()
+
+        def validate(self, name: str) -> bool:
+            match self:
+                case ValidationStrategy.WEB:
+                    return name.isalnum() and 4 <= len(name) <= 12
+                case ValidationStrategy.MOBILE:
+                    return name[0].isalpha() and all(c.isalnum() or c == "_" for c in name)
+                case ValidationStrategy.CONSOLE:
+                    return len(name) == 8 and not any(c in "aeiouAEIOU" for c in name)
+                case _:
+                    raise ValueError(f"Unknown validation strategy: {self}")
+    ```
+  </TabItem>
+  <TabItem label={"Código completo"} value={"Código completo"}>
+    ```python showLineNumbers title="type-fundamentals/algebraic_types/sum/enum/validator.py"
+    from enum import Enum, auto
+
+
+    class ValidationStrategy(Enum):
+        WEB = auto()
+        MOBILE = auto()
+        CONSOLE = auto()
+
+        def validate(self, name: str) -> bool:
+            match self:
+                case ValidationStrategy.WEB:
+                    return name.isalnum() and 4 <= len(name) <= 12
+                case ValidationStrategy.MOBILE:
+                    return name[0].isalpha() and all(c.isalnum() or c == "_" for c in name)
+                case ValidationStrategy.CONSOLE:
+                    return len(name) == 8 and not any(c in "aeiouAEIOU" for c in name)
+                case _:
+                    raise ValueError(f"Unknown validation strategy: {self}")
+
+
+    if __name__ == "__main__":
+        user = "Admin_01"
+
+        for strategy in ValidationStrategy:
+            print(f"{strategy.name}: {strategy.value}")
+            print("✓ Valid" if strategy.validate(user) else "✗ Invalid")
+            print()
+    ```
+  </TabItem>
+</BoxedTabs>
+
+:::explanation
+
+Cada valor del enum `ValidationStrategy` representa una estrategia diferente para validar un nombre de usuario.
+
+- La estrategia `WEB` permite solo caracteres alfanuméricos y longitudes entre 4 y 12 caracteres.
+- La estrategia `MOBILE` permite guiones bajos, pero requiere que el primer carácter sea una letra.
+- La estrategia `CONSOLE` exige exactamente 8 caracteres y prohíbe vocales.
+
+El método `validate()` implementa **comportamiento especializado por caso** usando una estructura `match`, que actúa como una alternativa clara y segura a los `if` o `dict`.
+
+:::
+
+:::warning Límite del modelo de enums en Python
+
+En Python, **no puedes asociar una subclase anónima a cada valor del enum** como en Kotlin.  
+Esto significa que:
+
+- No puedes declarar métodos `abstract` en el enum y sobrescribirlos por constante.
+- No puedes encapsular lógica específica por caso directamente dentro del valor.
+- La lógica diferenciada debe implementarse usando `if`, `match`, o diccionarios.
+
+En contraste, Kotlin permite que cada valor de un `enum class` actúe como una subclase anónima con su propia implementación, lo que favorece un diseño más polimórfico y expresivo.
+
+:::
+
+## 🔁 Recorrido cíclico de un enum
+
+En este ejemplo mostramos cómo:
+
+- Convertir una enumeración en una lista para poder recorrerla secuencialmente.
+- Obtener el índice (similar al *ordinal* en otros lenguajes) de un valor del enum.
+- Calcular el **siguiente valor** en la secuencia de manera cíclica.
+
+```python showLineNumbers title="type-fundamentals/algebraic_types/sum/enum/compiler.py"
+def next_pass(current: OptimizationPass) -> OptimizationPass:
+    passes = list(OptimizationPass)
+    index = passes.index(current)
+    return passes[(index + 1) % len(passes)]
+```
+
+:::explanation
+
+La función `next_pass` toma un valor del enum `OptimizationPass` y devuelve el siguiente en la secuencia.  
+Si el valor actual es el último, se vuelve al primero, generando un recorrido **circular**.
+
+Esto es posible porque:
+
+- `list(OptimizationPass)` convierte el enum en una lista ordenada según su declaración.
+- `passes.index(current)` obtiene el índice actual.
+- `(index + 1) % len(passes)` permite envolver el índice cuando se alcanza el final.
+
+Este patrón es útil cuando las fases de un proceso (como optimización, compilación o validación) deben recorrerse en orden o aplicarse cíclicamente.
+
+:::
+
+## 🧱 Modos de construcción combinables con `Flag`
+
+En este ejemplo usamos `Flag` para representar modos de construcción que pueden combinarse libremente.  
+Es útil en **build systems** o bibliotecas de automatización donde se desea ejecutar múltiples tareas en un solo paso (por ejemplo: compilar + testear).
+
+```python showLineNumbers title="type-fundamentals/algebraic_types/sum/enum/build_mode.py"
+from enum import Flag, auto
+
+
+class BuildMode(Flag):
+    COMPILE = auto()
+    DOCS = auto()
+    TEST = auto()
+
+
+def run_build(mode: BuildMode):
+    print(f"Running build mode: {mode}")
+
+    if BuildMode.COMPILE in mode:
+        print("- Compiling source files...")
+    if BuildMode.DOCS in mode:
+        print("- Generating documentation...")
+    if BuildMode.TEST in mode:
+        print("- Running test suite...")
+
+
+if __name__ == "__main__":
+    full_build = BuildMode.COMPILE | BuildMode.TEST
+    run_build(full_build)
+```
+
+:::explanation
+
+El enum `BuildMode` está definido como un `Flag`, lo que permite:
+
+- **Combinar valores** mediante `|`, por ejemplo: `BuildMode.COMPILE | BuildMode.TEST`.
+- **Verificar** si un modo específico está activado usando `in`, por ejemplo: `if BuildMode.TEST in mode`.
+- **Imprimir** múltiples modos combinados como `BuildMode.COMPILE|TEST`.
+
+Esto es útil para crear interfaces flexibles donde se pueden activar varias fases del proceso de construcción sin necesidad de definir todas las combinaciones como enums separados.
+
+Este patrón se aplica tanto en herramientas de línea de comandos como en scripts internos de automatización, y representa una forma práctica de modelar **tipos suma con combinación parcial**, similares a las "bit flags" clásicas de sistemas operativos.
+
+:::
+
+## 🆚 Resumen comparativo
+
+| **Aspecto**                                   | **Kotlin**                                                                                             | **Python**                                                                                      |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| **Estado mutable**                            | Sí, valores singleton con propiedades `var` mutables (aunque no recomendado en APIs públicas).         | Técnicamente posible modificar atributos, pero no seguro ni recomendable (rompe inmutabilidad). |
+| **Comportamiento por valor**                  | Cada valor puede ser una subclase anónima con implementación específica de métodos y propiedades.      | No se puede crear subclases anónimas por valor; se usa lógica condicional en métodos comunes.   |
+| **Iteración sobre valores**                   | Propiedad `entries` (reemplaza a `values()` desde Kotlin 1.9), eficiente y segura.                     | Se puede iterar usando `for valor in Enum`.                                                     |
+| **Orden y posición (`ordinal`)**              | Cada valor tiene `ordinal` (índice de declaración), útil para ciclos y ordenamientos.                  | No tiene equivalente directo; se usa índice de lista `list(Enum).index(valor)`.                 |
+| **Obtención de valor por nombre (`valueOf`)** | Existe, pero lanzar excepción si el nombre no existe.                                                  | Acceso directo con `Enum['NOMBRE']`, lanzando `KeyError` si no existe.                          |
+
+<ProCons>
+  <Pros title="Beneficios de Python">
+    - Las enumeraciones pueden tener valores personalizados legibles (por ejemplo, descripciones).
+    - Se pueden recorrer e indexar fácilmente usando `list(...)`, lo que permite construir recorridos secuenciales o circulares.
+    - La clase `Flag` permite modelar combinaciones de valores como modos de construcción, útiles para scripts o CLI de automatización.
+  </Pros>
+  <Cons title="Limitaciones de Python">
+    - No se pueden declarar subclases anónimas por cada valor como en Kotlin; el comportamiento específico debe implementarse manualmente.
+    - No se puede forzar que los valores del enum implementen métodos abstractos de forma segura.
+    - El modelo de mutabilidad es frágil: aunque técnicamente se puede cambiar el estado de un enum, esto rompe su contrato de inmutabilidad.
+  </Cons>
+</ProCons>
+
+## 🎯 Conclusiones
+
+Las enumeraciones en Python son una herramienta poderosa para representar **tipos suma** de forma clara, segura y expresiva. A pesar de las limitaciones del modelo respecto a lenguajes como Kotlin, es posible construir enums que no solo representen casos distintos, sino que también encapsulen **comportamiento especializado** por caso, favoreciendo una separación limpia de responsabilidades.
+
+Además, Python ofrece variantes útiles como `Flag`, que permiten modelar combinaciones de valores de forma concisa, y facilita recorridos secuenciales con técnicas explícitas usando `list(...)`. Estas capacidades hacen de las enumeraciones una pieza central en el diseño de bibliotecas configurables, flujos de validación, y scripts de automatización.
+
+### 🔑 Puntos clave
+
+- Python permite asociar valores personalizados a un `Enum`, como descripciones o códigos legibles.
+- Los enums pueden definir métodos que dependen del valor actual (`self`), usando `match`, `if`, o diccionarios para diferenciar comportamientos.
+- Aunque no se pueden declarar subclases anónimas por valor, el patrón `match` permite mantener el código legible y modular.
+- Se pueden implementar patrones como recorridos circulares (`next`) transformando el enum en lista e indexando manualmente.
+- La clase `Flag` permite combinar valores como si fueran "bit flags", útil para representar modos de operación simultáneos.
+- Python distingue distintos tipos de enums: `Enum`, `IntEnum`, `StrEnum`, y `Flag`, cada uno útil según el dominio del problema.
+
+### 🧰 ¿Qué nos llevamos?
+
+Al diseñar bibliotecas de software en Python, las enumeraciones nos permiten **declarar de forma explícita y segura** los distintos casos o modos de operación de un sistema, ya sea para validaciones, fases de compilación, configuraciones, o combinaciones de tareas. Aunque el modelo de enums en Python es más limitado que el de otros lenguajes, **el diseño cuidadoso y el uso de patrones idiomáticos** permite expresar comportamientos complejos de forma clara y mantenible.
+
+Comprender estas capacidades no solo mejora el diseño interno de nuestras bibliotecas, sino que también **facilita su uso por otras personas**, al hacer explícitas las alternativas disponibles y sus efectos. En síntesis: dominar las enumeraciones en Python es clave para construir software reusable, expresivo y robusto.
+
+## 📖 ¿Con ganas de más?
+
+<ReferenceList
+    title="🔥 Referencias recomendadas"
+    items={[
+        <WebPage
+            title="Enum — Support for Enumerations"
+            url="https://docs.python.org/3/library/enum.html"
+            location={<OfficialDocumentation>The Python Standard Library</OfficialDocumentation>}
+        >
+            Este documento es la referencia oficial del módulo <code>enum</code> de Python, incorporado desde la versión 3.4 y expandido en versiones posteriores. Define cómo modelar conjuntos de constantes simbólicas mediante enumeraciones que pueden tener valores únicos, ser iteradas, comparadas y extendidas con comportamiento personalizado. Presenta variantes como <code>Enum</code>, <code>IntEnum</code>, <code>StrEnum</code>, <code>Flag</code> e <code>IntFlag</code>, así como herramientas avanzadas para validación (<code>@verify</code>, <code>EnumCheck</code>), combinación de flags, asignación automática de valores (<code>auto</code>), y control de alias y valores inválidos. La guía también describe decoradores útiles, la metaclase <code>EnumType</code>, y cómo extender la funcionalidad por medio de métodos especiales.
+        </WebPage>
+    ]}
+/>
