@@ -1,24 +1,35 @@
 ---
 title: Tipos producto como clases en Scala
-sidebar_label: Scala
 ---
 
 import ReadingTime from '@site/src/components/reading-time/ReadingTime'
-import ExcludeFromReadingTime from '@site/src/components/reading-time/ExcludeFromReadingTime'
-import GitHubRepoLink from '@site/src/components/git/GitHubRepoLink'
-import Explanation from '@site/src/components/admonitions/Explanation'
+
+import ReferenceList from '@site/src/components/references/ReferenceList'
 import WebPage from '@site/src/components/references/WebPage'
 
+import GitHubRepoLink from '@site/src/components/git/GitHubRepoLink'
+import RepoLinks from '@site/src/components/git/RepoLinks'
+import GitLabRepo from '@site/src/components/git/GitLabRepo'
+import GitHubRepo from '@site/src/components/git/GitHubRepo'
+
+import Tooltip from '@site/src/components/Tooltip/Tooltip'
+import OfficialDocumentation from '@site/src/components/Tooltip/OfficialDocumentation'
+
 <ReadingTime multiplier={1.0}/>
-<GitHubRepoLink user="r8vnhill" repo="scala-dibs" />
+<RepoLinks
+  children={[
+    <GitLabRepo user="r8vnhill" repo="scala-dibs" />,
+    <GitHubRepo user="r8vnhill" repo="scala-dibs" />
+  ]}
+/>
 
-Los **tipos producto** son una de las construcciones fundamentales en el diseño de estructuras de datos: permiten agrupar múltiples valores heterogéneos en una única unidad compuesta. En Scala, una forma idiomática y expresiva de modelarlos es mediante clases comunes, que proporcionan nombres explícitos para los campos y permiten encapsular comportamiento directamente dentro del tipo.
+Los **tipos producto** son una de las construcciones fundamentales en el diseño de estructuras de datos: permiten agrupar múltiples valores heterogéneos en una única unidad compuesta. En Scala, aunque la forma más idiomática de representarlos suele ser mediante `case class`, comenzar con clases comunes es útil para comprender con mayor claridad cómo se construyen, se inicializan y se comportan estos tipos.
 
-Esta lección explora cómo representar tipos producto en Scala usando clases, comparando sus características con otras representaciones como tuplas, y analizando cómo se definen constructores primarios, secundarios, lógica de inicialización y parámetros por defecto. El objetivo es comprender cómo construir tipos robustos, mantenibles y expresivos, fundamentales para diseñar bibliotecas reutilizables en Scala.
+Esta lección explora cómo representar tipos producto en Scala usando clases regulares, comparando sus características con otras representaciones como tuplas. Se analizan aspectos clave como los constructores primarios y secundarios, la lógica de inicialización y el uso de parámetros por defecto. El objetivo es comprender cómo construir tipos robustos, mantenibles y expresivos, fundamentales para diseñar bibliotecas reutilizables en Scala.
 
 ## 🏗️ Clases comunes como tipos producto en Scala
 
-Una forma natural de representar tipos producto en Scala es mediante clases comunes. Estas clases permiten **agrupar múltiples valores con significado semántico** bajo una única estructura.
+Una forma directa de representar tipos producto en Scala es mediante clases comunes. Estas clases permiten **agrupar múltiples valores con significado semántico** bajo una única estructura con nombre.
 
 ```scala showLineNumbers title="Posición como tipo producto en Scala (type-fundamentals/algebraic-data-types/product/src/main/scala/cl/ravenhill/Position.scala)"
 class Position(val x: Int, val y: Int):
@@ -29,25 +40,32 @@ end Position
 
 @main def positionExample(): Unit =
   val pos = Position(x = 541, y = 133)
-  println(pos.x) // Prints: 541
-  println(pos.y) // Prints: 133
+  println(pos.x)        // Prints: 541
+  println(pos.y)        // Prints: 133
   println(pos.isOrigin) // Prints: false
 end positionExample
 ```
 
-<Explanation>
-  Esta clase `Position` es un ejemplo de **tipo producto** definido mediante una clase común. A diferencia de `Tuple` o `Pair`, aquí los campos tienen **nombres explícitos** (`x`, `y`) y la clase puede incluir **comportamiento asociado**, como el método `isOrigin`.
+:::explanation
 
-  - El uso de `val` en el constructor convierte `x` e `y` en **propiedades accesibles públicamente**.
-  - Scala 3 permite **omitir `new`** al instanciar clases si existe un método `apply`.
-</Explanation>
+La clase `Position` es un ejemplo de **tipo producto** modelado mediante una clase común. A diferencia de `Tuple` o `Pair`, esta estructura proporciona **nombres explícitos** (`x`, `y`) para sus componentes, lo que mejora la legibilidad y expresividad del código.
+
+Además, permite **incluir comportamiento directamente asociado** al dato, como el método `isOrigin`.
+
+:::
 
 <details>
   <summary>
     `new` opcional
   </summary>
-      
-  A diferencia de Scala 2, donde era necesario usar `new` para instanciar clases comunes, Scala 3 introduce **[métodos `apply` universales](https://docs.scala-lang.org/scala3/reference/other-new-features/creator-applications.html)**, lo que permite crear instancias sin necesidad de definir manualmente un método `apply` en el objeto acompañante.
+
+  En Scala 2, instanciar una clase común requería usar `new`, a menos que se definiera manualmente un método `apply` en el objeto acompañante.
+
+  Scala 3 introduce los **[métodos `apply` universales](https://docs.scala-lang.org/scala3/reference/other-new-features/creator-applications.html)** (también llamados *constructor proxies*), que permiten instanciar cualquier clase concreta sin necesidad de `new`, siempre que el objeto acompañante (si existe) no defina un miembro llamado `apply`.
+
+  Esta mejora unifica la sintaxis de creación de instancias entre `case class` y clases comunes, y contribuye a reducir el "ruido" visual del código.
+
+  El mismo comportamiento puede lograrse manualmente en Scala 2 (o en Scala 3 si defines tu propio objeto acompañante) escribiendo un método `apply`:
 
   ```scala showLineNumbers title="Scala 2: Instanciación sin new mediante apply"
   class Position(val x: Int, val y: Int)
@@ -58,6 +76,23 @@ end positionExample
 
   val pos = Position(3, 4) // Llama a Position.apply(...)
   ```
+
+  :::warning Cuidado con los objetos acompañantes
+
+  Si defines manualmente un `object` con el mismo nombre de la clase (como `object Position`), incluso si su método `apply` tiene una firma distinta al constructor principal, Scala **ya no generará automáticamente** el método `apply` universal.  
+  En ese caso, deberás usar `new` para invocar constructores que no estén cubiertos por tu propia definición de `apply`.
+
+  ```scala showLineNumbers title="El método apply automático deja de generarse"
+  class Position(val x: Int, val y: Int)
+
+  object Position:
+    def apply(): Position = new Position(0, 0)
+  end Position
+
+  val pos = Position(x = 541, y = 133)  // Esto ya no compila
+  ```
+
+  :::
 </details>
 
 ## 🧱 Constructores primarios y secundarios
@@ -66,50 +101,58 @@ Al igual que en Kotlin, Scala permite definir **constructores primarios y secund
 
 ### 🔹 Constructor primario
 
-En Scala 3, el constructor primario se define **como parte de la declaración de la clase**, similar a Kotlin. Los parámetros definidos en la cabecera de la clase son automáticamente parte del constructor primario.
+En Scala, el **constructor primario** se define como parte de la declaración de la clase, de forma similar a cómo se hace en Kotlin. Los parámetros declarados en la cabecera de la clase se convierten automáticamente en parte del constructor primario.
 
-```scala showLineNumbers title="Constructor primario en Scala"
+```scala showLineNumbers title="Constructor primario en Scala (type-fundamentals/algebraic-data-types/product/src/main/scala/cl/ravenhill/people/Person.scala)"
 class Person(val name: String, var age: Int)
 ```
 
 Al igual que en Kotlin:
 
-* `val` define una propiedad **inmutable**.
-* `var` define una propiedad **mutable**.
-* Si se omite `val` o `var`, el parámetro será **solo un argumento del constructor**, sin convertirse en propiedad.
+- `val` crea una propiedad **inmutable** accesible desde fuera de la clase.
+- `var` crea una propiedad **mutable**.
+- Si se omite `val` o `var`, el parámetro será **solo un argumento del constructor**,[^1] no una propiedad visible desde el exterior.
+
+[^1]: En Scala, un parámetro del constructor primario que no se marca con `val` o `var` **no se convierte en una propiedad del objeto**, es decir, **no es accesible desde fuera de la clase**. Sin embargo, **sí está disponible dentro del cuerpo de la clase**, incluidos sus métodos. Esto se debe a que el cuerpo de la clase en Scala forma parte del constructor, por lo que estos parámetros pueden usarse como variables locales persistentes.  
+Esto difiere de Kotlin, donde los parámetros sin `val` o `var` **no son accesibles más allá del constructor mismo**.
 
 #### 🔸 Anotaciones y modificadores
 
-Cuando necesitas aplicar una **anotación** o usar un **modificador de visibilidad**, puedes colocarlo directamente antes del parámetro o del constructor entero:
+Cuando necesitas aplicar una **anotación** o un **modificador de visibilidad** al constructor primario, puedes colocarlo directamente **antes de la lista de parámetros** o **del constructor entero**:
 
 ```scala showLineNumbers title="Anotaciones y modificadores en el constructor primario"
-import javax.inject.Inject
-
-class Person @Inject private (val name: String)
+class Person @targetName("createPerson") private (val name: String)
 ```
 
-En este ejemplo:
+:::explanation
 
-* `@Inject` es una anotación común en frameworks como [MacWire](https://github.com/adamw/macwire) o [Guice](https://github.com/google/guice).
-* `private` hace que el constructor solo sea accesible dentro del objeto companion o la clase misma.
+- `@targetName("createPerson")` cambia el nombre del constructor en el bytecode, lo que puede facilitar la interoperabilidad con Java o evitar conflictos con sobrecargas.
+- `private` restringe el acceso al constructor, lo que permite controlar la creación de instancias desde un *companion object* o una función de fábrica.
+
+:::
 
 #### 🔸 Lógica de inicialización
 
-En lugar de bloques `init`, Scala permite incluir **código directamente en el cuerpo de la clase**, que se ejecutará cuando se cree una instancia:
+En lugar de usar bloques `init` como en Kotlin, Scala permite incluir **código directamente en el cuerpo de la clase**, que se ejecutará como parte del **constructor primario**:
 
-```scala showLineNumbers title="Lógica de inicialización en el constructor primario"
-class Person(val name: String, var age: Int):
-  require(age >= 0, "Age must be non-negative")
+```scala showLineNumbers title="Lógica de inicialización en el constructor primario (type-fundamentals/algebraic-data-types/product/src/main/scala/cl/ravenhill/people/Person.scala)"
+class Person(val name: String):
+  require(name.nonEmpty, "Name cannot be empty")
 end Person
 ```
 
-Este código se ejecuta **inmediatamente al construir el objeto**, antes de que se retorne la instancia.
+:::explanation
+
+Este código se ejecuta **inmediatamente al construir el objeto**, antes de que se retorne la instancia.  
+Esto es posible porque el cuerpo de la clase **forma parte del constructor primario**, lo que permite realizar validaciones o inicializaciones adicionales sin estructuras especiales.
+
+:::
 
 ### 🔹 Constructores secundarios
 
-Scala también permite definir **constructores secundarios** utilizando la palabra clave `this`. Estos constructores pueden ofrecer diferentes formas de inicializar una clase, pero **siempre deben invocar el constructor primario como primera acción**.
+Scala permite definir **constructores secundarios** utilizando la palabra clave `this`. Estos constructores ofrecen formas alternativas de inicializar una clase, pero **siempre deben invocar el constructor primario como primera instrucción**.
 
-```scala showLineNumbers title="Constructor secundario en Scala"
+```scala showLineNumbers title="Constructor secundario en Scala (type-fundamentals/algebraic-data-types/product/src/main/scala/cl/ravenhill/people/Person.scala)"
 class Person(val name: String):
   var age: Int = 0
 
@@ -120,9 +163,12 @@ class Person(val name: String):
 end Person
 ```
 
-<Explanation>
-    En este ejemplo, el constructor secundario permite crear una instancia de `Person` proporcionando tanto `name` como `age`. Llama al constructor primario con `this(name)` y luego inicializa la propiedad `age`.
-</Explanation>
+:::explanation
+
+En este ejemplo, el constructor secundario permite crear una instancia de `Person` proporcionando tanto `name` como `age`.  
+Llama al constructor primario con `this(name)` y luego inicializa la propiedad `age`.
+
+:::
 
 :::warning
 
@@ -130,47 +176,60 @@ Los constructores secundarios **deben invocar al constructor primario como prime
 
 :::
 
-:::tip Parámetros por defecto
+:::tip Alternativa idiomática
 
-Al igual que en Kotlin, Scala permite definir **parámetros por defecto** en el constructor primario, eliminando la necesidad de constructores secundarios para casos comunes:
+En la práctica, es más común usar parámetros por defecto en el constructor primario en lugar de constructores secundarios:
 
-```scala showLineNumbers title="Parámetros por defecto en Scala"
+```scala showLineNumbers title="Parámetros por defecto en el constructor primario"
 class Person(val name: String, var age: Int = 0)
 ```
+
+Esta forma es más concisa, clara y más utilizada en código Scala idiomático moderno.
 
 :::
 
 ## 🎯 Conclusiones
 
-En esta lección hemos explorado cómo representar **tipos producto** en Scala utilizando clases comunes. Este enfoque nos permite agrupar valores relacionados bajo una sola entidad con nombres explícitos para cada campo, facilitando la claridad y el mantenimiento del código.
+En esta lección exploramos cómo representar **tipos producto** en Scala utilizando clases comunes, una herramienta clave para modelar datos estructurados de forma clara y segura. A través de ejemplos concretos, vimos cómo definir propiedades, incluir lógica de inicialización y aprovechar constructores para crear objetos con distintas configuraciones.
 
-Scala 3 introduce varias mejoras para trabajar con clases, como la posibilidad de omitir la palabra clave `new` gracias a los métodos `apply` universales, y una sintaxis más limpia para definir constructores primarios y secundarios.
-
-También vimos cómo incluir lógica de inicialización directamente en el cuerpo de la clase y cómo manejar parámetros por defecto para simplificar la creación de instancias.
+Scala 3 facilita este proceso con mejoras notables, como la **eliminación opcional de `new`** al instanciar clases y una **sintaxis más concisa** para declarar constructores y parámetros. Además, aprendimos a incorporar validaciones directamente en el cuerpo de la clase y a usar **valores por defecto** como alternativa idiomática a los constructores secundarios.
 
 ### 🔑 Puntos clave
 
-- Las **clases comunes en Scala** son una forma natural y clara de representar tipos producto, con campos nombrados y comportamiento asociado.
-- Scala 3 permite **omitir `new` al instanciar objetos** si existe un método `apply`.
-- El **constructor primario** se define en la cabecera de la clase y puede incluir parámetros con modificadores `val` o `var` para definir propiedades inmutables o mutables.
-- Se pueden usar **constructores secundarios** con la palabra clave `this`, pero deben invocar siempre al constructor primario como primera acción.
-- La lógica de inicialización puede colocarse directamente en el cuerpo de la clase y se ejecuta durante la creación de la instancia.
-- Los **parámetros por defecto** simplifican la definición de múltiples formas de construir un objeto, reduciendo la necesidad de constructores secundarios.
+- Las **clases comunes** en Scala permiten representar tipos producto de forma expresiva, con nombres significativos y comportamiento asociado.
+- Scala 3 ofrece una sintaxis más limpia, permitiendo **instanciación sin `new`** gracias a los métodos `apply` universales.
+- El **constructor primario** se define junto a la declaración de la clase, y sus parámetros pueden convertirse en propiedades mediante `val` o `var`.
+- Los **constructores secundarios**, definidos con `this`, permiten formas alternativas de creación, pero siempre deben invocar primero al constructor primario.
+- Es posible colocar **lógica de inicialización** en el cuerpo de la clase, lo que habilita validaciones y configuración del estado interno.
+- Los **parámetros por defecto** son una opción idiomática para simplificar la construcción de objetos sin necesidad de múltiples constructores.
 
 ### 🧰 ¿Qué nos llevamos?
 
-A partir de esta lección, entendemos que diseñar tipos producto con clases comunes en Scala es un patrón esencial para modelar datos estructurados de manera explícita y mantenible. La combinación de constructores primarios y secundarios, junto con parámetros por defecto, ofrece flexibilidad para crear objetos en distintas situaciones, mientras que la ejecución de lógica en el cuerpo de la clase permite validar y preparar correctamente el estado interno.
+Modelar tipos producto con clases comunes es una práctica fundamental para diseñar **librerías reutilizables y expresivas** en Scala. Dominar los constructores primarios y secundarios, junto con el uso de lógica de inicialización y parámetros por defecto, permite construir tipos robustos que promueven un código claro, seguro y fácil de evolucionar.
 
-Este conocimiento es fundamental para diseñar librerías reutilizables y robustas, donde la claridad en la definición de tipos y la inicialización correcta de instancias aseguran un código más seguro y fácil de extender o modificar en el futuro.
+## 📖 ¿Con ganas de más?
 
-<ExcludeFromReadingTime>
-  ## 📖 ¿Con ganas de más?
-
-  ### 🔥 Referencias recomendadas
-
-  - <WebPage title="Classes" url="https://docs.scala-lang.org/tour/classes.html" location="la documentación oficial de Scala">
-      Introducción a las clases en Scala, incluyendo su definición, creación de instancias, constructores con valores por defecto, uso de argumentos nombrados, encapsulamiento con miembros privados, y sintaxis de getters/setters. Se destacan las diferencias entre `val`, `var` y parámetros sin modificadores en el constructor. Incluye ejemplos en Scala 2 y Scala 3.
+<ReferenceList
+  title="🔥 Referencias recomendadas"
+  items={[
+    <WebPage
+      title="Classes"
+      url="https://docs.scala-lang.org/tour/classes.html"
+      location={<OfficialDocumentation>Tour of Scala</OfficialDocumentation>}
+    >
+      Introducción a las clases en Scala, incluyendo su definición, creación de instancias, constructores con valores por defecto, uso de argumentos nombrados, encapsulamiento con miembros privados, y sintaxis de getters/setters. Se destacan las diferencias entre <code>val</code>, <code>var</code> y parámetros sin modificadores en el constructor. Incluye ejemplos en Scala 2 y Scala 3.
     </WebPage>
-
-  {/* ### 🔹 Referencias adicionales */}
-</ExcludeFromReadingTime>
+  ]}
+/>
+<ReferenceList
+  title="🔹 Referencias adicionales"
+  items={[
+    <WebPage
+      title="Universal Apply Methods"
+      url="https://docs.scala-lang.org/scala3/reference/other-new-features/creator-applications.html"
+      location={<OfficialDocumentation>Scala 3 reference</OfficialDocumentation>}
+    >
+      Este contenido explica cómo Scala 3 extiende la sintaxis simplificada de creación de objetos —anteriormente exclusiva de las *case classes*— a todas las clases concretas, eliminando la necesidad de usar `new`. Se presentan los *constructor proxies*, objetos generados automáticamente que permiten crear instancias mediante llamadas tipo función. El texto detalla las reglas para su generación, sus limitaciones y el objetivo principal: hacer el código más limpio, uniforme y fácil de leer para los desarrolladores.
+    </WebPage>
+  ]}
+/>

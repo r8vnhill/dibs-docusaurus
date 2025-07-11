@@ -1,4 +1,3 @@
-
 /**
  * Interface for components that accept a title with an optional fallback.
  *
@@ -10,9 +9,9 @@ export interface WithTitle {
   /**
    * The title to render for the section. Can be a string or a React element.
    */
-  title: string | React.ReactElement;
+  title?: React.ReactNode;
   /**
    * Optional default title to use when no explicit title is provided.
    */
-  defaultTitle?: string | React.ReactElement;
+  defaultTitle?: React.ReactNode;
 }

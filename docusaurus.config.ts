@@ -43,6 +43,10 @@ const config: Config = {
                     sidebarPath: './sidebars.ts',
                     remarkPlugins: [remarkMath],
                     rehypePlugins: [rehypeKatex],
+                    admonitions: {
+                        keywords: ['explanation'],
+                        extendDefaults: true,
+                    }
                 },
                 theme: {
                     customCss: './src/css/custom.css',

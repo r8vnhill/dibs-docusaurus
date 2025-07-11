@@ -10,8 +10,11 @@ import Explanation from '@site/src/components/admonitions/Explanation';
 import ReferenceList from '@site/src/components/references/ReferenceList';
 import Book from '@site/src/components/references/Book';
 
+import InstallRustDependenciesMac from '@site/src/components/mdx/build-systems/init/cargo/InstallRustDependenciesMac';
+import InstallRustDependenciesLinux from '@site/src/components/mdx/build-systems/init/cargo/InstallRustDependenciesLinux';
+
 <ReadingTime multiplier={2} />
-<GitHubRepoLink user="r8vnhill" repo="echo-app-rust" />
+<GitHubRepoLink user="r8vnhill" repo="echo-app-rust"    />
 
 Esta lección está pensada como una puerta de entrada práctica a Rust desde una perspectiva de diseño de bibliotecas y herramientas. Aprenderás a instalar su toolchain, crear un proyecto reproducible desde cero y comprender cómo organizarlo correctamente. Todo lo que necesitas para comenzar a construir con confianza en este nuevo ecosistema.
 
@@ -65,107 +68,10 @@ Usar Rust sin Cargo es técnicamente posible, pero extremadamente raro. Cargo es
         ```
     </TabItem>
     <TabItem value="macOS" label="macOS">
-        ```bash showLineNumbers title="scripts/macos/install_rust_dependencies.sh"
-        #!/usr/bin/env bash
-
-        set -euo pipefail
-
-        # Function to check if commands are available by calling them with --version
-        test_installed() {
-            for cmd in "$@"; do
-                if ! command -v "$cmd" &> /dev/null; then
-                    echo "❌ '$cmd' was not found after installation. Check your PATH." >&2
-                    exit 1
-                fi
-                "$cmd" --version > /dev/null || {
-                    echo "❌ '$cmd' exists but failed to respond to --version." >&2
-                    exit 1
-                }
-            done
-        }
-
-        install_rust_dependencies() {
-            # Install rustup via Homebrew if not already installed
-            if ! command -v rustup &> /dev/null; then
-                echo "📦 Installing rustup using Homebrew..."
-                brew install rustup-init
-                rustup-init -y
-            else
-                echo "ℹ️ rustup is already installed."
-            fi
-
-            # Add the cargo bin directory to PATH
-            if [ -f "$HOME/.cargo/env" ]; then
-                . "$HOME/.cargo/env"
-            else
-                echo "⚠️ Warning: '$HOME/.cargo/env' not found. Ensure Rust is properly installed."
-            fi
-            
-            # Ensure rustc and cargo are installed
-            test_installed rustup rustc cargo
-            
-            echo "✅ Rust toolchain is installed successfully."
-        }
-
-        install_rust_dependencies
-        ```
-
-        Guarda este script como `install_rust_dependencies.sh` y ejecútalo:
-
-        ```bash
-        bash install_rust_dependencies.sh
-        ```
+        <InstallRustDependenciesMac />
     </TabItem>
     <TabItem value="Ubuntu/Debian" label="Ubuntu/Debian">
-        ```bash showLineNumbers title="Instalación de Rust en Linux"
-        #!/usr/bin/env bash
-
-        set -euo pipefail
-
-        # Function to check if commands are available by calling them with --version
-        test_installed() {
-            for cmd in "$@"; do
-                if ! command -v "$cmd" &> /dev/null; then
-                    echo "❌ '$cmd' was not found after installation. Check your PATH." >&2
-                    exit 1
-                fi
-                "$cmd" --version > /dev/null || {
-                    echo "❌ '$cmd' exists but failed to respond to --version." >&2
-                    exit 1
-                }
-            done
-        }
-
-        install_rust_dependencies() {
-            # Check if rustup is installed
-            if ! command -v rustup &> /dev/null; then
-                echo "📦 Installing rustup using the official script..."
-                curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-            else
-                echo "ℹ️ rustup is already installed."
-            fi
-
-            # Add the cargo bin directory to PATH
-            if [ -f "$HOME/.cargo/env" ]; then
-                . "$HOME/.cargo/env"
-            else
-                echo "⚠️ Warning: '$HOME/.cargo/env' not found. Ensure Rust is properly installed."
-            fi
-
-            # Ensure rustc and cargo are installed
-            test_installed rustup rustc cargo
-
-            echo "✅ Rust toolchain is installed successfully."
-        }
-
-        install_rust_dependencies
-        ```
-
-        Guarda este script como `install_rust_dependencies.sh` y ejecútalo:
-
-        ```bash
-        bash install_rust_dependencies.sh
-        ```
+        <InstallRustDependenciesLinux />
 
         Luego, asegúrate de que el directorio de Cargo esté en tu `PATH`. Puedes agregar la siguiente línea a tu archivo `~/.bashrc` o `~/.zshrc`:
 
