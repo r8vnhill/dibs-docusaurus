@@ -4,6 +4,7 @@ import { ClockAfternoon } from "phosphor-react";
 import styles from "./ReadingTime.module.css";
 import clsx from "clsx";
 import type { WithIcon } from "../traits/WithIcon";
+import ExcludeFromReadingTime from "./ExcludeFromReadingTime";
 
 /**
  * Calculates estimated reading time in minutes.
@@ -168,17 +169,19 @@ export default function ReadingTime({
   if (readingTime === null) return null;
 
   return (
-    <div className={clsx(styles.readingTime, className)} aria-live={ariaLive}>
-      <p className={styles.iconText}>
-        <span className={styles.icon} aria-hidden>
-          {icon}
-        </span>
-        {label}: {readingTime} {readingTime === 1 ? "minuto" : "minutos"}
-      </p>
-      <p className={styles.note}>
-        Esto considera el contenido visible y relevante, e ignora texto
-        colapsado o marcado como opcional.
-      </p>
-    </div>
+    <ExcludeFromReadingTime>
+      <div className={clsx(styles.readingTime, className)} aria-live={ariaLive}>
+        <p className={styles.iconText}>
+          <span className={styles.icon} aria-hidden>
+            {icon}
+          </span>
+          {label}: {readingTime} {readingTime === 1 ? "minuto" : "minutos"}
+        </p>
+        <p className={styles.note}>
+          Esto considera el contenido visible y relevante, e ignora texto
+          colapsado o marcado como opcional.
+        </p>
+      </div>
+    </ExcludeFromReadingTime>
   );
 }

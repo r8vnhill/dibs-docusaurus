@@ -1,0 +1,342 @@
+---
+title: Tipos suma como interfaces selladas
+sidebar_label: Interfaces selladas
+---
+
+import ReadingTime from '@site/src/components/reading-time/ReadingTime';
+
+import RepoLinks from '@site/src/components/git/RepoLinks';
+import GitLabRepo from '@site/src/components/git/GitLabRepo';
+import GitHubRepo from '@site/src/components/git/GitHubRepo';
+
+import { FigureCounterProvider } from '@site/src/components/Figure/FigureContext';
+import Figure from '@site/src/components/Figure/Figure';
+
+import Box from '@site/src/components/cajitas/Box';
+
+import Hint from '@site/src/components/exercise/Hint';
+
+<ReadingTime multiplier={3} />
+<RepoLinks
+  children={[
+    <GitLabRepo user="r8vnhill" repo="algebraic-data-types-kt"  />,
+    <GitHubRepo user="r8vnhill" repo="algebraic-data-types-kt"  />
+  ]}
+/>
+<FigureCounterProvider>
+
+<section title="Introducción">
+  TODO
+</section>
+<section title='Sintaxis básica y comparación'>
+  ## 🧮 Sintaxis básica y comparación
+
+  Antes de introducir interfaces selladas, recordemos brevemente cómo se declaran **enumeraciones** en Kotlin.
+
+  Una `enum class` representa un **tipo suma sin parámetros**. Es útil para modelar una lista cerrada de opciones fijas:
+
+  ```kotlin title="Sintaxis de enumeración"
+  enum class TipoSuma {
+      ALTERNATIVA_1,
+      ALTERNATIVA_2,
+      // ...
+      ALTERNATIVA_N
+  }
+  ```
+
+  Esto es equivalente a un tipo suma donde cada alternativa es una constante sin datos asociados. Aunque útil, este enfoque es limitado cuando necesitamos que cada alternativa lleve **información específica**.
+
+  Para representar **tipos suma con datos asociados por alternativa**, Kotlin ofrece dos mecanismos más generales: `sealed class` y `sealed interface`. A continuación, usamos una **`sealed interface`** para modelar un tipo suma más expresivo:
+
+  ```kotlin title="Sintaxis de tipo suma con sealed interface"
+  sealed interface TipoSuma
+
+  data class Alternativa1(val valor: String) : TipoSuma
+  data class Alternativa2(val valor: Int, val otroValor: String) : TipoSuma
+  // ...
+  data class AlternativaN(val valor: Double, val otroValor: Boolean) : TipoSuma
+  ```
+
+  Cada `data class` representa una **alternativa exclusiva** del tipo `TipoSuma`, y todas las alternativas deben definirse en el mismo paquete, gracias a la restricción impuesta por `sealed`.
+
+  <Box as="section" title="Notación formal">
+    ### 🔢 Notación formal
+
+    Podemos expresar esta definición como un **tipo suma de productos**:
+
+    $$
+    T = \mathtt{String} + \left(\mathtt{Int} \times \mathtt{String}\right) + \ldots + \left(\mathtt{Double} \times \mathtt{Boolean}\right)
+    $$
+
+    Esto significa que $T$ puede tomar **una entre varias formas posibles**, y cada forma (o caso) puede contener **diferentes combinaciones de tipos**.
+
+    Si analizamos la **cardinalidad** de estos tipos (es decir, la cantidad de valores posibles que puede tomar cada uno), podemos estimar la **cantidad total de valores posibles** del tipo `T`:
+
+    $$
+    |T| = |\mathtt{String}| + |\mathtt{Int}| \cdot |\mathtt{String}| + \ldots + |\mathtt{Double}| \cdot |\mathtt{Boolean}|
+    $$
+
+    Esto nos muestra cómo cada caso contribuye al tamaño total del tipo de forma proporcional a su estructura interna.
+
+    :::important
+
+    Incluso si usamos enumeraciones con valores asociados, **no podríamos representar** el tipo $T$ anterior con una simple `enum class`. Esto se debe a que `enum class` no permite asociar estructuras de datos distintas por variante. Para representar sumas de productos como esta, necesitamos `sealed class` o `sealed interface`.
+
+    :::
+
+    :::question
+
+    ¿Qué impide que usemos una `enum class` para representar el tipo suma anterior?
+
+    :::
+  </Box>
+  <Box as="section" title="Explicación de la sintaxis">
+    ### 📘 Explicación de la sintaxis
+
+    - `sealed interface TipoSuma`: Define una interfaz cerrada. Solo se puede implementar en el mismo paquete.
+    - `data class Nombre(...) : TipoSuma`: Declara una clase de datos que representa una alternativa del tipo e implementa la interfaz `TipoSuma`.
+
+    :::info Interfaces
+
+    Una **interfaz** en Kotlin es una colección de métodos y propiedades abstractas que una clase o un objeto puede implementar. A diferencia de las clases, **las interfaces no pueden almacenar estado**, aunque pueden declarar propiedades que deben ser implementadas mediante `get` y/o `set`.
+
+    En Kotlin:
+
+    - Todos los miembros declarados en una interfaz son **públicos por defecto**.
+    - No se permite usar `protected` dentro de interfaces (a diferencia de Scala, donde los *traits* sí lo permiten).
+    - Es posible incluir **implementaciones por defecto**, pero se recomienda evitarlo por ahora ya que entraremos en más detalles sobre esto en lecciones posteriores.
+
+    Si ya conoces interfaces o *traits* en otros lenguajes, esto debería resultarte familiar.
+
+    :::
+
+    :::tip ¿Es necesario usar `data class`?
+
+    No es obligatorio usar `data class` para representar las alternativas de un tipo suma. Sin embargo, dada la naturaleza de los **tipos algebraicos como estructuras de datos inmutables**, es **muy común** utilizar `data class` en este contexto, ya que ofrecen soporte automático para `equals`, `hashCode`, `toString` y desestructuración—características útiles en un enfoque funcional y declarativo.
+
+    Dicho esto, Kotlin es un lenguaje **multiparadigma**, y nada impide usar **clases normales** si tu diseño se beneficia de un enfoque más orientado a objetos o si necesitas un control más detallado sobre la implementación. Incluso puedes usar otros tipos que puedan implementar interfaces, como `abstract class` o `enum class`, si el caso lo justifica.
+
+    :::
+  </Box>
+</section>
+<section title="📦 Ejemplo práctico: Representación de operaciones aritméticas ">
+    ## 📦 Ejemplo práctico: Representación de operaciones aritméticas
+
+    Supongamos que queremos representar expresiones aritméticas como la siguiente:
+
+    ```
+    (3 + 5) * 2
+    ```
+
+    Podemos modelarla como un árbol de expresiones usando una `sealed interface`, donde cada operación es una alternativa del tipo suma. A continuación se muestra su estructura como árbol:
+
+    <Figure
+        src="/img/figures/arithmetic-tree.svg"
+        alt="Árbol de expresión aritmética"
+        maxWidth="400px"
+    >Árbol de expresión aritmética que representa la operación $(3 + 5) \times 2$</Figure>
+
+    Esto es un ejemplo clásico del [patrón Composite](https://refactoring.guru/design-patterns/composite),[^1] en el que una estructura jerárquica se representa mediante una interfaz común y múltiples implementaciones que pueden a su vez contener otras instancias de la misma interfaz.
+
+    En este caso, cada nodo del árbol es una instancia de un subtipo de `Expr`, y puede ser una constante (`Const`) o una operación binaria como suma (`Sum`) o multiplicación (`Mul`).
+
+    ```kotlin showLineNumbers title="sum/sealed/src/main/kotlin/cl/ravenhill/lang/Expr.kt"
+    sealed interface Expr {
+        val asString: String
+    }
+
+    data class Const(val value: Int) : Expr {
+        override val asString: String = value.toString()
+    }
+
+    data class Sum(val lExpr: Expr, val rExpr: Expr) : Expr {
+        override val asString: String = "(${lExpr.asString} + ${rExpr.asString})"
+    }
+
+    data class Mul(val lExpr: Expr, val rExpr: Expr) : Expr {
+        override val asString: String = "(${lExpr.asString} * ${rExpr.asString})"
+    }
+    ```
+
+    :::explanation
+
+    Cada clase representa una forma válida de construir una expresión:
+
+    - `Const` es un valor constante.
+    - `Sum` y `Mul` representan operaciones binarias que combinan dos subexpresiones.
+
+    La propiedad `asString` permite recorrer la estructura de manera recursiva para construir una representación textual de la expresión.
+
+    :::
+
+    ::::note `asString` vs `toString`
+
+    Definimos una propiedad personalizada `asString` para generar una representación de la expresión orientada a usuarias/os finales o documentación. Esto permite mantener la implementación predeterminada de `toString`, que en una `data class` muestra información útil para depuración (como el nombre del tipo y los valores de sus propiedades). 
+
+    :::question
+
+    Intenta imprimir una expresión aritmética usando `toString` y observa el resultado. Luego, usa `asString` para ver la diferencia.
+
+    :::
+
+    ::::
+
+    A continuación, construimos el árbol para `(3 + 5) * 2` y lo convertimos a texto:
+
+    ```kotlin showLineNumbers
+    println(
+        Mul(
+            Sum(
+                Const(3),
+                Const(5)
+            ),
+            Const(2)
+        ).asString
+    )
+    ```
+
+    Esto imprimirá:
+
+    ```
+    ((3 + 5) * 2)
+    ```
+
+    :::note
+
+    Este patrón —definir un tipo suma como árbol y evaluarlo recursivamente o convertirlo a texto— es común en intérpretes, analizadores sintácticos y transformadores de expresiones. Es una aplicación clásica de los tipos algebraicos en el diseño de estructuras de datos reutilizables.
+
+    :::
+</section>
+<section title="✅ Evaluación exhaustiva de expresiones">
+    ## ✅ Evaluación exhaustiva de expresiones
+
+    Al igual que con las enumeraciones, Kotlin obliga a que los bloques `when` sobre interfaces selladas sean exhaustivos. Esto significa que el compilador verificará que se manejen todos los posibles subtipos de la interfaz sellada, lo que ayuda a prevenir errores en tiempo de compilación cuando se agregan nuevas variantes.
+
+    ```kotlin showLineNumbers title="Eval.kt (sum/sealed)"
+    fun eval(expr: Expr): Int = when (expr) {
+        is Const -> expr.value
+        is Sum -> eval(expr.lExpr) + eval(expr.rExpr)
+        is Mul -> eval(expr.lExpr) * eval(expr.rExpr)
+    }
+    ```
+
+    :::explanation
+
+    Este patrón `when` es seguro y completo gracias a que `Expr` es una `sealed interface`. Si mañana agregamos un nuevo subtipo como `Sub`, el compilador marcará un error hasta que añadamos un caso para manejarlo. Esto es una ventaja sobre usar una jerarquía de clases tradicional o una interfaz abierta, donde omitir un caso podría pasar desapercibido y causar errores en tiempo de ejecución.
+
+    :::
+
+    :::important Uso de `is` en lugar de valores
+
+    A diferencia de las enumeraciones, donde cada caso del `when` compara directamente con una constante (`Color.RED`, `Color.BLUE`, etc.), en las interfaces selladas se utiliza el operador `is` para verificar el tipo dinámico del objeto. Esto se debe a que `Const`, `Sum` y `Mul` son clases diferentes, no valores de un mismo tipo. Cada rama del `when` actúa como un patrón de tipo.
+
+    :::
+
+    :::question
+
+    ¿Qué ocurre si saco una de las ramas del `when`?
+
+    :::
+</section>
+<section title="Ejercicio de cierre: Diseña tu propia jerarquía de expresiones">
+  ## Ejercicio
+
+  :::::exercise Diseña tu propia jerarquía de expresiones
+
+  Diseña una jerarquía de expresiones lógicas utilizando `sealed interface`. Tu objetivo es representar expresiones como:
+
+  ```
+  true AND (false OR NOT true)
+  ```
+
+  ### P1
+  
+  Define una `sealed interface` llamada `BooleanExpr` y sus subtipos: `True`, `False`, `And`, `Or` y `Not`. Cada uno debe implementar la interfaz y proporcionar una representación textual de la expresión (`asString`).
+
+  <Hint hints={[
+      <>Al igual que <code>data class</code> define un tipo producto de <code>n &gt; 0</code> componentes, existe la variante <code>data object</code> que define un producto de <code>n = 0</code> componentes. Usa esto para modelar <code>True</code> y <code>False</code>.</>
+  ]}  />
+
+  ::::solution
+
+  ```kotlin showLineNumbers title="sum/sealed/src/main/kotlin/cl/ravenhill/lang/BooleanExpr.kt"
+  sealed interface BooleanExpr {
+      val asString: String
+  }
+
+  data object True : BooleanExpr {
+      override val asString: String = "True"
+  }
+
+  data object False : BooleanExpr {
+      override val asString: String = "False"
+  }
+
+  data class And(val left: BooleanExpr, val right: BooleanExpr) : BooleanExpr {
+      override val asString: String = "(${left.asString} AND ${right.asString})"
+  }
+
+  data class Or(val left: BooleanExpr, val right: BooleanExpr) : BooleanExpr {
+      override val asString: String = "(${left.asString} OR ${right.asString})"
+  }
+
+  data class Not(val expr: BooleanExpr) : BooleanExpr {
+      override val asString: String = "NOT ${expr.asString}"
+  }
+  ```
+
+  :::explanation
+
+  Las expresiones `True` y `False` son valores constantes, representados como `data object` porque no requieren estado adicional. Las demás clases (`And`, `Or`, `Not`) modelan operadores lógicos clásicos y contienen referencias a otras expresiones booleanas, lo que permite componer estructuras de forma recursiva.
+
+  :::
+
+  ::::
+
+  ### P2
+
+  Implementa una función `eval(expr: BooleanExpr): Boolean` que evalúe la expresión de forma recursiva.
+
+  ::::solution
+
+  ```kotlin showLineNumbers title="sum/sealed/src/main/kotlin/cl/ravenhill/lang/BooleanExpr.kt"
+  fun eval(expr: BooleanExpr): Boolean = when (expr) {
+      is True -> true
+      is False -> false
+      is And -> eval(expr.left) && eval(expr.right)
+      is Or -> eval(expr.left) || eval(expr.right)
+      is Not -> !eval(expr.expr)
+  }
+  ```
+
+  :::explanation
+
+  Esta función evalúa expresiones booleanas de forma recursiva. El uso de `when` es seguro porque `BooleanExpr` es una interfaz sellada, lo que garantiza exhaustividad en tiempo de compilación.
+
+  :::
+
+  ::::
+
+  :::::
+</section>
+<section title="Conclusiones">
+  ## 🎯 Conclusiones
+
+  Las interfaces selladas permiten modelar tipos suma con variantes que pueden contener estructuras internas distintas, ofreciendo una forma clara, segura y extensible de representar decisiones, estructuras jerárquicas o expresiones. A diferencia de las enumeraciones, cada caso puede tener su propia forma y lógica, y el compilador nos asiste para mantener la exhaustividad.
+
+  ### 🔑 Puntos clave
+
+  - Los tipos suma representan una elección entre alternativas mutuamente excluyentes.
+  - `sealed interface` permite definir tipos suma con variantes ricas y datos asociados.
+  - Cada alternativa puede representarse con `data class`, `data object` u otros tipos que implementen la interfaz sellada.
+  - El compilador asegura exhaustividad en bloques `when`, evitando errores silenciosos al agregar nuevos casos.
+  - Esta técnica es fundamental en el diseño de estructuras reutilizables como árboles de expresión, ASTs, validadores o sistemas de reglas.
+
+  ### 🧰 ¿Qué nos llevamos?
+
+  Ahora sabemos cómo modelar alternativas complejas y recursivas en Kotlin de forma segura, declarativa y mantenible. Esta técnica es central en el diseño de bibliotecas expresivas, donde la claridad y la seguridad del tipo son esenciales. Podemos combinar tipos producto y suma para construir estructuras más sofisticadas, y hacerlo con el respaldo del compilador, que verifica que nuestras decisiones sean exhaustivas y correctas.
+</section>
+
+</FigureCounterProvider>
+
+[^1]: El patrón Composite permite tratar objetos individuales y composiciones de objetos de forma uniforme. Es útil para representar estructuras jerárquicas como árboles, donde los nodos internos y las hojas comparten una interfaz común. En este caso, cada operación aritmética y cada constante se modelan como variantes de un mismo tipo base (`Expr`), lo que permite construir y manipular expresiones complejas de manera modular.

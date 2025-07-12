@@ -2,7 +2,7 @@ import React from "react";
 import { WithClassName } from "../../../components/traits/WithClassName";
 import styles from "./Tip.module.css";
 import clsx from "clsx";
-import { Lightbulb } from "phosphor-react";
+import { Sparkle } from "phosphor-react";
 import { WithTitle } from "../../../components/traits/WithTitle";
 
 type TipProps = React.PropsWithChildren<WithClassName & WithTitle>;
@@ -25,7 +25,7 @@ export default function Tip({
     >
       <h3 id="tip-title" className={styles.tip__title}>
         <span className={styles.tip__icon} aria-hidden="true">
-          <Lightbulb size={20} weight="fill" />
+          <Sparkle size={20} weight="fill" />
         </span>
         {resolvedTitle}
       </h3>

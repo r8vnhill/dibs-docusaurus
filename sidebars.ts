@@ -48,18 +48,7 @@ const sidebars: SidebarsConfig = {
                         'type-fundamentals/algebraic-data-types/records-2/kt',
                         'type-fundamentals/algebraic-data-types/enums/kt',
                         'type-fundamentals/algebraic-data-types/idiom-enum/kt',
-                        {
-                            type: 'category',
-                            label: 'Tipos suma',
-                            link: {
-                                type: 'doc',
-                                id: 'fp/adt/sum/index',
-                            },
-                            items: [
-                                'fp/adt/sum/enums/kt',
-                                'fp/adt/sum/sealed/sealed',
-                            ],
-                        },
+                        'type-fundamentals/algebraic-data-types/sealed-interfaces/kt'
                     ],
                 },
                 {
