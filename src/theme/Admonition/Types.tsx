@@ -9,6 +9,7 @@ import Info from './Type/Info';
 import Question from './Type/Question';
 import Exercise from './Type/Exercise';
 import Solution from './Type/Solution';
+import More from './Type/More/More';
 
 const admonitionTypes: typeof AdmonitionTypes = {
   note: Note,
@@ -20,7 +21,8 @@ const admonitionTypes: typeof AdmonitionTypes = {
   important: Important,
   explanation: Explanation,
   exercise: Exercise,
-  solution: Solution
+  solution: Solution,
+  more: More
 };
 
 // Undocumented legacy admonition type aliases

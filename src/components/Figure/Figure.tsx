@@ -5,7 +5,7 @@ import React, {
   ForwardedRef,
 } from "react";
 import styles from "./Figure.module.css";
-import { useFigureCounter } from "./FigureContext";
+import { useFigureCounter } from "./FigureCounter";
 import { WithClassName } from "../traits/WithClassName";
 import clsx from "clsx";
 
@@ -58,7 +58,7 @@ const Figure = (
 ) => {
   const getNextFigureNumber = useFigureCounter();
   const number = useMemo(() => getNextFigureNumber.getNextNumber(), []);
-
+  
   const style = { maxWidth: maxWidth ?? "600px" };
 
   return (
