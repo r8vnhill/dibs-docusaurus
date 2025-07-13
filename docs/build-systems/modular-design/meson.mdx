@@ -9,17 +9,33 @@ import TabItem from '@theme/TabItem'
 import Glossary from '@site/src/components/admonitions/Glossary'
 import ExcludeFromReadingTime from '@site/src/components/reading-time/ExcludeFromReadingTime'
 import ReadingTime from '@site/src/components/reading-time/ReadingTime'
+
+import RepoLinks from '@site/src/components/git/RepoLinks';
+import GitLabRepo from '@site/src/components/git/GitLabRepo';
+import GitHubRepo from '@site/src/components/git/GitHubRepo';
+
+import TODO from '@site/src/components/TODO/TODO';
+
 import Sh from '@site/src/components/mdx/build-systems/modular-design/meson/sh.mdx'
 import CleanupSh from '@site/src/components/mdx/build-systems/modular-design/meson/cleanup-sh.mdx'
+import InitializeMultiModuleMesonProjectWindows from '@site/src/components/mdx/build-systems/modular-design/meson/InitializeMultiModuleMesonProjectWindows';
 
 <ReadingTime />
-<GitHubRepoLink user="r8vnhill" repo="echo-app-cpp-meson" />
+<RepoLinks children={[
+    <GitLabRepo user="r8vnhill" repo="echo-app-cpp-meson" />,
+    <GitHubRepo user="r8vnhill" repo="echo-app-cpp-meson" />
+]} />
 
-:::danger TODO
+{/* #region Introducción */}
+<section title="Introducción">
 
-- [ ] Añadir introducción
+<TODO/>
 
-:::
+</section>
+{/* #endregion Introducción */}
+
+{/* #region Estructura del proyecto */}
+<section title="Estructura del proyecto">
 
 ## 🏗️ Estructura esperada del proyecto
 
@@ -27,63 +43,25 @@ import CleanupSh from '@site/src/components/mdx/build-systems/modular-design/mes
 graph TD
 ```
 
-:::danger TODO
+<TODO reason="Añadir un diagrama de flujo de la estructura del proyecto." />
 
-- [ ] Añadir un diagrama de flujo de la estructura del proyecto.
-
-:::
+</section>
+{/* #endregion Estructura del proyecto */}
 
 ## 📦 Paso 1: Crear la estructura de carpetas
 
-Desde la raíz del proyecto:
+<TODO/>
 
 <BoxedTabs groupId={"os"}>
-    <TabItem value="Windows" label="Windows">
-        ```powershell showLineNumbers title="src/scripts/ps1/CreateProjectStructure.ps1"
-        @{
-            App = @("src/app/main.cpp", "src/app/meson.build")
-            Core = @("src/core/echo.cpp", "src/core/echo.hpp", "src/core/meson.build")
-        }.GetEnumerator() | ForEach-Object {
-            $module = $_.Key
-            $files = $_.Value
-
-            Write-Host "📁 Creating structure for module: $module" -ForegroundColor Cyan
-
-            foreach ($file in $files) {
-                $dir = Split-Path $file -Parent
-                if (-not (Test-Path $dir)) {
-                    New-Item -Path $dir -ItemType Directory -Force | Out-Null
-                }
-                New-Item -Path $file -ItemType File -Force | Out-Null
-                Write-Host "✅ $file" -ForegroundColor Green
-            }
-        }
-
-        Write-Host "🟢 Project initialized successfully." -ForegroundColor Green
-        ```
-
-        <Explanation>
-            Este script de PowerShell automatiza la creación de una estructura de carpetas y archivos mínima para un proyecto modular en C++ usando **Meson** como sistema de construcción.
-
-            - Define un diccionario con dos módulos: `App` y `Core`, cada uno asociado a los archivos que necesita.
-            - Por cada archivo:
-                - Crea la carpeta contenedora si no existe (por ejemplo, `src/app/` o `src/core/`).
-                - Crea un archivo vacío (`main.cpp`, `echo.cpp`, `meson.build`, etc.) en la ubicación indicada.
-                - Muestra en consola un mensaje de confirmación (`✅`) por cada archivo creado.
-        </Explanation>
-        
-        Puedes crear el archivo `CreateProjectStructure.ps1` y ejecutarlo desde PowerShell para crear la estructura de carpetas y archivos automáticamente.
-
-        ```powershell
-        .\scripts\ps1\CreateProjectStructure.ps1
-        ```
-    </TabItem>
-    <TabItem value="macOS" label="macOS">
-        <Sh />
-    </TabItem>
-    <TabItem value="Ubuntu/Debian" label="Ubuntu/Debian">
-        <Sh />
-    </TabItem>
+  <TabItem value="Windows" label="Windows">
+    <InitializeMultiModuleMesonProjectWindows />
+  </TabItem>
+  <TabItem value="macOS" label="macOS">
+      <TODO />
+  </TabItem>
+  <TabItem value="Ubuntu/Debian" label="Ubuntu/Debian">
+      <TODO />
+  </TabItem>
 </BoxedTabs>
 
 ::::tip Limpieza
@@ -91,24 +69,23 @@ Desde la raíz del proyecto:
 Puedes borrar los archivos creados en la lección pasada o guardarlos como recuerdo.
 
 <BoxedTabs groupId={"os"}>
-    <TabItem value="Windows" label="Windows">
-        ```powershell showLineNumbers title="src/scripts/ps1/CleanupProject.ps1"
-        'src\main.cpp', 'src\meson.build' | Remove-Item -Force -Verbose
-        ```
-    </TabItem>
-    <TabItem value="macOS" label="macOS">
-        <CleanupSh />
-    </TabItem>
-    <TabItem value="Ubuntu/Debian" label="Ubuntu/Debian">
-        <CleanupSh />
-    </TabItem>
+  <TabItem value="Windows" label="Windows">
+    <TODO/>
+  </TabItem>
+  <TabItem value="macOS" label="macOS">
+    <TODO />
+  </TabItem>
+  <TabItem value="Ubuntu/Debian" label="Ubuntu/Debian">
+    <TODO />
+  </TabItem>
 </BoxedTabs>
 
 ::::
 
 ## 🧾 Paso 2: Declarar el archivo raíz `meson.build`
 
-En este archivo indicamos a Meson que estamos creando un proyecto en C++, especificamos su versión, y declaramos qué subdirectorios contienen código que debe ser compilado.
+Este archivo indica a Meson cómo está estructurado el proyecto y qué subdirectorios contienen partes importantes del sistema, como bibliotecas o ejecutables.  
+Se ubica en la raíz del proyecto y es el punto de entrada que Meson usará para configurar todo lo demás.
 
 ```python showLineNumbers title="meson.build"
 project('echo-app', 'cpp', version: '0.2.0')  # Nombre, lenguaje y versión del proyecto
@@ -117,39 +94,28 @@ subdir('src/core')  # Biblioteca reutilizable
 subdir('src/app')   # Ejecutable principal
 ```
 
-<Explanation>
-    Este archivo es el punto de entrada del sistema de construcción de Meson. Declara el proyecto y registra los subdirectorios que contienen sus propios archivos `meson.build`. Así, Meson podrá compilar correctamente tanto la biblioteca (`core`) como la aplicación (`app`).
-</Explanation>
+:::explanation
 
+Este archivo define la configuración general del proyecto: su nombre, el lenguaje principal que utiliza (`cpp`), y su versión.
+
+Luego, con `subdir(...)`, se incluyen los archivos `meson.build` de los subdirectorios que contienen componentes del sistema.  
+Esto permite que cada módulo (como `core` o `app`) defina su propia configuración de forma modular y mantenible.
+
+Al ejecutar `meson setup`, Meson comenzará a procesar este archivo y recorrerá cada subdirectorio en el orden especificado.
+
+:::
+
+:::question
+
+Ejecuta el comando `meson setup build` en la raíz del proyecto. ¿Qué sucede? ¿Qué pasa si cambias `build` por `buildDir`?
+
+:::
 
 ## 🧩 Paso 3: Implementar la biblioteca `core`
 
-En este paso definimos la biblioteca `core`, que encapsula una función simple `echo`. Para ello, configuramos el archivo `meson.build` del módulo y escribimos su implementación.
+En este paso implementaremos la funcionalidad base de nuestra biblioteca `core`. Esta biblioteca contendrá una función simple llamada `echo`, cuya única responsabilidad será devolver el mismo texto que recibe.
 
-```python showLineNumbers title="src/core/meson.build"
-core_sources = files('echo.cpp')
-
-core_lib = static_library(
-    'core',
-    core_sources,
-    include_directories: include_directories('.'),
-    cpp_args: ['-std=c++23'],
-)
-```
-
-<Explanation>
-    Este archivo configura la compilación del módulo `core` como una biblioteca estática. 
-
-    - `static_library('core', ...)` indica que se generará una `.a` o `.lib` con ese nombre.
-    - Se incluyen los archivos fuente del módulo (`echo.cpp`) y el directorio actual como ruta de inclusión (`.`), donde está el archivo `echo.hpp`.
-    - Se fuerza el estándar `c++23` para habilitar características modernas del lenguaje.
-
-    Esto permite que otros módulos, como `app`, puedan vincularse contra `core` y reutilizar sus funciones.
-</Explanation>
-
-### ✍️ Implementación de `echo`
-
-Ahora escribimos la función `echo`, que devuelve una copia del mensaje recibido. Usamos `std::string_view` para mayor eficiencia en el paso de argumentos.
+Primero, declararemos los archivos fuente en `src/core/`:
 
 ```cpp showLineNumbers title="src/core/echo.hpp"
 #pragma once
@@ -168,16 +134,104 @@ std::string echo(std::string_view message) {
 }
 ```
 
-<Explanation>
-    - En `echo.hpp`, definimos la interfaz pública de la biblioteca.  
-      Usamos `std::string_view` como entrada para aceptar cadenas sin copiar, y `[[nodiscard]]` para evitar que se ignore el resultado de la función.
-    
-    - En `echo.cpp`, implementamos `echo` devolviendo una copia explícita del contenido usando rangos. Esto funciona igual que `std::string(message)` pero es más explícito en su conversión.
+:::explanation
 
-    Esta biblioteca es mínima pero funcional. Ilustra cómo separar la lógica de negocio (`core`) del ejecutable principal (`app`), siguiendo una estructura modular mantenible.
-</Explanation>
+- `echo.hpp` declara la interfaz pública de la biblioteca. Usamos `#pragma once` para evitar inclusiones múltiples, `std::string_view` como parámetro para evitar copias innecesarias, y el atributo `[[nodiscard]]` para advertir si se ignora el valor retornado.
+- `echo.cpp` implementa la función `echo`, que simplemente convierte el `std::string_view` en un `std::string` para devolver una copia del mensaje.
 
-## 🚀 Módulo `app`: ejecutable
+Este diseño es minimalista pero idiomático en C++ moderno: separa declaración e implementación, y aprovecha tipos livianos y anotaciones que mejoran la seguridad del código.
+
+:::
+
+
+Luego, en el archivo `meson.build` de `src/core/`, definimos cómo compilar esta biblioteca:
+
+```python showLineNumbers title="src/core/meson.build"
+core_sources = files('echo.cpp')
+
+core_lib = static_library(
+    'core',
+    core_sources,
+    include_directories: include_directories('.'),
+    cpp_args: ['-std=c++23'],
+)
+```
+
+:::explanation
+
+- `core_sources = files('echo.cpp')`: declaramos los archivos fuente.
+- `static_library(...)`: creamos una biblioteca estática llamada `libcore.a` (o su equivalente en tu sistema).
+- `include_directories('.')`: permite incluir `echo.hpp` desde otros módulos.
+- `cpp_args`: habilita el estándar de C++ que vamos a utilizar.
+
+:::
+
+:::question
+
+Ejecuta:
+
+```sh
+meson setup --reconfigure build
+meson compile -C build
+```
+
+¿Qué sucede? ¿Qué archivos se generan en `build/src/core/`?
+
+:::
+
+## 🚀 Paso 4: Implementar el ejecutable principal
+
+<TODO/>
+
+```cpp showLineNumbers title="src/app/main.cpp"
+#include <iostream>
+#include "echo.hpp"
+
+int main() {
+    std::string input;
+    std::getline(std::cin, input);
+
+    std::cout << echo(input) << std::endl;
+    return 0;
+}
+```
+
+Luego, definimos cómo compilar este ejecutable en `src/app/meson.build`:
+
+```python showLineNumbers title="src/app/meson.build"
+app_sources = files('main.cpp')
+
+executable(
+    'echo-app',
+    app_sources,
+    link_with: core_lib,
+    include_directories: include_directories('../core'),
+    cpp_args: ['-std=c++23'],
+    install: true,
+)
+```
+
+:::explanation
+
+- `main.cpp` incluye la cabecera de `core` y llama a `echo`, leyendo una línea por entrada estándar.
+- `link_with: core_lib` enlaza el ejecutable con la biblioteca estática que definimos antes.
+- `include_directories('../core')` asegura que el compilador pueda encontrar `echo.hpp`.
+- `install: true` permite que `ninja install` copie este ejecutable a una ubicación del sistema definida por Meson.
+
+:::
+
+:::question
+
+Vuelve a compilar el proyecto y ejecuta el programa con:
+
+```sh
+meson compile -C build
+./build/src/app/echo-app
+```
+
+¿Qué ocurre si escribes `hola` y presionas Enter?
+
+:::
 
 ```python showLineNumbers title="src/app/meson.build"
 app_sources = files('main.cpp')
