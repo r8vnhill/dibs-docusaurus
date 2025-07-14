@@ -1,42 +1,31 @@
 import React from 'react';
 import PowerShellScriptBlock from '../../../../code-blocks/PowerShellScriptBlock';
 
-const script = `# Enable advanced function features (e.g., -Verbose, -ErrorAction)
+const script = `# Enable advanced function features such as -Verbose, -ErrorAction, etc.
 [CmdletBinding()]
 param (
-    # Mandatory parameter to specify the project name; cannot be null or empty
+    # Define a mandatory parameter for the project name; must not be null or whitespace
     [Parameter(Mandatory)]
     [ValidateNotNullOrWhiteSpace()]
     [string] $ProjectName
 )
 
 try {
-    # Define the path to the source folder within the project
-    $src = Join-Path $ProjectName src
-
-    # Define the list of files to be created in the project
-    $files = @(
-        "$ProjectName/CMakeLists.txt",  # Root configuration file for CMake
-        "$src/main.cpp"                 # Main C++ source file
-    )
-
-    Write-Host "📁 Creating project structure..." -ForegroundColor Cyan
-
-    # Create the src directory (and parent if needed)
-    New-Item $src -ItemType Directory -Force | Out-Null
-
-    # Create each file listed in $files
-    $files | ForEach-Object {
-        New-Item $_ -ItemType File -Force | Out-Null
+    # Check if the project directory exists; create it if not
+    if (-not (Test-Path $ProjectName -PathType Container)) {
+        New-Item $ProjectName -ItemType Directory -Force | Out-Null
     }
 
-    Write-Host "📌 Switching to $ProjectName" -ForegroundColor Cyan
-
-    # Change the current working directory to the project folder
+    # Create the initial CMakeLists.txt if it doesn't exist
+    if (-not (Test-Path "$ProjectName/CMakeLists.txt")) {
+        New-Item "$ProjectName/CMakeLists.txt" -ItemType File -Force | Out-Null
+    }
+    # Change the working directory to the project folder
     Set-Location (Resolve-Path $ProjectName)
+    Write-Host "📌 Switched to $ProjectName" -ForegroundColor Cyan
 }
 catch {
-    Write-Error "❌ Error: $_"
+    Write-Error "❌ Failed to initialize project: $_"
     exit 1
 }
 `

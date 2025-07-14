@@ -43,7 +43,6 @@ type ScriptBlockProps = {
  * />
  * ```
  */
-
 export default function ScriptBlock({
   title,
   code,
@@ -52,6 +51,8 @@ export default function ScriptBlock({
   argsExample,
   description,
 }: ScriptBlockProps) {
+  const isBash = language === "bash";
+
   return (
     <section>
       <CodeBlock language={language} title={title} showLineNumbers>
@@ -59,14 +60,19 @@ export default function ScriptBlock({
       </CodeBlock>
       {description}
       <p>
-        Guarda este script como <code>{scriptName}</code>, y ejecútalo en la
-        terminal:
+        Guarda este script como <code>{scriptName}</code>
+        {isBash ? ", hazlo ejecutable y luego ejecútalo:" : ", y ejecútalo en la terminal:"}
       </p>
-      <CodeBlock language="bash" showLineNumbers>
-        {`${language === "powershell" ? "." : "bash"} ${title}${
-          argsExample ? " " + argsExample : ""
-        }`}
-      </CodeBlock>
+      {isBash ? (
+        <CodeBlock language="bash" showLineNumbers>
+          {`sudo chmod +x ${title}
+source ${title}${argsExample ? " " + argsExample : ""}`}
+        </CodeBlock>
+      ) : (
+        <CodeBlock language={language} showLineNumbers>
+          {`${language === "powershell" ? "." : "bash"} ${title}${argsExample ? " " + argsExample : ""}`}
+        </CodeBlock>
+      )}
     </section>
   );
 }

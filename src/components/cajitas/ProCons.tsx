@@ -38,7 +38,7 @@ const ContentBlock = React.forwardRef<HTMLElement, BlockProps>(
 
     return (
       <section
-        className={clsx(styles.section, className)}
+        className={clsx(styles.procons__section, className)}
         aria-label={resolvedTitle.toString()}
         ref={ref}
       >
@@ -99,7 +99,7 @@ export const Pros = React.forwardRef<HTMLElement, BlockProps>(
   ({ title, defaultTitle = "Beneficios", children, className }, ref) => {
     return (
       <ContentBlock
-        className={clsx(styles.sectionPros, className)}
+        className={clsx(styles.procons__sectionPros, className)}
         title={title}
         defaultTitle={defaultTitle}
         ref={ref}
@@ -133,7 +133,7 @@ export const Cons = React.forwardRef<HTMLElement, BlockProps>(
   ({ title, defaultTitle = "Limitaciones", children, className }, ref) => {
     return (
       <ContentBlock
-        className={clsx(styles.sectionCons, className)}
+        className={clsx(styles.procons__sectionCons, className)}
         title={title}
         defaultTitle={defaultTitle}
         ref={ref}

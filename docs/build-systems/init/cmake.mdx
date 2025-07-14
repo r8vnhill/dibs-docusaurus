@@ -1,13 +1,10 @@
 ---
 title: Creando un Proyecto C++ Básico con CMake
 ---
-import GitHubRepoLink from "@site/src/components/git/GitHubRepoLink";
-import References from "@site/src/components/ReferencesComponent";
 import ReadingTime from '@site/src/components/reading-time/ReadingTime';
+
 import { ProCons, Pros, Cons } from '@site/src/components/cajitas/ProCons'
-import BoxedTabs from '@site/src/components/cajitas/BoxedTabs'
-import TabItem from '@theme/TabItem'
-import Explanation from '@site/src/components/admonitions/Explanation'
+import BoxedTabs, { TabItem } from '@site/src/components/cajitas/BoxedTabs';
 
 import RepoLinks from '@site/src/components/git/RepoLinks';
 import GitLabRepo from '@site/src/components/git/GitLabRepo';
@@ -17,13 +14,19 @@ import InstallCmakeDependenciesWindows from '@site/src/components/mdx/build-syst
 import InstallCmakeDependenciesMac from '@site/src/components/mdx/build-systems/init/cmake/InstallCmakeDependenciesMac';
 import InstallCmakeDependenciesDebian from '@site/src/components/mdx/build-systems/init/cmake/InstallCmakeDependenciesDebian';
 import InitializeCmakeProjectWindows from '@site/src/components/mdx/build-systems/init/cmake/InitializeCmakeProjectWindows';
+import InitializeCmakeProjectSh from '@site/src/components/mdx/build-systems/init/cmake/InitializeCmakeProjectSh';
 
 import TODO from '@site/src/components/TODO/TODO';
 
 import Figure from '@site/src/components/Figure/Figure';
 import { FigureCounterProvider } from '@site/src/components/Figure/FigureCounter';
 
-<ReadingTime/>
+import ReferenceList from '@site/src/components/references/ReferenceList';
+import WebPage from '@site/src/components/references/WebPage';
+
+import OfficialDocumentation from '@site/src/components/Tooltip/OfficialDocumentation';
+
+<ReadingTime multiplier={2} />
 <RepoLinks children={[
   <GitLabRepo user="r8vnhill" repo="echo-app-cmake" />,
   <GitHubRepo user="r8vnhill" repo="echo-app-cmake" />
@@ -33,7 +36,13 @@ import { FigureCounterProvider } from '@site/src/components/Figure/FigureCounter
 
 {/* #region Introducción */}
 <section title="Introducción">
-<TODO/>
+
+CMake se ha convertido en el estándar de facto para configurar, compilar y mantener proyectos C++ portables. A diferencia de herramientas más antiguas como Make, CMake permite abstraer detalles del sistema operativo o compilador, lo que facilita la colaboración en equipos que trabajan en distintos entornos.
+
+Esta lección te guiará paso a paso para crear un proyecto básico en C++ utilizando CMake y otras herramientas modernas como Clang y Ninja. Aprenderás a estructurar un proyecto desde cero, configurar su archivo `CMakeLists.txt` inicial y verificar que todo esté listo para compilar.
+
+Aunque este ejemplo es sencillo, sienta las bases para escalar hacia proyectos más complejos que integren bibliotecas, múltiples módulos, pruebas y automatización.
+
 </section>
 {/* #endregion Introducción */}
 
@@ -96,10 +105,10 @@ Creamos los archivos iniciales:
     <InitializeCmakeProjectWindows />
   </TabItem>
   <TabItem value="macOS" label="macOS">
-    <TODO/>
+    <InitializeCmakeProjectSh os="macos" />
   </TabItem>
   <TabItem value="Ubuntu/Debian" label="Ubuntu/Debian">
-    <TODO/>
+    <InitializeCmakeProjectSh os="linux" />
   </TabItem>
 </BoxedTabs>
 
@@ -107,17 +116,146 @@ Creamos los archivos iniciales:
 {/* #endregion Paso 1 */}
 
 {/* #region Paso 2 */}
-<section title="Paso 2: ...">
+<section title="Paso 2: Configurar CMakeLists.txt">
 
-# \<emoji> Paso 2: \<title>
+## ⚙️ Paso 2: Configurar `CMakeLists.txt`
 
-<TODO/>
+El archivo `CMakeLists.txt` le indica a CMake cómo construir el proyecto. En este paso escribiremos una versión mínima para compilar un archivo `main.cpp` y generar un ejecutable.
+
+A continuación, se muestra un archivo básico compatible con múltiples plataformas y compiladores:
+
+```cmake title="CMakeLists.txt" showLineNumbers
+cmake_minimum_required(VERSION 4.0.3)
+project(EchoApp)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+```
+
+:::explanation
+
+Este archivo le indica a CMake cómo generar los archivos de compilación del proyecto:
+
+- `cmake_minimum_required(...)`: Define la versión mínima de CMake requerida. Esto asegura compatibilidad y evita errores si el proyecto usa características no disponibles en versiones más antiguas.
+- `project(EchoApp)`: Declara el nombre del proyecto. También inicializa variables como `PROJECT_NAME`.
+- `set(CMAKE_CXX_STANDARD 23)`: Especifica que el proyecto debe compilarse usando C++23.
+- `set(CMAKE_CXX_STANDARD_REQUIRED ON)`: Asegura que se use exactamente C++23 (y no una versión anterior compatible).
+
+:::
 
 </section>
 {/* #endregion Paso 2 */}
 
-## ...
+{/* #region Paso 3 */}
+<section title="Paso 3: Verificar la configuración de CMake">
 
-<TODO/>
+## ✅ Paso 3: Verificar la configuración de CMake
+
+Antes de compilar cualquier código, es buena idea asegurarse de que el archivo `CMakeLists.txt` está bien escrito y que todas las rutas y variables están correctamente definidas. Para eso, usaremos el comando `cmake` para generar los archivos de compilación en una carpeta aparte (`build/`).
+
+:::tip ¿Debe llamarse `build`?
+
+No necesariamente. Puedes usar cualquier nombre como `out`, `bin` o `build` para la carpeta de compilación, pero `build` es una convención común en la comunidad de CMake.
+
+:::
+
+::::exercise Comando para verificar CMake
+
+Desde la raíz del proyecto:
+
+```bash title="Ejecuta"
+cmake -S . -B build
+```
+
+:::explanation
+
+- `-S .` le indica a CMake que el archivo `CMakeLists.txt` está en el directorio actual.
+- `-B build` le indica que genere los archivos de compilación en una subcarpeta llamada `build`.
+
+:::
+
+### ✔️ Resultado esperado
+
+Si todo está bien, verás una salida como esta:
+
+```text
+-- The C compiler identification is Clang 17.0.6
+-- The CXX compiler identification is Clang 17.0.6
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /ruta/a/tu/proyecto/build
+```
+
+:::danger CMake x.y.z or higher is required.
+
+Si ves un error como `CMake x.y.z or higher is required`, significa que la versión de CMake instalada es demasiado antigua. Asegúrate de haber instalado una versión compatible (4.0.3 o superior), o cambia la línea `cmake_minimum_required(VERSION 4.0.3)` en el archivo `CMakeLists.txt` a una versión que tengas instalada.
+
+:::
+
+::::
+
+</section>
+{/* #endregion Paso 3 */}
+
+{/* #region Conclusiones */}
+<section title="Conclusiones">
+## 🎯 Conclusiones
+
+Crear un proyecto básico en C++ con CMake nos permite dar los primeros pasos hacia una estructura de desarrollo más profesional, portable y mantenible. Al establecer buenas prácticas desde el inicio —como separar el código fuente de la configuración, y validar la configuración antes de compilar— sentamos las bases para construir software más escalable.
+
+Este enfoque no solo facilita la colaboración en equipos, sino que también simplifica el uso de herramientas avanzadas como pruebas automatizadas, integración continua y análisis estático.
+
+### 🔑 Puntos clave
+
+- Instalamos herramientas esenciales: **Clang**, **CMake** y **Ninja**, que conforman una base moderna y multiplataforma para proyectos C++.
+- Creamos una estructura de proyecto clara y organizada, separando código y configuración.
+- Escribimos un archivo `CMakeLists.txt` mínimo pero funcional para compilar un ejecutable.
+- Verificamos que la configuración del proyecto fuera correcta antes de compilar.
+
+### 🧰 ¿Qué nos llevamos?
+
+Después de esta lección, ya puedes:
+
+✅ Configurar un entorno moderno para desarrollar en C++  
+✅ Crear un proyecto base con estructura clara y reutilizable  
+✅ Escribir y validar configuraciones iniciales de CMake
+
+Este es solo el comienzo. En futuras lecciones aprenderás a compilar múltiples archivos, definir bibliotecas reutilizables, manejar dependencias externas y automatizar pruebas.
+
+</section>
+{/* #endregion Conclusiones */}
+
+{/* #region ¿Qué sigue? */}
+<section title="¿Qué sigue?">
+## ➡️ ¿Qué sigue?
+
+Puedes ver todas las lecciones en [GitLab](https://gitlab.com/r8vnhill/echo-app-cmake) o [GitHub](https://github.com/r8vnhill/echo-app-cmake).
+
+</section>
+{/* #endregion ¿Qué sigue? */}
+
+{/* #region Referencias */}
+<section title="Referencias">
+
+## 📖 ¿Con ganas de más?
+
+<ReferenceList 
+  title="🔥 Referencias recomendadas" 
+  items={[
+    <WebPage
+      title="CMake tutorial"
+      url="https://cmake.org/cmake/help/book/mastering-cmake/cmake/Help/guide/tutorial/index.html"
+      location={<OfficialDocumentation>Mastering CMake</OfficialDocumentation>}
+    >
+      Tutorial paso a paso que muestra cómo crear y escalar un proyecto C++ con CMake: desde una configuración mínima hasta incluir bibliotecas, pruebas, instalación y empaquetado multiplataforma. Ideal para aprender buenas prácticas con <code>CMakeLists.txt</code> y herramientas modernas.
+      Aunque este tutorial cubre muchos temas avanzados, es útil revisar al menos las primeras secciones para complementar esta lección, que se enfoca solo en los pasos iniciales: configurar el entorno y crear la estructura del proyecto.
+    </WebPage>
+  ]}
+/>
+
+</section>
+{/* #endregion Referencias */}
 
 </FigureCounterProvider>
