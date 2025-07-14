@@ -1,18 +1,46 @@
 import React from 'react';
-import BashScriptBlock from '../../../../code-blocks/BashScriptBlock';
-import TODO from '../../../../TODO/TODO';
+import PowerShellScriptBlock from '../../../../code-blocks/PowerShellScriptBlock';
 
-const script = ``
+const script = `[CmdletBinding()]
+param ()
 
-const scriptName = 'install_cmake_dependencies.sh';
+# Required packages to compile C++ projects with CMake and Ninja
+$required = @('llvm', 'cmake', 'ninja')
 
-export default function InstallCmakeDependenciesMac(): JSX.Element {
+# Get installed package names as a set
+$installed = (scoop list | ForEach-Object { $_.Name }) -as [string[]]
+
+# Install missing packages
+foreach ($pkg in $required) {
+    if ($installed -contains $pkg) {
+        Write-Host "✅ $pkg already installed."
+    } else {
+        Write-Host "📦 Installing $pkg..."
+        scoop install $pkg
+    }
+}
+
+Write-Host "\`n🔍 Checking tool availability..."
+
+# Check if each required tool is in PATH
+foreach ($tool in @('clang++', 'cmake', 'ninja')) {
+    $cmd = Get-Command $tool -ErrorAction SilentlyContinue
+    if ($cmd) {
+        Write-Host "✅ $tool found at $($cmd.Source)"
+    } else {
+        Write-Error "⚠️ $tool not found in PATH"
+    }
+}
+`
+
+const scriptName = 'Install-CMakeDependencies.ps1';
+
+export default function InstallCmakeDependenciesWindows(): JSX.Element {
   return (
-    <TODO />
-    // <BashScriptBlock
-    //   title={`scripts/macos/${scriptName}`}
-    //   code={script}
-    //   scriptName={scriptName}
-    // />
+    <PowerShellScriptBlock
+      title={`scripts/windows/${scriptName}`}
+      code={script}
+      scriptName={scriptName}
+    />
   );
 }

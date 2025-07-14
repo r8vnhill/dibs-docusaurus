@@ -10,7 +10,7 @@ export default function InstallCmakeDependenciesMac(): JSX.Element {
   return (
     <TODO />
     // <BashScriptBlock
-    //   title={`scripts/macos/${scriptName}`}
+    //   title={`scripts/deb/${scriptName}`}
     //   code={script}
     //   scriptName={scriptName}
     // />
