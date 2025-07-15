@@ -60,17 +60,15 @@ export default function ScriptBlock({
       </CodeBlock>
       {description}
       <p>
-        Guarda este script como <code>{scriptName}</code>
-        {isBash ? ", hazlo ejecutable y luego ejecútalo:" : ", y ejecútalo en la terminal:"}
+        Guarda este script como <code>{scriptName}</code>, y ejecútalo en la terminal:
       </p>
       {isBash ? (
         <CodeBlock language="bash" showLineNumbers>
-          {`sudo chmod +x ${title}
-source ${title}${argsExample ? " " + argsExample : ""}`}
+          {`source ${title}${argsExample ? " " + argsExample : ""}`}
         </CodeBlock>
       ) : (
         <CodeBlock language={language} showLineNumbers>
-          {`${language === "powershell" ? "." : "bash"} ${title}${argsExample ? " " + argsExample : ""}`}
+          {`${title}${argsExample ? " " + argsExample : ""}`}
         </CodeBlock>
       )}
     </section>

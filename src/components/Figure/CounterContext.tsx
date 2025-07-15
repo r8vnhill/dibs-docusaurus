@@ -6,7 +6,7 @@ import React, {
   useRef,
 } from "react";
 
-type CounterContextType = {
+export type CounterContextType = {
   getNextNumber: () => number;
   reset: () => void;
   current: () => number;

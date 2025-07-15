@@ -1,41 +1,38 @@
 import React from 'react';
 import PowerShellScriptBlock from '../../../../code-blocks/PowerShellScriptBlock';
 
-const code = `# Enable advanced parameter binding and common parameters like -Verbose, -ErrorAction, etc.
+const code = `# Enable advanced features like -Verbose and standard error handling flags.
 [CmdletBinding()]
 param (
-    # Mandatory path for the Gradle project root.
+    # Require a non-empty string as the project root path.
     [Parameter(Mandatory)]
-    [ValidateNotNullOrEmpty()]  # Prevents null or empty string values.
+    [ValidateNotNullOrEmpty()]
     [string] $ProjectRoot
 )
 
-# Define the function that encapsulates the Gradle project initialization logic.
-function Initialize-GradleProject {
-    [CmdletBinding()]
-    param ()
+try {
+    # Attempt to resolve the full path (handles both absolute and relative paths).
+    $fullPath = Resolve-Path -Path $ProjectRoot -ErrorAction SilentlyContinue
 
-    try {
-        # Create the project directory if it doesn't already exist.
-        # The -Force flag prevents errors if it already exists.
-        $null = New-Item -Path $ProjectRoot -ItemType Directory -Force -ErrorAction Stop
-
-        # Change to the project directory
-        # (this change will persist after the script ends).
-        Set-Location -Path $ProjectRoot
-
-        # Run 'gradle init' interactively in the current directory.
-        Write-Verbose "Running 'gradle init' in '$ProjectRoot'"
-        & gradle init
+    # If the path doesn't exist yet, create the directory.
+    if (-not $fullPath) {
+        Write-Verbose "Creating '$ProjectRoot'"
+        $null = New-Item -Path $ProjectRoot -ItemType Directory -Force
+        $fullPath = Resolve-Path $ProjectRoot
     }
-    catch {
-        # Display a clear error message if anything goes wrong.
-        Write-Error "Failed to initialize Gradle project: $_"
-    }
+
+    # Navigate to the resolved project directory.
+    Set-Location $fullPath
+
+    # Log and run the Gradle initialization command interactively.
+    Write-Verbose "Running 'gradle init' in '$fullPath'"
+    # highlight-next-line
+    & gradle init
 }
-
-# Invoke the function to initialize the project.
-Initialize-GradleProject
+catch {
+    # If any error occurs, show a clear failure message.
+    Write-Error "❌ Gradle init failed: $_"
+}
 `;
 
 const scriptName = 'Initialize-GradleProject.ps1';
@@ -43,7 +40,7 @@ const scriptName = 'Initialize-GradleProject.ps1';
 export default function InitializeGradleProjectPsCode() {
   return (
     <PowerShellScriptBlock
-      title={`scripts/windows/${scriptName}`}
+      title={`scripts/powershell/${scriptName}`}
       code={code}
       scriptName={scriptName}
       argsExample="-ProjectRoot echo-app"

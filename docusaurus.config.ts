@@ -44,7 +44,7 @@ const config: Config = {
                     remarkPlugins: [remarkMath],
                     rehypePlugins: [rehypeKatex],
                     admonitions: {
-                        keywords: ['explanation', 'exercise', 'question', 'solution', 'more'],
+                        keywords: ['explanation', 'exercise', 'question', 'solution', 'more', 'definition'],
                         extendDefaults: true,  
                     }
                 },

@@ -1,9 +1,9 @@
 import React from "react";
-import { WithClassName } from "../../../components/traits/WithClassName";
+import { WithClassName } from "../../../../components/traits/WithClassName";
 import styles from "./Danger.module.css";
 import clsx from "clsx";
 import { Skull } from "phosphor-react";
-import { WithTitle } from "../../../components/traits/WithTitle";
+import { WithTitle } from "../../../../components/traits/WithTitle";
 
 type DangerProps = React.PropsWithChildren<WithClassName & WithTitle>;
 
