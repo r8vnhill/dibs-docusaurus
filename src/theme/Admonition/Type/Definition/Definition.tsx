@@ -38,7 +38,7 @@ export default function Definition({
         </span>
         <span className={styles.definition__text}>
           <strong>Definición {number}</strong>
-          {title && <>: {title}</>}
+          {title && <>:&nbsp;{title}</>}
         </span>
       </h3>
       {children}
