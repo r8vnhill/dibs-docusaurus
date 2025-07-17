@@ -211,8 +211,4 @@ export const RubyCard = createCard(
 export const MesonCard = createCard(
   "https://slaptijack.com/images/logos/meson.png",
   "C/C++: Meson"
-)
-export const CargoCard = createCard(
-  "https://doc.rust-lang.org/cargo/images/Cargo-Logo-Small.png",
-  "Rust: Cargo"
 );

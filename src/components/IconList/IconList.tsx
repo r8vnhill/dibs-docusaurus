@@ -12,8 +12,10 @@ import {
   Sliders,
   TerminalWindow,
   Key,
+  GlobeHemisphereWest,
 } from "phosphor-react";
 import styles from "./IconList.module.css";
+import TODO from "../TODO/TODO";
 
 /**
  * A list component that displays items with custom leading icons.
@@ -154,6 +156,14 @@ export function TerminalWindowItem({ children }: ItemProps) {
 export function KeyItem({ children }: ItemProps) {
   return (
     <IconItem icon={<Key size="1em" weight="fill" />}>
+      {children}
+    </IconItem>
+  );
+}
+
+export function WebPageItem({ children }: ItemProps) {
+  return (
+    <IconItem icon={<GlobeHemisphereWest size="1.1em" weight="fill" />}>
       {children}
     </IconItem>
   );

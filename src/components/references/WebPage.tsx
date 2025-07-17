@@ -1,6 +1,7 @@
 import React from "react";
 import clsx from "clsx";
 import styles from "./WebPage.module.css";
+import { WebPageItem } from "../IconList/IconList";
 
 type WebPageProps = {
   title: React.ReactNode;
@@ -38,30 +39,29 @@ const WebPage: React.FC<WebPageProps> = React.memo(
     }
 
     return (
-      <div className={clsx(styles.webPage, className)}>
-        <span className={styles.icon}>{icon}</span>{" "}
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={styles.title}
-        >
-          “{title}”
-        </a>{" "}
-        en <span className={styles.location}>{location}</span>
-        {author && (
-          <span className={styles.author}>
-            {" "}
-            por <span className={styles.authorName}>{author}</span>
-          </span>
-        )}
-        {children && (
-          <>
-            {":"}
-            <div className={styles.description}>{children}</div>
-          </>
-        )}
-      </div>
+      <WebPageItem>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.title}
+          >
+            “{title}”
+          </a>{" "}
+          en <span className={styles.location}>{location}</span>
+          {author && (
+            <span className={styles.author}>
+              {" "}
+              por <span className={styles.authorName}>{author}</span>
+            </span>
+          )}
+          {children && (
+            <>
+              {":"}
+              <div className={styles.description}>{children}</div>
+            </>
+          )}
+      </WebPageItem>
     );
   }
 );
