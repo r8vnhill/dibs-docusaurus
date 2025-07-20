@@ -11,6 +11,7 @@ import Exercise from './Type/Exercise';
 import Solution from './Type/Solution';
 import More from './Type/More/More';
 import Definition from './Type/Definition/Definition';
+import Abstract from './Type/Abstract/Abstract';
 
 const admonitionTypes: typeof AdmonitionTypes = {
   note: Note,
@@ -24,7 +25,8 @@ const admonitionTypes: typeof AdmonitionTypes = {
   exercise: Exercise,
   solution: Solution,
   more: More,
-  definition: Definition
+  definition: Definition,
+  abstract: Abstract,
 };
 
 // Undocumented legacy admonition type aliases

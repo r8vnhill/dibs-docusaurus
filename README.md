@@ -1,82 +1,25 @@
-# Diseño e Implementación de Bibliotecas de Software (DIBS)
+# dibs-docusaurus: Diseño e Implementación de Bibliotecas de Software
 
-Este repositorio contiene el sitio web del curso **Diseño e Implementación de Bibliotecas de Software** (DIBS), desarrollado con [Docusaurus](https://docusaurus.io/). El curso está orientado a estudiantes de ciencias de la computación con conocimientos previos en programación orientada a objetos y cubre principios, herramientas y técnicas para diseñar e implementar bibliotecas de software robustas y reutilizables.
+[![Framework](https://img.shields.io/badge/framework-Docusaurus-blue)](https://docusaurus.io/)
+[![Build](https://img.shields.io/badge/build-pnpm-yellowgreen)](https://pnpm.io)
+[![Plataforma](https://img.shields.io/badge/plataforma-Cloudflare%20Workers-orange)](https://workers.cloudflare.com)
+[![Licencia](https://img.shields.io/badge/licencia-BSD--2--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
+[![Propósito](https://img.shields.io/badge/propósito-educacional-yellow)](https://dibs.ravenhill.cl)
+[![Estado](https://img.shields.io/badge/estado-estable-brightgreen)]()
+[![Sitio de DIBS](https://img.shields.io/badge/sitio-dibs.ravenhill.cl-purple)](https://dibs.ravenhill.cl)
 
-## 📚 Temario
+Próximamente...
 
-Este curso tiene una duración sugerida de **15 semanas**, con una carga de trabajo de **10 horas semanales** (3 horas de cátedra + 7 horas de trabajo autónomo).
+## 🛡️ Licencia
 
-### Contenidos del curso
+Este proyecto está licenciado bajo la **[Licencia BSD de 2 Cláusulas](./LICENSE)**.
 
-#### Unidad 1: Introducción (1.5 semanas)
-- Introducción a bibliotecas de software
-- Principios de código limpio y mantenible
-- Sintaxis de lenguaje de programación
-- Void-safety
-- Repaso de programación orientada a objetos
+Puedes usar, adaptar y compartir este código libremente con fines personales, académicos o educativos, siempre que se dé la atribución correspondiente.
 
-#### Unidad 2: Build Systems (3 semanas)
-- Introducción a build systems
-- Manejo de dependencias
-- Automatización de tareas
-- Compilación y empaquetado de aplicaciones
-- Compilación y empaquetado de bibliotecas
-- Publicación de bibliotecas
+## 🌐 Sitio del curso DIBS
 
-#### Unidad 3: Testing (3 semanas)
-- Behavior-driven development (BDD)
-- Data-driven testing (DDT)
-- Aserciones avanzadas
-- Property-based testing (PBT)
-- Generadores arbitrarios
-- Desarrollo de propiedades
-- Reducción de casos de prueba
+El curso completo — *Diseño e Implementación de Bibliotecas de Software* — está disponible en:
 
-#### Unidad 4: Programación Genérica (1 semana)
-- Polimorfismo paramétrico
-- Varianza en sitio de declaración
-- Varianza en sitio de uso
-- Borrado de tipos
-- Reificación de tipos
+👉 [https://dibs.ravenhill.cl](https://dibs.ravenhill.cl)
 
-#### Unidad 5: Programación Orientada a Objetos (2 semanas)
-- Problema de la base débil
-- Métodos de extensión
-- Tipos anónimos
-- Sobrecarga de operadores
-- Variables y funciones estáticas
-- Herencia múltiple
-- Soluciones al problema del diamante
-
-#### Unidad 6: Programación Funcional (3.5 semanas)
-- Funciones puras y efectos secundarios
-- Funciones de alto orden
-- Funciones lambda
-- Tipos de datos algebraicos
-- Functores
-- Mónadas
-
-#### Unidad 7: Colecciones (1 semana)
-- Iterator pattern
-- Colecciones inmutables
-- Colecciones mutables
-- Operaciones sobre colecciones
-
----
-
-## 🚀 Tecnologías utilizadas
-
-- [Docusaurus 2](https://docusaurus.io/)
-- [Markdown](https://www.markdownguide.org/)
-- [Mermaid](https://mermaid.js.org/) para diagramas
-
-## 📦 Instalación local
-
-```bash
-npm install
-npm run start
-```
-
-## 🌐 Sitio web
-
-Puedes acceder al sitio del curso en: [https://dibs.pages.dev](https://dibs.pages.dev)
+Ahí encontrarás lecciones completas, diapositivas, ejercicios y recursos complementarios (en español).

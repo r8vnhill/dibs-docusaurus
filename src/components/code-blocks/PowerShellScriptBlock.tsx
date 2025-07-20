@@ -2,7 +2,7 @@ import React from "react";
 import ScriptBlock from "./ScriptBlock";
 
 type PowerShellScriptBlockProps = {
-  title: string;
+  title?: string;
   code: string;
   scriptName: string;
   argsExample?: string;
@@ -40,7 +40,6 @@ type PowerShellScriptBlockProps = {
  * ```
  */
 export default function PowerShellScriptBlock({
-  title,
   code,
   scriptName,
   argsExample,
@@ -48,7 +47,6 @@ export default function PowerShellScriptBlock({
 }: PowerShellScriptBlockProps) {
   return (
     <ScriptBlock
-      title={title}
       code={code}
       scriptName={scriptName}
       language="powershell"
@@ -56,4 +54,4 @@ export default function PowerShellScriptBlock({
       description={description}
     />
   );
-}
+} 

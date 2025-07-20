@@ -1,10 +1,9 @@
 import React from "react";
 import CodeBlock from "@theme/CodeBlock";
 
-type ScriptLanguage = "bash" | "powershell";
+type ScriptLanguage = "bash" | "powershell" | "cmd";
 
 type ScriptBlockProps = {
-  title: string;
   code: string;
   scriptName: string;
   language: ScriptLanguage;
@@ -12,65 +11,38 @@ type ScriptBlockProps = {
   description?: React.ReactNode;
 };
 
-/**
- * `ScriptBlock` displays a syntax-highlighted code block for a script (e.g., Bash or PowerShell)
- * and shows an example of how to execute it from the terminal.
- *
- * This component is useful for tutorials or documentation pages where you want to:
- * - Present a script file with syntax highlighting.
- * - Provide a contextual explanation or usage instructions.
- * - Show an example terminal command for running the script.
- *
- * ## Props
- *
- * @property title - Title displayed above the code block (typically the file name).
- * @property code - The full script content to display inside the code block.
- * @property scriptName - The file name used in the command-line example.
- * @property language - Script language (`"bash"` or `"powershell"`) for syntax highlighting.
- * @property argsExample - Optional string of example arguments to append in the run command.
- * @property description - Optional React node rendered between the script and execution example.
- *
- * ## Example usage
- *
- * ```tsx
- * <ScriptBlock
- *   title="scripts/init.sh"
- *   code="#!/bin/bash\necho Hello, $1"
- *   scriptName="init.sh"
- *   language="bash"
- *   argsExample="MyProject"
- *   description={<p>Este script inicializa un nuevo proyecto con el nombre indicado.</p>}
- * />
- * ```
- */
 export default function ScriptBlock({
-  title,
   code,
   scriptName,
   language,
   argsExample,
   description,
 }: ScriptBlockProps) {
-  const isBash = language === "bash";
+  const command = (() => {
+    const args = argsExample ? " " + argsExample : "";
+    switch (language) {
+      case "bash":
+        return `source ${scriptName}${args}`;
+      case "cmd":
+        return `call ${scriptName}${args}`;
+      case "powershell":
+      default:
+        return `${scriptName}${args}`;
+    }
+  })();
 
   return (
     <section>
-      <CodeBlock language={language} title={title} showLineNumbers>
+      <CodeBlock language={language} showLineNumbers>
         {code}
       </CodeBlock>
       {description}
       <p>
-        Guarda este script como <code>{scriptName}</code>, y ejecútalo en la terminal:
+        Guarda este script como <code>{scriptName}</code> y ejecútalo en la terminal:
       </p>
-      {isBash ? (
-        <CodeBlock language="bash" showLineNumbers>
-          {`source ${title}${argsExample ? " " + argsExample : ""}`}
-        </CodeBlock>
-      ) : (
-        <CodeBlock language={language} showLineNumbers>
-          {`${title}${argsExample ? " " + argsExample : ""}`}
-        </CodeBlock>
-      )}
+      <CodeBlock language={language} showLineNumbers>
+        {command}
+      </CodeBlock>
     </section>
   );
 }
