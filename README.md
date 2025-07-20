@@ -2,6 +2,8 @@
 
 [![Framework](https://img.shields.io/badge/framework-Docusaurus-blue)](https://docusaurus.io/)
 [![Build](https://img.shields.io/badge/build-pnpm-yellowgreen)](https://pnpm.io)
+[![Lenguaje](https://img.shields.io/badge/lenguaje-TypeScript-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![UI](https://img.shields.io/badge/UI-React-61DAFB?logo=react&logoColor=black)](https://reactjs.org)
 [![Plataforma](https://img.shields.io/badge/plataforma-Cloudflare%20Workers-orange)](https://workers.cloudflare.com)
 [![Licencia](https://img.shields.io/badge/licencia-BSD--2--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
 [![Propósito](https://img.shields.io/badge/propósito-educacional-yellow)](https://dibs.ravenhill.cl)

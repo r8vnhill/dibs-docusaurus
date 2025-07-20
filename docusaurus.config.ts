@@ -3,35 +3,21 @@ import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
+import createSiteConfig from "./config/site";
+import createFutureConfig from "./config/future";
+import createBrokenLinkHandlingConfig from "./config/broken-link-handling";
+import createMarkdownConfig from "./config/markdown";
+import createI18nConfig from "./config/i18n";
 
 const config: Config = {
-  title: "📚 DIBS",
-  tagline: "Diseño e Implementación de Bibliotecas de Software",
-  favicon: "img/online-library.ico",
-  url: "https://dibs.pages.dev",
-  // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
+  ...createSiteConfig(),
   baseUrl: "/",
-
-  // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: "ravenhill", // Usually your GitHub org/user name.
-  projectName: "dibs", // Usually your repo name.
-
-  markdown: {
-    mermaid: true,
-  },
+  ...createFutureConfig(),
+  
   themes: ["@docusaurus/theme-mermaid"],
-  onBrokenLinks: "throw",
-  onBrokenMarkdownLinks: "throw",
-
-  // Even if you don't use internationalization, you can use this field to set
-  // useful metadata like html lang. For example, if your site is Chinese, you
-  // may want to replace "en" with "zh-Hans".
-  i18n: {
-    defaultLocale: "en",
-    locales: ["en"],
-  },
+  ...createBrokenLinkHandlingConfig(),
+  ...createMarkdownConfig(),
+  ...createI18nConfig(),
 
   presets: [
     [

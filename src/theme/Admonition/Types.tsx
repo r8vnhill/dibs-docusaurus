@@ -13,7 +13,25 @@ import More from './Type/More/More';
 import Definition from './Type/Definition/Definition';
 import Abstract from './Type/Abstract/Abstract';
 
-const admonitionTypes: typeof AdmonitionTypes = {
+const admonitionKeys = [
+  'note',
+  'tip',
+  'info',
+  'warning',
+  'danger',
+  'question',
+  'important',
+  'explanation',
+  'exercise',
+  'solution',
+  'more',
+  'definition',
+  'abstract',
+] as const;
+
+type AdmonitionKey = (typeof admonitionKeys)[number];
+
+const admonitionTypes: Record<AdmonitionKey, typeof AdmonitionTypes[AdmonitionKey]> = {
   note: Note,
   tip: Tip,
   info: Info,
