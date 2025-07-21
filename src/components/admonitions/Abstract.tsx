@@ -1,14 +1,38 @@
-import React from "react";
-import { WithClassName } from "~/components/traits/WithClassName";
-import styles from "~/css/components/admonitions/Abstract.module.css";
+import { PropsWithChildren } from "react";
+import { WithClassName } from "~components/traits/WithClassName";
+import styles from "~css/components/admonitions/Abstract.module.css";
 import clsx from "clsx";
 import { Brain } from "phosphor-react";
 
 const TITLE_ID = "abstract-title";
 const TITLE_TEXT = "Abstract";
 
-type AbstractProps = React.PropsWithChildren<WithClassName>;
+/**
+ * Props for the Abstract component.
+ */
+export interface AbstractProps extends PropsWithChildren, WithClassName { }
 
+/**
+ * Renders an admonition box with the "Abstract" style.
+ *
+ * This component displays a visually distinct section labeled "Abstract", useful for highlighting 
+ * summaries or overviews within content such as documentation or educational material.
+ *
+ * It applies a consistent design using scoped CSS modules and includes an icon (🧠) to visually
+ * reinforce its semantic meaning.
+ *
+ * Accessibility is provided via ARIA roles and labels, and customization is supported through
+ * `className` and child content.
+ *
+ * @param className - Optional CSS class to extend or override styles.
+ * @param children - Content to display inside the abstract section.
+ * @returns A styled section element representing an abstract.
+ *
+ * @example
+ * <Abstract>
+ *   This section provides an overview of the lesson's key ideas.
+ * </Abstract>
+ */
 export default function Abstract({
   className,
   children,

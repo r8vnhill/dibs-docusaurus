@@ -1,3 +1,5 @@
+import meta from '~course-meta';
+
 /**
  * Define the shape of the site's global configuration.
  *
@@ -14,8 +16,11 @@ export interface SiteConfig {
   /** The path to the favicon image relative to the site's base URL. */
   favicon: string;
 
-  /** The base URL where the site is deployed. */
+  /** The full URL of the site, including protocol (e.g., https://). */
   url: string;
+
+  /** The base URL for the site, relative to the domain (e.g., /docs/). */
+  baseUrl: string;
 }
 
 /**
@@ -31,10 +36,11 @@ export default function createSiteConfig(
   overrides: Partial<SiteConfig> = {}
 ): SiteConfig {
   return {
-    title: "📚 DIBS",
-    tagline: "Diseño e Implementación de Bibliotecas de Software",
-    favicon: "img/online-library.ico",
-    url: "https://dibs.pages.dev",
+    title: `📚 ${meta.shortTitle}`,
+    tagline: meta.title,
+    favicon: meta.icon,
+    url: meta.url,
+    baseUrl: meta.baseUrl,
     ...overrides,
   };
 }
