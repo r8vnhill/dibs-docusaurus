@@ -1,5 +1,5 @@
 import { Footer } from "@docusaurus/theme-common";
-import { COPYRIGHT_HOLDER } from "config/course-meta";
+import { COPYRIGHT_HOLDER } from "../course-meta";
 
 /**
  * The current year.

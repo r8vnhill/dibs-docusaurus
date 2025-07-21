@@ -2,7 +2,7 @@ import path from "path";
 
 import { PluginOptions } from "@docusaurus/plugin-content-docs";
 import remarkPlugins from "./remark";
-import rehypePlugins from "./rehype";
+import rehypePlugins, { beforeDefaultRehypePlugins } from "./rehype";
 
 const sidebarPath = path.resolve(__dirname, "../sidebars.ts");
 
@@ -27,6 +27,7 @@ const docsPreset: Partial<PluginOptions> = {
   sidebarPath,
   remarkPlugins,
   rehypePlugins,
+  ...beforeDefaultRehypePlugins,
 };
 
 export default docsPreset;

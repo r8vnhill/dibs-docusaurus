@@ -1,4 +1,4 @@
-import { EXTERNAL_LINKS } from "config/course-meta";
+import { EXTERNAL_LINKS } from "../../course-meta";
 import { createExternalLinkElement } from "./utils";
 
 /**

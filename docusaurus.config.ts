@@ -6,26 +6,26 @@ import createMarkdownConfig from "./config/markdown";
 import createI18nConfig from "./config/i18n";
 import classicPresets from "./config/presets";
 import createThemeConfig from "./config/theme";
+import { katexStylesheet } from "./config/stylesheets";
 
 const config: Config = {
+  // General site metadata
   ...createSiteConfig(),
+  ...createI18nConfig(),
+
+  // Feature flags and experimental support
   ...createFutureConfig(),
 
-  ...createBrokenLinkHandlingConfig(),
+  // Content processing
   ...createMarkdownConfig(),
-  ...createI18nConfig(),
-  presets: classicPresets,
+  ...createBrokenLinkHandlingConfig(),
 
+  // Visuals and theme
   ...createThemeConfig(),
-  stylesheets: [
-    {
-      href: "https://cdn.jsdelivr.net/npm/katex@0.13.24/dist/katex.min.css",
-      type: "text/css",
-      integrity:
-        "sha384-odtC+0UGzzFL/6PNoE8rX/SPcQDXBJ+uRepguP4QkPCm2LBxH3FA3y+fKSiJ+AmM",
-      crossorigin: "anonymous",
-    },
-  ],
+  stylesheets: [katexStylesheet],
+
+  // Presets and plugins
+  presets: classicPresets,
   plugins: [require.resolve("docusaurus-lunr-search")],
 };
 
