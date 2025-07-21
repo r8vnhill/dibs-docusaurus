@@ -1,4 +1,4 @@
-import meta from '~course-meta';
+import meta from './course-meta';
 
 /**
  * Define the shape of the site's global configuration.
