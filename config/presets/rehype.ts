@@ -39,6 +39,7 @@ function createRehypeShikiConfig(
         dark: "catppuccin-mocha",
       },
       langs: Object.keys(bundledLanguages) as BundledLanguage[],
+      inline: "tailing-curly-colon",
       ...overrides,
     },
   ];

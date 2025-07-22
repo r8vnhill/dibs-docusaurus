@@ -1,21 +1,16 @@
-import { PropsWithChildren } from "react";
-import { WithClassName } from "~components/traits/WithClassName";
-import styles from "~css/components/admonitions/Abstract.module.css";
+import styles from "@site/src/css/components/callouts/Abstract.module.css";
 import clsx from "clsx";
 import { Brain } from "phosphor-react";
+import { AbstractProps } from "./types";
+import FilledIcon from "./FilledIcon";
 
 const TITLE_ID = "abstract-title";
 const TITLE_TEXT = "Abstract";
 
 /**
- * Props for the Abstract component.
- */
-export interface AbstractProps extends PropsWithChildren, WithClassName { }
-
-/**
  * Renders an admonition box with the "Abstract" style.
  *
- * This component displays a visually distinct section labeled "Abstract", useful for highlighting 
+ * This component displays a visually distinct section labeled "Abstract", useful for highlighting
  * summaries or overviews within content such as documentation or educational material.
  *
  * It applies a consistent design using scoped CSS modules and includes an icon (🧠) to visually
@@ -47,9 +42,7 @@ export default function Abstract({
       {...rest}
     >
       <h3 id={TITLE_ID} className={styles.abstract__title}>
-        <span className={styles.abstract__icon} aria-hidden="true">
-          <Brain size={24} weight="fill" />
-        </span>
+        <FilledIcon Icon={Brain} size={24} className={styles.abstract__icon} />
         {TITLE_TEXT}
       </h3>
       {children}

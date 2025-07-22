@@ -1,20 +1,18 @@
-import React, { useState } from "react";
-import styles from "./More.module.css";
+import { useState } from "react";
+import styles from "@site/src/css/components/callouts/More.module.css";
 import clsx from "clsx";
 import { CaretDown, CaretUp, DotsThree } from "phosphor-react";
-import { WithClassName } from "../../../../components/traits/WithClassName";
-import { WithTitle } from "../../../../components/traits/WithTitle";
-
-type MoreProps = React.PropsWithChildren<WithClassName & WithTitle>;
+import { MoreProps } from "./types";
+import FilledIcon from "./FilledIcon";
 
 export default function More({
   className,
   children,
-  title,
-  defaultTitle = "Más información",
+  heading,
   ...rest
 }: MoreProps): JSX.Element {
-  const resolvedTitle = title || defaultTitle;
+  const defaultHeading = "Más información";
+  const resolvedHeading = heading || defaultHeading;
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -30,10 +28,8 @@ export default function More({
         aria-expanded={isOpen}
         id="more-title"
       >
-        <span className={styles.more__icon} aria-hidden="true">
-          <DotsThree size={20} weight="fill" />
-        </span>
-        {resolvedTitle}
+        <FilledIcon Icon={DotsThree} className={styles.more__icon} />
+        {resolvedHeading}
         <span className={styles.more__toggle}>
           {isOpen ? <CaretUp size={16} /> : <CaretDown size={16} />}
         </span>

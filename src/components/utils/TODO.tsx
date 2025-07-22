@@ -1,6 +1,5 @@
-import React from "react";
 import clsx from "clsx";
-import styles from "./TODO.module.css";
+import styles from "@site/src/css/components/utils/TODO.module.css";
 
 type TODOProps = {
   metadata?: Record<string, unknown>;
